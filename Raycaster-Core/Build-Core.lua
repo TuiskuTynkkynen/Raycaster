@@ -5,11 +5,16 @@ project "Raycaster-Core"
    targetdir "Binaries/%{cfg.buildcfg}"
    staticruntime "off"
 
-   files { "Source/**.h", "Source/**.cpp" }
+   files { "Source/**.h", "Source/**.cpp", "Source/Libraries/glad/**"}
 
    includedirs
    {
-      "Source"
+      "Source",
+      "Source/Libraries/GLFW",
+      "Source/Libraries/GLFW/include",
+      "Source/Libraries/glad",
+      "Source/Libraries/glad/include",
+      "Source/Libraries/glad/src",
    }
 
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")

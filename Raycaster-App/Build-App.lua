@@ -5,21 +5,39 @@ project "Raycaster-App"
    targetdir "Binaries/%{cfg.buildcfg}"
    staticruntime "off"
 
-   files { "Source/**.h", "Source/**.cpp" }
+   files { "Source/**.h", "Source/**.cpp", "Source/Libraries/GLFW/**", "Source/Libraries/glad/**"}
 
    includedirs
    {
       "Source",
 
 	  -- Include Core
-	  "../Raycaster-Core/Source"
+	  "../Raycaster-Core/Source",
+          "../Raycaster-Core/Source/Libraries/GLFW",
+          "../Raycaster-Core/Source/Libraries/GLFW/include",
+          "../Raycaster-Core/Source/Libraries/glad",
+          "../Raycaster-Core/Source/Libraries/glad/include",
+          "../Raycaster-Core/Source/Libraries/glad/src",
+   }	
+
+   libdirs
+   {
+      "../Raycaster-Core/Source/Libraries/GLFW/include",
+      "../Raycaster-Core/Source/Libraries/GLFW/lib-vc2022",
    }
 
    links
    {
-      "Raycaster-Core"
+      "Raycaster-Core",
+      "glfw3",
    }
 
+   filter { "system:windows" }
+      links { "OpenGL32" }
+
+   filter { "system:not windows" }
+      links { "GL" }
+	
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
    objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
