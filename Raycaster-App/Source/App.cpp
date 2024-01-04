@@ -1,8 +1,10 @@
 #include "Core/Core.h"
 #include "Core/Shader.h"
+#include "Core/Texture.h"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <stb_image.h>
 
 #include <iostream>
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
@@ -36,10 +38,11 @@ int main(){
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     float vertices[] = {
-        -0.5f,-0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-         0.5f,-0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-         0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f,
+        //positions               //colours    //texture coordinates
+        -0.5f,-0.5f, 0.0f, 1.0f,  0.0f, 0.0f,  0.0f, 0.0f,
+         0.5f,-0.5f, 0.0f, 0.0f,  1.0f, 0.0f,  1.0f, 0.0f,
+        -0.5f, 0.5f, 0.0f, 0.0f,  0.0f, 1.0f,  0.0f, 1.0f,
+         0.5f, 0.5f, 1.0f, 1.0f,  1.0f, 1.0f,  1.0f, 1.0f,
     };
     
     uint32_t indices[] = {
@@ -61,19 +64,37 @@ int main(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
 
+    stbi_set_flip_vertically_on_load(true);
+
+    Core::Texture2D texture0(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
+    texture0.BindImage("container.jpg", GL_RGB);
+
+    Core::Texture2D texture1(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
+    texture1.BindImage("texture.jpg", GL_RGB);
+
+    texture0.Activate(0);
+    texture1.Activate(1);
+    
     Core::Shader shader("vertexShader.glsl", "fragmentShader.glsl");
+    shader.use();
+    shader.setInt("currentTexture0", 0);
+    shader.setInt("currentTexture1", 1);
+
     int32_t frameNumber = 0;
-    while (!glfwWindowShouldClose(window) && glfwGetTime() < 5){
+    while (!glfwWindowShouldClose(window)){
         glClearColor(0.1f, 0.15f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        float time = frameNumber++ / 200.0f;
-        float offset = (sin(time)) / 10.0f;
+        //float time = frameNumber++ / 200.0f;
+        float offset = 0.0f;
+        // offset = (sin(time)) / 10.0f;
         shader.use();
         shader.setFloat("uniformOffset", offset);
         glBindVertexArray(vertexArrayObject);

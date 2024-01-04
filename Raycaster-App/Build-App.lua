@@ -8,6 +8,7 @@ project "Raycaster-App"
    files { 
       "Source/**.h", "Source/**.cpp",
       "Source/Shaders/**.glsl",
+      "Source/Textures/**",
       "Source/Libraries/GLFW/**",
       "Source/Libraries/glad/**"
    }
@@ -19,11 +20,13 @@ project "Raycaster-App"
 	  -- Include Core
 	  "../Raycaster-Core/Source",
 	  "../Raycaster-Core/Source/Shaders",
+	  "../Raycaster-Core/Source/Textures",
           "../Raycaster-Core/Source/Libraries/GLFW",
           "../Raycaster-Core/Source/Libraries/GLFW/include",
           "../Raycaster-Core/Source/Libraries/glad",
           "../Raycaster-Core/Source/Libraries/glad/include",
           "../Raycaster-Core/Source/Libraries/glad/src",
+          "../Raycaster-Core/Source/Libraries/utils/",
    }	
 
    libdirs

@@ -8,6 +8,7 @@ project "Raycaster-Core"
    files { 
       "Source/**.h", "Source/**.cpp",
       "Source/Shaders/**.glsl",
+      "Source/Textures/**",
       "Source/Libraries/GLFW/**",
       "Source/Libraries/glad/**"
    }
@@ -16,11 +17,13 @@ project "Raycaster-Core"
    {
       "Source",
       "Source/Shaders",
+      "Source/Textures",
       "Source/Libraries/GLFW",
       "Source/Libraries/GLFW/include",
       "Source/Libraries/glad",
       "Source/Libraries/glad/include",
       "Source/Libraries/glad/src",
+      "Source/Libraries/utils",
    }
 
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
