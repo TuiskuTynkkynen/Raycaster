@@ -5,11 +5,17 @@ project "Raycaster-Core"
    targetdir "Binaries/%{cfg.buildcfg}"
    staticruntime "off"
 
-   files { "Source/**.h", "Source/**.cpp", "Source/Libraries/glad/**"}
+   files { 
+      "Source/**.h", "Source/**.cpp",
+      "Source/Shaders/**.glsl",
+      "Source/Libraries/GLFW/**",
+      "Source/Libraries/glad/**"
+   }
 
    includedirs
    {
       "Source",
+      "Source/Shaders",
       "Source/Libraries/GLFW",
       "Source/Libraries/GLFW/include",
       "Source/Libraries/glad",
