@@ -21,12 +21,10 @@ project "Raycaster-App"
 	  "../Raycaster-Core/Source",
 	  "../Raycaster-Core/Source/Shaders",
 	  "../Raycaster-Core/Source/Textures",
-          "../Raycaster-Core/Source/Libraries/GLFW",
+          "../Raycaster-Core/Source/Libraries/",
           "../Raycaster-Core/Source/Libraries/GLFW/include",
-          "../Raycaster-Core/Source/Libraries/glad",
           "../Raycaster-Core/Source/Libraries/glad/include",
           "../Raycaster-Core/Source/Libraries/glad/src",
-          "../Raycaster-Core/Source/Libraries/utils/",
    }	
 
    libdirs

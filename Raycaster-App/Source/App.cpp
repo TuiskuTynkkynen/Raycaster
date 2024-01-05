@@ -4,9 +4,13 @@
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
-#include <stb_image.h>
+#include <utils/stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
 }
@@ -42,7 +46,7 @@ int main(){
         -0.5f,-0.5f, 0.0f, 1.0f,  0.0f, 0.0f,  0.0f, 0.0f,
          0.5f,-0.5f, 0.0f, 0.0f,  1.0f, 0.0f,  1.0f, 0.0f,
         -0.5f, 0.5f, 0.0f, 0.0f,  0.0f, 1.0f,  0.0f, 1.0f,
-         0.5f, 0.5f, 1.0f, 1.0f,  1.0f, 1.0f,  1.0f, 1.0f,
+         0.5f, 0.5f, 0.0f, 1.0f,  1.0f, 1.0f,  1.0f, 1.0f,
     };
     
     uint32_t indices[] = {
@@ -71,8 +75,6 @@ int main(){
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    stbi_set_flip_vertically_on_load(true);
-
     Core::Texture2D texture0(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
     texture0.BindImage("container.jpg", GL_RGB);
 
@@ -87,14 +89,22 @@ int main(){
     shader.setInt("currentTexture0", 0);
     shader.setInt("currentTexture1", 1);
 
+    uint32_t tranformLocation = glGetUniformLocation(shader.ID, "transform");
+
     int32_t frameNumber = 0;
     while (!glfwWindowShouldClose(window)){
         glClearColor(0.1f, 0.15f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        //float time = frameNumber++ / 200.0f;
+        float time = frameNumber++ / 200.0f;
         float offset = 0.0f;
-        // offset = (sin(time)) / 10.0f;
+        offset = (sin(time) + 1.0f) / 10.0f;
+
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(0.0f, offset, 0.0f));
+        transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+        glUniformMatrix4fv(tranformLocation, 1, GL_FALSE, glm::value_ptr(transform));
+
         shader.use();
         shader.setFloat("uniformOffset", offset);
         glBindVertexArray(vertexArrayObject);
@@ -108,6 +118,7 @@ int main(){
     glDeleteVertexArrays(1, &vertexArrayObject);
     glDeleteBuffers(1, &vertexBufferObject);
     glDeleteBuffers(1, &elementBufferObject);
+    
     glfwTerminate();
     return 0;
 }

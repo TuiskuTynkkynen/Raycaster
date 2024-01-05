@@ -1,7 +1,7 @@
 #include "Texture.h"
 
 #include <glad/glad.h>
-#include <stb_image.h>
+#include <utils/stb_image.h>
 
 #include <filesystem> 
 #include <iostream>
@@ -23,6 +23,8 @@ namespace Core{
         std::string fileString = directoryPath.append(fileName).string();
         const char* filePath = fileString.c_str();
 
+        stbi_set_flip_vertically_on_load(true);
+
         int textureWidth, textureHeight, textureChannelCount;
         unsigned char* data = stbi_load(filePath, &textureWidth, &textureHeight, &textureChannelCount, 0);
 
@@ -36,6 +38,10 @@ namespace Core{
             std::cout << "ERROR: FAILED TO LOAD TEXTURE" << filePath << std::endl;
         }
         stbi_image_free(data);
+    }
+
+    Texture2D::~Texture2D() {
+        glDeleteTextures(1, &ID);
     }
 
     void Texture2D::Activate(uint32_t unitIndex) {

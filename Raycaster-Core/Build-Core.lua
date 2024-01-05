@@ -18,12 +18,10 @@ project "Raycaster-Core"
       "Source",
       "Source/Shaders",
       "Source/Textures",
-      "Source/Libraries/GLFW",
+      "Source/Libraries/",
       "Source/Libraries/GLFW/include",
-      "Source/Libraries/glad",
       "Source/Libraries/glad/include",
       "Source/Libraries/glad/src",
-      "Source/Libraries/utils",
    }
 
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")

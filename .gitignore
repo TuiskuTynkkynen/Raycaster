@@ -1,6 +1,9 @@
 # Directories
 .vs/
 Binaries/
+Raycaster-Core/Source/Libraries/*/
+Raycaster-Core/obj/
+Raycaster-App/obj/
 
 # Files
 *.vcxproj
