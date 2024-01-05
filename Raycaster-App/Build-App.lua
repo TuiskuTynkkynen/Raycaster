@@ -17,10 +17,11 @@ project "Raycaster-App"
    {
       "Source",
 
+	  "Source/Shaders",
+	  "Source/Textures",
+
 	  -- Include Core
 	  "../Raycaster-Core/Source",
-	  "../Raycaster-Core/Source/Shaders",
-	  "../Raycaster-Core/Source/Textures",
           "../Raycaster-Core/Source/Libraries/",
           "../Raycaster-Core/Source/Libraries/GLFW/include",
           "../Raycaster-Core/Source/Libraries/glad/include",

@@ -11,7 +11,7 @@
 namespace Core {
     Shader::Shader(const char* vertexFileName, const char* fragmentFileName)
     {
-        std::filesystem::path filePath = std::filesystem::current_path().parent_path() / "Raycaster-Core" / "Source" / "Shaders";
+        std::filesystem::path filePath = std::filesystem::current_path() / "Source" / "Shaders";
         
         std::string vertexCode, fragmentCode;
         std::ifstream vertexShaderFile, fragmentShaderFile;

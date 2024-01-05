@@ -106,7 +106,6 @@ int main(){
         glUniformMatrix4fv(tranformLocation, 1, GL_FALSE, glm::value_ptr(transform));
 
         shader.use();
-        shader.setFloat("uniformOffset", offset);
         glBindVertexArray(vertexArrayObject);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         //glDrawArrays(GL_TRIANGLES, 0, 3);

@@ -19,7 +19,7 @@ namespace Core{
 	}
 
     void Texture2D::BindImage(const char* fileName, GLenum colourSpace) {
-        std::filesystem::path directoryPath = std::filesystem::current_path().parent_path() / "Raycaster-Core" / "Source" / "Textures";
+        std::filesystem::path directoryPath = std::filesystem::current_path() / "Source" / "Textures";
         std::string fileString = directoryPath.append(fileName).string();
         const char* filePath = fileString.c_str();
 

@@ -16,8 +16,6 @@ project "Raycaster-Core"
    includedirs
    {
       "Source",
-      "Source/Shaders",
-      "Source/Textures",
       "Source/Libraries/",
       "Source/Libraries/GLFW/include",
       "Source/Libraries/glad/include",
