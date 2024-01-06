@@ -18,7 +18,7 @@ namespace Core{
         usesMipMap = (filterMin == GL_NEAREST_MIPMAP_NEAREST, filterMin == GL_LINEAR_MIPMAP_NEAREST, filterMin == GL_NEAREST_MIPMAP_LINEAR, filterMin == GL_LINEAR_MIPMAP_LINEAR);
 	}
 
-    void Texture2D::BindImage(const char* fileName, GLenum colourSpace) {
+    void Texture2D::BindImage(const char* fileName) {
         std::filesystem::path directoryPath = std::filesystem::current_path() / "Source" / "Textures";
         std::string fileString = directoryPath.append(fileName).string();
         const char* filePath = fileString.c_str();
@@ -29,6 +29,24 @@ namespace Core{
         unsigned char* data = stbi_load(filePath, &textureWidth, &textureHeight, &textureChannelCount, 0);
 
         if (data) {
+            GLenum colourSpace;
+
+            switch (textureChannelCount)
+            {
+            case 1:
+                colourSpace = GL_RED;
+                break;
+            case 3:
+                colourSpace = GL_RGB;
+                break;
+            case 4:
+                colourSpace = GL_RGBA;
+                break;
+            default:
+                colourSpace = GL_RGB;
+                break;
+            }
+
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, colourSpace, GL_UNSIGNED_BYTE, data);
             if (usesMipMap) {
                 glGenerateMipmap(GL_TEXTURE_2D);

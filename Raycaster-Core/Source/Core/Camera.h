@@ -16,9 +16,6 @@ namespace Core {
 	class FlyCamera
 	{
 	private:
-		
-		glm::vec3 cameraFront;
-		glm::vec3 cameraPosition;
 		glm::vec3 cameraUp;
 		glm::vec3 cameraRight;
 		glm::vec3 worldUp;
@@ -30,6 +27,9 @@ namespace Core {
 
 		void updateCameraVectors();
 	public:
+		glm::vec3 cameraFront;
+		glm::vec3 cameraPosition;
+		
 		float fov;
 
 		FlyCamera(glm::vec3 position, glm::vec3 up, float yaw, float pitch);

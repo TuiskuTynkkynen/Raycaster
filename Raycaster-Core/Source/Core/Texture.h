@@ -13,7 +13,7 @@ namespace Core {
 		Texture2D(GLint wrapS, GLint WrapT, GLint filterMin, GLint filterMax);
 		~Texture2D();
 
-		void BindImage(const char* fileName, GLenum colourSpace);
+		void BindImage(const char* fileName);
 		void Activate(uint32_t unitIndex);
 	};
 }
