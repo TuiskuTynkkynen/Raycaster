@@ -40,5 +40,24 @@ namespace Core {
 		void ProcessMouseMovement(float offsetX, float offsetY, bool constrainPitch);
 		void ProcessMouseScroll(float offset);
 	};
+
+	class RaycasterCamera //2D Camera
+	{
+	private:
+		float cameraYaw;
+		const float reciprocalCentre;
+		const float halfWidth;
+		const float halfHeight;
+	public: 
+		glm::vec3 cameraPosition;
+		glm::vec3 cameraDirection;
+		glm::vec3 cameraPlane;
+		
+		RaycasterCamera(glm::vec3 playerPosition, float yaw, float centre, float width, float height);
+		RaycasterCamera(float posX, float posY, float yaw, float centre, float width, float height);
+
+		void UpdateCamera(const glm::vec3& playerPosition, float yaw);
+		void UpdateCamera(float posX, float posY, float yaw);
+	};
 }
 
