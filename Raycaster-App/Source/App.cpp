@@ -174,6 +174,24 @@ void raycast2D(GLFWwindow* window){
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    const float lineVertices[] = {
+        0.0f, -0.5f,  0.0f,
+        0.0f,  0.5f,  0.0f,
+    };
+
+    uint32_t lineVAO;
+    glGenVertexArrays(1, &lineVAO);
+    glBindVertexArray(lineVAO);
+
+    uint32_t lineVBO;
+    glGenBuffers(1, &lineVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+
     Core::Shader shader("2DVertexShader.glsl", "2DFragmentShader.glsl");
     shader.use();
 
@@ -187,10 +205,22 @@ void raycast2D(GLFWwindow* window){
 
     glm::mat4 transform;
 
-    uint32_t rayCount = 60;
+    uint32_t rayCount = 800;
     
     glm::vec3 AxisZ = glm::vec3(0.0f, 0.0f, 1.0f);
     float deltaTime = 0.0f, lastFrame = 0.0f;
+
+    glEnable(GL_LINE_WIDTH);
+    glBindVertexArray(lineVAO);
+
+    float lineWidth = 1.0f / rayCount;
+
+    glLineWidth(windowWidth / rayCount);
+
+
+    glm::vec3 line = glm::vec3(1.0f);
+    line.x = 1 / float(rayCount);
+    glm::vec3 linePos = glm::vec3(0.0f);
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -201,25 +231,6 @@ void raycast2D(GLFWwindow* window){
         glClearColor(0.05f, 0.075f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glBindVertexArray(quadVAO);
-        for (int i = 0; i < size; i++) {
-            transform = glm::mat4(1.0f);
-            transform = glm::translate(transform, tilePositions[i]);
-            transform = glm::translate(transform, -camera.cameraPosition);
-            transform = glm::scale(transform, mapScale);
-            shader.setMat4("transform", transform);
-            shader.setVec3("colour", (map[i] != 0) ? glm::vec3(0.8f) : glm::vec3(0.2f));
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        }
-
-        shader.setVec3("colour", glm::vec3(1.0f, 0.0f, 0.0f));
-        transform = glm::mat4(1.0f);
-        transform = glm::rotate(transform, glm::radians(playerRotation), AxisZ);
-        transform = glm::scale(transform, playerScale);
-        shader.setMat4("transform", transform);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-       
-        glBindVertexArray(rayVAO);
         //The actual raycasting
         for (int i = 0; i < rayCount; i++)
         {
@@ -246,13 +257,11 @@ void raycast2D(GLFWwindow* window){
                     sideDistance.x += deltaDistance.x;
                     mapX += stepX;
                     side = 0;
-                    shader.setVec3("colour", glm::vec3(0.0f, 0.0f, 1.0f));
                 }
                 else {
                     sideDistance.y += deltaDistance.y;
                     mapY += stepY;
                     side = 1;
-                    shader.setVec3("colour", glm::vec3(0.0f, 1.0f, 0.0f));
                 }
 
                 if (mapY >= heigth || mapX >= width) {
@@ -266,16 +275,18 @@ void raycast2D(GLFWwindow* window){
 
             float perpWallDist;
             if (side == 0) { 
-                perpWallDist = (sideDistance.x - deltaDistance.x); 
+                perpWallDist = (sideDistance.x - deltaDistance.x);
+                shader.setVec3("colour", glm::vec3(0.0f, 0.0f, 1.0f));
             } else { 
                 perpWallDist = (sideDistance.y - deltaDistance.y);
+                shader.setVec3("colour", glm::vec3(0.0f, 0.25f, 1.0f));
             }
 
-            glm::vec3 ray = rayDirection * perpWallDist * mapScale;
-            ray.z = 0;
-
+            line.y = 1 / perpWallDist;
+            linePos.x = cameraX + lineWidth;
             transform = glm::mat4(1.0f);
-            transform = glm::scale(transform, ray);
+            transform = glm::translate(transform, linePos);
+            transform = glm::scale(transform, line);
             shader.setMat4("transform", transform);
             glDrawArrays(GL_LINES, 0, 2);
         }
