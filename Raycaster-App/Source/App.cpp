@@ -2,6 +2,10 @@
 #include "Core/Shader.h"
 #include "Core/Texture.h"
 #include "Core/Camera.h"
+#include "Core/VertexBuffer.h"
+#include "Core/ElementBuffer.h"
+#include "Core/VertexArray.h"
+#include "Core/VertexBufferLayout.h"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -22,8 +26,8 @@ bool firstMouse = true;
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
     
-    windowWidth = width;
-    windowHeigth = height;
+    windowWidth = (uint32_t)width;
+    windowHeigth = (uint32_t)height;
 }
 
 void processInput(GLFWwindow* window, float deltaTime){
@@ -66,7 +70,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     camera.ProcessMouseScroll(yoffset);
 }
 
-void processInput2D(GLFWwindow* window, const uint32_t* map, int height, int width, Core::RaycasterCamera& camera, glm::vec3& playerPosition, float& playerRotation, float deltaTime) {
+void processInput2D(GLFWwindow* window, const uint32_t* map, uint32_t height, uint32_t width, Core::RaycasterCamera& camera, glm::vec3& playerPosition, float& playerRotation, float deltaTime) {
     float velocity = 2.0f * deltaTime;
     float rotationSpeed = 180.0f * deltaTime;
 
@@ -117,7 +121,6 @@ void raycast2D(GLFWwindow* window){
     const float mapScalingFactor = 1.4f;
     const float centre = sqrt((float)size) / mapScalingFactor;
 
-    //TODO dynamic scaling based on sceen h and w
     const float quadVertices[]{
          0.48f,  0.48f, 0.0f, 
          0.48f, -0.48f, 0.0f,
@@ -129,8 +132,44 @@ void raycast2D(GLFWwindow* window){
         1, 2, 3,
     };
 
+    Core::VertexArray quadVAO;
+    Core::VertexBuffer quadVBO(quadVertices, sizeof(quadVertices));
+    Core::VertexBufferLayout quadLayout;
+    
+    quadLayout.Push<float>(3);
+    quadVAO.AddBuffer(quadVBO, quadLayout);
+
+    Core::ElementBuffer quadEBO(quadIndices, 6);
+    
+    const float rayVertices[] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+    };
+
+    Core::VertexArray rayVAO;
+    Core::VertexBuffer rayVBO(rayVertices, sizeof(rayVertices));
+    Core::VertexBufferLayout rayLayout;
+
+    rayLayout.Push<float>(3);
+    rayVAO.AddBuffer(rayVBO, rayLayout);
+    
+    const float lineVertices[] = {
+        0.0f, -0.5f,  0.0f,
+        0.0f,  0.5f,  0.0f,
+    };
+
+    Core::VertexArray lineVAO;
+    Core::VertexBuffer lineVBO(lineVertices, sizeof(lineVertices));
+    Core::VertexBufferLayout lineLayout;
+    
+    lineLayout.Push<float>(3);
+    lineVAO.AddBuffer(lineVBO, lineLayout);
+
+    Core::Shader shader("2DVertexShader.glsl", "2DFragmentShader.glsl");
+    shader.use();
+
     glm::vec3 tilePositions[size];
-    for (int i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         uint32_t mapX = i % width;
         uint32_t mapY = i / width;
 
@@ -139,61 +178,6 @@ void raycast2D(GLFWwindow* window){
         float worldZ = 0.0f;
         tilePositions[i] = glm::vec3(worldX, worldY, worldZ);
     }
-
-    uint32_t quadVAO;
-    glGenVertexArrays(1, &quadVAO);
-    glBindVertexArray(quadVAO);
-
-    uint32_t quadVBO;
-    glGenBuffers(1, &quadVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    unsigned int quadEBO;
-    glGenBuffers(1, &quadEBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
-
-    const float rayVertices[] = {
-        0.0f, 0.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-    };
-
-    uint32_t rayVAO;
-    glGenVertexArrays(1, &rayVAO);
-    glBindVertexArray(rayVAO);
-
-    uint32_t rayVBO;
-    glGenBuffers(1, &rayVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, rayVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(rayVertices), rayVertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    const float lineVertices[] = {
-        0.0f, -0.5f,  0.0f,
-        0.0f,  0.5f,  0.0f,
-    };
-
-    uint32_t lineVAO;
-    glGenVertexArrays(1, &lineVAO);
-    glBindVertexArray(lineVAO);
-
-    uint32_t lineVBO;
-    glGenBuffers(1, &lineVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-
-    Core::Shader shader("2DVertexShader.glsl", "2DFragmentShader.glsl");
-    shader.use();
 
     glm::vec3 mapScale = glm::vec3(1 / centre, 1 / centre, 1.0f);
     
@@ -211,11 +195,11 @@ void raycast2D(GLFWwindow* window){
     float deltaTime = 0.0f, lastFrame = 0.0f;
 
     glEnable(GL_LINE_WIDTH);
-    glBindVertexArray(lineVAO);
+    lineVAO.Bind();
 
     float lineWidth = 1.0f / rayCount;
 
-    glLineWidth(windowWidth / rayCount);
+    glLineWidth((float)windowWidth / rayCount);
 
 
     glm::vec3 line = glm::vec3(1.0f);
@@ -232,7 +216,7 @@ void raycast2D(GLFWwindow* window){
         glClear(GL_COLOR_BUFFER_BIT);
 
         //The actual raycasting
-        for (int i = 0; i < rayCount; i++)
+        for (uint32_t i = 0; i < rayCount; i++)
         {
             float cameraX = 2 * i / float(rayCount) - 1;
             glm::vec3 rayDirection = camera.cameraDirection + camera.cameraPlane * cameraX;
@@ -294,13 +278,6 @@ void raycast2D(GLFWwindow* window){
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    glDeleteVertexArrays(1, &quadVAO);
-    glDeleteBuffers(1, &quadVBO);
-    glDeleteBuffers(1, &quadVBO);
-
-    glDeleteVertexArrays(1, &rayVAO);
-    glDeleteBuffers(1, &rayVBO);
 }
 
 int main(){
@@ -403,33 +380,19 @@ int main(){
 
     uint32_t pointLightCount = 4;
 
-    uint32_t vertexArrayObject;
-    glGenVertexArrays(1, &vertexArrayObject);
-    glBindVertexArray(vertexArrayObject);
+    Core::VertexArray vertexArrayObject;
+    Core::VertexBuffer vertexBufferObject(vertices, sizeof(vertices));
+    Core::VertexBufferLayout vertexLayout;
 
-    uint32_t vertexBufferObject;
-    glGenBuffers(1, &vertexBufferObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    vertexLayout.Push<float>(3);
+    vertexLayout.Push<float>(3);
+    vertexLayout.Push<float>(2);
+    vertexArrayObject.AddBuffer(vertexBufferObject, vertexLayout);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    uint32_t lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-
-    uint32_t lightVBO;
-    glGenBuffers(1, &lightVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    Core::VertexArray lightVAO;
+    Core::VertexBufferLayout lightLayout;
+    lightLayout.Push<float>(3, 8);
+    lightVAO.AddBuffer(vertexBufferObject, lightLayout);
 
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     Core::Shader lightCubeShader("lightVertexShader.glsl", "lightFragmentShader.glsl");
@@ -467,7 +430,7 @@ int main(){
     lightingShader.setVec3("dirLight.diffuse", 0.6f, 0.5f, 0.5f);
     lightingShader.setVec3("dirLight.specular", 0.5f, 0.2f, 0.2f);
 
-    for (int i = 0; i < pointLightCount; i++) {
+    for (uint32_t i = 0; i < pointLightCount; i++) {
         std::string lightName = "pointLights[i]";
         lightName[12] = '0' + i;
         
@@ -504,8 +467,8 @@ int main(){
         lightingShader.setMat4("view", view);
         lightingShader.setMat4("projection", projection);
 
-        glBindVertexArray(vertexArrayObject);
-        for (int i = 0; i < cubeCount; i++) {
+        vertexArrayObject.Bind();
+        for (uint32_t i = 0; i < cubeCount; i++) {
             float angle = 20.0f * i;
 
             model = glm::mat4(1.0f);
@@ -523,7 +486,7 @@ int main(){
         glm::vec3 direction = view * glm::vec4(-1.0f, -1.0f, -1.0f, 0.0f);
         lightingShader.setVec3("dirLight.direction", direction);
 
-        for (int i = 0; i < pointLightCount; i++) {
+        for (uint32_t i = 0; i < pointLightCount; i++) {
             std::string lightName = "pointLights[i]";
             lightName[12] = '0' + i;
 
@@ -533,12 +496,12 @@ int main(){
             lightingShader.setVec3(lightName + ".position", direction);
         }
 
-        glBindVertexArray(lightVAO);
+        lightVAO.Bind();
         lightCubeShader.use();
         lightCubeShader.setMat4("view", view);
         lightCubeShader.setMat4("projection", projection);
         
-        for (int i = 0; i < pointLightCount; i++) {
+        for (uint32_t i = 0; i < pointLightCount; i++) {
             model = glm::mat4(1.0f);
             model = glm::translate(model, pointLightPositions[i]);
             model = glm::scale(model, glm::vec3(0.2f));
@@ -550,11 +513,6 @@ int main(){
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &vertexArrayObject);
-    glDeleteVertexArrays(1, &lightVAO);
-    glDeleteBuffers(1, &vertexBufferObject);
-    glDeleteBuffers(1, &lightVBO);
-    
     glfwTerminate();
     return 0;
 }
