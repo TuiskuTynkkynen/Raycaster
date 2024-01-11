@@ -165,8 +165,8 @@ void raycast2D(GLFWwindow* window){
     lineLayout.Push<float>(3);
     lineVAO.AddBuffer(lineVBO, lineLayout);
 
-    Core::Shader shader("2DVertexShader.glsl", "2DFragmentShader.glsl");
-    shader.use();
+    Core::Shader shader("2DShader.glsl");
+    shader.Bind();
 
     glm::vec3 tilePositions[size];
     for (uint32_t i = 0; i < size; i++) {
@@ -398,7 +398,7 @@ int main(){
     Core::Shader lightCubeShader("lightVertexShader.glsl", "lightFragmentShader.glsl");
     
     Core::Shader lightingShader("lightingVertexShader.glsl", "lightingFragmentShader.glsl");
-    lightingShader.use();
+    lightingShader.Bind();
     lightingShader.setInt("NR_POINT_LIGHTS", 4);
 
     lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
@@ -462,7 +462,7 @@ int main(){
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.fov), (float)windowHeigth / (float)windowWidth, 0.1f, 100.0f);
 
-        lightingShader.use();
+        lightingShader.Bind();
 
         lightingShader.setMat4("view", view);
         lightingShader.setMat4("projection", projection);
@@ -497,7 +497,7 @@ int main(){
         }
 
         lightVAO.Bind();
-        lightCubeShader.use();
+        lightCubeShader.Bind();
         lightCubeShader.setMat4("view", view);
         lightCubeShader.setMat4("projection", projection);
         
