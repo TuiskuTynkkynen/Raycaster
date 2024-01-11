@@ -7,15 +7,17 @@
 #include <iostream>
 #include <string>
 namespace Core{
-	Texture2D::Texture2D(GLint wrapS, GLint WrapT, GLint filterMin, GLint filterMax) {
-        glGenTextures(1, &ID);
-        glBindTexture(GL_TEXTURE_2D, ID);
+    Texture2D::Texture2D(GLint wrapS, GLint WrapT, GLint filterMin, GLint filterMax)
+        : m_RendererID(0)
+    {
+        glGenTextures(1, &m_RendererID);
+        glBindTexture(GL_TEXTURE_2D, m_RendererID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, WrapT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMin);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMax);
 
-        usesMipMap = (filterMin == GL_NEAREST_MIPMAP_NEAREST, filterMin == GL_LINEAR_MIPMAP_NEAREST, filterMin == GL_NEAREST_MIPMAP_LINEAR, filterMin == GL_LINEAR_MIPMAP_LINEAR);
+        m_UsesMipMap = (filterMin == GL_NEAREST_MIPMAP_NEAREST || filterMin == GL_LINEAR_MIPMAP_NEAREST || filterMin == GL_NEAREST_MIPMAP_LINEAR || filterMin == GL_LINEAR_MIPMAP_LINEAR);
 	}
 
     void Texture2D::BindImage(const char* fileName) {
@@ -48,7 +50,7 @@ namespace Core{
             }
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, colourSpace, GL_UNSIGNED_BYTE, data);
-            if (usesMipMap) {
+            if (m_UsesMipMap) {
                 glGenerateMipmap(GL_TEXTURE_2D);
             }
         }
@@ -59,12 +61,12 @@ namespace Core{
     }
 
     Texture2D::~Texture2D() {
-        glDeleteTextures(1, &ID);
+        glDeleteTextures(1, &m_RendererID);
     }
 
     void Texture2D::Activate(uint32_t unitIndex) {
         if (unitIndex > 15) { unitIndex = 0; }
         glActiveTexture(GL_TEXTURE0 + unitIndex);
-        glBindTexture(GL_TEXTURE_2D, ID);
+        glBindTexture(GL_TEXTURE_2D, m_RendererID);
     }
 }

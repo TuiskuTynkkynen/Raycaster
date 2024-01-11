@@ -16,19 +16,19 @@ namespace Core {
 	class FlyCamera
 	{
 	private:
-		glm::vec3 cameraUp;
-		glm::vec3 cameraRight;
-		glm::vec3 worldUp;
+		glm::vec3 m_cameraUp;
+		glm::vec3 m_cameraRight;
+		glm::vec3 m_worldUp;
 
-		const float movementSpeed;
-		const float mouseSensitivity;
-		float cameraYaw;
-		float cameraPitch;
+		const float m_movementSpeed;
+		const float m_mouseSensitivity;
+		float m_cameraYaw;
+		float m_cameraPitch;
 
 		void updateCameraVectors();
 	public:
-		glm::vec3 cameraFront;
-		glm::vec3 cameraPosition;
+		glm::vec3 direction;
+		glm::vec3 position;
 		
 		float fov;
 
@@ -44,14 +44,14 @@ namespace Core {
 	class RaycasterCamera //2D Camera
 	{
 	private:
-		float cameraYaw;
-		const float reciprocalCentre;
-		const float halfWidth;
-		const float halfHeight;
+		float m_cameraYaw;
+		const float m_reciprocalCentre;
+		const float m_halfWidth;
+		const float m_halfHeight;
 	public: 
-		glm::vec3 cameraPosition;
-		glm::vec3 cameraDirection;
-		glm::vec3 cameraPlane;
+		glm::vec3 position;
+		glm::vec3 direction;
+		glm::vec3 plane;
 		
 		RaycasterCamera(glm::vec3 playerPosition, float yaw, float centre, float width, float height);
 		RaycasterCamera(float posX, float posY, float yaw, float centre, float width, float height);

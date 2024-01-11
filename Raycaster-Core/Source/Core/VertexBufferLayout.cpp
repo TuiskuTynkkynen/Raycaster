@@ -11,8 +11,6 @@ uint32_t VertexAttributePointer::GetSizeOfType(uint32_t type) {
 }
 
 namespace Core {
-
-	VertexBufferLayout::VertexBufferLayout() {
-		m_Stride = 0;
-	}
+	VertexBufferLayout::VertexBufferLayout()
+		: m_Stride(0) {}
 }

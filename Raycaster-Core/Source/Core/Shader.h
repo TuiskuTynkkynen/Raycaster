@@ -7,9 +7,9 @@
 namespace Core {
 	class Shader
 	{
+    private:
+    	uint32_t m_RendererID;
     public:
-    	uint32_t ID;
-        
         Shader(const char* vertexFileName, const char* fragmentFileName);
         ~Shader();
         void use();

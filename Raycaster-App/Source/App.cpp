@@ -219,7 +219,7 @@ void raycast2D(GLFWwindow* window){
         for (uint32_t i = 0; i < rayCount; i++)
         {
             float cameraX = 2 * i / float(rayCount) - 1;
-            glm::vec3 rayDirection = camera.cameraDirection + camera.cameraPlane * cameraX;
+            glm::vec3 rayDirection = camera.direction + camera.plane * cameraX;
             glm::vec3 deltaDistance = glm::abs((float)1 / rayDirection);
             
             uint32_t mapX = (int)playerPosition.x;

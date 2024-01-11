@@ -3,7 +3,9 @@
 #include <glad/glad.h>
 
 namespace Core {
-	VertexArray::VertexArray() {
+	VertexArray::VertexArray()
+		: m_RendererID(0)
+	{
 		glGenVertexArrays(1, &m_RendererID);
 	}
 
