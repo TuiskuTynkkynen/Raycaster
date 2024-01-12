@@ -137,8 +137,8 @@ namespace Core {
     }
 
     void RaycasterCamera::UpdateCamera(const glm::vec3& playerPosition, float yaw) {
-        position.x = (playerPosition.x - m_halfHeight) * m_reciprocalCentre;
-        position.y = (m_halfWidth - playerPosition.y) * m_reciprocalCentre;
+        position.x = (playerPosition.x - m_halfWidth) * m_reciprocalCentre;
+        position.y = (m_halfHeight - playerPosition.y) * m_reciprocalCentre;
 
         m_cameraYaw = yaw;
         glm::vec3 front(0.0f);
@@ -150,8 +150,8 @@ namespace Core {
     }
 
     void RaycasterCamera::UpdateCamera(float posX, float posY, float yaw) {
-        position.x = (posX - m_halfHeight) * m_reciprocalCentre;
-        position.y = (m_halfWidth - posY) * m_reciprocalCentre;
+        position.x = (posX - m_halfWidth) * m_reciprocalCentre;
+        position.y = (m_halfHeight - posY) * m_reciprocalCentre;
 
         m_cameraYaw = yaw;
         glm::vec3 front(0.0f);

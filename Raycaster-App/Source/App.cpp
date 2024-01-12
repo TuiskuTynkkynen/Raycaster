@@ -16,8 +16,8 @@
 
 #include <iostream>
 
-uint32_t windowHeigth = 800;
-uint32_t windowWidth = 600;
+uint32_t windowHeigth = 600;
+uint32_t windowWidth = 1200;
 
 Core::FlyCamera camera(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 float lastCursorX, lastCursorY;
@@ -109,23 +109,28 @@ void processInput2D(GLFWwindow* window, const uint32_t* map, uint32_t height, ui
 void raycast2D(GLFWwindow* window){
     const uint32_t map[]{
         1, 1, 1, 1, 1,
-        1, 1, 0, 1, 1,
+        1, 0, 0, 0, 1,
+        1, 0, 0, 0, 1,
+        1, 0, 0, 0, 1,
+        1, 0, 0, 0, 1,
+        1, 0, 0, 0, 1,
+        1, 0, 0, 0, 1,
         1, 0, 0, 0, 1,
         1, 1, 0, 1, 1,
         1, 1, 1, 1, 1,
     };
     
-    const uint32_t heigth = 5, width = 5;
+    const uint32_t heigth = 10, width = 5;
     const float centreY = (float)(heigth - 1) / 2, centreX = (float)(width - 1) / 2;
     const uint32_t size = heigth * width;
     const float mapScalingFactor = 1.4f;
     const float centre = sqrt((float)size) / mapScalingFactor;
 
     const float quadVertices[]{
-         0.48f,  0.48f, 0.0f, 
-         0.48f, -0.48f, 0.0f,
-        -0.48f,  0.48f, 0.0f,
-        -0.48f, -0.48f, 0.0f,
+         0.5f,  0.5f, 0.0f,  1.0f, 1.0f,
+         0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
     };
     const uint32_t quadIndices[]{
         0, 1, 2,
@@ -137,6 +142,7 @@ void raycast2D(GLFWwindow* window){
     Core::VertexBufferLayout quadLayout;
     
     quadLayout.Push<float>(3);
+    quadLayout.Push<float>(2);
     quadVAO.AddBuffer(quadVBO, quadLayout);
 
     Core::ElementBuffer quadEBO(quadIndices, 6);
@@ -153,20 +159,14 @@ void raycast2D(GLFWwindow* window){
     rayLayout.Push<float>(3);
     rayVAO.AddBuffer(rayVBO, rayLayout);
     
-    const float lineVertices[] = {
-        0.0f, -0.5f,  0.0f,
-        0.0f,  0.5f,  0.0f,
-    };
-
-    Core::VertexArray lineVAO;
-    Core::VertexBuffer lineVBO(lineVertices, sizeof(lineVertices));
-    Core::VertexBufferLayout lineLayout;
-    
-    lineLayout.Push<float>(3);
-    lineVAO.AddBuffer(lineVBO, lineLayout);
-
     Core::Shader shader("2DShader.glsl");
     shader.Bind();
+
+    Core::Texture2D texture(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
+    texture.BindImage("crate.png");
+    
+    texture.Activate(0);
+    shader.setInt("tex", 0);
 
     glm::vec3 tilePositions[size];
     for (uint32_t i = 0; i < size; i++) {
@@ -187,33 +187,33 @@ void raycast2D(GLFWwindow* window){
 
     Core::RaycasterCamera camera(playerPosition, playerRotation, centre, width, heigth);
 
-    glm::mat4 transform;
-
-    uint32_t rayCount = 800;
+    const uint32_t rayCount = 200;
     
     glm::vec3 AxisZ = glm::vec3(0.0f, 0.0f, 1.0f);
     float deltaTime = 0.0f, lastFrame = 0.0f;
 
-    glEnable(GL_LINE_WIDTH);
-    lineVAO.Bind();
-
+    glm::mat4 transform;
     float lineWidth = 1.0f / rayCount;
-
-    glLineWidth((float)windowWidth / rayCount);
-
-
     glm::vec3 line = glm::vec3(1.0f);
-    line.x = 1 / float(rayCount);
+    line.x = lineWidth * 2;
     glm::vec3 linePos = glm::vec3(0.0f);
+
+
+    glm::vec2 texPos = glm::vec2(0.0f);
+    glm::vec3 rays[rayCount];
+
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
         processInput2D(window, map, heigth, width, camera, playerPosition, playerRotation, deltaTime);
-        
         glClearColor(0.05f, 0.075f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        
+        glViewport(0, 0, windowWidth / 2, windowHeigth);
+
+        quadVAO.Bind();
 
         //The actual raycasting
         for (uint32_t i = 0; i < rayCount; i++)
@@ -257,20 +257,64 @@ void raycast2D(GLFWwindow* window){
                 }
             }
 
-            float perpWallDist;
+            float wallDistance;
+            float hitPosition;
             if (side == 0) { 
-                perpWallDist = (sideDistance.x - deltaDistance.x);
-                shader.setVec3("colour", glm::vec3(0.0f, 0.0f, 1.0f));
+                wallDistance = sideDistance.x - deltaDistance.x;
+                texPos.x = playerPosition.y - wallDistance * rayDirection.y;
+                shader.setVec3("colour", glm::vec3(0.75f));
             } else { 
-                perpWallDist = (sideDistance.y - deltaDistance.y);
-                shader.setVec3("colour", glm::vec3(0.0f, 0.25f, 1.0f));
+                wallDistance = sideDistance.y - deltaDistance.y;
+                texPos.x = playerPosition.x + wallDistance * rayDirection.x;
+                shader.setVec3("colour", glm::vec3(1.0f));
             }
 
-            line.y = 1 / perpWallDist;
+            shader.setVec2("texTranslate", texPos);
+            
+            line.y = 1.0f / wallDistance;
             linePos.x = cameraX + lineWidth;
             transform = glm::mat4(1.0f);
             transform = glm::translate(transform, linePos);
             transform = glm::scale(transform, line);
+            shader.setMat4("transform", transform);
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+            glm::vec3 ray = rayDirection * wallDistance * mapScale;
+            ray.z = 0;
+            rays[i] = ray;
+        }
+        glViewport(windowWidth / 2, 0, windowWidth / 2, windowHeigth);
+
+        shader.setVec3("colour", glm::vec3(1.0f));
+
+        texPos.x = 1.0f;
+
+        shader.setVec2("texTranslate", texPos);
+
+        quadVAO.Bind();
+        for (int i = 0; i < size; i++) {
+            transform = glm::mat4(1.0f);
+            transform = glm::translate(transform, tilePositions[i]);
+            transform = glm::translate(transform, -camera.position);
+            transform = glm::scale(transform, mapScale);
+            shader.setMat4("transform", transform);
+            shader.setVec3("colour", (map[i] != 0) ? glm::vec3(0.8f) : glm::vec3(0.2f));
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }
+
+        shader.setVec3("colour", glm::vec3(1.0f, 0.0f, 0.0f));
+        transform = glm::mat4(1.0f);
+        transform = glm::rotate(transform, glm::radians(playerRotation), AxisZ);
+        transform = glm::scale(transform, playerScale);
+        shader.setMat4("transform", transform);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        rayVAO.Bind();
+
+        for (int i = 0; i < rayCount; i++) {
+            transform = glm::mat4(1.0f);
+            transform = glm::scale(transform, rays[i]);
             shader.setMat4("transform", transform);
             glDrawArrays(GL_LINES, 0, 2);
         }
@@ -285,7 +329,7 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(windowHeigth, windowWidth, "Raycaster", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeigth, "Raycaster", NULL, NULL);
     
     if (window == NULL){
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -299,15 +343,15 @@ int main(){
         return -1;
     }
     
-    glViewport(0, 0, windowHeigth, windowWidth);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    raycast2D(window);
+    return 0;
+    glViewport(0, 0, windowWidth, windowHeigth);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    raycast2D(window);
-    return 0;
     
     glEnable(GL_DEPTH_TEST);
     

@@ -182,6 +182,10 @@ namespace Core {
         glUniform1f(GetUniformLocation(name), value);
     }
 
+    void Shader::setVec2(const std::string& name, const glm::vec2& value) {
+        glUniform2f(GetUniformLocation(name), value.x, value.y);
+    }
+
     void Shader::setVec3(const std::string& name, float valueX, float valueY, float valueZ) {
         glUniform3f(GetUniformLocation(name), valueX, valueY, valueZ);
     }
