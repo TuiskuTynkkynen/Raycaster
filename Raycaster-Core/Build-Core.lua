@@ -7,8 +7,6 @@ project "Raycaster-Core"
 
    files { 
       "Source/**.h", "Source/**.cpp",
-      "Source/Shaders/**.glsl",
-      "Source/Textures/**",
       "Source/Libraries/GLFW/**",
       "Source/Libraries/glad/**"
    }
