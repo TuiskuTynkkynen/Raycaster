@@ -3,12 +3,8 @@
 
 #include <iostream>
 
-RayCaster::RayCaster() {
+Raycaster::Raycaster() {
 }
 
-RayCaster::~RayCaster() {
-}
-
-void RayCaster::Run() {
-    while (true);
+Raycaster::~Raycaster() {
 }

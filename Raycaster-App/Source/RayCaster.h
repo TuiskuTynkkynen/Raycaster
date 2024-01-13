@@ -2,15 +2,13 @@
 
 #include "Core.h"
 
-class RayCaster : public Core::Application
+class Raycaster : public Core::Application
 {
 public:
-	RayCaster();
-	~RayCaster();
-
-	void Run() override;
+	Raycaster();
+	~Raycaster();
 };
 
 Core::Application* Core::CreateApplication() {
-	return new RayCaster();
+	return new Raycaster();
 }
