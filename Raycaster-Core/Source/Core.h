@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Core/Shader.h"
-#include "Core/Texture.h"
-#include "Core/Camera.h"
-#include "Core/VertexBuffer.h"
-#include "Core/ElementBuffer.h"
-#include "Core/VertexArray.h"
-#include "Core/VertexBufferLayout.h"
-#include "Core/Application.h"
+#include "Core/Renderer/Shader.h"
+#include "Core/Renderer/Texture.h"
+#include "Core/Renderer/Camera.h"
+#include "Core/Renderer/VertexBuffer.h"
+#include "Core/Renderer/ElementBuffer.h"
+#include "Core/Renderer/VertexArray.h"
+#include "Core/Renderer/VertexBufferLayout.h"
+#include "Core/Base/Application.h"
