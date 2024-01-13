@@ -3,7 +3,7 @@
 #include "Event.h"
 
 namespace Core {
-	class WindowClose : Event {
+	class WindowClose : public Event {
 	public:
 		WindowClose(){}
 
@@ -13,7 +13,7 @@ namespace Core {
 
 	};
 
-	class WindowResize : Event
+	class WindowResize : public Event
 	{
 	private:
 		int m_Width;
@@ -31,7 +31,7 @@ namespace Core {
 		int GetCategory() const override { return EventCategoryWindow; }
 	};
 
-	class WindowFocus : Event {
+	class WindowFocus : public Event {
 	public:
 		WindowFocus() {}
 
@@ -40,7 +40,7 @@ namespace Core {
 		int GetCategory() const override { return EventCategoryWindow; }
 	};
 
-	class WindowLostFocus : Event {
+	class WindowLostFocus : public Event {
 	public:
 		WindowLostFocus() {}
 

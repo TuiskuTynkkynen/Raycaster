@@ -3,7 +3,7 @@
 #include "Event.h"
 
 namespace Core {
-	class KeyPressed : Event
+	class KeyPressed : public Event
 	{
 	private: 
 		int m_KeyCode;

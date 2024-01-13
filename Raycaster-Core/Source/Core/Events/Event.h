@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#define BIT(x) (1 << x)
+#define Bit(x) (1 << x)
 
 namespace Core {
 	enum class EventType {
@@ -22,6 +22,8 @@ namespace Core {
 
 	class Event
 	{
+		friend class EventDispatcher;
+
 	public:
 		virtual EventType GetType() const = 0;
 		virtual int GetCategory() const = 0;
@@ -47,9 +49,9 @@ namespace Core {
 
 		template<typename T>
 		bool Dispatch(EventFunction<T> func) {
-			if (m_Event.GetType() = T::GetStaticType()) {
+			if (m_Event.GetType() == T::GetStaticType()) {
 				m_Event.m_Handled = func(*(T*)&m_Event);
-				return;
+				return true;
 			}
 			return false;
 		}

@@ -3,7 +3,7 @@
 #include "Event.h"
 
 namespace Core {
-	class MouseButtonPressed : Event
+	class MouseButtonPressed : public Event
 	{
 	private:
 		int m_Button;
@@ -20,7 +20,7 @@ namespace Core {
 	};
 
 
-	class MouseMoved: Event
+	class MouseMoved : public Event
 	{
 	private:
 		float m_MouseX;
@@ -39,7 +39,7 @@ namespace Core {
 	};
 
 
-	class MouseScrolled: Event
+	class MouseScrolled : public Event
 	{
 	private:
 		float m_OffsetX;

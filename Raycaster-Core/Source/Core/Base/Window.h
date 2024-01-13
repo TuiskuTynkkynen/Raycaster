@@ -1,8 +1,11 @@
 #pragma once
 
+#include "Core/Events/Event.h"
+
 #include <GLFW/glfw3.h>
 
 #include <string>
+#include <functional>
 
 namespace Core {
 	struct WindowProperties {
@@ -15,6 +18,8 @@ namespace Core {
 	};
 
 	class Window {
+		using EventCallbackFunction = std::function<void(Event&)>;
+
 	private:
 		GLFWwindow* m_Window;
 
@@ -24,6 +29,7 @@ namespace Core {
 			uint32_t Height;
 
 			bool VSyncEnabled;
+			EventCallbackFunction EventCallback;
 		};
 
 		WindowData m_Data;
@@ -31,10 +37,12 @@ namespace Core {
 		Window(const WindowProperties& properties);
 		~Window();
 
+		void OnUpdate();
+
 		int GetHeight() { return m_Data.Height;  }
 		int GetWidth() { return m_Data.Width; }
-
-		void OnUpdate();
+		
+		inline void SetEventCallback(const EventCallbackFunction& callback) { m_Data.EventCallback = callback; }
 		void SetVSync(bool enbled);
 
 		static Window* Create(const WindowProperties& properties = WindowProperties());
