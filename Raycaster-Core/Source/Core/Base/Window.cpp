@@ -3,6 +3,8 @@
 #include "Core/Events/MouseEvent.h"
 #include "Core/Events/WindowEvent.h"
 
+#include <glad/glad.h>
+
 #include <iostream>
 
 namespace Core {
@@ -30,6 +32,8 @@ namespace Core {
 
 		m_Window = glfwCreateWindow(properties.Width, properties.Height, properties.Tittle.c_str(), nullptr, nullptr);
 		glfwMakeContextCurrent(m_Window);
+		
+		gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
