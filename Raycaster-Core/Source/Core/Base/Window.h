@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Events/Event.h"
+#include "Core/Renderer/GraphicsContext.h"
 
 #include <GLFW/glfw3.h>
 
@@ -22,6 +23,7 @@ namespace Core {
 
 	private:
 		GLFWwindow* m_Window;
+		GraphicsContext* m_context;
 
 		struct WindowData {
 			std::string Tittle;
