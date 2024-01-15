@@ -13,7 +13,6 @@ const float FOV = 45.0f;
 const glm::vec3 worldUp2D = glm::vec3(0.0f, 0.0f, 1.0f);
 
 namespace Core {
-
     FlyCamera::FlyCamera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH)
         : position(position), m_movementSpeed(SPEED), m_mouseSensitivity(SENSITIVITY), fov(FOV), m_worldUp(up), m_cameraYaw(yaw), m_cameraPitch(pitch)
     {
@@ -134,6 +133,11 @@ namespace Core {
 
         direction = glm::normalize(front);
         plane = glm::normalize(glm::cross(direction, worldUp2D));
+    }
+
+    glm::mat4 RaycasterCamera::GetViewMatrix()
+    {
+        return glm::translate(glm::mat4(1.0f), -position);
     }
 
     void RaycasterCamera::UpdateCamera(const glm::vec3& playerPosition, float yaw) {

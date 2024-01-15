@@ -14,7 +14,7 @@ namespace Core {
 		uint32_t Width;
 		uint32_t Height;
 
-		WindowProperties(const std::string& tittle = "core", uint32_t width = 1280, uint32_t height = 720)
+		WindowProperties(const std::string& tittle = "core", uint32_t width = 1200, uint32_t height = 600)
 			: Tittle(tittle), Width(width), Height(height) {}
 	};
 

@@ -1,5 +1,6 @@
 #include "RenderAPI.h"
 
+#include <iostream>
 namespace Core {
 	RenderAPI::RenderAPI() {
 		glEnable(GL_BLEND);

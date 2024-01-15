@@ -4,12 +4,11 @@
 #include "Core/Events/WindowEvent.h"
 
 #include <memory>
-#include <iostream>
 
 namespace Core {
 	class Application
 	{
-	private:
+	protected:
 		std::unique_ptr<Window> m_Window;
 		bool m_Running = true;
 
@@ -17,7 +16,7 @@ namespace Core {
 		Application();
 		~Application();
 
-		virtual void Run();
+		virtual void Run() = 0;
 		void OnEvent(Event& event);
 		bool OnWindowCloseEvent(WindowClose& event);
 	};

@@ -56,6 +56,8 @@ namespace Core {
 		RaycasterCamera(glm::vec3 playerPosition, float yaw, float centre, float width, float height);
 		RaycasterCamera(float posX, float posY, float yaw, float centre, float width, float height);
 
+		glm::mat4 GetViewMatrix();
+
 		void UpdateCamera(const glm::vec3& playerPosition, float yaw);
 		void UpdateCamera(float posX, float posY, float yaw);
 	};
