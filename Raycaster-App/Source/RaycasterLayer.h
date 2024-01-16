@@ -7,7 +7,7 @@ public:
 
 	void OnAttach() override;
 	void OnDetach() override {};
-	void OnUpdate() override;
+	void OnUpdate(Core::Timestep deltaTime) override;
 	void OnEvent(Core::Event& event) override {}
 private:
 	Core::RaycasterCamera* m_Camera;  //Lifetime is application lifetime

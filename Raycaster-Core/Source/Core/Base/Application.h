@@ -16,8 +16,10 @@ namespace Core {
 
 		std::unique_ptr<Window> m_Window;
 		LayerStack m_LayerStack;
+
 		bool m_Running = true;
-		
+		float m_LastFrame = 0.0f;
+
 		bool OnWindowCloseEvent(WindowClose& event);
 		bool OnWindowResizeEvent(WindowResize& event);
 

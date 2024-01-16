@@ -27,7 +27,7 @@ struct SceneData
 
 static SceneData s_Data;
 
-void processInput(const uint32_t* map, uint32_t height, uint32_t width, Core::RaycasterCamera& camera, glm::vec3& playerPosition, float& playerRotation, float deltaTime = 0.010f) {
+void processInput(const uint32_t* map, uint32_t height, uint32_t width, Core::RaycasterCamera& camera, glm::vec3& playerPosition, float& playerRotation, float deltaTime) {
     float velocity = 2.0f * deltaTime;
     float rotationSpeed = 180.0f * deltaTime;
 
@@ -89,8 +89,8 @@ void RaycasterLayer::OnAttach() {
     m_Camera = new Core::RaycasterCamera(s_Data.playerPosition, s_Data.playerRotation, s_Data.centre, s_Data.width, s_Data.heigth);
 }
 
-void RaycasterLayer::OnUpdate() {
-    processInput(s_Data.map, s_Data.heigth, s_Data.width, *m_Camera, s_Data.playerPosition, s_Data.playerRotation);
+void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
+    processInput(s_Data.map, s_Data.heigth, s_Data.width, *m_Camera, s_Data.playerPosition, s_Data.playerRotation, deltaTime);
 
     glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
     glm::vec3 zero(0.0f);
