@@ -20,11 +20,11 @@ namespace Core {
 		int m_Height;
 	
 	public:
-		WindowResize(int width, int heigth)
-			: m_Width(width), m_Height(heigth) {}
+		WindowResize(int width, int height)
+			: m_Width(width), m_Height(height) {}
 
 		inline int GetWidth() const { return m_Width; }
-		inline int GetHeigth() const { return m_Height; }
+		inline int GetHeight() const { return m_Height; }
 
 		static EventType GetStaticType() { return EventType::WindowResize; }
 		EventType GetType() const override { return GetStaticType(); }

@@ -25,15 +25,14 @@ namespace Core {
 		friend class EventDispatcher;
 
 	public:
+		bool handled = false;
+
 		virtual EventType GetType() const = 0;
 		virtual int GetCategory() const = 0;
 
 		inline bool IsInCategory(EventCategory category) const {
 			return GetCategory() & category;
 		}
-	
-	protected:
-		bool m_Handled = false;
 	};
 
 	class EventDispatcher {
@@ -50,7 +49,7 @@ namespace Core {
 		template<typename T>
 		bool Dispatch(EventFunction<T> func) {
 			if (m_Event.GetType() == T::GetStaticType()) {
-				m_Event.m_Handled = func(*(T*)&m_Event);
+				m_Event.handled = func(*(T*)&m_Event);
 				return true;
 			}
 			return false;
