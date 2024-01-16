@@ -27,6 +27,42 @@ struct SceneData
 
 static SceneData s_Data;
 
+void processInput(const uint32_t* map, uint32_t height, uint32_t width, Core::RaycasterCamera& camera, glm::vec3& playerPosition, float& playerRotation, float deltaTime = 0.010f) {
+    float velocity = 2.0f * deltaTime;
+    float rotationSpeed = 180.0f * deltaTime;
+
+    glm::vec3 front;
+    front.x = cos(glm::radians(playerRotation));
+    front.y = -sin(glm::radians(playerRotation)); //player y is flipped (array index)
+    front.z = 0.0f;
+
+    glm::vec3 oldPosition = playerPosition;
+    if (Core::Input::IsKeyPressed(RC_KEY_W)) {
+        playerPosition += velocity * front;
+    }
+
+    if (Core::Input::IsKeyPressed(RC_KEY_S)) {
+        playerPosition -= velocity * front;
+    }
+
+    if (Core::Input::IsKeyPressed(RC_KEY_A)) {
+        playerRotation += rotationSpeed;
+    }
+
+    if (Core::Input::IsKeyPressed(RC_KEY_D)) {
+        playerRotation -= rotationSpeed;
+    }
+
+    if (map[(int)oldPosition.y * width + (int)playerPosition.x] != 0) {
+        playerPosition.x = oldPosition.x;
+    }
+    if (map[(int)playerPosition.y * width + (int)oldPosition.x] != 0) {
+        playerPosition.y = oldPosition.y;
+    }
+
+    camera.UpdateCamera(playerPosition, playerRotation);
+}
+
 void RaycasterLayer::OnAttach() {
     const float centreY = (float)(s_Data.heigth - 1) / 2, centreX = (float)(s_Data.width - 1) / 2;
     const float mapScalingFactor = 1.4f;
@@ -54,6 +90,8 @@ void RaycasterLayer::OnAttach() {
 }
 
 void RaycasterLayer::OnUpdate() {
+    processInput(s_Data.map, s_Data.heigth, s_Data.width, *m_Camera, s_Data.playerPosition, s_Data.playerRotation);
+
     glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
     glm::vec3 zero(0.0f);
     glm::mat4 identity(1.0f);
@@ -151,3 +189,5 @@ void RaycasterLayer::OnUpdate() {
         Core::Renderer2D::DrawLine(zero, rays[i], colour);
     }
 }
+
+

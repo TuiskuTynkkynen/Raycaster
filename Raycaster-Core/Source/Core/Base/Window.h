@@ -47,6 +47,8 @@ namespace Core {
 		inline void SetEventCallback(const EventCallbackFunction& callback) { m_Data.EventCallback = callback; }
 		void SetVSync(bool enbled);
 
+		inline GLFWwindow* GetWindowPointer() { return m_Window;  }
+
 		static Window* Create(const WindowProperties& properties = WindowProperties());
 	};
 }

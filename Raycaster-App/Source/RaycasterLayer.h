@@ -2,7 +2,6 @@
 
 #include "Core.h"
 
-
 class RaycasterLayer : public Core::Layer {
 public:
 

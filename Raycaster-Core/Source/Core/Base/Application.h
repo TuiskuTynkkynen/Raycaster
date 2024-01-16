@@ -32,7 +32,7 @@ namespace Core {
 		void PushLayer(Layer* layer);
 		void PushOverlay(Layer* overlay);
 
-		Window& GetWindow() { return *m_Window; }
+		static inline Window& GetWindow() { return *s_Instance->m_Window; }
 
 		friend int ::main();
 	};
