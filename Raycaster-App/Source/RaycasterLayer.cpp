@@ -8,7 +8,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     uint32_t rayCount = rays.size();
     glm::vec3 colour;
     
-    Core::Renderer2D::SetViewPort(0, 0, 600, 600);
+    Core::Renderer2D::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
 
     glm::vec3 rayPos(0.0f);
     glm::vec3 rayScale(2.0f / rayCount, 0.0f, 0.0f);
@@ -28,6 +28,17 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     }
 }
 
+void RaycasterLayer::OnEvent(Core::Event& event) {
+    Core::EventDispatcher dispatcer(event);
+    dispatcer.Dispatch<Core::WindowResize>(std::bind(&RaycasterLayer::OnWindowResizeEvent, this, std::placeholders::_1));
+}
+
+bool RaycasterLayer::OnWindowResizeEvent(Core::WindowResize& event) {
+    m_ViewPortWidth = event.GetWidth() * 0.5f;
+    m_ViewPortHeight = event.GetHeight();
+
+    return false;
+}
 
 void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     static glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
@@ -39,7 +50,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::Clear(colour);
     // -------------------------------------------------------------------------------------------------------
 
-    Core::Renderer2D::SetViewPort(600, 0, 600, 600);
+    Core::Renderer2D::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(m_Scene->GetCamera());
 
     std::vector<Core::FlatQuad> tiles = m_Scene->GetQuads();
@@ -61,4 +72,16 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     for (int i = 0; i < lineCount; i++) {
         Core::Renderer2D::DrawLine(lines[i].Posistion, lines[i].Scale, colour);
     }
+}
+
+void Layer2D::OnEvent(Core::Event& event) {
+    Core::EventDispatcher dispatcer(event);
+    dispatcer.Dispatch<Core::WindowResize>(std::bind(&Layer2D::OnWindowResizeEvent, this, std::placeholders::_1));
+}
+
+bool Layer2D::OnWindowResizeEvent(Core::WindowResize& event) {
+    m_ViewPortWidth = event.GetWidth() * 0.5f;
+    m_ViewPortHeight = event.GetHeight();
+
+    return false;
 }
