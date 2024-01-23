@@ -1,25 +1,31 @@
 #include "Core.h"
 
 #include "RaycasterLayer.h"
-
-#include <iostream>
+#include "RaycasterScene.h"
 
 class Raycaster : public Core::Application
 {
 public:
-	Raycaster(){}
+	Raycaster(){
+		RaycasterScene* scene = new RaycasterScene();
+		SetActiveScene(scene);
+		
+		RaycasterLayer* layer0 = new RaycasterLayer();
+		PushLayer(layer0);
+		Layer2D* layer1 = new Layer2D();
+		PushLayer(layer1);
+	}
+
 	~Raycaster(){}
 };
+
 
 Core::Application* Core::CreateApplication() {
 	return new Raycaster();
 }
 
 int main(){
-	Core::Layer* layer = new RaycasterLayer();
-
     Core::Application* app = Core::CreateApplication();
-	app->PushLayer(layer);
     app->Run();
     delete app;
 }

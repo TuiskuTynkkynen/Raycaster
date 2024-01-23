@@ -16,6 +16,8 @@ namespace Core {
 		m_Window = std::unique_ptr<Window>(Window::Create());
 		m_Window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
+		m_ActiveScene = nullptr;
+
 		RenderAPI::Init();
 		Renderer2D::Init();
 	}
@@ -30,6 +32,8 @@ namespace Core {
 			float currentFrame = glfwGetTime();
 			Timestep deltaTime = currentFrame - m_LastFrame;
 			m_LastFrame = currentFrame;
+
+			m_ActiveScene->OnUpdate(deltaTime);
 
 			for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
 				(*iterator)->OnUpdate(deltaTime);
@@ -50,6 +54,8 @@ namespace Core {
 
 			(*--iterator)->OnEvent(event);
 		}
+
+		m_ActiveScene->OnEvent(event);
 	}
 
 	void Application::Close() {
@@ -58,12 +64,22 @@ namespace Core {
 
 	void Application::PushLayer(Layer* layer) {
 		m_LayerStack.PushLayer(layer);
+		layer->SetScene(m_ActiveScene);
 		layer->OnAttach();
 	}
 
 	void Application::PushOverlay(Layer* overlay) {
 		m_LayerStack.PushOverlay(overlay);
 		overlay->OnAttach();
+	}
+
+	void Application::SetActiveScene(Scene* scene) {
+		m_ActiveScene = std::shared_ptr<Scene>(scene);
+		m_ActiveScene->Init();
+
+		for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
+			(*iterator)->SetScene(m_ActiveScene);
+		}
 	}
 
 	bool Application::OnWindowCloseEvent(WindowClose& event) {

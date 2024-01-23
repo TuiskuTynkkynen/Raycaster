@@ -3,6 +3,7 @@
 #include "Window.h"
 #include "Core/Events/WindowEvent.h"
 #include "LayerStack.h"
+#include "Core/Raycaster/Scene.h"
 
 #include <memory>
 
@@ -15,6 +16,7 @@ namespace Core {
 		static Application* s_Instance;
 
 		std::unique_ptr<Window> m_Window;
+		std::shared_ptr<Scene> m_ActiveScene;
 		LayerStack m_LayerStack;
 
 		bool m_Running = true;
@@ -33,6 +35,8 @@ namespace Core {
 
 		void PushLayer(Layer* layer);
 		void PushOverlay(Layer* overlay);
+		
+		void SetActiveScene(Scene* scene);
 
 		static inline Window& GetWindow() { return *s_Instance->m_Window; }
 
