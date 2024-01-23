@@ -14,8 +14,11 @@ namespace Core {
 	{
     private:
     	uint32_t m_RendererID;
-        std::unordered_map<std::string, uint32_t> m_UniformLocationCache;
-        uint32_t GetUniformLocation(const std::string& name);
+        
+        //const char* doesn't do extra allocations -> faster than string
+        std::unordered_map<const char*, uint32_t> m_UniformLocationCache; 
+
+        uint32_t GetUniformLocation(const char* name);
     public:
         Shader(const std::string& shaderFileName);
         Shader(const char* vertexFileName, const char* fragmentFileName);
@@ -24,16 +27,16 @@ namespace Core {
         void Bind();
         void Unbind();
         
-        void setBool(const std::string& name, bool value);
-        void setInt(const std::string& name, int value);
-        void setFloat(const std::string& name, float value);
-        void setVec2(const std::string& name, const glm::vec2& value);
-        void setVec3(const std::string& name, float valueX, float valueY, float valueZ);
-        void setVec3(const std::string& name, const glm::vec3& value);
-        void setVec4(const std::string& name, float valueX, float valueY, float valueZ, float valueW);
-        void setVec4(const std::string& name, const glm::vec4& value);
-        void setMat3(const std::string& name, const glm::mat3& value);
-        void setMat4(const std::string& name, const glm::mat4& value);
+        void setBool(const char* name, bool value);
+        void setInt(const char* name, int value);
+        void setFloat(const char* name, float value);
+        void setVec2(const char* name, const glm::vec2& value);
+        void setVec3(const char* name, float valueX, float valueY, float valueZ);
+        void setVec3(const char* name, const glm::vec3& value);
+        void setVec4(const char* name, float valueX, float valueY, float valueZ, float valueW);
+        void setVec4(const char* name, const glm::vec4& value);
+        void setMat3(const char* name, const glm::mat3& value);
+        void setMat4(const char* name, const glm::mat4& value);
 	};
 }
 
