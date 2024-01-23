@@ -4,7 +4,9 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexPos;
 
+uniform mat4 viewProjection;
 uniform mat4 transform;
+
 uniform vec2 texTranslate;
 uniform vec2 texScale;
 
@@ -12,7 +14,7 @@ out vec2 TexCoords;
 
 void main()
 {
-   gl_Position = transform * vec4(aPos, 1.0f);
+   gl_Position = viewProjection * transform * vec4(aPos, 1.0f);
    TexCoords = texScale * aTexPos + texTranslate;
 }
 

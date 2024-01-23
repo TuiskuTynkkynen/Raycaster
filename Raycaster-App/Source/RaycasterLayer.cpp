@@ -2,6 +2,8 @@
 
 #include <iostream>
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
+    static glm::mat4 identity(1.0f);
+    
     std::vector<Core::Ray> rays = m_Scene->GetRays();
     uint32_t rayCount = rays.size();
     glm::vec3 colour;
@@ -12,6 +14,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     glm::vec3 rayScale(2.0f / rayCount, 0.0f, 0.0f);
     glm::vec2 texPos(0.0f);
     glm::vec2 texScale(0.0f, 1.0f);
+
+    Core::Renderer2D::BeginScene(identity);
 
     for (int i = 0; i < rayCount; i++) {
         rayPos.x = rays[i].rayPosX;
@@ -30,14 +34,13 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     static glm::vec3 zero(0.0f);
     static glm::mat4 identity(1.0f);
 
-    // -------------------- TODO make these update in application --------------------------------------------
     glm::vec3 colour = glm::vec3(0.05f, 0.075f, 0.1f);
+    // -------------------- TODO make this update in application --------------------------------------------
     Core::Renderer2D::Clear(colour);
     // -------------------------------------------------------------------------------------------------------
 
     Core::Renderer2D::SetViewPort(600, 0, 600, 600);
-    glm::mat4 viewMatrix = m_Scene->GetCamera().GetViewMatrix();
-    Core::Renderer2D::BeginScene(viewMatrix);
+    Core::Renderer2D::BeginScene(m_Scene->GetCamera());
 
     std::vector<Core::FlatQuad> tiles = m_Scene->GetQuads();
     uint32_t mapSize = tiles.size();

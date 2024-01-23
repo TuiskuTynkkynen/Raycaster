@@ -81,10 +81,23 @@ namespace Core {
 
 	void Renderer2D::BeginScene(RaycasterCamera& camera) {
 		s_Data.ViewProjection = camera.GetViewMatrix();
+
+		s_Data.FlatShader->Bind();
+		s_Data.FlatShader->setMat4("viewProjection", s_Data.ViewProjection);
+
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->setMat4("viewProjection", s_Data.ViewProjection);
 	}
 
 	void Renderer2D::BeginScene(glm::mat4& transform) {
 		s_Data.ViewProjection = transform;
+		s_Data.ViewProjection = glm::mat4(1.0f);
+
+		s_Data.FlatShader->Bind();
+		s_Data.FlatShader->setMat4("viewProjection", s_Data.ViewProjection);
+
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->setMat4("viewProjection", s_Data.ViewProjection);
 	}
 
 	void Renderer2D::Clear(glm::vec3& colour) {
@@ -107,8 +120,8 @@ namespace Core {
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::scale(transform, scale);
 
-		s_Data.TextureShader->setMat4("transform", s_Data.ViewProjection * transform);
-
+		s_Data.TextureShader->setMat4("transform", transform);
+		
 		s_Data.QuadVertexArray->Bind();
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
@@ -122,7 +135,7 @@ namespace Core {
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::scale(transform, scale);
 
-		s_Data.FlatShader->setMat4("transform", s_Data.ViewProjection * transform);
+		s_Data.FlatShader->setMat4("transform", transform);
 
 		s_Data.QuadVertexArray->Bind();
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
@@ -137,7 +150,7 @@ namespace Core {
 		transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
 		transform = glm::scale(transform, scale);
 
-		s_Data.FlatShader->setMat4("transform", s_Data.ViewProjection * transform);
+		s_Data.FlatShader->setMat4("transform", transform);
 
 		s_Data.QuadVertexArray->Bind();
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
@@ -151,7 +164,7 @@ namespace Core {
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::scale(transform, scale);
-		s_Data.FlatShader->setMat4("transform", s_Data.ViewProjection * transform);
+		s_Data.FlatShader->setMat4("transform", transform);
 
 		s_Data.LineVertexArray->Bind();
 		RenderAPI::DrawLines(*s_Data.LineVertexArray, 2);
