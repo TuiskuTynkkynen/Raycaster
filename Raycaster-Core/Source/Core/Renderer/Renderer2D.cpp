@@ -9,6 +9,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <glm/gtx/matrix_transform_2d.hpp>
+
 #include <memory>
 
 struct Renderer2DDAta {
@@ -109,20 +111,21 @@ namespace Core {
 		RenderAPI::SetViewPort(offsetX, offsetY, width, height);
 	}
 
-	void Renderer2D::DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale){
+	void Renderer2D::DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale, float textureRotate){
 		RenderAPI::SetDepthBuffer(false);
 
 		s_Data.TextureShader->Bind();
 		s_Data.TextureShader->setVec3("colour", colour);
-		s_Data.TextureShader->setVec2("texTranslate", textureOffset);
-		s_Data.TextureShader->setVec2("texScale", textureScale);
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::scale(transform, scale);
-
 		s_Data.TextureShader->setMat4("transform", transform);
-		
-		s_Data.QuadVertexArray->Bind();
+
+		glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
+		texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
+		texTransform = glm::scale(texTransform, textureScale);
+		s_Data.TextureShader->setMat3("texTransform", texTransform);
+
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 

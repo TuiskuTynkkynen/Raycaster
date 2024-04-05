@@ -4,27 +4,37 @@
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     static glm::mat4 identity(1.0f);
     
-    std::vector<Core::Ray> rays = m_Scene->GetRays();
-    uint32_t rayCount = rays.size();
-    glm::vec3 colour;
-    
     Core::Renderer2D::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
-
-    glm::vec3 rayPos(0.0f);
-    glm::vec3 rayScale(2.0f / rayCount, 0.0f, 0.0f);
-    glm::vec2 texPos(0.0f);
-    glm::vec2 texScale(0.0f, 1.0f);
-
     Core::Renderer2D::BeginScene(identity);
+    
+    {
+        std::vector<Core::Sprite> sprites = m_Scene->GetSprites();
+        uint32_t spriteCount = sprites.size();
+        for (uint32_t i = 0; i < spriteCount; i++) {
+            Core::Renderer2D::DrawTextureQuad(sprites[i].Posistion, sprites[i].Scale, sprites[i].Colour, sprites[i].TexPosition, sprites[i].TexScale, sprites[i].TexRotation);
+        }
+    }
 
-    for (int i = 0; i < rayCount; i++) {
-        rayPos.x = rays[i].rayPosX;
-        rayScale.y = rays[i].rayScaleY;
-        texPos.x = rays[i].texPosX;
+    {
+        std::vector<Core::Ray> rays = m_Scene->GetRays();
+        uint32_t rayCount = rays.size();
+        glm::vec3 colour;
+    
+        glm::vec3 rayPos(0.0f);
+        glm::vec3 rayScale(2.0f / rayCount, 0.0f, 0.0f);
+        glm::vec2 texPos(0.0f);
+        glm::vec2 texScale(0.0f, 1.0f);
 
-        colour = glm::vec3(1.0f) * rays[i].brightness;
 
-        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, texPos, texScale);
+        for (int i = 0; i < rayCount; i++) {
+            rayPos.x = rays[i].rayPosX;
+            rayScale.y = rays[i].rayScaleY;
+            texPos.x = rays[i].texPosX;
+
+            colour = glm::vec3(1.0f) * rays[i].brightness;
+
+            Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, texPos, texScale);
+        }
     }
 }
 
@@ -46,10 +56,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     static glm::mat4 identity(1.0f);
 
     glm::vec3 colour = glm::vec3(0.05f, 0.075f, 0.1f);
-    // -------------------- TODO make this update in application --------------------------------------------
-    Core::Renderer2D::Clear(colour);
-    // -------------------------------------------------------------------------------------------------------
-
+    
     Core::Renderer2D::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(m_Scene->GetCamera());
 

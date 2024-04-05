@@ -9,6 +9,7 @@ namespace Core {
 
         glm::vec2 TexPosition;
         glm::vec2 TexScale;
+        float TexRotation;
 
         glm::vec3 Colour;
     };

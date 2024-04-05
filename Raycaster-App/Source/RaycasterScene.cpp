@@ -8,6 +8,22 @@ void RaycasterScene::Init(){
     m_Rays.resize(m_RayCount); //should be initialized to default values
     m_Lines.resize(m_RayCount); //should be initialized to default vec3s
 
+    m_Sprites.resize(m_RayCount); //should be initialized to default vec3s
+    {
+        glm::vec3 rayScale(2.0f, 2.0f / m_RayCount, 0.0f);
+        glm::vec3 colour(0.8f);
+
+        for (uint32_t i = 0; i < m_RayCount; i++)
+        {
+            float cameraY = 2 * i / float(m_RayCount) - 1;
+            m_Sprites[i].Posistion.y = cameraY;
+            m_Sprites[i].Scale = rayScale;
+
+            if (i == m_RayCount * 0.5f) { colour = glm::vec3(1.0f); }
+            m_Sprites[i].Colour = colour;
+        }
+    }
+
     m_Player.Position = glm::vec3((float)s_MapData.width / 2, (float)s_MapData.heigth / 2, 1.0f);
     m_Player.Scale = s_MapData.mapScale * 0.4f;
     m_Player.Rotation = 90.0f;
@@ -35,12 +51,15 @@ void RaycasterScene::Init(){
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     if (!m_Paused) {
+        glm::vec3 colour = glm::vec3(0.05f, 0.075f, 0.1f);
+        Core::Renderer2D::Clear(colour);
         ProcessInput(deltaTime);
         CastRays();
     }
 }
 
 void RaycasterScene::CastRays() {
+    //Wall casting
     for (uint32_t i = 0; i < m_RayCount; i++)
     {
         float cameraX = 2 * i / float(m_RayCount) - 1;
@@ -98,6 +117,18 @@ void RaycasterScene::CastRays() {
         m_Rays[i].rayPosX = cameraX + m_RayWidth;
         
         m_Lines[i].Scale = rayDirection * wallDistance * s_MapData.mapScale;
+    }
+
+    //Floor and ceiling "casting"
+    for (uint32_t i = 0; i < m_RayCount; i ++)
+    {
+        glm::vec3 rayDirection = m_Camera->direction - m_Camera->plane;
+        float scale = abs(m_RayCount / (2 * (float)i - m_RayCount)); // = 1.0f / abs(2 * i / m_RayCount - 1)
+
+        m_Sprites[i].TexScale.x = scale;
+        m_Sprites[i].TexPosition.x = scale * 0.5f * rayDirection.x + m_Player.Position.x;
+        m_Sprites[i].TexPosition.y = scale * 0.5f * rayDirection.y - m_Player.Position.y;
+        m_Sprites[i].TexRotation = m_Player.Rotation - 90.0f;
     }
 }
 

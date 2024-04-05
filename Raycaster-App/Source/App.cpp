@@ -19,7 +19,6 @@ public:
 	~Raycaster(){}
 };
 
-
 Core::Application* Core::CreateApplication() {
 	return new Raycaster();
 }

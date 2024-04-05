@@ -34,7 +34,7 @@ namespace Core {
 			m_LastFrame = currentFrame;
 
 			m_ActiveScene->OnUpdate(deltaTime);
-
+			
 			for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
 				(*iterator)->OnUpdate(deltaTime);
 			}
@@ -54,7 +54,7 @@ namespace Core {
 
 			(*--iterator)->OnEvent(event);
 		}
-
+		
 		m_ActiveScene->OnEvent(event);
 	}
 

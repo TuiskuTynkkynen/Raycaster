@@ -14,7 +14,7 @@ namespace Core {
 
 		static void SetViewPort(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height);
 
-		static void DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale);
+		static void DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale, float textureRotate = 0.0f);
 		static void DrawFlatQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour);
 		static void DrawRotatedFlatQuad(glm::vec3& position, float rotation, glm::vec3& rotationAxis, glm::vec3& scale, glm::vec3& colour);
 		static void DrawLine(glm::vec3& position, glm::vec3& scale, glm::vec3& colour);
