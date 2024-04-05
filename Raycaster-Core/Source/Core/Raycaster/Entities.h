@@ -28,10 +28,13 @@ namespace Core {
     };
 
     struct Ray {
-        float rayPosX;
-        float rayScaleY;
-        float texPosX;
+        float rayOffset;
+        float rayScale;
+
+        glm::vec2 TexPosition;
+        float TexRotation;
         float Atlasindex;
+        
         float brightness;
     };
 

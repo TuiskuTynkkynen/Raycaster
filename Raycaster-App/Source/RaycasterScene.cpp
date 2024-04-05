@@ -5,25 +5,20 @@
 RaycasterScene::MapData RaycasterScene::s_MapData;
 
 void RaycasterScene::Init(){
-    m_Rays.resize(m_RayCount); //should be initialized to default values
+    m_Rays.resize(2 * m_RayCount); //should be initialized to default values
     m_Lines.resize(m_RayCount); //should be initialized to default vec3s
 
-    m_Sprites.resize(m_RayCount); //should be initialized to default vec3s
+    uint32_t Index = 7; 
+    float brightness = 0.8f;
+
+    for (uint32_t i = 0; i < m_RayCount; i++)
     {
-        glm::vec3 rayScale(2.0f, 2.0f / m_RayCount, 0.0f);
-        glm::vec3 colour(0.8f);
-        uint32_t Index = 7; 
+        float cameraY = 2 * i / float(m_RayCount) - 1;
+        m_Rays[m_RayCount + i].rayOffset = cameraY;
+        m_Rays[m_RayCount + i].Atlasindex = Index;
 
-        for (uint32_t i = 0; i < m_RayCount; i++)
-        {
-            float cameraY = 2 * i / float(m_RayCount) - 1;
-            m_Sprites[i].Posistion.y = cameraY;
-            m_Sprites[i].Scale = rayScale;
-            m_Sprites[i].Atlasindex = Index;
-
-            if (i == m_RayCount * 0.5f) { colour = glm::vec3(1.0f); Index = 6; }
-            m_Sprites[i].Colour = colour;
-        }
+        if (i == m_RayCount * 0.5f) { brightness = 1.0f; Index = 6; }
+        m_Rays[m_RayCount + i].brightness = brightness;
     }
 
     m_Player.Position = glm::vec3((float)s_MapData.width / 2, (float)s_MapData.heigth / 2, 1.0f);
@@ -106,17 +101,17 @@ void RaycasterScene::CastRays() {
         float wallDistance;
         if (side == 0) {
             wallDistance = sideDistance.x - deltaDistance.x;
-            m_Rays[i].texPosX = m_Player.Position.y - wallDistance * rayDirection.y;
+            m_Rays[i].TexPosition.x = m_Player.Position.y - wallDistance * rayDirection.y;
             m_Rays[i].brightness = 0.75f;
         }
         else {
             wallDistance = sideDistance.y - deltaDistance.y;
-            m_Rays[i].texPosX = m_Player.Position.x + wallDistance * rayDirection.x;
+            m_Rays[i].TexPosition.x = m_Player.Position.x + wallDistance * rayDirection.x;
             m_Rays[i].brightness = 1.0f;
         }
 
-        m_Rays[i].rayScaleY = 1.0f / wallDistance;
-        m_Rays[i].rayPosX = cameraX + m_RayWidth;
+        m_Rays[i].rayScale = 1.0f / wallDistance;
+        m_Rays[i].rayOffset = cameraX + m_RayWidth;
         m_Rays[i].Atlasindex = s_MapData.map[mapY * s_MapData.width + mapX];
         
         m_Lines[i].Scale = rayDirection * wallDistance * s_MapData.mapScale;
@@ -128,10 +123,10 @@ void RaycasterScene::CastRays() {
         glm::vec3 rayDirection = m_Camera->direction - m_Camera->plane;
         float scale = abs(m_RayCount / (2 * (float)i - m_RayCount)); // = 1.0f / abs(2 * i / m_RayCount - 1)
 
-        m_Sprites[i].TexScale.x = scale;
-        m_Sprites[i].TexPosition.x = scale * 0.5f * rayDirection.x + m_Player.Position.x;
-        m_Sprites[i].TexPosition.y = scale * 0.5f * rayDirection.y - m_Player.Position.y;
-        m_Sprites[i].TexRotation = m_Player.Rotation - 90.0f;
+        m_Rays[m_RayCount + i].rayScale = scale;
+        m_Rays[m_RayCount + i].TexPosition.x = scale * 0.5f * rayDirection.x + m_Player.Position.x;
+        m_Rays[m_RayCount + i].TexPosition.y = scale * 0.5f * rayDirection.y - m_Player.Position.y;
+        m_Rays[m_RayCount + i].TexRotation = m_Player.Rotation - 90.0f;
     }
 }
 
