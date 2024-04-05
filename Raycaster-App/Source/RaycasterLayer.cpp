@@ -11,7 +11,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         std::vector<Core::Sprite> sprites = m_Scene->GetSprites();
         uint32_t spriteCount = sprites.size();
         for (uint32_t i = 0; i < spriteCount; i++) {
-            Core::Renderer2D::DrawTextureQuad(sprites[i].Posistion, sprites[i].Scale, sprites[i].Colour, sprites[i].TexPosition, sprites[i].TexScale, sprites[i].TexRotation);
+            Core::Renderer2D::DrawTextureQuad(sprites[i].Posistion, sprites[i].Scale, sprites[i].Colour, sprites[i].TexPosition, sprites[i].TexScale, sprites[i].Atlasindex, sprites[i].TexRotation);
         }
     }
 
@@ -33,7 +33,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
 
             colour = glm::vec3(1.0f) * rays[i].brightness;
 
-            Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, texPos, texScale);
+            Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, texPos, texScale, rays[i].Atlasindex);
         }
     }
 }

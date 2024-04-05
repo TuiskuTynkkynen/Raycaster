@@ -12,14 +12,16 @@ void RaycasterScene::Init(){
     {
         glm::vec3 rayScale(2.0f, 2.0f / m_RayCount, 0.0f);
         glm::vec3 colour(0.8f);
+        uint32_t Index = 7; 
 
         for (uint32_t i = 0; i < m_RayCount; i++)
         {
             float cameraY = 2 * i / float(m_RayCount) - 1;
             m_Sprites[i].Posistion.y = cameraY;
             m_Sprites[i].Scale = rayScale;
+            m_Sprites[i].Atlasindex = Index;
 
-            if (i == m_RayCount * 0.5f) { colour = glm::vec3(1.0f); }
+            if (i == m_RayCount * 0.5f) { colour = glm::vec3(1.0f); Index = 6; }
             m_Sprites[i].Colour = colour;
         }
     }
@@ -115,6 +117,7 @@ void RaycasterScene::CastRays() {
 
         m_Rays[i].rayScaleY = 1.0f / wallDistance;
         m_Rays[i].rayPosX = cameraX + m_RayWidth;
+        m_Rays[i].Atlasindex = s_MapData.map[mapY * s_MapData.width + mapX];
         
         m_Lines[i].Scale = rayDirection * wallDistance * s_MapData.mapScale;
     }

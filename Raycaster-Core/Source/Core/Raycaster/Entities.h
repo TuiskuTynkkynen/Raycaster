@@ -10,6 +10,7 @@ namespace Core {
         glm::vec2 TexPosition;
         glm::vec2 TexScale;
         float TexRotation;
+        float Atlasindex;
 
         glm::vec3 Colour;
     };
@@ -30,6 +31,7 @@ namespace Core {
         float rayPosX;
         float rayScaleY;
         float texPosX;
+        float Atlasindex;
         float brightness;
     };
 

@@ -27,6 +27,9 @@ struct Renderer2DDAta {
 	std::unique_ptr<Core::Texture2D> TextureAtlas;
 
 	glm::mat4 ViewProjection;
+
+	uint32_t atlasWidth;
+	uint32_t atlasHeigth;
 };
 
 static Renderer2DDAta s_Data;
@@ -71,10 +74,14 @@ namespace Core {
 		s_Data.TextureShader->Bind();
 		
 		s_Data.TextureAtlas = std::make_unique<Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
-		s_Data.TextureAtlas->BindImage("crate.png");
+		s_Data.TextureAtlas->BindImage("wolfenstein_texture_atlas.png");
 
 		s_Data.TextureAtlas->Activate(0);
 		s_Data.TextureShader->setInt("tex", 0);
+
+		s_Data.atlasWidth = 11;
+		s_Data.atlasHeigth = 1;
+		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeigth));
 
 		s_Data.FlatShader = std::make_unique<Shader>("2DFlatShader.glsl");
 
@@ -111,11 +118,12 @@ namespace Core {
 		RenderAPI::SetViewPort(offsetX, offsetY, width, height);
 	}
 
-	void Renderer2D::DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale, float textureRotate){
+	void Renderer2D::DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
 		RenderAPI::SetDepthBuffer(false);
 
 		s_Data.TextureShader->Bind();
 		s_Data.TextureShader->setVec3("colour", colour);
+		s_Data.TextureShader->setVec2("atlasOffset", glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::scale(transform, scale);
