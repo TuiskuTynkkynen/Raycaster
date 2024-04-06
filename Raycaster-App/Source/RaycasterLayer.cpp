@@ -37,6 +37,12 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
+
+    std::vector<Core::Sprite>& s = m_Scene->GetSprites();
+    uint32_t count = s.size();
+    for (int i = 0; i < count; i++) {
+        Core::Renderer2D::DrawTextureQuad(s[i].Posistion, s[i].Scale, s[i].Colour, s[i].TexPosition, s[i].TexScale, s[i].Atlasindex);
+    }
 }
 
 void RaycasterLayer::OnEvent(Core::Event& event) {

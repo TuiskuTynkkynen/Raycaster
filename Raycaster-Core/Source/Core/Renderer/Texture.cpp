@@ -49,7 +49,7 @@ namespace Core{
                 break;
             }
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, colourSpace, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_2D, 0, colourSpace, textureWidth, textureHeight, 0, colourSpace, GL_UNSIGNED_BYTE, data);
             if (m_UsesMipMap) {
                 glGenerateMipmap(GL_TEXTURE_2D);
             }

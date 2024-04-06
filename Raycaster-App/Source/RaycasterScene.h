@@ -34,6 +34,7 @@ private:
     std::vector<Core::Line> m_Lines;
     std::vector<Core::FlatQuad> m_Tiles;
     std::vector<Core::Sprite> m_Sprites;
+    float* m_ZBuffer = new float[m_RayCount];
 
     Core::Player m_Player;
 
@@ -43,6 +44,7 @@ private:
 
     void ProcessInput(Core::Timestep deltaTime);
     void CastRays();
+    void RenderSprites();
 
 public: 
     void Init() override;
