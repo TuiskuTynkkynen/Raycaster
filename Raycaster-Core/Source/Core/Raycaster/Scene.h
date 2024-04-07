@@ -22,6 +22,8 @@ public:
 	virtual std::vector<Sprite>& GetSprites() = 0;
 	virtual std::vector<FlatQuad>& GetQuads() = 0;
 	virtual std::vector<Line>& GetLines() = 0;
+
+	virtual uint32_t GetRayCount() = 0;
 };
 }
 

@@ -75,10 +75,11 @@ public:
     inline std::vector<Core::Ray>& GetRays() { return m_Rays;  }
     inline std::vector<Core::Line>& GetLines() { return m_Lines;  }
     inline std::vector<Core::FlatQuad>& GetQuads() { return m_Tiles;  }
-
-    std::vector<Core::Sprite>& GetSprites() override { return m_Sprites; }
+    inline std::vector<Core::Sprite>& GetSprites() override { return m_Sprites; }
 
     inline Core::Player& GetPlayer() { return m_Player;  }
     inline Core::RaycasterCamera& GetCamera() { return *m_Camera;  }
+
+    inline uint32_t GetRayCount() { return m_RayCount; }
 };
 

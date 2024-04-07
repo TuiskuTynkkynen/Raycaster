@@ -8,19 +8,19 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::BeginScene(identity);
     
     std::vector<Core::Ray> rays = m_Scene->GetRays();
+    uint32_t rayCount = m_Scene->GetRayCount();
     uint32_t rayArraySize = rays.size();
-    uint32_t rayCount = rays.size() * 0.5f;
     glm::vec3 colour;
     
     glm::vec3 rayPos(0.0f);
     glm::vec3 rayScale(2.0f, 2.0f / rayCount, 0.0f);
     glm::vec2 texScale(0.0f, 0.0f);
 
-    for (int i = rayCount; i < rayArraySize; i++) {
-        rayPos.y = rays[i].rayOffset;
-        texScale.x = rays[i].rayScale;
+    for (int i = rayCount; i < rayCount * 2; i++) {
+        rayPos.y = rays[i].Position.y;
+        texScale.x = rays[i].Scale;
 
-        colour = glm::vec3(1.0f) * rays[i].brightness;
+        colour = glm::vec3(1.0f) * rays[i].Brightness;
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex, rays[i].TexRotation);
     }
@@ -30,18 +30,22 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     texScale = glm::vec2(0.0f, 1.0f);
 
     for (int i = 0; i < rayCount; i++) {
-        rayPos.x = rays[i].rayOffset;
-        rayScale.y = rays[i].rayScale;
+        rayPos.x = rays[i].Position.x;
+        rayScale.y = rays[i].Scale;
         
-        colour = glm::vec3(1.0f) * rays[i].brightness;
+        colour = glm::vec3(1.0f) * rays[i].Brightness;
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
 
-    std::vector<Core::Sprite>& s = m_Scene->GetSprites();
-    uint32_t count = s.size();
-    for (int i = 0; i < count; i++) {
-        Core::Renderer2D::DrawTextureQuad(s[i].Posistion, s[i].Scale, s[i].Colour, s[i].TexPosition, s[i].TexScale, s[i].Atlasindex);
+    for (int i = 2 * rayCount; i < rayArraySize; i++) {
+        rayPos.x = rays[i].Position.x;
+        rayPos.y = rays[i].Position.y;
+        rayScale.y = rays[i].Scale;
+
+        colour = glm::vec3(1.0f) * rays[i].Brightness;
+
+        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
 }
 

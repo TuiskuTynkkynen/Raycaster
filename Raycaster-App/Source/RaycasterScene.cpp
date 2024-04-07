@@ -10,18 +10,13 @@ RaycasterScene::MapData RaycasterScene::s_MapData;
 void RaycasterScene::Init(){
     m_Rays.resize(2 * m_RayCount); //should be initialized to default values
     m_Lines.resize(m_RayCount); //should be initialized to default vec3s
-    m_Sprites.resize(1);
+    
     uint32_t Index = 7; 
-    float brightness = 0.8f;
-
-    for (uint32_t i = 0; i < m_RayCount; i++)
-    {
+    for (uint32_t i = 0; i < m_RayCount; i++) {
         float cameraY = 2 * i / float(m_RayCount) - 1;
-        m_Rays[m_RayCount + i].rayOffset = cameraY;
+        m_Rays[m_RayCount + i].Position.y = cameraY;
         m_Rays[m_RayCount + i].Atlasindex = Index;
-
-        if (i == m_RayCount * 0.5f) { brightness = 1.0f; Index = 6; }
-        m_Rays[m_RayCount + i].brightness = brightness;
+        if (i == m_RayCount * 0.5f) { Index = 6; }
     }
 
     m_Player.Position = glm::vec3((float)s_MapData.width / 2, (float)s_MapData.heigth / 2, 0.5f);
@@ -58,7 +53,6 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         Core::Renderer2D::Clear(colour);
         ProcessInput(deltaTime);
         CastRays();
-        m_Sprites.clear();
         RenderSprites();
     }
 }
@@ -116,7 +110,6 @@ void RaycasterScene::CastRays() {
             worldPosition.y += offset;
             
             m_Rays[i].TexPosition.x = m_Player.Position.y - wallDistance * rayDirection.y;
-            m_Rays[i].brightness = 0.75f;
         }
         else {
             wallDistance = sideDistance.y - deltaDistance.y;
@@ -126,11 +119,10 @@ void RaycasterScene::CastRays() {
             worldPosition.x += offset;
             
             m_Rays[i].TexPosition.x = m_Player.Position.x + wallDistance * rayDirection.x;
-            m_Rays[i].brightness = 1.0f;
         }
 
-        m_Rays[i].rayScale = 1.0f / wallDistance;
-        m_Rays[i].rayOffset = cameraX + m_RayWidth;
+        m_Rays[i].Scale = 1.0f / wallDistance;
+        m_Rays[i].Position.x = cameraX + m_RayWidth;
         m_Rays[i].Atlasindex = s_MapData.map[mapY * s_MapData.width + mapX];
 
         float brightness = 0.0f;
@@ -138,7 +130,7 @@ void RaycasterScene::CastRays() {
             float distance = glm::length(worldPosition - lightPos);
             brightness += 1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance));
         }
-        m_Rays[i].brightness = brightness;
+        m_Rays[i].Brightness = brightness;
 
         m_ZBuffer[i] = wallDistance;
         m_Lines[i].Scale = rayDirection * wallDistance * s_MapData.mapScale;
@@ -150,7 +142,7 @@ void RaycasterScene::CastRays() {
         glm::vec3 rayDirection = m_Camera->direction - m_Camera->plane;
         float scale = abs(m_RayCount / (2 * (float)i - m_RayCount)); // = 1.0f / abs(2 * i / m_RayCount - 1)
         
-        m_Rays[m_RayCount + i].rayScale = scale;
+        m_Rays[m_RayCount + i].Scale = scale;
         m_Rays[m_RayCount + i].TexPosition.x = scale * 0.5f * rayDirection.x + m_Player.Position.x;
         m_Rays[m_RayCount + i].TexPosition.y = scale * 0.5f * rayDirection.y - m_Player.Position.y;
 
@@ -161,7 +153,7 @@ void RaycasterScene::CastRays() {
             float distance = glm::length(worldPosition - lightPos);
             brightness += std::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
         }
-        m_Rays[m_RayCount + i].brightness = brightness;
+        m_Rays[m_RayCount + i].Brightness = brightness;
         
         m_Rays[m_RayCount + i].TexRotation = m_Player.Rotation - 90.0f;
     }
@@ -173,12 +165,12 @@ void RaycasterScene::RenderSprites() {
     positions.push_back(glm::vec3(3.0f, 2.5f, 0.2f));
     positions.push_back(glm::vec3(2.5f, 2.5f, 0.2f));
     
-    uint32_t count = positions.size();
+    uint32_t count = positions.capacity();
+    uint32_t rayIndex = 2 * m_RayCount;
+    uint32_t space = m_Rays.size();
 
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
-    Core::Sprite sprite;
 
-    
     for (uint32_t index = 0; index < count; index++) {
         positions[index] -= m_Player.Position;
         positions[index] = matrix * positions[index];
@@ -197,6 +189,7 @@ void RaycasterScene::RenderSprites() {
 
         glm::vec3 scale(0.5f, 0.5f, 0.5f);
         glm::vec3 colour(1.0f, 1.0f, 1.0f);
+        uint32_t atlasIndex = 8;
 
         float brightness = 0.0f;
         for (glm::vec3 lightPos : m_Lights) {
@@ -221,19 +214,25 @@ void RaycasterScene::RenderSprites() {
             if (i >= m_RayCount || m_ZBuffer[i] < distance) {
                 continue;
             }
+
+            if (rayIndex >= space) {
+                Core::Ray r;
+                m_Rays.push_back(r);
+            }
+
             position.x = (i + 0.5f) * rScale - 1.0f;
-
-            sprite.Posistion = position;
-            sprite.Scale = scale;
             
-            sprite.TexScale.y = 1.0f;
-            sprite.TexPosition.x = std::max((i - startX) / width, 0.0f);
+            m_Rays[rayIndex].Position = position;
+            m_Rays[rayIndex].Scale = scale.y;
+            m_Rays[rayIndex].TexPosition.x = std::max((i - startX) / width, 0.0f);
+            m_Rays[rayIndex].Atlasindex = atlasIndex;
+            m_Rays[rayIndex].Brightness =  brightness;
 
-            sprite.Atlasindex = 8;
-            sprite.Colour = colour * brightness;
-            m_Sprites.push_back(sprite);
+            rayIndex++;
         }
     }
+
+    m_Rays.resize(rayIndex);
 }
 
 void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
