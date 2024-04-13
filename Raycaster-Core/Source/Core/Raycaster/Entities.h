@@ -10,9 +10,14 @@ namespace Core {
         glm::vec2 TexPosition;
         glm::vec2 TexScale;
         float TexRotation;
-        float Atlasindex;
+        uint32_t Atlasindex;
 
         glm::vec3 Colour;
+
+        Sprite() {
+            TexRotation = 0.0f;
+            Atlasindex = 0;
+        }
     };
     
     struct FlatQuad {
@@ -33,9 +38,16 @@ namespace Core {
 
         glm::vec2 TexPosition;
         float TexRotation;
-        float Atlasindex;
+        uint32_t Atlasindex;
         
         float Brightness;
+
+        Ray() {
+            Scale = 0.0f;
+            TexRotation = 0.0f;
+            Atlasindex = 0;
+            Brightness = 0.0f;
+        }
     };
 
     struct Player {

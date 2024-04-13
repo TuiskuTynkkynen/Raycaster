@@ -5,13 +5,11 @@
 
 #include <memory>
 
-class RaycasterScene : public Core::Scene
-{
+class RaycasterScene : public Core::Scene {
 private:
-    struct MapData
-    {
-        static const uint32_t heigth = 24, width = 24;
-        static const uint32_t size = heigth * width;
+    struct MapData {
+        static const uint32_t height = 24, width = 24;
+        static const uint32_t size = height * width;
         const uint32_t map[size]{ 
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,

@@ -31,6 +31,6 @@ uniform sampler2D tex;
 out vec4 FragColor;
 
 void main(){
-	vec2 foo = (fract(TexCoords) + atlasOffset)/ atlasSize;
-	FragColor = texture(tex, foo) * vec4(colour, 1.0f);
+	vec2 uv = (fract(TexCoords) + atlasOffset) / atlasSize;
+	FragColor = texture(tex, uv) * vec4(colour, 1.0f);
 }

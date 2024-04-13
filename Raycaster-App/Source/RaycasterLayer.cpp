@@ -1,7 +1,6 @@
 #include "RaycasterLayer.h"
 
-#include <iostream>
-void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
+void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
     static glm::mat4 identity(1.0f);
     
     Core::Renderer2D::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);

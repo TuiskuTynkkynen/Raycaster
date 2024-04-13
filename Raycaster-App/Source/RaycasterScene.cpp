@@ -21,17 +21,17 @@ void RaycasterScene::Init(){
         if (i == m_RayCount * 0.5f) { Index = 6; }
     }
 
-    m_Player.Position = glm::vec3((float)s_MapData.width / 2, (float)s_MapData.heigth / 2, 0.5f);
+    m_Player.Position = glm::vec3((float)s_MapData.width / 2, (float)s_MapData.height / 2, 0.5f);
     m_Player.Scale = s_MapData.mapScale * 0.4f;
     m_Player.Rotation = 90.0f;
 
-    m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, s_MapData.mapScalingFactor, s_MapData.width, s_MapData.heigth);
+    m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, s_MapData.mapScalingFactor, s_MapData.width, s_MapData.height);
     
     Core::FlatQuad tile;
     tile.Scale = glm::vec3(0.95f * s_MapData.mapScale.x, 0.95f * s_MapData.mapScale.y, 1.0f);
     tile.Posistion.z = 0.0f;
 
-    float centreY = (float)(s_MapData.heigth - 1) / 2, centreX = (float)(s_MapData.width - 1) / 2;
+    float centreY = (float)(s_MapData.height - 1) / 2, centreX = (float)(s_MapData.width - 1) / 2;
     for (uint32_t i = 0; i < s_MapData.size; i++) {
         uint32_t mapX = i % s_MapData.width;
         uint32_t mapY = i / s_MapData.width;
@@ -136,7 +136,7 @@ void RaycasterScene::CastRays() {
                 side = 1;
             }
 
-            if (mapY >= s_MapData.heigth || mapX >= s_MapData.width) {
+            if (mapY >= s_MapData.height || mapX >= s_MapData.width) {
                 std::cout << "ERROR: INDEX OUT OF BOUNDS" << std::endl;
                 break;
             }
@@ -182,8 +182,7 @@ void RaycasterScene::CastRays() {
     }
 
     //Floor and ceiling "casting"
-    for (uint32_t i = 0; i < m_RayCount; i ++)
-    {
+    for (uint32_t i = 0; i < m_RayCount; i ++) {
         glm::vec3 rayDirection = m_Camera->direction - m_Camera->plane;
         float scale = abs(m_RayCount / (2 * (float)i - m_RayCount)); // = 1.0f / abs(2 * i / m_RayCount - 1)
         
@@ -355,14 +354,14 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
                 enemyPos.x = enemy.Position.x + 0.5f * enemy.Scale.x * directions[j].x;
                 enemyPos.y = enemy.Position.y + 0.5f * enemy.Scale.y * directions[j].y;
 
-                lineOfSight &= Algorithms::LineOfSight(enemyPos, playerPos, m_EnemyMap, s_MapData.width, s_MapData.heigth);
+                lineOfSight &= Algorithms::LineOfSight(enemyPos, playerPos, m_EnemyMap, s_MapData.width, s_MapData.height);
             }
 
             if (!lineOfSight) {
                 enemyPos.x = enemy.Position.x;
                 enemyPos.y = enemy.Position.y;
 
-                movementVector = Algorithms::AStar(enemyPos, playerPos, m_EnemyMap, s_MapData.width, s_MapData.heigth);
+                movementVector = Algorithms::AStar(enemyPos, playerPos, m_EnemyMap, s_MapData.width, s_MapData.height);
                 movementVector += 0.5f; //Pathfind to tile centre
             }
 
@@ -382,7 +381,7 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
         m_SpriteObjects[4 + i].FlipTexture = (uint32_t)enemy.Tick % 2 == 0;
 
         //Update on 2D-layer
-        uint32_t centreY = s_MapData.heigth * 0.5f, centreX = s_MapData.width * 0.5f;
+        uint32_t centreY = s_MapData.height * 0.5f, centreX = s_MapData.width * 0.5f;
         m_Tiles[tileIndex - i].Posistion.x = (enemy.Position.x - centreX) * s_MapData.mapScale.x;
         m_Tiles[tileIndex - i].Posistion.y = (centreY - enemy.Position.y) * s_MapData.mapScale.y;
     }

@@ -29,7 +29,12 @@ struct Renderer2DDAta {
 	glm::mat4 ViewProjection;
 
 	uint32_t atlasWidth;
-	uint32_t atlasHeigth;
+	uint32_t atlasHeight;
+
+	Renderer2DDAta() {
+		atlasHeight = 0;
+		atlasWidth = 0;
+	}
 };
 
 static Renderer2DDAta s_Data;
@@ -80,8 +85,8 @@ namespace Core {
 		s_Data.TextureShader->setInt("tex", 0);
 
 		s_Data.atlasWidth = 11;
-		s_Data.atlasHeigth = 2;
-		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeigth));
+		s_Data.atlasHeight = 2;
+		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
 
 		s_Data.FlatShader = std::make_unique<Shader>("2DFlatShader.glsl");
 

@@ -3,10 +3,9 @@
 #include "RaycasterLayer.h"
 #include "RaycasterScene.h"
 
-class Raycaster : public Core::Application
-{
+class Raycaster : public Core::Application {
 public:
-	Raycaster(){
+	Raycaster() {
 		RaycasterScene* scene = new RaycasterScene();
 		SetActiveScene(scene);
 		
@@ -23,7 +22,7 @@ Core::Application* Core::CreateApplication() {
 	return new Raycaster();
 }
 
-int main(){
+int main() {
     Core::Application* app = Core::CreateApplication();
     app->Run();
     delete app;
