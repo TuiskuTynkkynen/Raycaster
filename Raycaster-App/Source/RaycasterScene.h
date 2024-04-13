@@ -12,7 +12,6 @@ private:
     {
         static const uint32_t heigth = 24, width = 24;
         static const uint32_t size = heigth * width;
-
         const uint32_t map[size]{ 
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
@@ -54,17 +53,48 @@ private:
     std::vector<Core::Sprite> m_Sprites;
     std::vector<glm::vec3> m_Lights;
     float* m_ZBuffer = new float[m_RayCount];
+    
+    struct SpriteObject {
+        glm::vec3 Position;
+        glm::vec3 Scale;
+
+        uint32_t AtlasIndex;
+        bool FlipTexture;
+
+        SpriteObject() {
+            AtlasIndex = 0;
+            FlipTexture = false;
+        }
+    };
+    std::vector<SpriteObject> m_SpriteObjects;
+
+    struct Enemy {
+        glm::vec3 Position;
+        glm::vec3 Scale;
+
+        uint32_t AtlasIndex;
+
+        float Tick;
+        float Speed;
+
+        Enemy() {
+            AtlasIndex = 0;
+            Tick = 0.0f;
+            Speed = 0.0f;
+        }
+    };
+    bool m_EnemyMap[s_MapData.size];
+    std::vector<Enemy> m_Enemies;
 
     Core::Player m_Player;
-
     std::unique_ptr<Core::RaycasterCamera> m_Camera;
     
     bool m_Paused = false;
-
+    
     void ProcessInput(Core::Timestep deltaTime);
     void CastRays();
     void RenderSprites();
-
+    void UpdateEnemies(Core::Timestep deltaTime);
 public: 
     void Init() override;
     void Shutdown() override {}

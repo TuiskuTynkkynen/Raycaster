@@ -80,7 +80,7 @@ namespace Core {
 		s_Data.TextureShader->setInt("tex", 0);
 
 		s_Data.atlasWidth = 11;
-		s_Data.atlasHeigth = 1;
+		s_Data.atlasHeigth = 2;
 		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeigth));
 
 		s_Data.FlatShader = std::make_unique<Shader>("2DFlatShader.glsl");

@@ -1,4 +1,5 @@
 #include "RaycasterScene.h"
+#include "Algorithms.h"
 
 #include <glm/gtx/matrix_transform_2d.hpp>
 
@@ -10,7 +11,8 @@ RaycasterScene::MapData RaycasterScene::s_MapData;
 void RaycasterScene::Init(){
     m_Rays.resize(2 * m_RayCount); //should be initialized to default values
     m_Lines.resize(m_RayCount); //should be initialized to default vec3s
-    
+    m_SpriteObjects.resize(6);
+
     uint32_t Index = 7; 
     for (uint32_t i = 0; i < m_RayCount; i++) {
         float cameraY = 2 * i / float(m_RayCount) - 1;
@@ -26,7 +28,7 @@ void RaycasterScene::Init(){
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, s_MapData.mapScalingFactor, s_MapData.width, s_MapData.heigth);
     
     Core::FlatQuad tile;
-    tile.Scale = glm::vec3(0.95f / s_MapData.mapScalingFactor, 0.95f / s_MapData.mapScalingFactor, 1.0f);
+    tile.Scale = glm::vec3(0.95f * s_MapData.mapScale.x, 0.95f * s_MapData.mapScale.y, 1.0f);
     tile.Posistion.z = 0.0f;
 
     float centreY = (float)(s_MapData.heigth - 1) / 2, centreX = (float)(s_MapData.width - 1) / 2;
@@ -34,8 +36,8 @@ void RaycasterScene::Init(){
         uint32_t mapX = i % s_MapData.width;
         uint32_t mapY = i / s_MapData.width;
 
-        tile.Posistion.x = (mapX - centreX) / (s_MapData.mapScalingFactor);
-        tile.Posistion.y = (centreY - mapY) / (s_MapData.mapScalingFactor);
+        tile.Posistion.x = (mapX - centreX) * s_MapData.mapScale.x;
+        tile.Posistion.y = (centreY - mapY) * s_MapData.mapScale.y;
         
         float brightness = (s_MapData.map[mapY * s_MapData.width + mapX] != 0) ? 1.0f : 0.5f;
 
@@ -44,14 +46,57 @@ void RaycasterScene::Init(){
     }
 
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.8f));
-    m_Lights.push_back(glm::vec3(8.0f, 6.0f, 0.8f));
+    m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.8f));
+
+    Enemy e;
+    e.Position = glm::vec3(8.5f, 6.5f, 0.4f);
+    e.Scale = glm::vec3(0.8f);
+    e.AtlasIndex = 11;
+    e.Speed = 1.0f;
+    m_Enemies.push_back(e);
+
+    e.Position = glm::vec3(2.5f, 3.0f, 0.4f);
+    m_Enemies.push_back(e);
+
+    tile.Posistion = glm::vec3(1.0f);
+    tile.Scale = m_Player.Scale;
+    tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
+    m_Tiles.push_back(tile);
+    m_Tiles.push_back(tile);
+
+    for (uint32_t i = 0; i < s_MapData.size; i++) {
+        m_EnemyMap[i] = s_MapData.map[i];
+    }
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     if (!m_Paused) {
         glm::vec3 colour = glm::vec3(0.05f, 0.075f, 0.1f);
         Core::Renderer2D::Clear(colour);
+
+        //Static objects
+        m_SpriteObjects[0].Position = glm::vec3(3.0f, 2.5f, 0.25f);
+        m_SpriteObjects[0].Scale = glm::vec3(0.5f, 0.5f, 0.5f);
+        m_SpriteObjects[0].AtlasIndex = 8;
+        m_SpriteObjects[0].FlipTexture = false;
+        
+        m_SpriteObjects[1].Position = glm::vec3(2.5f, 2.5f, 0.25f);
+        m_SpriteObjects[1].Scale = glm::vec3(0.5f, 0.5f, 0.5f);
+        m_SpriteObjects[1].AtlasIndex = 8;
+        m_SpriteObjects[1].FlipTexture = false;
+
+        m_SpriteObjects[2].Position = glm::vec3(2.5f, 3.0f, 0.85f);
+        m_SpriteObjects[2].Scale = glm::vec3(0.5f, 0.5f, 0.5f);
+        m_SpriteObjects[2].AtlasIndex = 10;
+        m_SpriteObjects[2].FlipTexture = false;
+
+        m_SpriteObjects[3].Position = glm::vec3(8.5f, 6.5f, 0.85f);
+        m_SpriteObjects[3].Scale = glm::vec3(0.5f, 0.5f, 0.5f);
+        m_SpriteObjects[3].AtlasIndex = 10;
+        m_SpriteObjects[3].FlipTexture = false;
+
         ProcessInput(deltaTime);
+        UpdateEnemies(deltaTime);
         CastRays();
         RenderSprites();
     }
@@ -65,8 +110,8 @@ void RaycasterScene::CastRays() {
         glm::vec3 rayDirection = m_Camera->direction + m_Camera->plane * cameraX;
         glm::vec3 deltaDistance = glm::abs((float)1 / rayDirection);
 
-        uint32_t mapX = (int)m_Player.Position.x;
-        uint32_t mapY = (int)m_Player.Position.y;
+        uint32_t mapX = m_Player.Position.x;
+        uint32_t mapY = m_Player.Position.y;
 
         int32_t stepX = (rayDirection.x > 0) ? 1 : -1;
         int32_t stepY = (rayDirection.y < 0) ? 1 : -1;
@@ -160,36 +205,31 @@ void RaycasterScene::CastRays() {
 }
 
 void RaycasterScene::RenderSprites() {
-    //TODO use actual objects instead of mocks 
-    std::vector<glm::vec3> positions;
-    positions.push_back(glm::vec3(3.0f, 2.5f, 0.2f));
-    positions.push_back(glm::vec3(2.5f, 2.5f, 0.2f));
-    
-    uint32_t count = positions.capacity();
+    uint32_t count = m_SpriteObjects.size();
     uint32_t rayIndex = 2 * m_RayCount;
     uint32_t space = m_Rays.size();
 
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
 
     for (uint32_t index = 0; index < count; index++) {
-        positions[index] -= m_Player.Position;
-        positions[index] = matrix * positions[index];
+        m_SpriteObjects[index].Position -= m_Player.Position;
+        m_SpriteObjects[index].Position = matrix * m_SpriteObjects[index].Position;
     }
 
-    std::sort(positions.begin(), positions.end(), [this](glm::vec3 a, glm::vec3 b) {
-        return a.y > b.y;
+    std::sort(m_SpriteObjects.begin(), m_SpriteObjects.end(), [this](SpriteObject a, SpriteObject b) {
+        return a.Position.y > b.Position.y;
     });
 
     for (uint32_t index = 0; index < count; index++) {
-        glm::vec3 position = positions[index];
+        glm::vec3 position = m_SpriteObjects[index].Position;
         
         if (position.y < 0) {
             break;
         }
 
-        glm::vec3 scale(0.5f, 0.5f, 0.5f);
-        glm::vec3 colour(1.0f, 1.0f, 1.0f);
-        uint32_t atlasIndex = 8;
+        glm::vec3 scale = m_SpriteObjects[index].Scale;
+        uint32_t atlasIndex = m_SpriteObjects[index].AtlasIndex;
+        bool flipTexture = m_SpriteObjects[index].FlipTexture;
 
         float brightness = 0.0f;
         for (glm::vec3 lightPos : m_Lights) {
@@ -209,7 +249,8 @@ void RaycasterScene::RenderSprites() {
         float startX = 0.5f * (m_RayCount - width + position.x * m_RayCount);
         float endX = startX + width;
         scale.x = rScale;
-        
+        float texturePosition;
+
         for (int32_t i = startX; i < endX; i++) {
             if (i >= m_RayCount || m_ZBuffer[i] < distance) {
                 continue;
@@ -221,10 +262,11 @@ void RaycasterScene::RenderSprites() {
             }
 
             position.x = (i + 0.5f) * rScale - 1.0f;
-            
+            texturePosition = std::max((i - startX) / width, 0.0f);
+
             m_Rays[rayIndex].Position = position;
             m_Rays[rayIndex].Scale = scale.y;
-            m_Rays[rayIndex].TexPosition.x = std::max((i - startX) / width, 0.0f);
+            m_Rays[rayIndex].TexPosition.x = (flipTexture) ? 1.0f - texturePosition : texturePosition;
             m_Rays[rayIndex].Atlasindex = atlasIndex;
             m_Rays[rayIndex].Brightness =  brightness;
 
@@ -261,12 +303,87 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
         m_Player.Rotation -= rotationSpeed;
     }
 
-    if (s_MapData.map[(int)oldPosition.y * s_MapData.width + (int)m_Player.Position.x] != 0) {
+    if (s_MapData.map[(uint32_t)oldPosition.y * s_MapData.width + (uint32_t)m_Player.Position.x] != 0) {
         m_Player.Position.x = oldPosition.x;
     }
-    if (s_MapData.map[(int)m_Player.Position.y * s_MapData.width + (int)m_Player.Position.x] != 0) {
+    if (s_MapData.map[(uint32_t)m_Player.Position.y * s_MapData.width + (uint32_t)m_Player.Position.x] != 0) {
         m_Player.Position.y = oldPosition.y;
     }
 
     m_Camera->UpdateCamera(m_Player.Position, m_Player.Rotation);
+}
+
+void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
+    uint32_t count = m_Enemies.size();
+    uint32_t tileIndex = m_Tiles.size() - 1;
+
+    for (uint32_t i = 0; i < count; i++) {
+        Enemy& enemy = m_Enemies[i];
+        uint32_t atlasOffset = 0;
+
+        uint32_t mapIndex = (uint32_t)enemy.Position.y * s_MapData.width + (uint32_t)enemy.Position.x;
+        m_EnemyMap[mapIndex] = s_MapData.map[mapIndex];
+        
+        glm::vec3 distance = enemy.Position - m_Player.Position;
+        if (glm::length(distance) < 1.1f) {
+            //"Attack"
+            enemy.Tick += deltaTime;
+            atlasOffset = 1;
+        } else {
+            //Pathfinding
+            enemy.Tick += deltaTime * 2.0f;
+            bool lineOfSight = true;
+
+            glm::vec2 playerPos;
+            playerPos.x = m_Player.Position.x;
+            playerPos.y = m_Player.Position.y;
+
+            glm::vec2 movementVector = playerPos;
+
+            glm::vec2 enemyPos;
+            static const glm::i32vec2 directions[] = {
+                glm::i32vec2(1,0),
+                glm::i32vec2(-1,0),
+                glm::i32vec2(0,1),
+                glm::i32vec2(0,-1),
+                glm::i32vec2(1,1),
+                glm::i32vec2(-1,1),
+                glm::i32vec2(1,-1),
+                glm::i32vec2(-1,-1),
+            };
+            for (uint32_t j = 0; j < 8 && lineOfSight; j++) {
+                enemyPos.x = enemy.Position.x + 0.5f * enemy.Scale.x * directions[j].x;
+                enemyPos.y = enemy.Position.y + 0.5f * enemy.Scale.y * directions[j].y;
+
+                lineOfSight &= Algorithms::LineOfSight(enemyPos, playerPos, m_EnemyMap, s_MapData.width, s_MapData.heigth);
+            }
+
+            if (!lineOfSight) {
+                enemyPos.x = enemy.Position.x;
+                enemyPos.y = enemy.Position.y;
+
+                movementVector = Algorithms::AStar(enemyPos, playerPos, m_EnemyMap, s_MapData.width, s_MapData.heigth);
+                movementVector += 0.5f; //Pathfind to tile centre
+            }
+
+            movementVector.x -= enemy.Position.x;
+            movementVector.y -= enemy.Position.y;
+            movementVector = glm::normalize(movementVector);
+            movementVector *= deltaTime * enemy.Speed;
+
+            enemy.Position.x += movementVector.x;
+            enemy.Position.y += movementVector.y;
+        }
+
+        m_EnemyMap[(uint32_t)enemy.Position.y * s_MapData.width + (uint32_t)enemy.Position.x] = true;
+        m_SpriteObjects[4 + i].Position = enemy.Position;
+        m_SpriteObjects[4 + i].Scale = enemy.Scale;
+        m_SpriteObjects[4 + i].AtlasIndex = enemy.AtlasIndex + atlasOffset;
+        m_SpriteObjects[4 + i].FlipTexture = (uint32_t)enemy.Tick % 2 == 0;
+
+        //Update on 2D-layer
+        uint32_t centreY = s_MapData.heigth * 0.5f, centreX = s_MapData.width * 0.5f;
+        m_Tiles[tileIndex - i].Posistion.x = (enemy.Position.x - centreX) * s_MapData.mapScale.x;
+        m_Tiles[tileIndex - i].Posistion.y = (centreY - enemy.Position.y) * s_MapData.mapScale.y;
+    }
 }
