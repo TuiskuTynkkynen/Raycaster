@@ -10,30 +10,30 @@ private:
     struct MapData {
         static const uint32_t height = 24, width = 24;
         static const uint32_t size = height * width;
-        const uint32_t map[size]{ 
+        const int32_t map[size]{ 
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,2,2,2,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1,
+            1,0,0,0,0,0,-2,2,2,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
             1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1,
             1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,2,2,0,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1,
+            1,0,0,0,0,0,-2,2,0,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-5,-5,0,0,0,0,0,1,
+            1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,-5,-5,0,0,0,0,0,1,
             1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,4,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,1,
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
         };
 
@@ -47,7 +47,7 @@ private:
 
     std::vector<Core::Ray> m_Rays;
     std::vector<Core::Line> m_Lines;
-    std::vector<Core::FlatQuad> m_Tiles;
+    std::vector<Core::Tile> m_Tiles;
     std::vector<Core::Sprite> m_Sprites;
     std::vector<glm::vec3> m_Lights;
     float* m_ZBuffer = new float[m_RayCount];
@@ -65,7 +65,6 @@ private:
         }
     };
     std::vector<SpriteObject> m_SpriteObjects;
-
     struct Enemy {
         glm::vec3 Position;
         glm::vec3 Scale;
@@ -83,6 +82,7 @@ private:
     };
     bool m_EnemyMap[s_MapData.size];
     std::vector<Enemy> m_Enemies;
+    std::vector<glm::vec4> m_Diagonals;
 
     Core::Player m_Player;
     std::unique_ptr<Core::RaycasterCamera> m_Camera;
@@ -102,7 +102,7 @@ public:
 
     inline std::vector<Core::Ray>& GetRays() { return m_Rays;  }
     inline std::vector<Core::Line>& GetLines() { return m_Lines;  }
-    inline std::vector<Core::FlatQuad>& GetQuads() { return m_Tiles;  }
+    inline std::vector<Core::Tile>& GetTiles() { return m_Tiles;  }
     inline std::vector<Core::Sprite>& GetSprites() override { return m_Sprites; }
 
     inline Core::Player& GetPlayer() { return m_Player;  }

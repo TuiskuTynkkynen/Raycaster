@@ -27,7 +27,7 @@ void RaycasterScene::Init(){
 
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, s_MapData.mapScalingFactor, s_MapData.width, s_MapData.height);
     
-    Core::FlatQuad tile;
+    Core::Tile tile;
     tile.Scale = glm::vec3(0.95f * s_MapData.mapScale.x, 0.95f * s_MapData.mapScale.y, 1.0f);
     tile.Posistion.z = 0.0f;
 
@@ -39,7 +39,7 @@ void RaycasterScene::Init(){
         tile.Posistion.x = (mapX - centreX) * s_MapData.mapScale.x;
         tile.Posistion.y = (centreY - mapY) * s_MapData.mapScale.y;
         
-        float brightness = (s_MapData.map[mapY * s_MapData.width + mapX] != 0) ? 1.0f : 0.5f;
+        float brightness = (s_MapData.map[mapY * s_MapData.width + mapX] > 0) ? 1.0f : 0.5f;
 
         tile.Colour = glm::vec3(brightness);
         m_Tiles.push_back(tile);
@@ -58,15 +58,64 @@ void RaycasterScene::Init(){
     e.Position = glm::vec3(2.5f, 3.0f, 0.4f);
     m_Enemies.push_back(e);
 
-    tile.Posistion = glm::vec3(1.0f);
-    tile.Scale = m_Player.Scale;
-    tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
-    m_Tiles.push_back(tile);
-    m_Tiles.push_back(tile);
-
     for (uint32_t i = 0; i < s_MapData.size; i++) {
         m_EnemyMap[i] = s_MapData.map[i];
     }
+
+    tile.Colour = glm::vec3(1.0f);
+    tile.IsTriangle = true;
+
+    static const int32_t directions[] = {
+        1, -1, s_MapData.width, -s_MapData.width //R, L, D, U 
+    };
+
+    for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
+        if (s_MapData.map[startIndex] >= 0) {
+            continue;
+        }
+
+        uint32_t dir1 = 5;
+        uint32_t dir2 = 5;
+        for (uint32_t i = 0; i < 4; i++) {
+            uint32_t cur = startIndex + directions[i];
+            if (cur >= s_MapData.size || s_MapData.map[cur] == 0) {
+                continue;
+            }
+
+            if (dir1 == 5) {
+                dir1 = i;
+            } else {
+                dir2 = i;
+            }
+        }
+
+        glm::vec2 point1(startIndex % s_MapData.width, startIndex / s_MapData.width);
+
+        tile.Posistion.x = (point1.x - centreX) * s_MapData.mapScale.x;
+        tile.Posistion.y = (centreY - point1.y) * s_MapData.mapScale.y;
+        tile.Rotation = dir1 == 1 ? 180.0f : 0.0f;
+        tile.Rotation -= dir2 - dir1 == 2 ? 90.0f : 0.0f;
+        m_Tiles.push_back(tile);
+        
+        glm::vec2 point2 = point1;
+
+        if (dir2 - dir1 == 2) {
+            point1.x++;
+            point2.y++;
+        }
+        else {
+            point2.x++;
+            point2.y++;
+        }
+
+        m_Diagonals.emplace_back(point1.x, point1.y, point2.x, point2.y);
+    }
+
+    tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
+    tile.Scale = m_Player.Scale;
+    tile.IsTriangle = false;
+    m_Tiles.push_back(tile);
+    m_Tiles.push_back(tile);
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
@@ -103,9 +152,22 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
 }
 
 void RaycasterScene::CastRays() {
+    //Calculate and sort distance to each diagonal
+    glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
+    std::vector<glm::i32vec2> diagonalDistances;
+
+    uint32_t diagonalCount = m_Diagonals.size();
+    for (uint32_t i = 0; i < diagonalCount; i++) {
+        int32_t distance = m_Diagonals[i].x + m_Diagonals[i].y - m_Player.Position.x - m_Player.Position.y;
+        diagonalDistances.emplace_back(distance, i);
+    }
+
+    std::sort(diagonalDistances.begin(), diagonalDistances.end(), [this](glm::i32vec2& a, glm::i32vec2& b) {
+        return a.x > b.x;
+    });
+
     //Wall casting
-    for (uint32_t i = 0; i < m_RayCount; i++)
-    {
+    for (uint32_t i = 0; i < m_RayCount; i++) {
         float cameraX = 2 * i / float(m_RayCount) - 1;
         glm::vec3 rayDirection = m_Camera->direction + m_Camera->plane * cameraX;
         glm::vec3 deltaDistance = glm::abs((float)1 / rayDirection);
@@ -120,11 +182,10 @@ void RaycasterScene::CastRays() {
         sideDistance.x *= (rayDirection.x < 0) ? (m_Player.Position.x - mapX) : (mapX + 1.0f - m_Player.Position.x);
         sideDistance.y *= (rayDirection.y > 0) ? (m_Player.Position.y - mapY) : (mapY + 1.0f - m_Player.Position.y);
 
-        uint32_t hit = 0;
+        bool hit = false;
         uint32_t side = 0;
-
-        while (hit == 0)
-        {
+        glm::vec2 worldPosition;
+        while (!hit){
             if (sideDistance.x < sideDistance.y) {
                 sideDistance.x += deltaDistance.x;
                 mapX += stepX;
@@ -140,35 +201,73 @@ void RaycasterScene::CastRays() {
                 std::cout << "ERROR: INDEX OUT OF BOUNDS" << std::endl;
                 break;
             }
+
+            if (s_MapData.map[mapY * s_MapData.width + mapX] < 0) { //if diagonal
+                glm::vec2 point3(m_Player.Position.x, m_Player.Position.y);
+                glm::vec2 point4 = point3;
+                point3.x += rayDirection.x;
+                point3.y -= rayDirection.y;
+
+                for (uint32_t j = 0; j < diagonalCount; j++) {
+                    int32_t dist = mapX + mapY - m_Player.Position.x - m_Player.Position.y - diagonalDistances[j].x;
+                    if (dist > 2 || dist < -2) {
+                        continue;
+                    }
+                    uint32_t index = diagonalDistances[j].y;
+
+                    glm::vec2 p1(m_Diagonals[index].x, m_Diagonals[index].y);
+                    glm::vec2 p2(m_Diagonals[index].z, m_Diagonals[index].w);
+                    std::optional<glm::vec2> intersection = Algorithms::LineIntersection(p1, p2, point3, point4, true);
+                    if (!intersection || (uint32_t)intersection.value().x != mapX || (uint32_t)intersection.value().y != mapY) {
+                        continue;
+                    }
+
+                    worldPosition = intersection.value();
+                    sideDistance.x = intersection.value().x;
+                    sideDistance.y = intersection.value().y;
+                    sideDistance.z = 0.0f;
+                    sideDistance.y = (matrix * (sideDistance - m_Player.Position)).y; //Calculates perpendicular distance
+
+                    side = 2;
+                    hit = true;
+                    break;
+                }
+            }
+
             if (s_MapData.map[mapY * s_MapData.width + mapX] > 0) {
-                hit = 1;
+                hit = true;
             }
         }
 
-        glm::vec2 worldPosition(mapX, mapY);
         float wallDistance;
         if (side == 0) {
             wallDistance = sideDistance.x - deltaDistance.x;
-            
+
             float offset = m_Player.Position.y - wallDistance * rayDirection.y;
             offset -= floor(offset);
-            worldPosition.y += offset;
-            
-            m_Rays[i].TexPosition.x = m_Player.Position.y - wallDistance * rayDirection.y;
+            worldPosition.x = mapX - stepX;
+            worldPosition.y = mapY + offset;
+
+            m_Rays[i].TexPosition.x = offset;
         }
-        else {
+        else if (side == 1) {
             wallDistance = sideDistance.y - deltaDistance.y;
-            
+
             float offset = m_Player.Position.x + wallDistance * rayDirection.x;
             offset -= floor(offset);
-            worldPosition.x += offset;
-            
-            m_Rays[i].TexPosition.x = m_Player.Position.x + wallDistance * rayDirection.x;
+            worldPosition.x = mapX + offset;
+            worldPosition.y = mapY - stepY;
+
+            m_Rays[i].TexPosition.x = offset;
+        }
+        else {
+            wallDistance = sideDistance.y;
+            m_Rays[i].TexPosition.x = sideDistance.x;
         }
 
         m_Rays[i].Scale = 1.0f / wallDistance;
         m_Rays[i].Position.x = cameraX + m_RayWidth;
-        m_Rays[i].Atlasindex = s_MapData.map[mapY * s_MapData.width + mapX];
+        m_Rays[i].Atlasindex = abs(s_MapData.map[mapY * s_MapData.width + mapX]);
 
         float brightness = 0.0f;
         for (glm::vec2 lightPos : m_Lights) {
@@ -182,10 +281,10 @@ void RaycasterScene::CastRays() {
     }
 
     //Floor and ceiling "casting"
-    for (uint32_t i = 0; i < m_RayCount; i ++) {
+    for (uint32_t i = 0; i < m_RayCount; i++) {
         glm::vec3 rayDirection = m_Camera->direction - m_Camera->plane;
         float scale = abs(m_RayCount / (2 * (float)i - m_RayCount)); // = 1.0f / abs(2 * i / m_RayCount - 1)
-        
+
         m_Rays[m_RayCount + i].Scale = scale;
         m_Rays[m_RayCount + i].TexPosition.x = scale * 0.5f * rayDirection.x + m_Player.Position.x;
         m_Rays[m_RayCount + i].TexPosition.y = scale * 0.5f * rayDirection.y - m_Player.Position.y;
@@ -198,7 +297,7 @@ void RaycasterScene::CastRays() {
             brightness += std::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
         }
         m_Rays[m_RayCount + i].Brightness = brightness;
-        
+
         m_Rays[m_RayCount + i].TexRotation = m_Player.Rotation - 90.0f;
     }
 }

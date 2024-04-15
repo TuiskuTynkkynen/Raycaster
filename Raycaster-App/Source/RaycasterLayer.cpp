@@ -70,11 +70,16 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(m_Scene->GetCamera());
 
-    std::vector<Core::FlatQuad> tiles = m_Scene->GetQuads();
+    std::vector<Core::Tile> tiles = m_Scene->GetTiles();
     uint32_t mapSize = tiles.size();
 
     for (int i = 0; i < mapSize; i++) {
-        Core::Renderer2D::DrawFlatQuad(tiles[i].Posistion, tiles[i].Scale, tiles[i].Colour);
+        if (tiles[i].IsTriangle) {
+            Core::Renderer2D::DrawRotatedFlatTriangle(tiles[i].Posistion, tiles[i].Rotation, AxisZ, tiles[i].Scale, tiles[i].Colour);
+        }
+        else {
+            Core::Renderer2D::DrawFlatQuad(tiles[i].Posistion, tiles[i].Scale, tiles[i].Colour);
+        }
     }
 
     Core::Renderer2D::BeginScene(identity);

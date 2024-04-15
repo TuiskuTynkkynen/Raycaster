@@ -172,6 +172,21 @@ namespace Core {
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 
+	void Renderer2D::DrawRotatedFlatTriangle(glm::vec3& position, float rotation, glm::vec3& rotationAxis, glm::vec3& scale, glm::vec3& colour) {
+		RenderAPI::SetDepthBuffer(false);
+		s_Data.FlatShader->Bind();
+		s_Data.FlatShader->setVec3("colour", colour);
+
+		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+		transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
+		transform = glm::scale(transform, scale);
+
+		s_Data.FlatShader->setMat4("transform", transform);
+		
+		s_Data.QuadVertexArray->Bind();
+		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 3);
+	}
+
 	void Renderer2D::DrawLine(glm::vec3& position, glm::vec3& scale, glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
 		

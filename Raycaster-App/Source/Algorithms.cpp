@@ -109,3 +109,28 @@ glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, bool* map, 
 
     return result;
 }
+
+std::optional<glm::vec2> Algorithms::LineIntersection(glm::vec2& point1, glm::vec2& point2, glm::vec2& point3, glm::vec2& point4, bool isHalfLine) {
+    glm::vec2 line1 = point2 - point1;
+    glm::vec2 line2 = point4 - point3;
+
+    float denominator = line1.x * line2.y - line2.x * line1.y;
+    if (denominator == 0) {
+        return std::nullopt; // Collinear
+    }
+    bool denomPositive = denominator > 0;
+
+    glm::vec2 segment13 = point1 - point3;
+    float check = line1.x * segment13.y - line1.y * segment13.x;
+    if (!isHalfLine && (check < 0) == denomPositive || (check > denominator) == denomPositive) {
+        return std::nullopt; //hits line2 but between point 3 and 4
+    }
+
+    float numerator = line2.x * segment13.y - line2.y * segment13.x;
+    if ((numerator < 0) == denomPositive || (numerator > denominator) == denomPositive) {
+        return std::nullopt; //hits line1 but between point 1 and 2
+    }
+
+    float t = numerator / denominator; //where point on line 1 -> 0 = p1 and 1 = p2 
+    return glm::vec2(point1.x + (t * line1.x), point1.y + (t * line1.y));
+}

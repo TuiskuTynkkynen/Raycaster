@@ -20,11 +20,19 @@ namespace Core {
         }
     };
     
-    struct FlatQuad {
+    struct Tile {
         glm::vec3 Posistion;
         glm::vec3 Scale;
 
+        bool IsTriangle;
+        float Rotation;
+
         glm::vec3 Colour;
+
+        Tile() {
+            IsTriangle = false;
+            Rotation = 0.0f;
+        }
     };
 
     struct Line {
