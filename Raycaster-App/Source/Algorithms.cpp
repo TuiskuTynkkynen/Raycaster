@@ -1,6 +1,5 @@
 #include "Algorithms.h"
 
-#include <vector>
 #include <queue>
 
 bool Algorithms::LineOfSight(glm::vec2 start, glm::vec2 end, bool* map, uint32_t width, uint32_t height) {
@@ -133,4 +132,39 @@ std::optional<glm::vec2> Algorithms::LineIntersection(glm::vec2& point1, glm::ve
 
     float t = numerator / denominator; //where point on line 1 -> 0 = p1 and 1 = p2 
     return glm::vec2(point1.x + (t * line1.x), point1.y + (t * line1.y));
+}
+
+glm::vec2 Algorithms::LineCollisions(glm::vec2& point, std::vector<LineCollider> lines, float thickness) {
+    uint32_t lineCount = lines.size();
+    glm::vec2 movement(0.0f);
+
+    for (int i = 0; i < lineCount; i++) {
+        float pointDX = point.x - lines[i].Position.x;
+        float pointDY = point.y - lines[i].Position.y;
+        float distance = std::max(lines[i].Vector.x * lines[i].Vector.x + lines[i].Vector.y * lines[i].Vector.y, 0.0001f);
+        distance = (lines[i].Vector.x * pointDX + lines[i].Vector.y * pointDY) / distance;
+      
+        if (distance * lines[i].Length < -thickness * 0.5f || distance * lines[i].Length > lines[i].Length + thickness * 0.5f) {
+            continue;
+        }
+        
+        float dx = distance * lines[i].Vector.x + lines[i].Position.x;
+        float dy = distance * lines[i].Vector.y + lines[i].Position.y;
+        distance = sqrt((dx - point.x) * (dx - point.x) + (dy - point.y) * (dy - point.y));
+
+        if (distance < thickness) {
+            float crossProduct = lines[i].Vector.x * pointDY - lines[i].Vector.y * pointDX;
+
+            if (crossProduct > 0) {
+                movement.x -= point.x - (dx - lines[i].Normal.x * thickness);
+                movement.y -= point.y - (dy - lines[i].Normal.y * thickness);
+            }
+            else {
+                movement.x -= point.x - (dx + lines[i].Normal.x * thickness);
+                movement.y -= point.y - (dy + lines[i].Normal.y * thickness);
+            }
+        }
+    }
+
+    return movement;
 }

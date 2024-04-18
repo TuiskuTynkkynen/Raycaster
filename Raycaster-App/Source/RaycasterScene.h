@@ -2,6 +2,7 @@
 
 #include "Core.h"
 #include "Core/Raycaster/Scene.h"
+#include "Algorithms.h"
 
 #include <memory>
 
@@ -83,7 +84,10 @@ private:
     bool m_EnemyMap[s_MapData.size];
     std::vector<Enemy> m_Enemies;
     std::vector<glm::vec4> m_Diagonals;
+    std::vector<LineCollider> m_Walls;
 
+    
+    float max = 0.0f;
     Core::Player m_Player;
     std::unique_ptr<Core::RaycasterCamera> m_Camera;
     

@@ -1,5 +1,4 @@
 #include "RaycasterScene.h"
-#include "Algorithms.h"
 
 #include <glm/gtx/matrix_transform_2d.hpp>
 
@@ -65,8 +64,8 @@ void RaycasterScene::Init(){
     tile.Colour = glm::vec3(1.0f);
     tile.IsTriangle = true;
 
-    static const int32_t directions[] = {
-        1, -1, s_MapData.width, -s_MapData.width //R, L, D, U 
+    int32_t directions[] = {
+        1, -1, s_MapData.width, -s_MapData.width, 0 //R, L, D, U 
     };
 
     for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
@@ -109,6 +108,41 @@ void RaycasterScene::Init(){
         }
 
         m_Diagonals.emplace_back(point1.x, point1.y, point2.x, point2.y);
+        m_Walls.emplace_back(point1, point2);
+    }
+
+
+    for (uint32_t i = 0; i < 4; i++) {
+        std::vector<glm::vec2> points;
+        for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
+            uint32_t cur = startIndex + directions[i];
+            if (s_MapData.map[startIndex] <= 0 || cur >= s_MapData.size) {
+                continue;
+            }
+
+            if (s_MapData.map[cur] == 0) {
+                int f = i == 0 || i == 2 ? i : 4;
+                int b = i == 1 || i == 3 ? -1 : 1;
+
+                cur = startIndex + b * directions[(i + 2) % 4] + directions[f];
+                glm::vec2 point1((startIndex + directions[f]) % s_MapData.width, (startIndex + directions[f]) / s_MapData.width);
+                glm::vec2 point2(cur % s_MapData.width, cur / s_MapData.width);
+
+
+                auto iter = std::find(points.begin(), points.end(), point1);
+                if (iter != points.end()) {
+                    *iter = point2;         //if duplicate 
+                }
+                else {
+                    points.push_back(point1);
+                    points.push_back(point2);
+                }
+            }
+        }
+
+        for (int j = 0; j < points.size(); j += 2) {
+            m_Walls.emplace_back(points[j], points[j +1]);
+        }
     }
 
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -186,23 +220,8 @@ void RaycasterScene::CastRays() {
         uint32_t side = 0;
         glm::vec2 worldPosition;
         while (!hit){
-            if (sideDistance.x < sideDistance.y) {
-                sideDistance.x += deltaDistance.x;
-                mapX += stepX;
-                side = 0;
-            }
-            else {
-                sideDistance.y += deltaDistance.y;
-                mapY += stepY;
-                side = 1;
-            }
-
-            if (mapY >= s_MapData.height || mapX >= s_MapData.width) {
-                std::cout << "ERROR: INDEX OUT OF BOUNDS" << std::endl;
-                break;
-            }
-
-            if (s_MapData.map[mapY * s_MapData.width + mapX] < 0) { //if diagonal
+            //if diagonal, needs to be handled first, because player can be inside diagonal
+            if (s_MapData.map[mapY * s_MapData.width + mapX] < 0) {
                 glm::vec2 point3(m_Player.Position.x, m_Player.Position.y);
                 glm::vec2 point4 = point3;
                 point3.x += rayDirection.x;
@@ -232,6 +251,25 @@ void RaycasterScene::CastRays() {
                     hit = true;
                     break;
                 }
+                if (hit) {
+                    break;
+                }
+            }
+
+            if (sideDistance.x < sideDistance.y) {
+                sideDistance.x += deltaDistance.x;
+                mapX += stepX;
+                side = 0;
+            }
+            else {
+                sideDistance.y += deltaDistance.y;
+                mapY += stepY;
+                side = 1;
+            }
+
+            if (mapY >= s_MapData.height || mapX >= s_MapData.width) {
+                std::cout << "ERROR: INDEX OUT OF BOUNDS" << std::endl;
+                break;
             }
 
             if (s_MapData.map[mapY * s_MapData.width + mapX] > 0) {
@@ -384,7 +422,6 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
     front.y = -sin(glm::radians(m_Player.Rotation)); //player y is flipped (array index)
     front.z = 0.0f;
 
-    glm::vec3 oldPosition = m_Player.Position;
     if (Core::Input::IsKeyPressed(RC_KEY_W)) {
         m_Player.Position += velocity * front;
     }
@@ -401,12 +438,16 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
         m_Player.Rotation -= rotationSpeed;
     }
 
-    if (s_MapData.map[(uint32_t)oldPosition.y * s_MapData.width + (uint32_t)m_Player.Position.x] != 0) {
-        m_Player.Position.x = oldPosition.x;
+    glm::vec2 col(m_Player.Position.x, m_Player.Position.y);
+    col = Algorithms::LineCollisions(col, m_Walls, 0.4f);
+
+    float length = glm::length(col);
+    if (length > velocity) {
+        col *= 1.0f / length * velocity;
     }
-    if (s_MapData.map[(uint32_t)m_Player.Position.y * s_MapData.width + (uint32_t)m_Player.Position.x] != 0) {
-        m_Player.Position.y = oldPosition.y;
-    }
+
+    m_Player.Position.x += col.x;
+    m_Player.Position.y += col.y;
 
     m_Camera->UpdateCamera(m_Player.Position, m_Player.Rotation);
 }
@@ -414,7 +455,7 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
 void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
     uint32_t count = m_Enemies.size();
     uint32_t tileIndex = m_Tiles.size() - 1;
-
+    
     for (uint32_t i = 0; i < count; i++) {
         Enemy& enemy = m_Enemies[i];
         uint32_t atlasOffset = 0;
