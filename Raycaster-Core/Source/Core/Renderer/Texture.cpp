@@ -20,6 +20,10 @@ namespace Core{
         m_UsesMipMap = (filterMin == GL_NEAREST_MIPMAP_NEAREST || filterMin == GL_LINEAR_MIPMAP_NEAREST || filterMin == GL_NEAREST_MIPMAP_LINEAR || filterMin == GL_LINEAR_MIPMAP_LINEAR);
 	}
 
+    Texture2D::~Texture2D() {
+        glDeleteTextures(1, &m_RendererID);
+    }
+
     void Texture2D::BindImage(const char* fileName) {
         std::filesystem::path directoryPath = std::filesystem::current_path() / "Source" / "Textures";
         std::string fileString = directoryPath.append(fileName).string();
@@ -49,6 +53,7 @@ namespace Core{
                 break;
             }
 
+            glBindTexture(GL_TEXTURE_2D, m_RendererID);
             glTexImage2D(GL_TEXTURE_2D, 0, colourSpace, textureWidth, textureHeight, 0, colourSpace, GL_UNSIGNED_BYTE, data);
             if (m_UsesMipMap) {
                 glGenerateMipmap(GL_TEXTURE_2D);
@@ -60,8 +65,29 @@ namespace Core{
         stbi_image_free(data);
     }
 
-    Texture2D::~Texture2D() {
-        glDeleteTextures(1, &m_RendererID);
+    void Texture2D::BindData(const unsigned char* data, uint32_t height, uint32_t width, uint32_t channelCount) {
+        GLenum colourSpace;
+
+        switch (channelCount){
+        case 1:
+            colourSpace = GL_RED;
+            break;
+        case 3:
+            colourSpace = GL_RGB;
+            break;
+        case 4:
+            colourSpace = GL_RGBA;
+            break;
+        default:
+            colourSpace = GL_RGB;
+            break;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, m_RendererID);
+        glTexImage2D(GL_TEXTURE_2D, 0, colourSpace, width, height, 0, colourSpace, GL_UNSIGNED_BYTE, data);
+        if (m_UsesMipMap) {
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
     }
 
     void Texture2D::Activate(uint32_t unitIndex) {
