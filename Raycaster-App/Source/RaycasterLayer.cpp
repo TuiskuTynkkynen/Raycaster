@@ -1,5 +1,11 @@
 #include "RaycasterLayer.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
+float timeDelta = 0;
+uint32_t frameCount = 0;
+float frameTime = 0;
+
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
     static glm::mat4 identity(1.0f);
     
@@ -46,6 +52,20 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
+
+    frameCount++;
+    timeDelta += deltaTime;
+    if (timeDelta >= 0.1f) {
+        frameTime = 1000.0f * timeDelta / frameCount;
+        frameCount = 0;
+        timeDelta = 0.0f;
+    }
+
+    colour = glm::vec3(0.2f, 0.8f, 0.2f);
+    glm::mat4 projection = glm::ortho(0.0f, (float)m_ViewPortWidth, 0.0f, (float)m_ViewPortHeight);
+    Core::Renderer2D::BeginScene(projection);
+    std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
+    Core::Renderer2D::DrawString(frameStats, 5.0f, m_ViewPortHeight - 15.0f, 2.0f, colour);
 }
 
 void RaycasterLayer::OnEvent(Core::Event& event) {

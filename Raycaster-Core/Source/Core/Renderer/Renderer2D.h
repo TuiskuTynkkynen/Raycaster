@@ -2,6 +2,8 @@
 
 #include "Camera.h"
 
+#include <string>
+
 namespace Core {
 	class Renderer2D //TODO implement batch rendering
 	{
@@ -19,6 +21,9 @@ namespace Core {
 		static void DrawRotatedFlatQuad(glm::vec3& position, float rotation, glm::vec3& rotationAxis, glm::vec3& scale, glm::vec3& colour);
 		static void DrawRotatedFlatTriangle(glm::vec3& position, float rotation, glm::vec3& rotationAxis, glm::vec3& scale, glm::vec3& colour);
 		static void DrawLine(glm::vec3& position, glm::vec3& scale, glm::vec3& colour);
+		
+		template <typename T>
+		static void DrawString(const T& text, float x, float y, float scale, const glm::vec3& colour);
 
 		static void SetLineWidth(uint32_t width);
 	};

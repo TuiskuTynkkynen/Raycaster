@@ -6,6 +6,7 @@
 #include "ElementBuffer.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "Font.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -23,8 +24,11 @@ struct Renderer2DDAta {
 
 	std::unique_ptr<Core::Shader> FlatShader;
 	std::unique_ptr<Core::Shader> TextureShader;
+	std::unique_ptr<Core::Shader> TextShader;
 
 	std::unique_ptr<Core::Texture2D> TextureAtlas;
+
+	std::unique_ptr<Core::Font> Font;
 
 	glm::mat4 ViewProjection;
 
@@ -90,6 +94,12 @@ namespace Core {
 
 		s_Data.FlatShader = std::make_unique<Shader>("2DFlatShader.glsl");
 
+		s_Data.TextShader = std::make_unique<Shader>("TextShader.glsl");
+		s_Data.Font = std::make_unique<Font>(false);
+		s_Data.Font->AddCharacterRange(' ', '~'); //Printable ASCII
+		s_Data.Font->AddCharacterRange(0x00A1, 0x0FF); //Printable Latin-1 Supplement
+		s_Data.Font->GenerateAtlas("tiny5/tiny5-Medium.ttf", 8);
+		
 		s_Data.ViewProjection = glm::mat4(1.0f);
 	}
 
@@ -101,17 +111,26 @@ namespace Core {
 
 		s_Data.TextureShader->Bind();
 		s_Data.TextureShader->setMat4("viewProjection", s_Data.ViewProjection);
+
+		s_Data.TextShader->Bind();
+		s_Data.TextShader->setMat4("viewProjection", s_Data.ViewProjection);
+
+		s_Data.TextureAtlas->Activate(0);
 	}
 
 	void Renderer2D::BeginScene(glm::mat4& transform) {
 		s_Data.ViewProjection = transform;
-		s_Data.ViewProjection = glm::mat4(1.0f);
 
 		s_Data.FlatShader->Bind();
 		s_Data.FlatShader->setMat4("viewProjection", s_Data.ViewProjection);
 
 		s_Data.TextureShader->Bind();
 		s_Data.TextureShader->setMat4("viewProjection", s_Data.ViewProjection);
+
+		s_Data.TextShader->Bind();
+		s_Data.TextShader->setMat4("viewProjection", s_Data.ViewProjection);
+
+		s_Data.TextureAtlas->Activate(0);
 	}
 
 	void Renderer2D::Clear(glm::vec3& colour) {
@@ -201,7 +220,61 @@ namespace Core {
 		RenderAPI::DrawLines(*s_Data.LineVertexArray, 2);
 	}
 
+	template <typename T>
+	void Renderer2D::DrawString(const T& text, float x, float y, float scale, const glm::vec3& colour) {
+		RenderAPI::SetDepthBuffer(false);
+
+		s_Data.TextShader->Bind();
+		s_Data.TextShader->setVec3("colour", colour);
+		s_Data.Font->ActivateAtlas();
+		
+		glm::vec3 position(0.0f);
+		glm::vec3 size(1.0f);
+		float startX = x;
+		for (auto c = text.begin(); c != text.end(); c++) {
+			if (*c == '\r') {
+				continue;
+			}
+			if (*c == '\n') {
+				x = startX;
+				y -= s_Data.Font->GetGlyphInfo(' ').Size.y * scale;
+				continue;
+			}
+
+			GlyphInfo glyph = s_Data.Font->GetGlyphInfo(*c);
+			
+			if (glyph.Advance == 0) {
+				glyph = s_Data.Font->GetGlyphInfo('?');
+			}
+			if (glyph.Size.x * glyph.Size.y == 0) {
+				x += glyph.Advance * scale;
+				continue;
+			}
+
+			size.x = glyph.Size.x * scale;
+			size.y = -glyph.Size.y * scale;
+
+			position.x = x + glyph.Bearing.x * scale + size.x * 0.5f;
+			position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale - size.y * 0.5f;
+
+			glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+			transform = glm::scale(transform, size);
+			s_Data.TextShader->setMat4("transform", transform);
+
+			glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), glyph.TexPosition);
+			texTransform = glm::scale(texTransform, glyph.TexScale);
+			s_Data.TextShader->setMat3("texTransform", texTransform);
+
+			RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
+			x += glyph.Advance * scale;
+		}
+	}
+
 	void Renderer2D::SetLineWidth(uint32_t width) {
 		RenderAPI::SetLineWidth(width);
 	}
+
+	template void Renderer2D::DrawString<std::string>(const std::string&, float, float, float, const glm::vec3&);
+	template void Renderer2D::DrawString<std::wstring>(const std::wstring&, float, float, float, const glm::vec3&);
 }
+
