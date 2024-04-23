@@ -23,6 +23,8 @@ project "Raycaster-App"
 	  -- Include Core
 	  "../Raycaster-Core/Source",
           "../Raycaster-Core/Source/Libraries/",
+          "../Raycaster-Core/Source/Libraries/freetype",
+          "../Raycaster-Core/Source/Libraries/dlg",
           "../Raycaster-Core/Source/Libraries/GLFW/include",
           "../Raycaster-Core/Source/Libraries/glad/include",
           "../Raycaster-Core/Source/Libraries/glad/src",
@@ -30,6 +32,7 @@ project "Raycaster-App"
 
    libdirs
    {
+      "../Raycaster-Core/Source/Libraries/freetype",
       "../Raycaster-Core/Source/Libraries/GLFW/include",
       "../Raycaster-Core/Source/Libraries/GLFW/lib-vc2022",
    }
@@ -38,6 +41,7 @@ project "Raycaster-App"
    {
       "Raycaster-Core",
       "glfw3",
+      "freetype",
    }
 
    filter { "system:windows" }

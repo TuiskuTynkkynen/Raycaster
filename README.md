@@ -12,6 +12,10 @@ External dependencies should be added to Raycaster-Core/Source/Libraries
 - [GLM](https://glm.g-truc.net/0.9.8/) OpenGL mathematics library  
   - Version 0.9.8.5  
   - In Raycaster-Core/Source/Libraries/glm  
-- [stb](https://github.com/nothings/stb/blob/master/stb_image.h) for image parsing 
+- [stb](https://github.com/nothings/stb/blob/master/stb_image.h) for image parsing  
   -  Just the stb_image header file  
   -  In Raycaster-Core/Source/Libraries/utils  
+- [FreeType](https://freetype.org/) for font parsing  
+  -  Version 2.13.2  
+  -  Cannot be in seperate directory  
+  -  In Raycaster-Core/Source/Libraries  

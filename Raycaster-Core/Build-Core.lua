@@ -7,14 +7,17 @@ project "Raycaster-Core"
 
    files { 
       "Source/**.h", "Source/**.cpp",
+      "Source/Libraries/**",
       "Source/Libraries/GLFW/**",
-      "Source/Libraries/glad/**"
+      "Source/Libraries/glad/**",
    }
 
    includedirs
    {
       "Source",
       "Source/Libraries/",
+      "Source/Libraries/freetype/",
+      "Source/Libraries/dlg/",
       "Source/Libraries/GLFW/include",
       "Source/Libraries/glad/include",
       "Source/Libraries/glad/src",
