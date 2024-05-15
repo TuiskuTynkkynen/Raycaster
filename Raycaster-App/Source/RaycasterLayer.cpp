@@ -8,6 +8,12 @@ float frameTime = 0;
 
 void RaycasterLayer::OnAttach() {
     Core::Renderer2D::SetTextureAtlas("wolfenstein_texture_atlas.png", 11, 2);
+
+    std::shared_ptr<Core::Font> font = std::make_shared<Core::Font>(false);
+    font->AddCharacterRange(' ', '~'); //Printable ASCII
+    font->AddCharacterRange(0x00A1, 0x0FF); //Printable Latin-1 Supplement
+    font->GenerateAtlas("tiny5/tiny5-Medium.ttf", 8);
+    Core::Renderer2D::SetFont(font);
 }
 
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 

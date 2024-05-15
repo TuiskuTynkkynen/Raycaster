@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Camera.h"
+#include "Font.h"
 
 #include <string>
 
@@ -27,5 +28,6 @@ namespace Core {
 
 		static void SetLineWidth(uint32_t width);
 		static void SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height);
+		static void SetFont(std::shared_ptr<Font> font);
 	};
 }

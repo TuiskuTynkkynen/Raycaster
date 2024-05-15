@@ -6,7 +6,6 @@
 #include "ElementBuffer.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "Font.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -28,7 +27,7 @@ struct Renderer2DDAta {
 
 	std::unique_ptr<Core::Texture2D> TextureAtlas;
 
-	std::unique_ptr<Core::Font> Font;
+	std::shared_ptr<Core::Font> Font;
 
 	glm::mat4 ViewProjection;
 
@@ -100,11 +99,8 @@ namespace Core {
 		s_Data.FlatShader = std::make_unique<Shader>("2DFlatShader.glsl");
 
 		s_Data.TextShader = std::make_unique<Shader>("TextShader.glsl");
-		s_Data.Font = std::make_unique<Font>(false);
-		s_Data.Font->AddCharacterRange(' ', '~'); //Printable ASCII
-		s_Data.Font->AddCharacterRange(0x00A1, 0x0FF); //Printable Latin-1 Supplement
-		s_Data.Font->GenerateAtlas("tiny5/tiny5-Medium.ttf", 8);
-		
+		s_Data.Font = std::make_shared<Font>();
+
 		s_Data.ViewProjection = glm::mat4(1.0f);
 	}
 
@@ -282,6 +278,10 @@ namespace Core {
 		s_Data.atlasWidth = width;
 		s_Data.atlasHeight = height;
 		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
+	}
+
+	void Renderer2D::SetFont(std::shared_ptr<Font> font) {
+		s_Data.Font = font;
 	}
 
 	template void Renderer2D::DrawString<std::string>(const std::string&, float, float, float, const glm::vec3&);
