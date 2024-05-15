@@ -172,7 +172,6 @@ namespace Core {
 
 		s_Data.FlatShader->setMat4("transform", transform);
 
-		s_Data.QuadVertexArray->Bind();
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 
@@ -187,7 +186,6 @@ namespace Core {
 
 		s_Data.FlatShader->setMat4("transform", transform);
 
-		s_Data.QuadVertexArray->Bind();
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 
@@ -202,7 +200,6 @@ namespace Core {
 
 		s_Data.FlatShader->setMat4("transform", transform);
 		
-		s_Data.QuadVertexArray->Bind();
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 3);
 	}
 
