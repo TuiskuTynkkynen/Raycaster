@@ -6,6 +6,10 @@ float timeDelta = 0;
 uint32_t frameCount = 0;
 float frameTime = 0;
 
+void RaycasterLayer::OnAttach() {
+    Core::Renderer2D::SetTextureAtlas("wolfenstein_texture_atlas.png", 11, 2);
+}
+
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
     static glm::mat4 identity(1.0f);
     

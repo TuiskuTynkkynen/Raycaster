@@ -26,5 +26,6 @@ namespace Core {
 		static void DrawString(const T& text, float x, float y, float scale, const glm::vec3& colour);
 
 		static void SetLineWidth(uint32_t width);
+		static void SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height);
 	};
 }

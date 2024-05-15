@@ -83,13 +83,18 @@ namespace Core {
 		s_Data.TextureShader->Bind();
 		
 		s_Data.TextureAtlas = std::make_unique<Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
-		s_Data.TextureAtlas->BindImage("wolfenstein_texture_atlas.png");
-
-		s_Data.TextureAtlas->Activate(0);
+		{
+			unsigned char missingTextureData[] = {
+				0, 0, 0, 255,
+				255, 0, 255, 255,
+				255, 0, 255, 255,
+				0, 0, 0, 255,
+			};
+			s_Data.TextureAtlas->BindData(missingTextureData, 2, 2, 4);
+		}
 		s_Data.TextureShader->setInt("tex", 0);
 
-		s_Data.atlasWidth = 11;
-		s_Data.atlasHeight = 2;
+		s_Data.atlasWidth = s_Data.atlasHeight = 1;
 		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
 
 		s_Data.FlatShader = std::make_unique<Shader>("2DFlatShader.glsl");
@@ -269,6 +274,14 @@ namespace Core {
 
 	void Renderer2D::SetLineWidth(uint32_t width) {
 		RenderAPI::SetLineWidth(width);
+	}
+
+	void Renderer2D::SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height) {
+		s_Data.TextureAtlas->BindImage(fileName);
+
+		s_Data.atlasWidth = width;
+		s_Data.atlasHeight = height;
+		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
 	}
 
 	template void Renderer2D::DrawString<std::string>(const std::string&, float, float, float, const glm::vec3&);
