@@ -11,7 +11,7 @@ namespace Core {
 	public: 
 		static void Init();
 
-		static void BeginScene(RaycasterCamera& camera);
+		static void BeginScene(Camera& camera);
 		static void BeginScene(glm::mat4& transform);
 		static void Clear(glm::vec3& colour);
 

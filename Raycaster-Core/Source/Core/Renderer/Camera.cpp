@@ -29,13 +29,11 @@ namespace Core {
         updateCameraVectors();
     }
 
-    glm::mat4 FlyCamera::GetViewMatrix()
-    {
+    glm::mat4 FlyCamera::GetViewMatrix() {
         return glm::lookAt(position, position + direction, m_cameraUp);
     }
 
-    void FlyCamera::ProcessKeyboard(CameraMovement movement, float deltaTime)
-    {
+    void FlyCamera::ProcessKeyboard(CameraMovement movement, float deltaTime) {
         float velocity = m_movementSpeed * deltaTime;
 
         switch (movement)
@@ -61,8 +59,7 @@ namespace Core {
         }
     }
 
-    void FlyCamera::ProcessMouseMovement(float offsetX, float offsetY, bool constrainPitch = true)
-    {
+    void FlyCamera::ProcessMouseMovement(float offsetX, float offsetY, bool constrainPitch = true) {
         offsetX *= m_mouseSensitivity;
         offsetY *= m_mouseSensitivity;
 
@@ -81,8 +78,7 @@ namespace Core {
         updateCameraVectors();
     }
 
-    void FlyCamera::ProcessMouseScroll(float offset)
-    {
+    void FlyCamera::ProcessMouseScroll(float offset) {
         fov -= offset;
         if (fov < 1.0f) {
             fov = 1.0f;
@@ -92,8 +88,7 @@ namespace Core {
         }
     }
 
-    void FlyCamera::updateCameraVectors()
-    {
+    void FlyCamera::updateCameraVectors() {
         glm::vec3 front;
         front.x = cos(glm::radians(m_cameraYaw)) * cos(glm::radians(m_cameraPitch));
         front.y = sin(glm::radians(m_cameraPitch));
@@ -135,8 +130,7 @@ namespace Core {
         plane = glm::normalize(glm::cross(direction, worldUp2D));
     }
 
-    glm::mat4 RaycasterCamera::GetViewMatrix()
-    {
+    glm::mat4 RaycasterCamera::GetViewMatrix() {
         return glm::translate(glm::mat4(1.0f), -position);
     }
 

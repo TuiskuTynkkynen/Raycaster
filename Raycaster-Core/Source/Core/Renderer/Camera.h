@@ -13,7 +13,12 @@ namespace Core {
 		DOWN,
 	};
 
-	class FlyCamera
+	class Camera {
+	public:
+		virtual glm::mat4 GetViewMatrix() = 0;
+	};
+
+	class FlyCamera : public Camera
 	{
 	private:
 		glm::vec3 m_cameraUp;
@@ -36,13 +41,13 @@ namespace Core {
 		FlyCamera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
 
 		glm::mat4 GetViewMatrix();
+
 		void ProcessKeyboard(CameraMovement direction, float deltaTime);
 		void ProcessMouseMovement(float offsetX, float offsetY, bool constrainPitch);
 		void ProcessMouseScroll(float offset);
 	};
 
-	class RaycasterCamera //2D Camera
-	{
+	class RaycasterCamera : public Camera { //2D Camera
 	private:
 		float m_cameraYaw;
 		const float m_reciprocalCentre;

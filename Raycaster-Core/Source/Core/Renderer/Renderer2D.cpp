@@ -104,7 +104,7 @@ namespace Core {
 		s_Data.ViewProjection = glm::mat4(1.0f);
 	}
 
-	void Renderer2D::BeginScene(RaycasterCamera& camera) {
+	void Renderer2D::BeginScene(Camera& camera) {
 		s_Data.ViewProjection = camera.GetViewMatrix();
 
 		s_Data.FlatShader->Bind();
