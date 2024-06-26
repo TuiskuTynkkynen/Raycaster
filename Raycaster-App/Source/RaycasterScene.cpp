@@ -150,12 +150,13 @@ void RaycasterScene::Init(){
     tile.IsTriangle = false;
     m_Tiles.push_back(tile);
     m_Tiles.push_back(tile);
+
+    Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     if (!m_Paused) {
-        glm::vec3 colour = glm::vec3(0.05f, 0.075f, 0.1f);
-        Core::Renderer2D::Clear(colour);
+        Core::RenderAPI::Clear();
 
         //Static objects
         m_SpriteObjects[0].Position = glm::vec3(3.0f, 2.5f, 0.25f);

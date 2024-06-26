@@ -13,9 +13,6 @@ namespace Core {
 
 		static void BeginScene(Camera& camera);
 		static void BeginScene(glm::mat4& transform);
-		static void Clear(glm::vec3& colour);
-
-		static void SetViewPort(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height);
 
 		static void DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale, uint32_t atlasIndex = 0, float textureRotate = 0.0f);
 		static void DrawFlatQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour);
@@ -26,7 +23,6 @@ namespace Core {
 		template <typename T>
 		static void DrawString(const T& text, float x, float y, float scale, const glm::vec3& colour);
 
-		static void SetLineWidth(uint32_t width);
 		static void SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height);
 		static void SetFont(std::shared_ptr<Font> font);
 	};

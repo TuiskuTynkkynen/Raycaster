@@ -19,7 +19,7 @@ void RaycasterLayer::OnAttach() {
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
     static glm::mat4 identity(1.0f);
     
-    Core::Renderer2D::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
+    Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(identity);
     
     std::vector<Core::Ray> rays = m_Scene->GetRays();
@@ -97,7 +97,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
 
     glm::vec3 colour = glm::vec3(0.05f, 0.075f, 0.1f);
     
-    Core::Renderer2D::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
+    Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(m_Scene->GetCamera());
 
     std::vector<Core::Tile> tiles = m_Scene->GetTiles();

@@ -134,15 +134,6 @@ namespace Core {
 		s_Data.TextureAtlas->Activate(0);
 	}
 
-	void Renderer2D::Clear(glm::vec3& colour) {
-		RenderAPI::SetClearColour(colour);
-		RenderAPI::Clear();
-	}
-
-	void Renderer2D::SetViewPort(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height) {
-		RenderAPI::SetViewPort(offsetX, offsetY, width, height);
-	}
-
 	void Renderer2D::DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
 		RenderAPI::SetDepthBuffer(false);
 
@@ -266,10 +257,6 @@ namespace Core {
 			RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 			x += glyph.Advance * scale;
 		}
-	}
-
-	void Renderer2D::SetLineWidth(uint32_t width) {
-		RenderAPI::SetLineWidth(width);
 	}
 
 	void Renderer2D::SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height) {
