@@ -5,22 +5,19 @@
 
 #include <glm/glm.hpp>
 
-namespace Core {
-	static class RenderAPI {
-	public:
-		static void Init();
+namespace Core::RenderAPI {
+    void Init();
 
-		static void SetViewPort(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height);
-		static void SetClearColour(glm::vec3& colour);
-		static void SetClearColour(float r, float g, float b);
-		static void Clear();
+    void SetViewPort(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height);
+    void SetClearColour(const glm::vec3& colour);
+    void SetClearColour(float r, float g, float b);
+    void Clear();
 
-		static void DrawVertices(VertexArray& array, uint32_t vertexCount);
-		static void DrawIndexed(VertexArray& array, uint32_t indexCount);
-		static void DrawLines(VertexArray& array, uint32_t vertexCount);
+    void DrawVertices(const VertexArray& array, uint32_t vertexCount);
+    void DrawIndexed(const VertexArray& array, uint32_t indexCount);
+    void DrawLines(const VertexArray& array, uint32_t vertexCount);
 
-		static void SetLineWidth(uint32_t width);
-		static void SetDepthBuffer(bool enabled);
-	};
+    void SetLineWidth(uint32_t width);
+    void SetDepthBuffer(bool enabled);
 }
 
