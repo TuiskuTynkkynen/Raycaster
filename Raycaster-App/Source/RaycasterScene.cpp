@@ -47,6 +47,8 @@ void RaycasterScene::Init(){
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.8f));
     m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.8f));
 
+    InitWalls();
+
     Enemy e;
     e.Position = glm::vec3(8.5f, 6.5f, 0.4f);
     e.Scale = glm::vec3(0.8f);
@@ -61,93 +63,8 @@ void RaycasterScene::Init(){
         m_EnemyMap[i] = s_MapData.map[i];
     }
 
-    tile.Colour = glm::vec3(1.0f);
-    tile.IsTriangle = true;
-
-    int32_t directions[] = {
-        1, -1, s_MapData.width, -s_MapData.width, 0 //R, L, D, U 
-    };
-
-    for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
-        if (s_MapData.map[startIndex] >= 0) {
-            continue;
-        }
-
-        uint32_t dir1 = 5;
-        uint32_t dir2 = 5;
-        for (uint32_t i = 0; i < 4; i++) {
-            uint32_t cur = startIndex + directions[i];
-            if (cur >= s_MapData.size || s_MapData.map[cur] == 0) {
-                continue;
-            }
-
-            if (dir1 == 5) {
-                dir1 = i;
-            } else {
-                dir2 = i;
-            }
-        }
-
-        glm::vec2 point1(startIndex % s_MapData.width, startIndex / s_MapData.width);
-
-        tile.Posistion.x = (point1.x - centreX) * s_MapData.mapScale.x;
-        tile.Posistion.y = (centreY - point1.y) * s_MapData.mapScale.y;
-        tile.Rotation = dir1 == 1 ? 180.0f : 0.0f;
-        tile.Rotation -= dir2 - dir1 == 2 ? 90.0f : 0.0f;
-        m_Tiles.push_back(tile);
-        
-        glm::vec2 point2 = point1;
-
-        if (dir2 - dir1 == 2) {
-            point1.x++;
-            point2.y++;
-        }
-        else {
-            point2.x++;
-            point2.y++;
-        }
-
-        m_Diagonals.emplace_back(point1.x, point1.y, point2.x, point2.y);
-        m_Walls.emplace_back(point1, point2);
-    }
-
-
-    for (uint32_t i = 0; i < 4; i++) {
-        std::vector<glm::vec2> points;
-        for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
-            uint32_t cur = startIndex + directions[i];
-            if (s_MapData.map[startIndex] <= 0 || cur >= s_MapData.size) {
-                continue;
-            }
-
-            if (s_MapData.map[cur] == 0) {
-                int f = i == 0 || i == 2 ? i : 4;
-                int b = i == 1 || i == 3 ? -1 : 1;
-
-                cur = startIndex + b * directions[(i + 2) % 4] + directions[f];
-                glm::vec2 point1((startIndex + directions[f]) % s_MapData.width, (startIndex + directions[f]) / s_MapData.width);
-                glm::vec2 point2(cur % s_MapData.width, cur / s_MapData.width);
-
-
-                auto iter = std::find(points.begin(), points.end(), point1);
-                if (iter != points.end()) {
-                    *iter = point2;         //if duplicate 
-                }
-                else {
-                    points.push_back(point1);
-                    points.push_back(point2);
-                }
-            }
-        }
-
-        for (int j = 0; j < points.size(); j += 2) {
-            m_Walls.emplace_back(points[j], points[j +1]);
-        }
-    }
-
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
     tile.Scale = m_Player.Scale;
-    tile.IsTriangle = false;
     m_Tiles.push_back(tile);
     m_Tiles.push_back(tile);
 
@@ -525,5 +442,94 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
         uint32_t centreY = s_MapData.height * 0.5f, centreX = s_MapData.width * 0.5f;
         m_Tiles[tileIndex - i].Posistion.x = (enemy.Position.x - centreX) * s_MapData.mapScale.x;
         m_Tiles[tileIndex - i].Posistion.y = (centreY - enemy.Position.y) * s_MapData.mapScale.y;
+    }
+}
+
+void RaycasterScene::InitWalls() {
+    const int32_t directions[] = {
+        1, -1, s_MapData.width, -s_MapData.width, 0 //R, L, D, U 
+    };
+    const float centreY = (s_MapData.height - 1.0f) / 2, centreX = (s_MapData.width - 1.0f) / 2;
+
+    Core::Tile tile;
+    tile.Scale = glm::vec3(0.95f * s_MapData.mapScale.x, 0.95f * s_MapData.mapScale.y, 1.0f);
+    tile.Colour = glm::vec3(1.0f);
+    tile.IsTriangle = true;
+
+    glm::vec2 point1, point2;
+
+    for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
+        if (s_MapData.map[startIndex] >= 0) {
+            continue;
+        }
+
+        point1.x = point2.x = startIndex % s_MapData.width;
+        point1.y = point2.y = startIndex / s_MapData.width;
+        
+        uint32_t dir1 = 5;
+        uint32_t dir2 = 5;
+        for (uint32_t i = 0; i < 4; i++) {
+            uint32_t test = startIndex + directions[i];
+         
+            if (test >= s_MapData.size || s_MapData.map[test] == 0) {
+                continue;
+            }
+
+            if (dir1 == 5) {
+                dir1 = i;
+            } else {
+                dir2 = i;
+            }
+        }
+        
+        tile.Posistion.x = (point1.x - centreX) * s_MapData.mapScale.x;
+        tile.Posistion.y = (centreY - point1.y) * s_MapData.mapScale.y;
+        tile.Rotation = dir1 == 1 || dir1 + dir2 > 5 ? 180.0f : 0.0f;
+        tile.Rotation -= dir2 - dir1 == 2 ? 90.0f : 0.0f;
+        m_Tiles.push_back(tile);
+
+        if (dir2 - dir1 == 2) {
+            point1.x++;
+            point2.y++;
+        } else {
+            point2++;
+        }
+
+        m_Diagonals.emplace_back(point1.x, point1.y, point2.x, point2.y);
+        m_Walls.emplace_back(point1, point2);
+    }
+
+    std::vector<glm::vec2> points;
+    for (uint32_t i = 0; i < 4; i++) {
+        for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
+            uint32_t current = startIndex + directions[i];
+            if (s_MapData.map[startIndex] <= 0 || current >= s_MapData.size || s_MapData.map[current] != 0) {
+                continue;
+            }
+            
+            int32_t offset = i % 2 == 0 ? directions[i] : 0;
+            current = startIndex + offset;
+    
+            point1.x = current % s_MapData.width;
+            point1.y = current / s_MapData.width;
+
+            current += abs(directions[(i + 2) % 4]); // rotate 2nd point 90 deg ahead
+
+            point2.x = current % s_MapData.width;
+            point2.y = current / s_MapData.width;
+
+            auto iterator = std::find(points.begin(), points.end(), point1);
+            if (iterator != points.end()) {
+                *iterator = point2;         //if 1st point already exist, line end point can be updated
+            } else {
+                points.push_back(point1);
+                points.push_back(point2);
+            }
+        }
+
+        for (int j = 0; j < points.size(); j += 2) {
+            m_Walls.emplace_back(points[j], points[j + 1]);
+        }
+        points.clear();
     }
 }

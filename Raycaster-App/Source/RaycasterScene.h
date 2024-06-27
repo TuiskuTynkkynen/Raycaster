@@ -97,6 +97,7 @@ private:
     void CastRays();
     void RenderSprites();
     void UpdateEnemies(Core::Timestep deltaTime);
+    void InitWalls();
 public: 
     void Init() override;
     void Shutdown() override {}
