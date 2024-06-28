@@ -2,161 +2,162 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
-// Default camera values
-const float YAW = -90.0f;
-const float PITCH = 0.0f;
-const float SPEED = 5.0f;
-const float SENSITIVITY = 0.1f;
-const float FOV = 45.0f; 
-
 const glm::vec3 worldUp2D = glm::vec3(0.0f, 0.0f, 1.0f);
 
 namespace Core {
-    FlyCamera::FlyCamera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH)
-        : position(position), m_movementSpeed(SPEED), m_mouseSensitivity(SENSITIVITY), fov(FOV), m_worldUp(up), m_cameraYaw(yaw), m_cameraPitch(pitch)
+    FlyCamera::FlyCamera(const glm::vec3& position, const glm::vec3& up, float yaw, float pitch)
+        : m_Position(position), m_MovementSpeed(SPEED), m_MouseSensitivity(SENSITIVITY), m_Fov(FOV), m_WorldUp(up), m_CameraYaw(yaw), m_CameraPitch(pitch)
     {
-       direction = glm::vec3(0.0f, 0.0f, -1.0f);
-       updateCameraVectors();
+       m_Direction = glm::vec3(0.0f, 0.0f, -1.0f);
+       UpdateCameraVectors();
     }
 
     FlyCamera::FlyCamera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch)
-        : m_movementSpeed(SPEED), m_mouseSensitivity(SENSITIVITY), fov(FOV), m_cameraYaw(yaw), m_cameraPitch(pitch)
+        : m_MovementSpeed(SPEED), m_MouseSensitivity(SENSITIVITY), m_Fov(FOV), m_CameraYaw(yaw), m_CameraPitch(pitch)
     {
-        direction = glm::vec3(0.0f, 0.0f, -1.0f);
-        position = glm::vec3(posX, posY, posZ);
-        m_worldUp = glm::vec3(upX, upY, upZ);
-        updateCameraVectors();
+        m_Direction = glm::vec3(0.0f, 0.0f, -1.0f);
+        m_Position = glm::vec3(posX, posY, posZ);
+        m_WorldUp = glm::vec3(upX, upY, upZ);
+        UpdateCameraVectors();
     }
 
     glm::mat4 FlyCamera::GetViewMatrix() {
-        return glm::lookAt(position, position + direction, m_cameraUp);
+        return glm::lookAt(m_Position, m_Position + m_Direction, m_CameraUp);
     }
 
     void FlyCamera::ProcessKeyboard(CameraMovement movement, float deltaTime) {
-        float velocity = m_movementSpeed * deltaTime;
+        float velocity = m_MovementSpeed * deltaTime;
 
         switch (movement)
         {
         case FORWARD:
-            position += direction * velocity;
+            m_Position += m_Direction * velocity;
             break;
         case BACKWARD:
-            position -= direction * velocity;
+            m_Position -= m_Direction * velocity;
             break;
         case RIGHT:
-            position += m_cameraRight * velocity;
+            m_Position += m_CameraRight * velocity;
             break;
         case LEFT:
-            position -= m_cameraRight * velocity;
+            m_Position -= m_CameraRight * velocity;
             break;
         case UP:
-            position += m_worldUp * velocity;
+            m_Position += m_WorldUp * velocity;
             break;
         case DOWN:
-            position -= m_worldUp * velocity;
+            m_Position -= m_WorldUp * velocity;
             break;
         }
     }
 
     void FlyCamera::ProcessMouseMovement(float offsetX, float offsetY, bool constrainPitch = true) {
-        offsetX *= m_mouseSensitivity;
-        offsetY *= m_mouseSensitivity;
+        offsetX *= m_MouseSensitivity;
+        offsetY *= m_MouseSensitivity;
 
-        m_cameraYaw += offsetX;
-        m_cameraPitch += offsetY;
+        m_CameraYaw += offsetX;
+        m_CameraPitch += offsetY;
 
         if (constrainPitch){
-            if (m_cameraPitch > 89.0f) {
-                m_cameraPitch = 89.0f;
+            if (m_CameraPitch > 89.0f) {
+                m_CameraPitch = 89.0f;
             } 
-            if (m_cameraPitch < -89.0f) {
-                m_cameraPitch = -89.0f;
+            if (m_CameraPitch < -89.0f) {
+                m_CameraPitch = -89.0f;
             }
         }
 
-        updateCameraVectors();
+        UpdateCameraVectors();
     }
 
     void FlyCamera::ProcessMouseScroll(float offset) {
-        fov -= offset;
-        if (fov < 1.0f) {
-            fov = 1.0f;
+        m_Fov -= offset;
+        if (m_Fov < 1.0f) {
+            m_Fov = 1.0f;
         }
-        if (fov > 90.0f) {
-            fov = 90.0f;
+        if (m_Fov > 90.0f) {
+            m_Fov = 90.0f;
         }
     }
+    
+    void FlyCamera::UpdateCamera(const glm::vec3& position, float yaw, float pitch) {
+        m_Position = position;
+        m_CameraYaw = yaw;
+        m_CameraPitch = pitch;
 
-    void FlyCamera::updateCameraVectors() {
+        UpdateCameraVectors();
+    }
+
+    void FlyCamera::UpdateCameraVectors() {
         glm::vec3 front;
-        front.x = cos(glm::radians(m_cameraYaw)) * cos(glm::radians(m_cameraPitch));
-        front.y = sin(glm::radians(m_cameraPitch));
-        front.z = sin(glm::radians(m_cameraYaw)) * cos(glm::radians(m_cameraPitch));
-        direction = glm::normalize(front);
+        front.x = cos(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch));
+        front.y = sin(glm::radians(m_CameraPitch));
+        front.z = sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch));
+        m_Direction = glm::normalize(front);
         
-        m_cameraRight = glm::normalize(glm::cross(direction, m_worldUp));
-        m_cameraUp = glm::normalize(glm::cross(m_cameraRight, direction));
+        m_CameraRight = glm::normalize(glm::cross(m_Direction, m_WorldUp));
+        m_CameraUp = glm::normalize(glm::cross(m_CameraRight, m_Direction));
     }
 
 
-    RaycasterCamera::RaycasterCamera(glm::vec3 playerPosition, float yaw, float centre, float width, float height) 
-        : m_reciprocalCentre(1 / centre), m_halfWidth(width/2), m_halfHeight(height/2), m_cameraYaw(yaw)
+    
+    RaycasterCamera::RaycasterCamera(const glm::vec3& playerPosition, float yaw, float centre, float width, float height) 
+        : m_ReciprocalCentre(1 / centre), m_HalfWidth(width/2), m_HalfHeight(height/2), m_CameraYaw(yaw)
     {
-        position = glm::vec3(0.0f);
-        position.x = (playerPosition.x - m_halfWidth) * m_reciprocalCentre;
-        position.y = (m_halfHeight - playerPosition.y) * m_reciprocalCentre;
+        m_Position = glm::vec3(0.0f);
+        m_Position.x = (playerPosition.x - m_HalfWidth) * m_ReciprocalCentre;
+        m_Position.y = (m_HalfHeight - playerPosition.y) * m_ReciprocalCentre;
 
         glm::vec3 front(0.0f);
-        front.x = cos(glm::radians(m_cameraYaw));
-        front.y = sin(glm::radians(m_cameraYaw));
+        front.x = cos(glm::radians(m_CameraYaw));
+        front.y = sin(glm::radians(m_CameraYaw));
 
-        direction = glm::normalize(front);
-        plane = glm::normalize(glm::cross(direction, worldUp2D));
+        m_Direction = glm::normalize(front);
+        m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
     }
 
     RaycasterCamera::RaycasterCamera(float posX, float posY, float yaw, float centre, float width, float height) 
-        : m_reciprocalCentre(1 / centre), m_halfWidth(width/2), m_halfHeight(height/2), m_cameraYaw(yaw)
+        : m_ReciprocalCentre(1 / centre), m_HalfWidth(width/2), m_HalfHeight(height/2), m_CameraYaw(yaw)
     {
-        position = glm::vec3(0.0f);
-        position.x = (posX - m_halfWidth) * m_reciprocalCentre;
-        position.y = (m_halfHeight - posY) * m_reciprocalCentre;
+        m_Position = glm::vec3(0.0f);
+        m_Position.x = (posX - m_HalfWidth) * m_ReciprocalCentre;
+        m_Position.y = (m_HalfHeight - posY) * m_ReciprocalCentre;
 
         glm::vec3 front(0.0f);
-        front.x = cos(glm::radians(m_cameraYaw));
-        front.y = sin(glm::radians(m_cameraYaw));
+        front.x = cos(glm::radians(m_CameraYaw));
+        front.y = sin(glm::radians(m_CameraYaw));
 
-        direction = glm::normalize(front);
-        plane = glm::normalize(glm::cross(direction, worldUp2D));
+        m_Direction = glm::normalize(front);
+        m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
     }
 
     glm::mat4 RaycasterCamera::GetViewMatrix() {
-        return glm::translate(glm::mat4(1.0f), -position);
+        return glm::translate(glm::mat4(1.0f), -m_Position);
     }
 
     void RaycasterCamera::UpdateCamera(const glm::vec3& playerPosition, float yaw) {
-        position.x = (playerPosition.x - m_halfWidth) * m_reciprocalCentre;
-        position.y = (m_halfHeight - playerPosition.y) * m_reciprocalCentre;
+        m_Position.x = (playerPosition.x - m_HalfWidth) * m_ReciprocalCentre;
+        m_Position.y = (m_HalfHeight - playerPosition.y) * m_ReciprocalCentre;
 
-        m_cameraYaw = yaw;
+        m_CameraYaw = yaw;
         glm::vec3 front(0.0f);
-        front.x = cos(glm::radians(m_cameraYaw));
-        front.y = sin(glm::radians(m_cameraYaw));
+        front.x = cos(glm::radians(m_CameraYaw));
+        front.y = sin(glm::radians(m_CameraYaw));
 
-        direction = glm::normalize(front);
-        plane = glm::normalize(glm::cross(direction, worldUp2D));
+        m_Direction = glm::normalize(front);
+        m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
     }
 
     void RaycasterCamera::UpdateCamera(float posX, float posY, float yaw) {
-        position.x = (posX - m_halfWidth) * m_reciprocalCentre;
-        position.y = (m_halfHeight - posY) * m_reciprocalCentre;
+        m_Position.x = (posX - m_HalfWidth) * m_ReciprocalCentre;
+        m_Position.y = (m_HalfHeight - posY) * m_ReciprocalCentre;
 
-        m_cameraYaw = yaw;
+        m_CameraYaw = yaw;
         glm::vec3 front(0.0f);
-        front.x = cos(glm::radians(m_cameraYaw));
-        front.y = sin(glm::radians(m_cameraYaw));
+        front.x = cos(glm::radians(m_CameraYaw));
+        front.y = sin(glm::radians(m_CameraYaw));
 
-        direction = glm::normalize(front);
-        plane = glm::normalize(glm::cross(direction, worldUp2D));
+        m_Direction = glm::normalize(front);
+        m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
     }
 }

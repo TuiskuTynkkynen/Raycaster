@@ -121,7 +121,7 @@ void RaycasterScene::CastRays() {
     //Wall casting
     for (uint32_t i = 0; i < m_RayCount; i++) {
         float cameraX = 2 * i / float(m_RayCount) - 1;
-        glm::vec3 rayDirection = m_Camera->direction + m_Camera->plane * cameraX;
+        glm::vec3 rayDirection = m_Camera->GetDirection() + m_Camera->GetPlane() * cameraX;
         glm::vec3 deltaDistance = glm::abs((float)1 / rayDirection);
 
         uint32_t mapX = m_Player.Position.x;
@@ -238,14 +238,14 @@ void RaycasterScene::CastRays() {
 
     //Floor and ceiling "casting"
     for (uint32_t i = 0; i < m_RayCount; i++) {
-        glm::vec3 rayDirection = m_Camera->direction - m_Camera->plane;
+        glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
         float scale = abs(m_RayCount / (2 * (float)i - m_RayCount)); // = 1.0f / abs(2 * i / m_RayCount - 1)
 
         m_Rays[m_RayCount + i].Scale = scale;
         m_Rays[m_RayCount + i].TexPosition.x = scale * 0.5f * rayDirection.x + m_Player.Position.x;
         m_Rays[m_RayCount + i].TexPosition.y = scale * 0.5f * rayDirection.y - m_Player.Position.y;
 
-        glm::vec2 worldPosition(scale * 0.5f * m_Camera->direction.x + m_Player.Position.x, scale * 0.5f * -m_Camera->direction.y + m_Player.Position.y);
+        glm::vec2 worldPosition(scale * 0.5f * m_Camera->GetDirection().x + m_Player.Position.x, scale * 0.5f * -m_Camera->GetDirection().y + m_Player.Position.y);
 
         float brightness = 0.0f;
         for (glm::vec2 lightPos : m_Lights) {
