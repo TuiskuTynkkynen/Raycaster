@@ -67,6 +67,7 @@ private:
         }
     };
     std::vector<SpriteObject> m_SpriteObjects;
+    std::vector<SpriteObject> m_StaticObjects;
     struct Enemy {
         glm::vec3 Position;
         glm::vec3 Scale;
@@ -100,6 +101,7 @@ private:
     void RenderSprites();
     void UpdateEnemies(Core::Timestep deltaTime);
     void InitWalls();
+    void InitModels();
 public: 
     void Init() override;
     void Shutdown() override {}

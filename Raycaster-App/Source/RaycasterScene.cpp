@@ -1,8 +1,10 @@
 #include "RaycasterScene.h"
 
 #include <glm/gtx/matrix_transform_2d.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <algorithm>
+#include <ranges>
 #include <iostream>
 
 RaycasterScene::MapData RaycasterScene::s_MapData;
@@ -25,6 +27,7 @@ void RaycasterScene::Init(){
     m_Player.Rotation = 90.0f;
 
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, s_MapData.mapScalingFactor, s_MapData.width, s_MapData.height);
+    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
     
     Core::Tile tile;
     tile.Scale = glm::vec3(0.95f * s_MapData.mapScale.x, 0.95f * s_MapData.mapScale.y, 1.0f);
@@ -44,10 +47,24 @@ void RaycasterScene::Init(){
         m_Tiles.push_back(tile);
     }
 
-    m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.8f));
-    m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.8f));
+    m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
+    m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.75f));
+    
+    SpriteObject staticObject;
+    staticObject.Position = glm::vec3(3.0f, 2.5f, 0.25f);
+    staticObject.Scale = glm::vec3(0.5f, 0.5f, 0.5f);
+    staticObject.AtlasIndex = 8;
+    staticObject.FlipTexture = false;
+    
+    m_StaticObjects.push_back(staticObject);
+    staticObject.Position.x = 2.5f;
+    m_StaticObjects.push_back(staticObject);
 
-    InitWalls();
+    staticObject.AtlasIndex = 10;
+    for (const glm::vec3& light : m_Lights) {
+        staticObject.Position = light;
+        m_StaticObjects.push_back(staticObject);
+    }
 
     Enemy e;
     e.Position = glm::vec3(8.5f, 6.5f, 0.4f);
@@ -69,6 +86,9 @@ void RaycasterScene::Init(){
     m_Tiles.push_back(tile);
 
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
+    
+    InitWalls();
+    InitModels();
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
@@ -76,25 +96,9 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         Core::RenderAPI::Clear();
 
         //Static objects
-        m_SpriteObjects[0].Position = glm::vec3(3.0f, 2.5f, 0.25f);
-        m_SpriteObjects[0].Scale = glm::vec3(0.5f, 0.5f, 0.5f);
-        m_SpriteObjects[0].AtlasIndex = 8;
-        m_SpriteObjects[0].FlipTexture = false;
-        
-        m_SpriteObjects[1].Position = glm::vec3(2.5f, 2.5f, 0.25f);
-        m_SpriteObjects[1].Scale = glm::vec3(0.5f, 0.5f, 0.5f);
-        m_SpriteObjects[1].AtlasIndex = 8;
-        m_SpriteObjects[1].FlipTexture = false;
-
-        m_SpriteObjects[2].Position = glm::vec3(2.5f, 3.0f, 0.85f);
-        m_SpriteObjects[2].Scale = glm::vec3(0.5f, 0.5f, 0.5f);
-        m_SpriteObjects[2].AtlasIndex = 10;
-        m_SpriteObjects[2].FlipTexture = false;
-
-        m_SpriteObjects[3].Position = glm::vec3(8.5f, 6.5f, 0.85f);
-        m_SpriteObjects[3].Scale = glm::vec3(0.5f, 0.5f, 0.5f);
-        m_SpriteObjects[3].AtlasIndex = 10;
-        m_SpriteObjects[3].FlipTexture = false;
+        for (uint32_t i = 0; i < m_StaticObjects.size(); i++) {
+            m_SpriteObjects[i] = m_StaticObjects[i];
+        }
 
         ProcessInput(deltaTime);
         UpdateEnemies(deltaTime);
@@ -266,6 +270,12 @@ void RaycasterScene::RenderSprites() {
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
 
     for (uint32_t index = 0; index < count; index++) {
+        //3D
+        glm::vec3 position3D(m_SpriteObjects[index].Position.x, m_SpriteObjects[index].Position.z, m_SpriteObjects[index].Position.y);
+        m_Models[index + 1].Transform = glm::translate(glm::mat4(1.0f), position3D);
+        m_Models[index + 1].Transform = glm::rotate(m_Models[index + 1].Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        
+        //Transform for 2D
         m_SpriteObjects[index].Position -= m_Player.Position;
         m_SpriteObjects[index].Position = matrix * m_SpriteObjects[index].Position;
     }
@@ -368,11 +378,13 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
     m_Player.Position.y += col.y;
 
     m_Camera->UpdateCamera(m_Player.Position, m_Player.Rotation);
+    m_Camera3D->UpdateCamera(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), -m_Player.Rotation);
 }
 
 void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
     uint32_t count = m_Enemies.size();
     uint32_t tileIndex = m_Tiles.size() - 1;
+    uint32_t modelIndex = m_Models.size() - count;
     
     for (uint32_t i = 0; i < count; i++) {
         Enemy& enemy = m_Enemies[i];
@@ -436,12 +448,19 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
         m_SpriteObjects[4 + i].Position = enemy.Position;
         m_SpriteObjects[4 + i].Scale = enemy.Scale;
         m_SpriteObjects[4 + i].AtlasIndex = enemy.AtlasIndex + atlasOffset;
-        m_SpriteObjects[4 + i].FlipTexture = (uint32_t)enemy.Tick % 2 == 0;
+        bool flip = (uint32_t)enemy.Tick % 2 == 0;
+        m_SpriteObjects[4 + i].FlipTexture = flip;
 
         //Update on 2D-layer
         uint32_t centreY = s_MapData.height * 0.5f, centreX = s_MapData.width * 0.5f;
         m_Tiles[tileIndex - i].Posistion.x = (enemy.Position.x - centreX) * s_MapData.mapScale.x;
         m_Tiles[tileIndex - i].Posistion.y = (centreY - enemy.Position.y) * s_MapData.mapScale.y;
+
+        //Update on 3D-layer
+        uint32_t atlasWidth = 11;
+        glm::vec2 index = glm::vec2((enemy.AtlasIndex + atlasOffset) % atlasWidth, (enemy.AtlasIndex + atlasOffset) / atlasWidth);
+        m_Models[modelIndex + i].Materials.front()->Parameters.back().Value = glm::vec2(flip ? 0.0f : 1.0f, 0.0f);
+        m_Models[modelIndex + i].Materials.front()->Parameters.front().Value = index;
     }
 }
 
@@ -531,5 +550,303 @@ void RaycasterScene::InitWalls() {
             m_Walls.emplace_back(points[j], points[j + 1]);
         }
         points.clear();
+    }
+}
+
+void RaycasterScene::InitModels() {
+    std::vector<std::pair<glm::vec4, uint32_t>> walls;
+   
+    {
+        //Add horizontal and vertical walls to walls vector
+        const int32_t directions[] = {
+            1, -1, s_MapData.width, -s_MapData.width, 0 //R, L, D, U 
+        };
+
+        glm::vec3 point1, point2;
+        std::vector<glm::vec3> points;
+        for (uint32_t i = 0; i < 4; i++) {
+            for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
+                uint32_t current = startIndex + directions[i];
+                if (s_MapData.map[startIndex] <= 0 || current >= s_MapData.size || s_MapData.map[current] != 0) {
+                    continue;
+                }
+
+                int32_t offset = i % 2 == 0 ? directions[i] : 0;
+                current = startIndex + offset;
+
+                point1.z = point2.z = s_MapData.map[startIndex];
+                point1.x = current % s_MapData.width;
+                point1.y = current / s_MapData.width;
+
+                current += abs(directions[(i + 2) % 4]); // rotate 2nd point 90 deg ahead
+
+                point2.x = current % s_MapData.width;
+                point2.y = current / s_MapData.width;
+
+                auto iterator = std::find(points.begin(), points.end(), point1);
+                if (iterator != points.end()) {
+                    *iterator = point2;         //if 1st point already exist, wall end point can be updated
+                }
+                else {
+                    points.push_back(point1);
+                    points.push_back(point2);
+                }
+            }
+
+            for (uint32_t j = 0; j < points.size(); j += 2) {
+                walls.emplace_back(glm::vec4(points[j].x, points[j].y, points[j + 1].x, points[j + 1].y), abs(points[j].z));
+            }
+
+            points.clear();
+        }
+
+        //Add horizontal and vertical walls to walls vector
+        for (auto& v4 : m_Diagonals) {
+            uint32_t midX = (v4.x + v4.z) * 0.5f;
+            uint32_t midY = (v4.y + v4.w) * 0.5f;
+            uint32_t index = abs(s_MapData.map[midY * s_MapData.width + midX]);
+
+            walls.emplace_back(v4, index);
+        }
+
+        //sort walls vector by atlas texture index
+        std::sort(walls.begin(), walls.end(), [](auto& a, auto& b) {
+            return a.second < b.second;
+        });
+    }
+
+    std::vector<float> vertices;
+    std::vector<uint32_t> indices;
+    std::vector<std::pair<uint32_t, glm::uvec4>> subranges;
+    
+    {
+        subranges.emplace_back();
+
+        //Create vertices and indices from walls
+        uint32_t prevIndex = walls[0].second;
+        uint32_t vertexCount = 0;
+        uint32_t wallCount = walls.size();
+        for (uint32_t i = 0; i < wallCount; i++) {
+            auto& [wall, index] = walls[i];
+
+            if (index != prevIndex) {
+                glm::uvec4& previous = subranges.back().second;
+                glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
+                subranges.emplace_back(prevIndex, ranges);
+
+                prevIndex = index;
+                vertexCount = 0;
+            }
+
+            float dx = wall.x - wall.z;
+            float dy = wall.y - wall.w;
+            glm::vec3 normal = glm::normalize(glm::vec3(-dy, 0.0f, dx));
+
+            float uvLength = std::max(abs(dx), abs(dy)) * 0.5f;
+
+            for (uint32_t i = 0; i < 4; i++) {
+                float y = (i % 2 == 0) ? 0.0f : 1.0f;
+                uint32_t offset = i >= 2 ? 2 : 0;
+
+                //position
+                vertices.push_back(wall[0 + offset]);
+                vertices.push_back(y);
+                vertices.push_back(wall[1 + offset]);
+
+                //normal
+                vertices.push_back(normal.x);
+                vertices.push_back(normal.y);
+                vertices.push_back(normal.z);
+
+                //uv
+                vertices.push_back(offset * uvLength);
+                vertices.push_back(y);
+            }
+
+            indices.push_back(vertexCount);
+            indices.push_back(vertexCount + 1);
+            indices.push_back(vertexCount + 2);
+            indices.push_back(vertexCount + 2);
+            indices.push_back(vertexCount + 3);
+            indices.push_back(vertexCount + 1);
+
+            vertexCount += 4;
+        }
+
+        //add last mesh
+        glm::uvec4& previous = subranges.back().second;
+        glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
+        subranges.emplace_back(prevIndex, ranges);
+
+        //Create vertices and indices for floor and ceiling
+        const glm::vec4 floor(0.0f, 0.0f, s_MapData.width, s_MapData.height);
+        const glm::vec3 normal(0.0f, 1.0f, 0.0f);
+        for (uint32_t i = 0; i < 2; i++) {
+            uint32_t index = (i % 2 == 0) ? 7 : 6;
+
+            for (uint32_t j = 0; j < 4; j++) {
+                uint32_t offset = j <= 1 ? j : 5 - j;
+                float x = floor[(0 + offset) % 4];
+                float z = floor[(1 + offset) % 4];
+                //position
+                vertices.push_back(x);
+                vertices.push_back(i);
+                vertices.push_back(z);
+
+                //normal
+                vertices.push_back(normal.x);
+                vertices.push_back(normal.y);
+                vertices.push_back(normal.z);
+
+                //uv
+                vertices.push_back(x);
+                vertices.push_back(z);
+            }
+
+            indices.push_back(0);
+            indices.push_back(1);
+            indices.push_back(2);
+            indices.push_back(2);
+            indices.push_back(3);
+            indices.push_back(1);
+
+            glm::uvec4& previous = subranges.back().second;
+            glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
+            subranges.emplace_back(index, ranges);
+        }
+    }
+
+    //setup shader
+    auto shader = std::make_shared<Core::Shader>("3DAtlasShader.glsl");
+    shader->Bind();
+    shader->setInt("Texture", 0);
+
+    uint32_t lightCount = m_Lights.size();
+    glm::uvec2 atlasSize(11, 2);
+    
+    shader->setVec2("AtlasSize", atlasSize);
+    shader->setInt("LightCount", lightCount);
+    
+    for (uint32_t i = 0; i < lightCount; i++) {
+        std::string lightName = "PointLights[i]";
+        lightName[12] = '0' + i;
+        glm::vec3 pos(m_Lights[i].x, m_Lights[i].z, m_Lights[i].y);
+        shader->setVec3(lightName.c_str(), pos);
+    }
+    
+    auto textureAtlas = std::make_shared<Core::Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
+    textureAtlas->BindImage("wolfenstein_texture_atlas.png");
+
+    //Create meshes from wall, floor and ceiling vertices and attach them to map model
+    {
+        m_Models.emplace_back();
+        Core::Model& mapModel = m_Models.back();
+
+        uint32_t meshCount = 0;
+        for (auto& [index, ranges] : subranges) {
+            std::ranges::subrange vertexData(vertices.begin() + ranges.x, vertices.begin() + ranges.y);
+            std::ranges::subrange indexData(indices.begin() + ranges.z, indices.begin() + ranges.w);
+
+            if (!vertexData.size()) {
+                continue;
+            }
+
+            auto mesh = std::make_shared<Core::Mesh>();
+            mesh->VAO = std::make_unique<Core::VertexArray>();
+            mesh->VBO = std::make_unique<Core::VertexBuffer>(vertexData.data(), sizeof(float) * vertexData.size());
+            Core::VertexBufferLayout wallLayout;
+
+            wallLayout.Push<float>(3);
+            wallLayout.Push<float>(3);
+            wallLayout.Push<float>(2);
+            mesh->VAO->AddBuffer(*mesh->VBO, wallLayout);
+
+            if (indexData.size()) {
+                mesh->EBO = std::make_unique<Core::ElementBuffer>(indexData.data(), indexData.size());
+            }
+
+            mapModel.Meshes.emplace_back(mesh, meshCount);
+
+            auto mat = std::make_shared<Core::Material>();
+            mat->Shader = shader;
+            mat->MaterialMaps.emplace_back();
+            mat->MaterialMaps.back().Texture = textureAtlas;
+            mat->MaterialMaps.back().TextureIndex = 0;
+            mat->Parameters.emplace_back(glm::vec2(index, 0), "AtlasOffset");
+            mat->Parameters.emplace_back(glm::vec2(0.0f, 0.0f), "FlipTexture");
+            mapModel.Materials.push_back(mat);
+
+            meshCount++;
+        }
+    }
+
+    //Create and set up model for static objects and enemies
+    const glm::vec3 normal(0.0f, 0.0f, 1.0f);
+    const uint32_t totalCount = m_StaticObjects.size() + m_Enemies.size();
+    glm::vec3 scale;
+    glm::vec2 index;
+    for (uint32_t i = 0; i < totalCount; i++) {
+        if (i < m_StaticObjects.size()) {
+            scale = m_StaticObjects[i].Scale;
+            index = glm::vec2(m_StaticObjects[i].AtlasIndex, 0.0f);
+        } else {
+            scale = m_Enemies[i - m_StaticObjects.size()].Scale;
+            index.x = m_Enemies[i - m_StaticObjects.size()].AtlasIndex % atlasSize.x;
+            index.y = m_Enemies[i - m_StaticObjects.size()].AtlasIndex / atlasSize.x;
+        }
+        m_Models.emplace_back();
+        Core::Model& model = m_Models.back();
+
+        vertices.clear();
+        indices.clear();
+
+        for (uint32_t j = 0; j < 4; j++) {
+            float x = (j >= 2) ? scale.x * 0.5f : -scale.x * 0.5f;
+            float y = (j % 2 == 1) ? scale.y * 0.5f : - scale.y * 0.5f;
+
+            //position
+            vertices.push_back(x);
+            vertices.push_back(y);
+            vertices.push_back(0.0f);
+
+            //normal
+            vertices.push_back(normal.x);
+            vertices.push_back(normal.y);
+            vertices.push_back(normal.z);
+            
+            //uv
+            vertices.push_back((j >= 2) ? 0.0f : 1.0f);
+            vertices.push_back((j % 2 == 0) ? 0.0f : 1.0f);
+        }
+
+        indices.push_back(0);
+        indices.push_back(1);
+        indices.push_back(2);
+        indices.push_back(2);
+        indices.push_back(3);
+        indices.push_back(1);
+
+        auto mesh = std::make_shared<Core::Mesh>();
+        mesh->VAO = std::make_unique<Core::VertexArray>();
+        mesh->VBO = std::make_unique<Core::VertexBuffer>(vertices.data(), sizeof(float) * vertices.size());
+        Core::VertexBufferLayout wallLayout;
+
+        wallLayout.Push<float>(3);
+        wallLayout.Push<float>(3);
+        wallLayout.Push<float>(2);
+        mesh->VAO->AddBuffer(*mesh->VBO, wallLayout);
+
+        mesh->EBO = std::make_unique<Core::ElementBuffer>(indices.data(), indices.size());
+
+        model.Meshes.emplace_back(mesh, 0);
+
+        auto mat = std::make_shared<Core::Material>();
+        mat->Shader = shader;
+        mat->MaterialMaps.emplace_back();
+        mat->MaterialMaps.back().Texture = textureAtlas;
+        mat->MaterialMaps.back().TextureIndex = 0;
+        mat->Parameters.emplace_back(index, "AtlasOffset");
+        mat->Parameters.emplace_back(0.0f, "FlipTexture");
+        model.Materials.push_back(mat);
     }
 }
