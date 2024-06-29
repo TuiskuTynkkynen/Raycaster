@@ -104,7 +104,7 @@ namespace Core {
 		s_Data.ViewProjection = glm::mat4(1.0f);
 	}
 
-	void Renderer2D::BeginScene(Camera& camera) {
+	void Renderer2D::BeginScene(const Camera& camera) {
 		s_Data.ViewProjection = camera.GetViewMatrix();
 
 		s_Data.FlatShader->Bind();
@@ -119,7 +119,7 @@ namespace Core {
 		s_Data.TextureAtlas->Activate(0);
 	}
 
-	void Renderer2D::BeginScene(glm::mat4& transform) {
+	void Renderer2D::BeginScene(const glm::mat4& transform) {
 		s_Data.ViewProjection = transform;
 
 		s_Data.FlatShader->Bind();
@@ -134,7 +134,7 @@ namespace Core {
 		s_Data.TextureAtlas->Activate(0);
 	}
 
-	void Renderer2D::DrawTextureQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour, glm::vec2& textureOffset, glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
+	void Renderer2D::DrawTextureQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
 		RenderAPI::SetDepthBuffer(false);
 
 		s_Data.TextureShader->Bind();
@@ -153,7 +153,7 @@ namespace Core {
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 
-	void Renderer2D::DrawFlatQuad(glm::vec3& position, glm::vec3& scale, glm::vec3& colour) {
+	void Renderer2D::DrawFlatQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
 		
 		s_Data.FlatShader->Bind();
@@ -167,7 +167,7 @@ namespace Core {
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 
-	void Renderer2D::DrawRotatedFlatQuad(glm::vec3& position, float rotation, glm::vec3& rotationAxis, glm::vec3& scale, glm::vec3& colour) {
+	void Renderer2D::DrawRotatedFlatQuad(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
 		s_Data.FlatShader->Bind();
 		s_Data.FlatShader->setVec3("colour", colour);
@@ -181,7 +181,7 @@ namespace Core {
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 
-	void Renderer2D::DrawRotatedFlatTriangle(glm::vec3& position, float rotation, glm::vec3& rotationAxis, glm::vec3& scale, glm::vec3& colour) {
+	void Renderer2D::DrawRotatedFlatTriangle(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
 		s_Data.FlatShader->Bind();
 		s_Data.FlatShader->setVec3("colour", colour);
@@ -195,7 +195,7 @@ namespace Core {
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 3);
 	}
 
-	void Renderer2D::DrawLine(glm::vec3& position, glm::vec3& scale, glm::vec3& colour) {
+	void Renderer2D::DrawLine(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
 		
 		s_Data.FlatShader->Bind();

@@ -21,7 +21,7 @@ namespace Core {
         UpdateCameraVectors();
     }
 
-    glm::mat4 FlyCamera::GetViewMatrix() {
+    glm::mat4 FlyCamera::GetViewMatrix() const {
         return glm::lookAt(m_Position, m_Position + m_Direction, m_CameraUp);
     }
 
@@ -131,7 +131,7 @@ namespace Core {
         m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
     }
 
-    glm::mat4 RaycasterCamera::GetViewMatrix() {
+    glm::mat4 RaycasterCamera::GetViewMatrix() const {
         return glm::translate(glm::mat4(1.0f), -m_Position);
     }
 

@@ -20,7 +20,7 @@ namespace Core {
 
 	class Camera {
 	public:
-		virtual glm::mat4 GetViewMatrix() = 0;
+		virtual glm::mat4 GetViewMatrix() const = 0;
 	};
 
 	class FlyCamera : public Camera
@@ -45,10 +45,10 @@ namespace Core {
 		FlyCamera(const glm::vec3& position = glm::vec3(0.0f, 0.0f, 0.0f), const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 		FlyCamera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
 
-		glm::mat4 GetViewMatrix();
-		const glm::vec3& GetPosition() { return m_Position; }
-		const glm::vec3& GetDirection() { return m_Direction; }
-		float GetFov() { return m_Fov; }
+		glm::mat4 GetViewMatrix() const;
+		const glm::vec3& GetPosition() const { return m_Position; }
+		const glm::vec3& GetDirection() const { return m_Direction; }
+		float GetFov() const { return m_Fov; }
 
 		void ProcessKeyboard(CameraMovement direction, float deltaTime);
 		void ProcessMouseMovement(float offsetX, float offsetY, bool constrainPitch);
@@ -71,10 +71,10 @@ namespace Core {
 		RaycasterCamera(const glm::vec3& playerPosition, float yaw, float centre, float width, float height);
 		RaycasterCamera(float posX, float posY, float yaw, float centre, float width, float height);
 
-		glm::mat4 GetViewMatrix() override;
-		const glm::vec3& GetPosition() { return m_Position; }
-		const glm::vec3& GetDirection() { return m_Direction; }
-		const glm::vec3& GetPlane() { return m_Plane; }
+		glm::mat4 GetViewMatrix() const override;
+		const glm::vec3& GetPosition() const { return m_Position; } 
+		const glm::vec3& GetDirection() const { return m_Direction; }
+		const glm::vec3& GetPlane() const { return m_Plane; }
 
 		void UpdateCamera(const glm::vec3& playerPosition, float yaw);
 		void UpdateCamera(float posX, float posY, float yaw);

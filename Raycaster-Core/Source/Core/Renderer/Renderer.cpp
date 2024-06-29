@@ -4,11 +4,11 @@
 static glm::mat4 s_ViewProjectionMatrix = glm::mat4(1.0f);
 
 namespace Core {
-	void Renderer::BeginScene(Camera& camera) {
+	void Renderer::BeginScene(const Camera& camera) {
 		s_ViewProjectionMatrix = camera.GetViewMatrix();
 	}
 
-	void Renderer::BeginScene(glm::mat4& transform) {
+	void Renderer::BeginScene(const glm::mat4& transform) {
 		RenderAPI::SetDepthBuffer(true);
 		s_ViewProjectionMatrix = transform;
 	}
