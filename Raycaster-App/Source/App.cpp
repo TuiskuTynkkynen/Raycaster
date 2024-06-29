@@ -11,7 +11,7 @@ public:
 		
 		RaycasterLayer* layer0 = new RaycasterLayer();
 		PushLayer(layer0);
-		Layer2D* layer1 = new Layer2D();
+		Layer3D* layer1 = new Layer3D();
 		PushLayer(layer1);
 	}
 

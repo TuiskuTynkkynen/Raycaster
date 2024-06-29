@@ -137,3 +137,28 @@ bool Layer2D::OnWindowResizeEvent(Core::WindowResize& event) {
 
     return false;
 }
+
+void Layer3D::OnUpdate(Core::Timestep deltaTime) {
+    static glm::mat4 perspective = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 500.0f);
+
+    Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
+    Core::Renderer::BeginScene(perspective);
+
+    const std::vector<Core::Model>& models = m_Scene->GetModels();
+
+    for (const Core::Model& model : models) {
+        Core::Renderer::DrawModel(model);
+    }
+}
+
+void Layer3D::OnEvent(Core::Event& event) {
+    Core::EventDispatcher dispatcer(event);
+    dispatcer.Dispatch<Core::WindowResize>(std::bind(&Layer3D::OnWindowResizeEvent, this, std::placeholders::_1));
+}
+
+bool Layer3D::OnWindowResizeEvent(Core::WindowResize& event) {
+    m_ViewPortWidth = event.GetWidth() * 0.5f;
+    m_ViewPortHeight = event.GetHeight();
+
+    return false;
+}
