@@ -50,6 +50,7 @@ private:
     std::vector<Core::Line> m_Lines;
     std::vector<Core::Tile> m_Tiles;
     std::vector<Core::Sprite> m_Sprites;
+    std::vector<Core::Model> m_Models;
     std::vector<glm::vec3> m_Lights;
     float* m_ZBuffer = new float[m_RayCount];
     
@@ -90,7 +91,7 @@ private:
     float max = 0.0f;
     Core::Player m_Player;
     std::unique_ptr<Core::RaycasterCamera> m_Camera;
-    
+
     bool m_Paused = false;
     
     void ProcessInput(Core::Timestep deltaTime);
@@ -105,10 +106,11 @@ public:
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override {}
 
-    inline std::vector<Core::Ray>& GetRays() { return m_Rays;  }
-    inline std::vector<Core::Line>& GetLines() { return m_Lines;  }
-    inline std::vector<Core::Tile>& GetTiles() { return m_Tiles;  }
+    inline std::vector<Core::Ray>& GetRays() override { return m_Rays; }
+    inline std::vector<Core::Line>& GetLines() override { return m_Lines; }
+    inline std::vector<Core::Tile>& GetTiles() override { return m_Tiles;  }
     inline std::vector<Core::Sprite>& GetSprites() override { return m_Sprites; }
+    inline const std::vector<Core::Model>& GetModels () override { return m_Models; }
 
     inline Core::Player& GetPlayer() { return m_Player;  }
     inline Core::RaycasterCamera& GetCamera() { return *m_Camera;  }
