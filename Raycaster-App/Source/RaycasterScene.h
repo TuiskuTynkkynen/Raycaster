@@ -91,6 +91,7 @@ private:
     float max = 0.0f;
     Core::Player m_Player;
     std::unique_ptr<Core::RaycasterCamera> m_Camera;
+    std::unique_ptr<Core::FlyCamera> m_Camera3D;
 
     bool m_Paused = false;
     
@@ -106,14 +107,15 @@ public:
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override {}
 
-    inline std::vector<Core::Ray>& GetRays() override { return m_Rays; }
-    inline std::vector<Core::Line>& GetLines() override { return m_Lines; }
-    inline std::vector<Core::Tile>& GetTiles() override { return m_Tiles;  }
-    inline std::vector<Core::Sprite>& GetSprites() override { return m_Sprites; }
-    inline const std::vector<Core::Model>& GetModels () override { return m_Models; }
+    inline const std::vector<Core::Ray>& GetRays() const override { return m_Rays; }
+    inline const std::vector<Core::Line>& GetLines() const override { return m_Lines; }
+    inline const std::vector<Core::Tile>& GetTiles() const override { return m_Tiles; }
+    inline const std::vector<Core::Sprite>& GetSprites() const override { return m_Sprites; }
+    inline const std::vector<Core::Model>& GetModels() const override { return m_Models; }
 
-    inline Core::Player& GetPlayer() { return m_Player;  }
-    inline Core::RaycasterCamera& GetCamera() { return *m_Camera;  }
+    inline const Core::Player& GetPlayer() const override { return m_Player; }
+    inline const Core::RaycasterCamera& GetCamera() const override { return *m_Camera; }
+    inline const Core::FlyCamera& GetCamera3D() const override { return *m_Camera3D;  }
 
     inline uint32_t GetRayCount() { return m_RayCount; }
 };

@@ -22,7 +22,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(identity);
     
-    std::vector<Core::Ray> rays = m_Scene->GetRays();
+    const std::vector<Core::Ray>& rays = m_Scene->GetRays();
     uint32_t rayCount = m_Scene->GetRayCount();
     uint32_t rayArraySize = rays.size();
     glm::vec3 colour;
@@ -100,7 +100,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(m_Scene->GetCamera());
 
-    std::vector<Core::Tile> tiles = m_Scene->GetTiles();
+    const std::vector<Core::Tile>& tiles = m_Scene->GetTiles();
     uint32_t mapSize = tiles.size();
 
     for (int i = 0; i < mapSize; i++) {
@@ -115,7 +115,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::BeginScene(identity);
 
     colour = glm::vec3(1.0f, 0.0f, 0.0f);
-    Core::Player& player = m_Scene->GetPlayer();
+    const Core::Player& player = m_Scene->GetPlayer();
     Core::Renderer2D::DrawRotatedFlatQuad(zero, player.Rotation, AxisZ, player.Scale, colour);
 
     colour = glm::vec3(0.0f, 0.0f, 1.0f);
@@ -139,10 +139,10 @@ bool Layer2D::OnWindowResizeEvent(Core::WindowResize& event) {
 }
 
 void Layer3D::OnUpdate(Core::Timestep deltaTime) {
-    static glm::mat4 perspective = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 500.0f);
-
+    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 500.0f) * m_Scene->GetCamera3D().GetViewMatrix();
+    
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
-    Core::Renderer::BeginScene(perspective);
+    Core::Renderer::BeginScene(viewPerspective);
 
     const std::vector<Core::Model>& models = m_Scene->GetModels();
 

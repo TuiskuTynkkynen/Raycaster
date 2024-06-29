@@ -16,14 +16,15 @@ public:
     virtual void OnUpdate(Timestep deltaTime) = 0;
     virtual void OnEvent(Event& event) = 0;
 
-    virtual RaycasterCamera& GetCamera() = 0;
-    virtual Player& GetPlayer() = 0;
+    virtual const RaycasterCamera& GetCamera() const = 0;
+    virtual const FlyCamera& GetCamera3D() const = 0;
+    virtual const Player& GetPlayer() const = 0;
 
-    virtual std::vector<Ray>& GetRays() = 0;
-    virtual std::vector<Sprite>& GetSprites() = 0;
-    virtual std::vector<Tile>& GetTiles() = 0;
-    virtual std::vector<Line>& GetLines() = 0;
-    virtual const std::vector<Model>& GetModels() = 0;
+    virtual const std::vector<Ray>& GetRays() const = 0;
+    virtual const std::vector<Sprite>& GetSprites() const = 0;
+    virtual const std::vector<Tile>& GetTiles() const = 0;
+    virtual const std::vector<Line>& GetLines() const = 0;
+    virtual const std::vector<Model>& GetModels() const = 0;
 
     virtual uint32_t GetRayCount() = 0;
 };
