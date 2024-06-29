@@ -260,6 +260,7 @@ namespace Core {
 	}
 
 	void Renderer2D::SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height) {
+		s_Data.TextureShader->Bind();
 		s_Data.TextureAtlas->BindImage(fileName);
 
 		s_Data.atlasWidth = width;
