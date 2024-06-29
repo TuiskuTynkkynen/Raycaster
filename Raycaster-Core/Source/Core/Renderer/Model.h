@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 
 #include <memory>
+#include <variant>
 #include <string>
 
 //TODO tie into ECS
@@ -29,8 +30,18 @@ namespace Core {
     };
 
     struct Material {
+        struct Parameter {
+            std::variant<float, glm::vec2, glm::vec3, glm::vec4> Value;
+            std::string Uniform;
+
+            Parameter(std::variant<float, glm::vec2, glm::vec3, glm::vec4> value, const std::string& uniformName)
+                : Value(value), Uniform(uniformName)
+            {}
+        };
+
         std::shared_ptr<Shader> Shader;
         std::vector<MaterialMap> MaterialMaps;
+        std::vector<Parameter> Parameters;
     };
 
     struct Model {
