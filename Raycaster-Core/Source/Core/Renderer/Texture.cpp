@@ -1,11 +1,12 @@
 #include "Texture.h"
+#include "Core/Debug/Log.h"
 
 #include <glad/glad.h>
 #include <utils/stb_image.h>
 
 #include <filesystem> 
-#include <iostream>
 #include <string>
+
 namespace Core{
     Texture2D::Texture2D(GLint wrapS, GLint WrapT, GLint filterMin, GLint filterMax)
         : m_RendererID(0)
@@ -60,7 +61,7 @@ namespace Core{
             }
         }
         else {
-            std::cout << "ERROR: FAILED TO LOAD TEXTURE" << filePath << std::endl;
+            RC_ERROR("FAILED TO LOAD TEXTURE {}", fileName);
         }
         stbi_image_free(data);
     }

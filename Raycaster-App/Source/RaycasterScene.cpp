@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <ranges>
-#include <iostream>
 
 RaycasterScene::MapData RaycasterScene::s_MapData;
 
@@ -191,7 +190,7 @@ void RaycasterScene::CastRays() {
             }
 
             if (mapY >= s_MapData.height || mapX >= s_MapData.width) {
-                std::cout << "ERROR: INDEX OUT OF BOUNDS" << std::endl;
+                RC_FATAL("INDEX OUT OF BOUNDS");
                 break;
             }
 

@@ -1,5 +1,7 @@
 #include "Shader.h"
 
+#include "Core/Debug/Log.h"
+
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -8,7 +10,6 @@
 #include <filesystem> 
 #include <fstream>
 #include <sstream>
-#include <iostream>
 
 namespace Core {
     Shader::Shader(const std::string& shaderFileName)
@@ -54,7 +55,7 @@ namespace Core {
         glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
         if (!compileStatus) {
             glGetShaderInfoLog(vertexShader, 512, NULL, shaderCompileLog);
-            std::cout << "ERROR: VERTEX SHADER COMPILATION FAILED\n" << shaderCompileLog << std::endl;
+            RC_ERROR("VERTEX SHADER COMPILATION FAILED\n{}", shaderCompileLog);
         }
 
         uint32_t fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -64,7 +65,7 @@ namespace Core {
         glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
         if (!compileStatus) {
             glGetShaderInfoLog(fragmentShader, 512, NULL, shaderCompileLog);
-            std::cout << "ERROR: FRAGMENT SHADER COMPILATION FAILED\n" << shaderCompileLog << std::endl;
+            RC_ERROR("FRAGMENT SHADER COMPILATION FAILED\n{}", shaderCompileLog);
         }
 
         m_RendererID = glCreateProgram();
@@ -75,7 +76,7 @@ namespace Core {
         glGetProgramiv(m_RendererID, GL_LINK_STATUS, &compileStatus);
         if (!compileStatus) {
             glGetProgramInfoLog(m_RendererID, 512, NULL, shaderCompileLog);
-            std::cout << "ERROR: SHADER PROGRAM LINKING FAILED\n" << shaderCompileLog << std::endl;
+            RC_ERROR("VERTEX SHADER PROGRAM LINKING FAILED\n{}", shaderCompileLog);
         }
 
         glDeleteShader(vertexShader);
@@ -107,9 +108,10 @@ namespace Core {
             vertexCode = vShaderStream.str();
             fragmentCode = fShaderStream.str();
         }
-        catch (std::ifstream::failure e)
+        catch (std::ifstream::failure e) 
         {
-            std::cout << "ERROR SHADER FILE READ FAILED" << std::endl;
+            RC_ERROR("SHADER FILE {} OR {} READ FAILED", vertexFileName, fragmentFileName);
+            return;
         }
 
         const char* vertexShaderCode = vertexCode.c_str();
@@ -125,7 +127,7 @@ namespace Core {
         glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
         if (!compileStatus) {
             glGetShaderInfoLog(vertexShader, 512, NULL, shaderCompileLog);
-            std::cout << "ERROR: VERTEX SHADER COMPILATION FAILED\n" << shaderCompileLog << std::endl;
+            RC_ERROR("VERTEX SHADER COMPILATION FAILED\n{}", shaderCompileLog);
         }
 
         uint32_t fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -135,7 +137,7 @@ namespace Core {
         glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
         if (!compileStatus) {
             glGetShaderInfoLog(fragmentShader, 512, NULL, shaderCompileLog);
-            std::cout << "ERROR: FRAGMENT SHADER COMPILATION FAILED\n" << shaderCompileLog << std::endl;
+            RC_ERROR("FRAGMENT SHADER COMPILATION FAILED\n{}", shaderCompileLog);
         }
 
         m_RendererID = glCreateProgram();
@@ -146,7 +148,7 @@ namespace Core {
         glGetProgramiv(m_RendererID, GL_LINK_STATUS, &compileStatus);
         if (!compileStatus) {
             glGetProgramInfoLog(m_RendererID, 512, NULL, shaderCompileLog);
-            std::cout << "ERROR: SHADER PROGRAM LINKING FAILED\n" << shaderCompileLog << std::endl;
+            RC_ERROR("VERTEX SHADER PROGRAM LINKING FAILED\n{}", shaderCompileLog);
         }
 
         glDeleteShader(vertexShader);
@@ -218,7 +220,7 @@ namespace Core {
         int32_t location = glGetUniformLocation(m_RendererID, name);
     
         if (location == -1) {
-            std::cout << "WARNING: UNIFORM " << name << " DOES NOT EXIST" << std::endl;
+            RC_WARN("UNIFORM {} DOES NOT EXIST", name);
             return 0;
         }
         return location;

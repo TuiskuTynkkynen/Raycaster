@@ -2,14 +2,14 @@
 #include "Core/Events/KeyEvent.h"
 #include "Core/Events/MouseEvent.h"
 #include "Core/Events/WindowEvent.h"
+#include "Core/Debug/Log.h"
 
-#include <iostream>
 
 namespace Core {
 	static bool s_GLFWInitialized = false;
 
 	static void GLFWErrorCallback(int error, const char* desciption) {
-		std::cout << "GLFW ERROR (" << error << ") " << desciption << std::endl;
+		RC_ERROR("GLFW ERROR ({}) {}", error, desciption);
 	}
 
 	Window::Window(const WindowProperties& properties) {

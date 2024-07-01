@@ -1,11 +1,12 @@
 #include "Font.h"
 
+#include "Core/Debug/Log.h"
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <glad/glad.h>
 
 #include <filesystem>
-#include <iostream>
 
 namespace Core {
     Font::Font(bool interpolation) {
@@ -30,7 +31,7 @@ namespace Core {
         }
 
         if (characterCount <= 0) {
-            std::cout << "ERROR: NO CHARACTER RANGES HAVE BEEN ADDED" << std::endl;
+            RC_WARN("NO CHARACTER RANGES HAVE BEEN ADDED TO FONT");
             return;
         }
 
@@ -39,14 +40,14 @@ namespace Core {
 
         FT_Library ft;
         if (FT_Init_FreeType(&ft)) {
-            std::cout << "ERROR: COULD NOT INIT FREETYPE LIBRARY" << std::endl;
+            RC_ERROR("FAILED TO INITIALIZE FREETYPE LIBRARY");
             return;
         }
 
         FT_Face face;
         if (FT_New_Face(ft, fileString.c_str(), 0, &face)) {
             FT_Done_FreeType(ft);
-            std::cout << "ERROR: FAILED TO LOAD FONT " << filePath << std::endl;
+            RC_ERROR("FAILED TO LOAD FONT {}", filePath);
             return;
         }
         FT_Set_Pixel_Sizes(face, width, height);
@@ -65,7 +66,7 @@ namespace Core {
         for (CharacterRange range : m_CharacterRanges) {
             for (uint32_t c = range.Start; c <= range.End; c++) {
                 if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-                    std::cout << "ERROR: FAILED TO LOAD GLYPH " << c << std::endl;
+                    RC_WARN("FAILED TO LOAD GLYPH {}", c);
                     continue;
                 }
                 FT_Bitmap* bitmap = &face->glyph->bitmap;
@@ -75,7 +76,7 @@ namespace Core {
                     y += ((face->size->metrics.height >> 6) + 1);
                 }
                 if (y + bitmap->rows >= textureDimensions) {
-                    std::cout << "ERROR: COULD NOT FIT ALL CHARACTERS IN TEXTURE ATLAS" << std::endl;
+                    RC_WARN("COULD NOT FIT ALL CHARACTERS IN TEXTURE ATLAS");
                     break;
                 }
 
