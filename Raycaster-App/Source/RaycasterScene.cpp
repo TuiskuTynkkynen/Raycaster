@@ -1,7 +1,8 @@
 #include "RaycasterScene.h"
 
-#include <glm/gtx/matrix_transform_2d.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_transform_2d.hpp>
 
 #include <algorithm>
 #include <ranges>
@@ -80,15 +81,15 @@ void RaycasterScene::Init(){
         m_EnemyMap[i] = s_MapData.map[i];
     }
 
+    InitWalls();
+    InitModels();
+
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
     tile.Scale = m_Player.Scale;
     m_Tiles.push_back(tile);
     m_Tiles.push_back(tile);
 
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
-    
-    InitWalls();
-    InitModels();
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
@@ -345,7 +346,7 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
     float velocity = 2.0f * deltaTime;
     float rotationSpeed = 180.0f * deltaTime;
 
-    glm::vec3 front;
+    glm::vec3 front(0.0f);
     front.x = cos(glm::radians(m_Player.Rotation));
     front.y = -sin(glm::radians(m_Player.Rotation)); //player y is flipped (array index)
     front.z = 0.0f;
@@ -403,13 +404,13 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
             enemy.Tick += deltaTime * 2.0f;
             bool lineOfSight = true;
 
-            glm::vec2 playerPos;
+            glm::vec2 playerPos(0.0f);
             playerPos.x = m_Player.Position.x;
             playerPos.y = m_Player.Position.y;
 
             glm::vec2 movementVector = playerPos;
 
-            glm::vec2 enemyPos;
+            glm::vec2 enemyPos(0.0f);
             static const glm::i32vec2 directions[] = {
                 glm::i32vec2(1,0),
                 glm::i32vec2(-1,0),
@@ -474,8 +475,8 @@ void RaycasterScene::InitWalls() {
     tile.Scale = glm::vec3(0.95f * s_MapData.mapScale.x, 0.95f * s_MapData.mapScale.y, 1.0f);
     tile.Colour = glm::vec3(1.0f);
     tile.IsTriangle = true;
-
-    glm::vec2 point1, point2;
+    
+    glm::vec2 point1(0.0f), point2(0.0f);
 
     for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
         if (s_MapData.map[startIndex] >= 0) {
@@ -562,7 +563,7 @@ void RaycasterScene::InitModels() {
             1, -1, s_MapData.width, -s_MapData.width, 0 //R, L, D, U 
         };
 
-        glm::vec3 point1, point2;
+        glm::vec3 point1(0.0f), point2(0.0f);
         std::vector<glm::vec3> points;
         for (uint32_t i = 0; i < 4; i++) {
             for (uint32_t startIndex = 0; startIndex < s_MapData.size; startIndex++) {
@@ -741,7 +742,7 @@ void RaycasterScene::InitModels() {
     {
         m_Models.emplace_back();
         Core::Model& mapModel = m_Models.back();
-
+        
         uint32_t meshCount = 0;
         for (auto& [index, ranges] : subranges) {
             std::ranges::subrange vertexData(vertices.begin() + ranges.x, vertices.begin() + ranges.y);

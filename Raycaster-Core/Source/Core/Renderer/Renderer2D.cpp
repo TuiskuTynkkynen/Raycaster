@@ -8,7 +8,7 @@
 #include "Texture.h"
 
 #include <glm/gtc/matrix_transform.hpp>
-
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_transform_2d.hpp>
 
 #include <memory>
@@ -29,15 +29,10 @@ struct Renderer2DDAta {
 
 	std::shared_ptr<Core::Font> Font;
 
-	glm::mat4 ViewProjection;
+	glm::mat4 ViewProjection = glm::mat4(1.0f);
 
-	uint32_t atlasWidth;
-	uint32_t atlasHeight;
-
-	Renderer2DDAta() {
-		atlasHeight = 0;
-		atlasWidth = 0;
-	}
+	uint32_t atlasWidth = 0;
+	uint32_t atlasHeight = 0;
 };
 
 static Renderer2DDAta s_Data;

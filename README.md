@@ -9,8 +9,8 @@ External dependencies should be added to Raycaster-Core/Source/Libraries
   - For gl version 3.3  
   - No extensions
   - In Raycaster-Core/Source/Libraries/glad  
-- [GLM](https://glm.g-truc.net/0.9.8/) OpenGL mathematics library  
-  - Version 0.9.8.5  
+- [GLM](https://github.com/g-truc/glm/releases/tag/1.0.1) OpenGL mathematics library  
+  - Version 1.0.1  
   - In Raycaster-Core/Source/Libraries/glm  
 - [stb](https://github.com/nothings/stb/blob/master/stb_image.h) for image parsing  
   -  Just the stb_image header file  

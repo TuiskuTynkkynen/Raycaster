@@ -25,7 +25,7 @@ namespace Core {
         std::shared_ptr<Texture2D> Texture;
         uint32_t TextureIndex{};
 
-        glm::vec3 Colour;
+        glm::vec3 Colour{};
         std::string ColourUniform;
     };
 
@@ -53,6 +53,6 @@ namespace Core {
         std::vector<IndexedMesh> Meshes;
         std::vector<std::shared_ptr<Material>> Materials;
             
-        glm::mat4 Transform;
+        glm::mat4 Transform = glm::mat4(1.0f);
     };
 }

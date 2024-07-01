@@ -55,33 +55,22 @@ private:
     float* m_ZBuffer = new float[m_RayCount];
     
     struct SpriteObject {
-        glm::vec3 Position;
-        glm::vec3 Scale;
+        glm::vec3 Position{};
+        glm::vec3 Scale{};
 
-        uint32_t AtlasIndex;
-        bool FlipTexture;
-
-        SpriteObject() {
-            AtlasIndex = 0;
-            FlipTexture = false;
-        }
+        uint32_t AtlasIndex = 0;
+        bool FlipTexture = false;
     };
     std::vector<SpriteObject> m_SpriteObjects;
     std::vector<SpriteObject> m_StaticObjects;
     struct Enemy {
-        glm::vec3 Position;
-        glm::vec3 Scale;
+        glm::vec3 Position{};
+        glm::vec3 Scale{};
 
-        uint32_t AtlasIndex;
+        uint32_t AtlasIndex = 0;
 
-        float Tick;
-        float Speed;
-
-        Enemy() {
-            AtlasIndex = 0;
-            Tick = 0.0f;
-            Speed = 0.0f;
-        }
+        float Tick = 0.0f;
+        float Speed = 0.0f;
     };
     bool m_EnemyMap[s_MapData.size];
     std::vector<Enemy> m_Enemies;
