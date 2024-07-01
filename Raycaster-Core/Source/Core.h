@@ -9,3 +9,4 @@
 #include "Core/Renderer/Renderer.h"
 #include "Core/Renderer/Renderer2D.h"
 #include "Core/Renderer/Font.h"
+#include "Core/Debug/Log.h"

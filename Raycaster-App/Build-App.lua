@@ -58,12 +58,12 @@ project "Raycaster-App"
        defines { "WINDOWS" }
 
    filter "configurations:Debug"
-       defines { "DEBUG" }
+       defines { "DEBUG", "LOG_ENABLE" }
        runtime "Debug"
        symbols "On"
 
    filter "configurations:Release"
-       defines { "RELEASE" }
+       defines { "RELEASE", "LOG_ENABLE", "LOG_PREFIX_LEVEL=1"  }
        runtime "Release"
        optimize "On"
        symbols "On"
