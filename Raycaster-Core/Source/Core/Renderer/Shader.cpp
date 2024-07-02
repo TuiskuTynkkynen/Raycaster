@@ -1,6 +1,6 @@
 #include "Shader.h"
 
-#include "Core/Debug/Log.h"
+#include "Core/Debug/Debug.h"
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>

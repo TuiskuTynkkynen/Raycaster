@@ -1,5 +1,5 @@
 #include "Texture.h"
-#include "Core/Debug/Log.h"
+#include "Core/Debug/Debug.h"
 
 #include <glad/glad.h>
 #include <utils/stb_image.h>

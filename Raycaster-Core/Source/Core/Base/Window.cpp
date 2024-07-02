@@ -2,7 +2,7 @@
 #include "Core/Events/KeyEvent.h"
 #include "Core/Events/MouseEvent.h"
 #include "Core/Events/WindowEvent.h"
-#include "Core/Debug/Log.h"
+#include "Core/Debug/Debug.h"
 
 
 namespace Core {
