@@ -1,6 +1,5 @@
 #include "Log.h"
 
-#include <filesystem>
 #include <chrono>
 #include <thread>
 
@@ -47,8 +46,8 @@ namespace Core {
 		result << GetLogLevelColour(logLevel) << GetLogLevelString(logLevel) << RESET << " ";
 		
 		if (prefixLevel >= PrefixLevel::Full) {
-			std::filesystem::path foo = sourceLocation.file_name();
-			result << std::format("{}{}:{} ", GRAY, foo.filename().string(), sourceLocation.line());
+			std::filesystem::path temp = sourceLocation.file_name();
+			result << std::format("{}{}:{} ", GRAY, temp.filename().string(), sourceLocation.line());
 		}
 
 		if (prefixLevel >= PrefixLevel::Multithread) {

@@ -6,6 +6,7 @@
 
 #include <format>
 #include <source_location>
+#include <filesystem>
 #include <iostream>
 
 #ifndef LOG_PREFIX_LEVEL
@@ -83,6 +84,18 @@ struct std::formatter<glm::mat<C, R, T, Q>>
     }
 
     constexpr auto parse(std::format_parse_context& context){
+        return context.end();
+    }
+};
+
+template<>
+struct std::formatter<std::source_location> {
+    auto format(const std::source_location& value, std::format_context& context) const {
+        std::filesystem::path temp = value.file_name();
+        return format_to(context.out(), "{}:{}", temp.filename().string(), value.line());
+    }
+
+    constexpr auto parse(std::format_parse_context& context) {
         return context.end();
     }
 };
