@@ -21,11 +21,11 @@ struct Renderer2DDAta {
 	std::unique_ptr<Core::VertexBuffer> QuadVertexBuffer;
 	std::unique_ptr<Core::ElementBuffer> QuadElementBuffer;
 
-	std::unique_ptr<Core::Shader> FlatShader;
 	std::unique_ptr<Core::Shader> TextureShader;
 	std::unique_ptr<Core::Shader> TextShader;
 
 	std::unique_ptr<Core::Texture2D> TextureAtlas;
+	std::unique_ptr<Core::Texture2D> WhiteTexture;
 
 	std::shared_ptr<Core::Font> Font;
 
@@ -73,10 +73,11 @@ namespace Core {
 
 		s_Data.QuadElementBuffer = std::make_unique<ElementBuffer>(quadIndices, 6);
 
-		s_Data.TextureShader = std::make_unique<Shader>("2DTextureShader.glsl");
+		s_Data.TextureShader = std::make_unique<Shader>("2DShader.glsl");
 		s_Data.TextureShader->Bind();
 		
 		s_Data.TextureAtlas = std::make_unique<Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
+		s_Data.WhiteTexture = std::make_unique<Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
 		{
 			unsigned char missingTextureData[] = {
 				0, 0, 0, 255,
@@ -84,14 +85,21 @@ namespace Core {
 				255, 0, 255, 255,
 				0, 0, 0, 255,
 			};
+
 			s_Data.TextureAtlas->BindData(missingTextureData, 2, 2, 4);
+			
+			unsigned char whiteTextureData[] = {
+				255, 255, 255, 255,
+			};
+
+			s_Data.WhiteTexture->BindData(whiteTextureData, 1, 1, 4);
 		}
-		s_Data.TextureShader->setInt("tex", 0);
+
+		s_Data.TextureShader->setInt("Textures[0]", 0);
+		s_Data.TextureShader->setInt("Textures[1]", 1);
 
 		s_Data.atlasWidth = s_Data.atlasHeight = 1;
-		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
-
-		s_Data.FlatShader = std::make_unique<Shader>("2DFlatShader.glsl");
+		s_Data.TextureShader->setVec2("AtlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
 
 		s_Data.TextShader = std::make_unique<Shader>("TextShader.glsl");
 		s_Data.Font = std::make_shared<Font>();
@@ -102,48 +110,45 @@ namespace Core {
 	void Renderer2D::BeginScene(const Camera& camera) {
 		s_Data.ViewProjection = camera.GetViewMatrix();
 
-		s_Data.FlatShader->Bind();
-		s_Data.FlatShader->setMat4("viewProjection", s_Data.ViewProjection);
-
 		s_Data.TextureShader->Bind();
-		s_Data.TextureShader->setMat4("viewProjection", s_Data.ViewProjection);
+		s_Data.TextureShader->setMat4("ViewProjection", s_Data.ViewProjection);
 
 		s_Data.TextShader->Bind();
 		s_Data.TextShader->setMat4("viewProjection", s_Data.ViewProjection);
 
-		s_Data.TextureAtlas->Activate(0);
+		s_Data.WhiteTexture->Activate(0);
+		s_Data.TextureAtlas->Activate(1);
 	}
 
 	void Renderer2D::BeginScene(const glm::mat4& transform) {
 		s_Data.ViewProjection = transform;
 
-		s_Data.FlatShader->Bind();
-		s_Data.FlatShader->setMat4("viewProjection", s_Data.ViewProjection);
-
 		s_Data.TextureShader->Bind();
-		s_Data.TextureShader->setMat4("viewProjection", s_Data.ViewProjection);
+		s_Data.TextureShader->setMat4("ViewProjection", s_Data.ViewProjection);
 
 		s_Data.TextShader->Bind();
 		s_Data.TextShader->setMat4("viewProjection", s_Data.ViewProjection);
 
-		s_Data.TextureAtlas->Activate(0);
+		s_Data.WhiteTexture->Activate(0);
+		s_Data.TextureAtlas->Activate(1);
 	}
 
 	void Renderer2D::DrawTextureQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
 		RenderAPI::SetDepthBuffer(false);
 
 		s_Data.TextureShader->Bind();
-		s_Data.TextureShader->setVec3("colour", colour);
-		s_Data.TextureShader->setVec2("atlasOffset", glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
+		s_Data.TextureShader->setVec3("Colour", colour);
+		s_Data.TextureShader->setInt("TextureIndex", 1);
+		s_Data.TextureShader->setVec2("AtlasOffset", glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::scale(transform, scale);
-		s_Data.TextureShader->setMat4("transform", transform);
+		s_Data.TextureShader->setMat4("Transform", transform);
 
 		glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
 		texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
 		texTransform = glm::scale(texTransform, textureScale);
-		s_Data.TextureShader->setMat3("texTransform", texTransform);
+		s_Data.TextureShader->setMat3("TexTransform", texTransform);
 
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
@@ -151,41 +156,46 @@ namespace Core {
 	void Renderer2D::DrawFlatQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
 		
-		s_Data.FlatShader->Bind();
-		s_Data.FlatShader->setVec3("colour", colour);
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->setVec3("Colour", colour);
+		s_Data.TextureShader->setInt("TextureIndex", 0);
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::scale(transform, scale);
 
-		s_Data.FlatShader->setMat4("transform", transform);
+		s_Data.TextureShader->setMat4("Transform", transform);
 
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 
 	void Renderer2D::DrawRotatedFlatQuad(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
-		s_Data.FlatShader->Bind();
-		s_Data.FlatShader->setVec3("colour", colour);
+
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->setVec3("Colour", colour);
+		s_Data.TextureShader->setInt("TextureIndex", 0);
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
 		transform = glm::scale(transform, scale);
 
-		s_Data.FlatShader->setMat4("transform", transform);
+		s_Data.TextureShader->setMat4("Transform", transform);
 
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 6);
 	}
 
 	void Renderer2D::DrawRotatedFlatTriangle(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
-		s_Data.FlatShader->Bind();
-		s_Data.FlatShader->setVec3("colour", colour);
+		
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->setVec3("Colour", colour);
+		s_Data.TextureShader->setInt("TextureIndex", 0);
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
 		transform = glm::scale(transform, scale);
 
-		s_Data.FlatShader->setMat4("transform", transform);
+		s_Data.TextureShader->setMat4("Transform", transform);
 		
 		RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, 3);
 	}
@@ -193,12 +203,14 @@ namespace Core {
 	void Renderer2D::DrawLine(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour) {
 		RenderAPI::SetDepthBuffer(false);
 		
-		s_Data.FlatShader->Bind();
-		s_Data.FlatShader->setVec3("colour", colour);
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->setVec3("Colour", colour);
+		s_Data.TextureShader->setInt("TextureIndex", 0);
 
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 		transform = glm::scale(transform, scale);
-		s_Data.FlatShader->setMat4("transform", transform);
+
+		s_Data.TextureShader->setMat4("Transform", transform);
 
 		s_Data.LineVertexArray->Bind();
 		RenderAPI::DrawLines(*s_Data.LineVertexArray, 2);
@@ -260,7 +272,7 @@ namespace Core {
 
 		s_Data.atlasWidth = width;
 		s_Data.atlasHeight = height;
-		s_Data.TextureShader->setVec2("atlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
+		s_Data.TextureShader->setVec2("AtlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
 	}
 
 	void Renderer2D::SetFont(std::shared_ptr<Font> font) {
