@@ -3,14 +3,13 @@
 #include "Timestep.h"
 #include "Core/Renderer/RenderAPI.h"
 #include "Core/Renderer/Renderer2D.h"
+#include "Core/Debug/Debug.h"
 
 namespace Core {
 	Application* Application::s_Instance = nullptr;
 
 	Application::Application() {
-		if (s_Instance) {
-			static_assert("ERROR: APPLICATION ALREADY CREATED");
-		}
+		RC_ASSERT(!s_Instance, "Application already created");
 		s_Instance = this;
 
 		m_Window = std::unique_ptr<Window>(Window::Create());
@@ -27,6 +26,8 @@ namespace Core {
 	}
 
 	void Application::Run() {
+		RC_ASSERT(m_ActiveScene, "Active scene not has been set");
+		RC_ASSERT(m_LayerStack.begin() != m_LayerStack.end(), "Layer stack is empty");
 		while (m_Running)
 		{
 			float currentFrame = glfwGetTime();
@@ -63,17 +64,20 @@ namespace Core {
 	}
 
 	void Application::PushLayer(Layer* layer) {
+		RC_ASSERT(layer, "Attempted to push invalid layer");
 		m_LayerStack.PushLayer(layer);
 		layer->SetScene(m_ActiveScene);
 		layer->OnAttach();
 	}
 
 	void Application::PushOverlay(Layer* overlay) {
+		RC_ASSERT(overlay, "Attempted to push invalid overlay");
 		m_LayerStack.PushOverlay(overlay);
 		overlay->OnAttach();
 	}
 
 	void Application::SetActiveScene(Scene* scene) {
+		RC_ASSERT(scene, "Attempted to set active scene to nullptr");
 		m_ActiveScene = std::shared_ptr<Scene>(scene);
 		m_ActiveScene->Init();
 
