@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Core.h"
-#include "Core/Raycaster/Scene.h"
 #include "Algorithms.h"
 
 #include <memory>

@@ -11,8 +11,9 @@ public:
 		
 		RaycasterLayer* layer0 = new RaycasterLayer();
 		PushLayer(layer0);
-		Layer3D* layer1 = new Layer3D();
+		Layer2D* layer1 = new Layer2D();
 		PushLayer(layer1);
+		GetWindow().SetVSync(false);
 	}
 
 	~Raycaster(){}

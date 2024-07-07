@@ -63,6 +63,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
 
+    Core::Renderer2D::EndScene();
+
     frameCount++;
     timeDelta += deltaTime;
     if (timeDelta >= 0.1f) {
@@ -76,6 +78,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::BeginScene(projection);
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
     Core::Renderer2D::DrawString(frameStats, 5.0f, m_ViewPortHeight - 15.0f, 2.0f, colour);
+
+    Core::Renderer2D::EndScene();
 }
 
 void RaycasterLayer::OnEvent(Core::Event& event) {
@@ -112,6 +116,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
         }
     }
 
+    Core::Renderer2D::EndScene();
     Core::Renderer2D::BeginScene(identity);
 
     colour = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -124,6 +129,8 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     for (int i = 0; i < lineCount; i++) {
         Core::Renderer2D::DrawLine(lines[i].Posistion, lines[i].Scale, colour);
     }
+
+    Core::Renderer2D::EndScene();
 }
 
 void Layer2D::OnEvent(Core::Event& event) {
