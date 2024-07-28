@@ -44,7 +44,11 @@ out vec4 FragColor;
 
 void main(){
 	if(TextureIndex == 2){
-		FragColor =  vec4(VertexColour, texture(Textures[TextureIndex], TexCoords));
+		//float alpha = texture(Textures[TextureIndex], TexCoords).r;
+		//float alpha = texture(Textures[TextureIndex], TexCoords).r >= 0.499f ? 1.0f : 0.0f;
+		float smoothing = 0.0035f;
+		float alpha = smoothstep( 0.5 - smoothing, 0.5 + smoothing, texture(Textures[TextureIndex], TexCoords).r );
+		FragColor =  vec4(VertexColour, alpha);
 		return;
 	}
 

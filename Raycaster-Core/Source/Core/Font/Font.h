@@ -1,5 +1,5 @@
 #pragma once
-#include "Texture.h"
+#include "Core/Renderer/Texture.h"
 
 #include <glm/glm.hpp>
 
@@ -16,7 +16,7 @@ namespace Core {
         uint32_t Advance;
     };
 
-    class Font{
+    class Font {
     private:
         struct CharacterRange {
             uint32_t Start;
@@ -30,6 +30,7 @@ namespace Core {
 
         void AddCharacterRange(uint32_t start, uint32_t end);
         void GenerateAtlas(const char* filePath, uint32_t height, uint32_t width = 0);
+        void GenerateSDFAtlas(const char* filePath, uint32_t height, uint32_t width = 0); //TODO gen on seperate thread
 
         inline void ActivateAtlas(uint32_t unitIndex = 0) { m_TextureAtlas->Activate(unitIndex); }
         inline GlyphInfo GetGlyphInfo(uint32_t character) { return m_Glyphs[character]; }

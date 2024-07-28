@@ -9,16 +9,16 @@ float frameTime = 0;
 void RaycasterLayer::OnAttach() {
     Core::Renderer2D::SetTextureAtlas("wolfenstein_texture_atlas.png", 11, 2);
 
-    std::shared_ptr<Core::Font> font = std::make_shared<Core::Font>(false);
+    std::shared_ptr<Core::Font> font = std::make_shared<Core::Font>(true);
     font->AddCharacterRange(' ', '~'); //Printable ASCII
     font->AddCharacterRange(0x00A1, 0x0FF); //Printable Latin-1 Supplement
-    font->GenerateAtlas("tiny5/tiny5-Medium.ttf", 8);
+    font->GenerateSDFAtlas("tiny5/arial.ttf", 20);
     Core::Renderer2D::SetFont(font);
 }
 
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
     static glm::mat4 identity(1.0f);
-    
+
     Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(identity);
     
@@ -77,7 +77,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     glm::mat4 projection = glm::ortho(0.0f, (float)m_ViewPortWidth, 0.0f, (float)m_ViewPortHeight);
     Core::Renderer2D::BeginScene(projection);
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
-    Core::Renderer2D::DrawString(frameStats, 5.0f, m_ViewPortHeight - 15.0f, 2.0f, colour);
+    Core::Renderer2D::DrawString(frameStats, 5.0f, m_ViewPortHeight - 25.0f, 1.5f, colour);
 
     Core::Renderer2D::EndScene();
 }
