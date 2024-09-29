@@ -10,6 +10,7 @@ namespace Core {
 	public:
 		static bool IsKeyPressed(uint32_t key);
 		static bool IsButtonPressed(uint32_t button);
+		static bool IsButtonReleased(uint32_t button);
 
 		static float GetMouseX();
 		static float GetMouseY();

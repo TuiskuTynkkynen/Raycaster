@@ -12,6 +12,11 @@ namespace Core {
 		auto state = glfwGetMouseButton(Application::GetWindow().GetWindowPointer(), button);
 		return state == GLFW_PRESS || state == GLFW_REPEAT;
 	}
+	
+	bool Input::IsButtonReleased(uint32_t button) {
+		auto state = glfwGetMouseButton(Application::GetWindow().GetWindowPointer(), button);
+		return state == GLFW_RELEASE;
+	}
 
 	float Input::GetMouseX() {
 		double x, y;
