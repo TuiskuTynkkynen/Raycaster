@@ -88,7 +88,12 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::UI::Begin({ 0, 0 }, { m_ViewPortWidth, m_ViewPortHeight });
     Core::UI::Button({ 0.5f, 0.2f });
     foo ^= Core::UI::Button({ 0.5f, 0.2f });
-    Core::UI::Button({ 0.5f, 0.2f });
+
+    Core::UI::BeginContainer({ 0.75f, 0.4f }, { 0.8f, 0.25f, 0.25f });
+    Core::UI::Button({ 0.75f, 0.4f });
+    Core::UI::Button({ 0.75f, 0.4f });
+    Core::UI::EndContainer();
+
     Core::UI::End();
 }
 
