@@ -29,7 +29,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     const std::vector<Core::Ray>& rays = m_Scene->GetRays();
     uint32_t rayCount = m_Scene->GetRayCount();
     uint32_t rayArraySize = rays.size();
-    glm::vec3 colour;
+    glm::vec4 colour;
     
     glm::vec3 rayPos(0.0f);
     glm::vec3 rayScale(2.0f, 2.0f / rayCount, 0.0f);
@@ -39,7 +39,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         rayPos.y = rays[i].Position.y;
         texScale.x = rays[i].Scale;
 
-        colour = glm::vec3(1.0f) * rays[i].Brightness;
+        colour = glm::vec4(1.0f) * rays[i].Brightness;
+        colour.a = 1.0f;
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex, rays[i].TexRotation);
     }
@@ -52,7 +53,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         rayPos.x = rays[i].Position.x;
         rayScale.y = rays[i].Scale;
         
-        colour = glm::vec3(1.0f) * rays[i].Brightness;
+        colour = glm::vec4(1.0f) * rays[i].Brightness;
+        colour.a = 1.0f;
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
@@ -62,7 +64,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         rayPos.y = rays[i].Position.y;
         rayScale.y = rays[i].Scale;
 
-        colour = glm::vec3(1.0f) * rays[i].Brightness;
+        colour = glm::vec4(1.0f) * rays[i].Brightness;
+        colour.a = 1.0f;
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
@@ -77,7 +80,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         timeDelta = 0.0f;
     }
     
-    colour = glm::vec3(0.2f, 0.8f, 0.2f);
+    colour = glm::vec4(0.2f, 0.8f, 0.2f, 1.0f);
     glm::mat4 projection = glm::ortho(0.0f, (float)m_ViewPortWidth, 0.0f, (float)m_ViewPortHeight);
     Core::Renderer2D::BeginScene(projection);
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
@@ -89,7 +92,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::UI::Button({ 0.5f, 0.2f });
     foo ^= Core::UI::Button({ 0.5f, 0.2f });
 
-    Core::UI::BeginContainer({ 0.75f, 0.4f }, { 0.8f, 0.25f, 0.25f });
+    Core::UI::BeginContainer({ 0.75f, 0.4f }, { 0.8f, 0.25f, 0.25f, 1.0f });
     Core::UI::Button({ 0.75f, 0.4f });
     Core::UI::Button({ 0.75f, 0.4f });
     Core::UI::EndContainer();
@@ -113,8 +116,6 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     static glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
     static glm::vec3 zero(0.0f);
     static glm::mat4 identity(1.0f);
-
-    glm::vec3 colour = glm::vec3(0.05f, 0.075f, 0.1f);
     
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(m_Scene->GetCamera());
@@ -124,21 +125,21 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
 
     for (int i = 0; i < mapSize; i++) {
         if (tiles[i].IsTriangle) {
-            Core::Renderer2D::DrawRotatedFlatTriangle(tiles[i].Posistion, tiles[i].Rotation, AxisZ, tiles[i].Scale, tiles[i].Colour);
+            Core::Renderer2D::DrawRotatedFlatTriangle(tiles[i].Posistion, tiles[i].Rotation, AxisZ, tiles[i].Scale, { tiles[i].Colour.x, tiles[i].Colour.y, tiles[i].Colour.z, 1.0f });
         }
         else {
-            Core::Renderer2D::DrawFlatQuad(tiles[i].Posistion, tiles[i].Scale, tiles[i].Colour);
+            Core::Renderer2D::DrawFlatQuad(tiles[i].Posistion, tiles[i].Scale, { tiles[i].Colour.x, tiles[i].Colour.y, tiles[i].Colour.z, 1.0f });
         }
     }
 
     Core::Renderer2D::EndScene();
     Core::Renderer2D::BeginScene(identity);
 
-    colour = glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::vec4 colour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     const Core::Player& player = m_Scene->GetPlayer();
     Core::Renderer2D::DrawRotatedFlatQuad(zero, player.Rotation, AxisZ, player.Scale, colour);
 
-    colour = glm::vec3(0.0f, 0.0f, 1.0f);
+    colour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
     std::vector <Core::Line> lines = m_Scene->GetLines();
     uint32_t lineCount = lines.size();
     for (int i = 0; i < lineCount; i++) {

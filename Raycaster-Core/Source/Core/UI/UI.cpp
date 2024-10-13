@@ -18,7 +18,7 @@ namespace Core::UI {
 		glm::vec2 Position;
 		glm::vec2 Size;
 
-		std::array<glm::vec3, 3> Colours; // [0] = primary, [1] = hover, [2] = clicked
+		std::array<glm::vec4, 3> Colours; // [0] = primary, [1] = hover, [2] = clicked
 		
 		size_t ParentID = 0;
 		size_t SiblingID = 0;
@@ -130,7 +130,7 @@ namespace Core {
 			Surface& s = InternalSystem->Elements[i];
 
 			uint32_t colourIndex = InternalSystem->ActiveID == i ? 2 : InternalSystem->HoverID == i ? 1 : 0;
-			glm::vec3& colour = s.Colours[colourIndex];
+			glm::vec4& colour = s.Colours[colourIndex];
 
 			if (s.Size.x * s.Size.y == 0.0f) { continue; }
 
@@ -147,7 +147,7 @@ namespace Core {
 		InternalSystem->Elements.clear();
 	}
 
-	void UI::BeginContainer(glm::vec2 size, const glm::vec3& primaryColour) {
+	void UI::BeginContainer(glm::vec2 size, const glm::vec4& primaryColour) {
 		RC_ASSERT(InternalSystem, "Tried to begin a UI container before initializing UI");
 		RC_ASSERT(!InternalSystem->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
@@ -174,7 +174,7 @@ namespace Core {
 		InternalSystem->OpenElement = parentId;
 	}
 
-	bool UI::Button(glm::vec2 size, const glm::vec3& primaryColour, const glm::vec3& hoverColour, const glm::vec3& activeColour) {
+	bool UI::Button(glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
 		RC_ASSERT(InternalSystem, "Tried to create a UI button before initializing UI");
 		RC_ASSERT(!InternalSystem->Elements.empty(), "Tried to create a UI button before calling UI Begin");
 

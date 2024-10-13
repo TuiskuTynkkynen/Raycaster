@@ -16,7 +16,7 @@
 
 struct QuadVertex {
     glm::vec3 Position{ 0.0f };
-    glm::vec3 Colour{ 0.0f };
+    glm::vec4 Colour{ 0.0f };
     glm::vec2 TextureCoords{ 0.0f };
     glm::vec2 AtlasOffset{ 0.0f };
 
@@ -116,7 +116,7 @@ namespace Core {
 
         VertexBufferLayout quadLayout;
         quadLayout.Push<float>(3);
-        quadLayout.Push<float>(3);
+        quadLayout.Push<float>(4);
         quadLayout.Push<float>(2);
         quadLayout.Push<float>(2);
         quadLayout.Push<float>(1);
@@ -234,7 +234,7 @@ namespace Core {
         RenderAPI::SetDepthBuffer(true);
     }
 
-    void Renderer2D::DrawQuad(uint32_t textureIndex, const glm::vec3& colour, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
+    void Renderer2D::DrawQuad(uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
         if (s_Data.QuadIndexCount >= s_Data.MaxIndices) {
             Flush();
         }
@@ -251,7 +251,7 @@ namespace Core {
         s_Data.QuadIndexCount += 6;
     }
 
-    void Renderer2D::DrawTextureQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
+    void Renderer2D::DrawTextureQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
         transform = glm::scale(transform, scale);
 
@@ -262,14 +262,14 @@ namespace Core {
         DrawQuad(1, colour, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
     }
 
-    void Renderer2D::DrawFlatQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour) {
+    void Renderer2D::DrawFlatQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
         transform = glm::scale(transform, scale);
 
         DrawQuad(0, colour, transform);
     }
 
-    void Renderer2D::DrawRotatedFlatQuad(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec3& colour) {
+    void Renderer2D::DrawRotatedFlatQuad(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec4& colour) {
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
         transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
         transform = glm::scale(transform, scale);
@@ -277,7 +277,7 @@ namespace Core {
         DrawQuad(0, colour, transform);
     }
 
-    void Renderer2D::DrawRotatedFlatTriangle(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec3& colour) {
+    void Renderer2D::DrawRotatedFlatTriangle(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec4& colour) {
         if (s_Data.TriangleVertexCount >= s_Data.MaxVertices) {
             Flush();
         }
@@ -295,7 +295,7 @@ namespace Core {
         s_Data.TriangleVertexCount += 3;
     }
 
-    void Renderer2D::DrawLine(const glm::vec3& position, const glm::vec3& scale, const glm::vec3& colour) {
+    void Renderer2D::DrawLine(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
         if (s_Data.LineVertexCount >= s_Data.MaxVertices) {
             Flush();
         }
@@ -312,7 +312,7 @@ namespace Core {
     }
 
     template <typename T>
-    void Renderer2D::DrawString(const T& text, float x, float y, float scale, const glm::vec3& colour) {
+    void Renderer2D::DrawString(const T& text, float x, float y, float scale, const glm::vec4& colour) {
         glm::vec3 position(0.0f);
         glm::vec3 size(1.0f);
         float startX = x;
@@ -367,7 +367,7 @@ namespace Core {
         s_Data.Font = font;
     }
 
-    template void Renderer2D::DrawString<std::string>(const std::string&, float, float, float, const glm::vec3&);
-    template void Renderer2D::DrawString<std::wstring>(const std::wstring&, float, float, float, const glm::vec3&);
+    template void Renderer2D::DrawString<std::string>(const std::string&, float, float, float, const glm::vec4&);
+    template void Renderer2D::DrawString<std::wstring>(const std::wstring&, float, float, float, const glm::vec4&);
 }
 
