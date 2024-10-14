@@ -14,7 +14,8 @@ namespace Core::UI {
 		
 	struct Surface {
 		SurfaceType Type = SurfaceType::None;
-		
+		LayoutType Layout = LayoutType::None;
+
 		glm::vec2 Position;
 		glm::vec2 Size;
 
@@ -38,6 +39,33 @@ namespace Core::UI {
 	};
 
 	std::unique_ptr<System> InternalSystem;
+
+	inline static float LinearPadding(size_t parentID) {
+		const Surface& parent = InternalSystem->Elements[parentID];
+		size_t paddingDimension = parent.Layout != LayoutType::Horizontal;
+
+		float padding = parentID ? parent.Size[paddingDimension] : 1.0f;
+
+		for (size_t i = parentID + 1; i && i < InternalSystem->Elements.size(); i = InternalSystem->Elements[i].SiblingID) {
+			padding -= InternalSystem->Elements[i].Size[paddingDimension];
+		}
+
+		return std::max(0.025f * parent.Size[paddingDimension], padding / (parent.ChildCount + 1));
+	}
+
+	inline static void LinearLayout(Surface& s, float padding) {
+		const Surface& parent = InternalSystem->Elements[s.ParentID];
+		size_t paddingDimension = parent.Layout != LayoutType::Horizontal;
+
+		float relativePosition = padding;
+		for (size_t i = s.ParentID + 1; i && &InternalSystem->Elements[i] < &s; i = InternalSystem->Elements[i].SiblingID) {
+			relativePosition += InternalSystem->Elements[i].Size[paddingDimension] + padding;
+		}
+
+		s.Position[1 - paddingDimension] = parent.Position[1 - paddingDimension];
+		s.Position[paddingDimension] = parent.Position[paddingDimension] - parent.Size[paddingDimension] * 0.5f
+			+ relativePosition + s.Size[paddingDimension] * 0.5f;
+	}
 }
 
 namespace Core {
@@ -53,32 +81,20 @@ namespace Core {
 		InternalSystem.reset();
 	}
 
-	void UI::Begin(glm::uvec2 screenPosition, glm::uvec2 screenSize) {
+	void UI::Begin(glm::uvec2 screenPosition, glm::uvec2 screenSize, LayoutType layout) {
 		RC_ASSERT(InternalSystem, "UI has not been initialized");
 		InternalSystem->Elements.clear();
 
 		InternalSystem->Position = screenPosition;
 		InternalSystem->Size = screenSize;
 
-		Surface s{ SurfaceType::None, glm::vec2(0.5f), glm::vec2(1.0f), {glm::vec4(0.0f), glm::vec4(0.0f), glm::vec4(0.0f)}};
+		Surface s{ SurfaceType::None, layout, glm::vec2(0.5f), glm::vec2(1.0f), {glm::vec4(0.0f), glm::vec4(0.0f), glm::vec4(0.0f)}};
 		InternalSystem->Elements.emplace_back(s);
 	}
 
 	void UI::Update() {
 		RC_ASSERT(InternalSystem, "Tried to update UI before initializing");
 		RC_ASSERT(!InternalSystem->Elements.empty(), "Tried to update UI before calling UI Begin");
-
-		auto CalculatePadding = [](const Surface& s) {
-			const Surface& parent = InternalSystem->Elements[s.ParentID];
-
-			float padding = s.ParentID ? parent.Size.y : 1.0f;
-
-			for (size_t i = s.ParentID + 1; i && i < InternalSystem->Elements.size(); i = InternalSystem->Elements[i].SiblingID) {
-				padding -= InternalSystem->Elements[i].Size.y;
-			}
-
-			return std::max(0.05f * parent.Size.y, padding / (parent.ChildCount + 1));
-		};
 
 		float mouseX = Input::GetMouseX() / InternalSystem->Size.x;
 		float mouseY = Input::GetMouseY() / InternalSystem->Size.y;
@@ -89,19 +105,27 @@ namespace Core {
 
 		size_t lastParentId = -1;
 		float padding = 0.0f;
-		float relativeY = 0.0f;
+		void (*layoutFunction)(Surface& s, float padding);
+		
 		for (size_t i = 1; i < InternalSystem->Elements.size(); i++) {
 			Surface& current = InternalSystem->Elements[i];
 			const Surface& parent = InternalSystem->Elements[current.ParentID];
-
+			
 			if (current.ParentID != lastParentId) { 
-				padding = CalculatePadding(current);
-				relativeY = padding;
+				switch (parent.Layout)
+				{
+				case Core::UI::LayoutType::None:
+					continue;
+				case Core::UI::LayoutType::Vertical:
+				case Core::UI::LayoutType::Horizontal:
+					padding = LinearPadding(current.ParentID);
+					layoutFunction = LinearLayout;
+					break;
+				}
 			}
 
-			current.Position.x = parent.Position.x;
-			current.Position.y = parent.Position.y - parent.Size.y * 0.5f + relativeY + current.Size.y * 0.5f;
-
+			layoutFunction(current, padding);
+			
 			if (current.Type == SurfaceType::Button && (!InternalSystem->ActiveID || InternalSystem->ActiveID == i)) {
 				if (mouseX <= current.Position.x + current.Size.x * 0.5f && mouseX >= current.Position.x - current.Size.x * 0.5f
 					&& mouseY <= current.Position.y + current.Size.y * 0.5f && mouseY >= current.Position.y - current.Size.y * 0.5f) {
@@ -114,7 +138,6 @@ namespace Core {
 				}
 			}
 
-			relativeY += current.Size.y + padding;
 			lastParentId = current.ParentID;
 		}
 	}
@@ -147,11 +170,11 @@ namespace Core {
 		InternalSystem->Elements.clear();
 	}
 
-	void UI::BeginContainer(glm::vec2 size, const glm::vec4& primaryColour) {
+	void UI::BeginContainer(glm::vec2 size, const glm::vec4& primaryColour, LayoutType layout) {
 		RC_ASSERT(InternalSystem, "Tried to begin a UI container before initializing UI");
 		RC_ASSERT(!InternalSystem->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
-		Surface s{ SurfaceType::None, glm::vec2(2.0f), size, {primaryColour}, InternalSystem->OpenElement};
+		Surface s{ SurfaceType::None, layout, glm::vec2(2.0f), size * InternalSystem->Elements[InternalSystem->OpenElement].Size, {primaryColour}, InternalSystem->OpenElement};
 		InternalSystem->Elements.push_back(s);
 
 		InternalSystem->Elements[InternalSystem->OpenElement].ChildCount++;
@@ -178,7 +201,7 @@ namespace Core {
 		RC_ASSERT(InternalSystem, "Tried to create a UI button before initializing UI");
 		RC_ASSERT(!InternalSystem->Elements.empty(), "Tried to create a UI button before calling UI Begin");
 
-		Surface s{ SurfaceType::Button, glm::vec2(2.0f), size * InternalSystem->Elements[InternalSystem->OpenElement].Size, {primaryColour, hoverColour, activeColour}, InternalSystem->OpenElement };
+		Surface s{ SurfaceType::Button, LayoutType::None, glm::vec2(2.0f), size * InternalSystem->Elements[InternalSystem->OpenElement].Size, {primaryColour, hoverColour, activeColour}, InternalSystem->OpenElement };
 		InternalSystem->Elements.push_back(s);
 		
 		InternalSystem->Elements[InternalSystem->OpenElement].ChildCount++;

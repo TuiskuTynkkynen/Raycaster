@@ -88,15 +88,30 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
             Core::Renderer2D::DrawString(frameStats, 5.0f, m_ViewPortHeight - 15.0f, 2.0f, colour);
     }
     Core::Renderer2D::EndScene();
+    
     Core::UI::Begin({ 0, 0 }, { m_ViewPortWidth, m_ViewPortHeight });
-    Core::UI::Button({ 0.5f, 0.2f });
-    foo ^= Core::UI::Button({ 0.5f, 0.2f });
 
-    Core::UI::BeginContainer({ 0.75f, 0.4f }, { 0.8f, 0.25f, 0.25f, 1.0f });
-    Core::UI::Button({ 0.75f, 0.4f });
-    Core::UI::Button({ 0.75f, 0.4f });
+    Core::UI::BeginContainer({ 0.75f, 0.2f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Horizontal);
+        Core::UI::Button({ 0.4f, 0.75f });
+        Core::UI::Button({ 0.4f, 0.75f });
+    Core::UI::EndContainer();
+    
+    Core::UI::BeginContainer({ 0.75f, 0.5f }, { 0.8f, 0.25f, 0.25f, 0.25f }, Core::UI::LayoutType::Horizontal);
+        Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Vertical);
+            Core::UI::Button({ 1.0f, 0.25f });
+            Core::UI::Button({ 1.0f, 0.25f });
+            Core::UI::Button({ 1.0f, 0.25f });
+        Core::UI::EndContainer();
+
+        Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Vertical);
+            Core::UI::Button({ 1.0f, 0.25f });
+            Core::UI::Button({ 1.0f, 0.25f });
+            Core::UI::Button({ 1.0f, 0.25f });
+        Core::UI::EndContainer();
     Core::UI::EndContainer();
 
+    foo ^= Core::UI::Button({ 0.75f, 0.2f });
+    
     Core::UI::End();
 }
 
