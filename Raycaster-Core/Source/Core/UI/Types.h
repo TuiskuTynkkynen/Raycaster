@@ -24,10 +24,17 @@ namespace Core::UI {
         Button,
     };
 
-    
+    enum class PositioningType {
+        Auto = 0,
+        Offset,
+        Relative,
+        Absolute,
+    };
+
     struct Surface {
         SurfaceType Type;
         LayoutType Layout;
+        PositioningType Positioning;
 
         glm::vec2 Position;
         glm::vec2 Size;
@@ -38,9 +45,9 @@ namespace Core::UI {
         size_t SiblingID = 0;
         uint32_t ChildCount = 0;
         
-        Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None,
+        Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None, PositioningType positioning = PositioningType::Auto,
                 glm::vec2 position = glm::vec2(1.0f), glm::vec2 size = glm::vec2(1.0f),
                 std::array<glm::vec4, 3> colours = DefaultColours, size_t parentID = 0) 
-            : Type(type), Layout(layout), Position(position), Size(size), Colours(colours), ParentID(parentID) {}
+            : Type(type), Layout(layout), Positioning(positioning), Position(position), Size(size), Colours(colours), ParentID(parentID) {}
     };
 }

@@ -18,9 +18,7 @@ namespace Core::UI {
 			m_Position = parent.Position;
 		}
 
-		void Next(Surface& s) override {
-			s.Position = m_Position;
-		}
+		void Next(Surface& s) override;
 	private:
 		glm::vec2 m_Position;
 	};

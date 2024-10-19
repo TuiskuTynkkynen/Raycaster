@@ -29,7 +29,7 @@ namespace Core {
         UI::Internal::System->Position = screenPosition;
         UI::Internal::System->Size = screenSize;
 
-        UI::Internal::System->Elements.emplace_back(SurfaceType::None, layout, glm::vec2(0.5f), glm::vec2(1.0f), std::array<glm::vec4, 3>{glm::vec4(0.0f), glm::vec4(0.0f), glm::vec4(0.0f)});
+        UI::Internal::System->Elements.emplace_back(SurfaceType::None, layout, PositioningType::Auto, glm::vec2(0.5f), glm::vec2(1.0f), std::array<glm::vec4, 3>{glm::vec4(0.0f), glm::vec4(0.0f), glm::vec4(0.0f)});
     }
 
     void UI::Update() {
@@ -107,11 +107,11 @@ namespace Core {
         UI::Internal::System->Elements.clear();
     }
 
-    void UI::BeginContainer(glm::vec2 size, const glm::vec4& primaryColour, LayoutType layout) {
+    void UI::BeginContainer(PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, LayoutType layout) {
         RC_ASSERT(UI::Internal::System, "Tried to begin a UI container before initializing UI");
         RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
-        UI::Internal::System->Elements.emplace_back(SurfaceType::None, layout, glm::vec2(1.0f), size * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour }, UI::Internal::System->OpenElement);
+        UI::Internal::System->Elements.emplace_back(SurfaceType::None, layout, positioning, position, size * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour }, UI::Internal::System->OpenElement);
 
         UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
 
@@ -133,11 +133,11 @@ namespace Core {
         UI::Internal::System->OpenElement = parentId;
     }
 
-    bool UI::Button(glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+    bool UI::Button(PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(UI::Internal::System, "Tried to create a UI button before initializing UI");
         RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI button before calling UI Begin");
 
-        UI::Internal::System->Elements.emplace_back(SurfaceType::Button, LayoutType::None, glm::vec2(1.0f), size * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, UI::Internal::System->OpenElement);
+        UI::Internal::System->Elements.emplace_back(SurfaceType::Button, LayoutType::None, positioning, position, size * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, UI::Internal::System->OpenElement);
         
         UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
 
