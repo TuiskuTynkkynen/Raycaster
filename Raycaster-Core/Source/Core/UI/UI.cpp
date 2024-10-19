@@ -37,18 +37,6 @@ namespace Core {
 		RC_ASSERT(UI::Internal::System, "Tried to update UI before initializing");
 		RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to update UI before calling UI Begin");
 
-		auto CalculatePadding = [](const Surface& s) {
-			const Surface& parent = UI::Internal::System->Elements[s.ParentID];
-
-			float padding = s.ParentID ? parent.Size.y : 1.0f;
-
-			for (size_t i = s.ParentID + 1; i && i < UI::Internal::System->Elements.size(); i = UI::Internal::System->Elements[i].SiblingID) {
-				padding -= UI::Internal::System->Elements[i].Size.y;
-			}
-
-			return std::max(0.05f * parent.Size.y, padding / (parent.ChildCount + 1));
-		};
-
 		float mouseX = Input::GetMouseX() / UI::Internal::System->Size.x;
 		float mouseY = Input::GetMouseY() / UI::Internal::System->Size.y;
 		UI::Internal::System->HoverID = 0;
@@ -57,20 +45,27 @@ namespace Core {
 		}
 
 		size_t lastParentId = -1;
-		float padding = 0.0f;
-		float relativeY = 0.0f;
+		std::unique_ptr<Layout> layout = std::make_unique<NoLayout>(UI::Internal::System->Elements.front());
 		for (size_t i = 1; i < UI::Internal::System->Elements.size(); i++) {
 			Surface& current = UI::Internal::System->Elements[i];
 			const Surface& parent = UI::Internal::System->Elements[current.ParentID];
+			
+			if (current.ParentID != lastParentId) { 
+				switch (parent.Layout) {
+				case Core::UI::LayoutType::None:
+					layout = std::make_unique<NoLayout>(parent);
+					continue;
+				case Core::UI::LayoutType::Vertical:
+				case Core::UI::LayoutType::Horizontal:
+					layout = std::make_unique<LinearLayout>(i);
+					break;
+				}
 
-			if (current.ParentID != lastParentId) {
-				padding = CalculatePadding(current);
-				relativeY = padding;
+				lastParentId = current.ParentID;
 			}
 
-			current.Position.x = parent.Position.x;
-			current.Position.y = parent.Position.y - parent.Size.y * 0.5f + relativeY + current.Size.y * 0.5f;
-
+			layout->Next(current);
+			
 			if (current.Type == SurfaceType::Button && (!UI::Internal::System->ActiveID || UI::Internal::System->ActiveID == i)) {
 				if (mouseX <= current.Position.x + current.Size.x * 0.5f && mouseX >= current.Position.x - current.Size.x * 0.5f
 					&& mouseY <= current.Position.y + current.Size.y * 0.5f && mouseY >= current.Position.y - current.Size.y * 0.5f) {
@@ -82,9 +77,6 @@ namespace Core {
 					}
 				}
 			}
-
-			relativeY += current.Size.y + padding;
-			lastParentId = current.ParentID;
 		}
 	}
 
