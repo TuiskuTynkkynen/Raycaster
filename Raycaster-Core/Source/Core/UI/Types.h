@@ -5,36 +5,42 @@
 #include <array>
 
 namespace Core::UI {
-	enum class LayoutType {
-		None = 0,
-		Vertical,
-		Horizontal,
-	};
-	
-	enum class SurfaceType {
-		None = 0,
-		Button,
-	};
+    namespace {
+        std::array<glm::vec4, 3> DefaultColours = {
+            glm::vec4(0.125f, 0.125f, 0.5f, 1.0f),
+            glm::vec4(0.325f, 0.325f, 0.7f, 1.0f),
+            glm::vec4(0.7f, 0.7f, 0.325f, 1.0f)
+        };
+    }
 
-	struct Surface {
-		SurfaceType Type = SurfaceType::None;
-		LayoutType Layout = LayoutType::None;
+    enum class LayoutType {
+        None = 0,
+        Vertical,
+        Horizontal,
+    };
+    
+    enum class SurfaceType {
+        None = 0,
+        Button,
+    };
 
-		glm::vec2 Position;
-		glm::vec2 Size;
+    
+    struct Surface {
+        SurfaceType Type;
+        LayoutType Layout;
 
-		std::array<glm::vec4, 3> Colours; // [0] = primary, [1] = hover, [2] = clicked
+        glm::vec2 Position;
+        glm::vec2 Size;
 
-		size_t ParentID = 0;
-		size_t SiblingID = 0;
-		uint32_t ChildCount = 0;
-	};
+        std::array<glm::vec4, 3> Colours; // [0] = primary, [1] = hover, [2] = clicked
 
-	namespace {
-		std::array<glm::vec4, 3> DefaultColours = {
-			glm::vec4(0.125f, 0.125f, 0.5f, 1.0f),
-			glm::vec4(0.325f, 0.325f, 0.7f, 1.0f),
-			glm::vec4(0.7f, 0.7f, 0.325f, 1.0f)
-		};
-	}
+        size_t ParentID = 0;
+        size_t SiblingID = 0;
+        uint32_t ChildCount = 0;
+        
+        Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None,
+                glm::vec2 position = glm::vec2(1.0f), glm::vec2 size = glm::vec2(1.0f),
+                std::array<glm::vec4, 3> colours = DefaultColours, size_t parentID = 0) 
+            : Type(type), Layout(layout), Position(position), Size(size), Colours(colours), ParentID(parentID) {}
+    };
 }
