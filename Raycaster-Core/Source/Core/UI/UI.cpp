@@ -65,6 +65,26 @@ namespace Core {
 
             layout->Next(current);
             
+            if (current.AdditionalData.type() == typeid(Internal::TextData)) {
+                Internal::TextData& data = std::any_cast<Internal::TextData&>(current.AdditionalData);
+
+                glm::vec2 size(0.0f);
+                size.y = Internal::Font->GetGlyphInfo(' ').Size.y;
+                for (size_t i = 0; i < data.Text.length(); i++) {
+                    if(i == data.Text.length() - 1){ 
+                        size.x += Internal::Font->GetGlyphInfo(data.Text[i]).Size.x;
+                        break;
+                    }
+                    size.x += Internal::Font->GetGlyphInfo(data.Text[i]).Advance;
+                }
+
+                glm::vec2 scale = (current.Size * 0.9f) / size;
+                data.Scale = std::min(scale.x, scale.y);
+
+                size *= data.Scale * glm::vec2(-0.5f, 0.25f);
+                data.Offset = size;
+            }
+
             if (current.Type == SurfaceType::Button && (!UI::Internal::System->ActiveID || UI::Internal::System->ActiveID == i)) {
                 if (mouseX <= current.Position.x + current.Size.x * 0.5f && mouseX >= current.Position.x - current.Size.x * 0.5f
                     && mouseY <= current.Position.y + current.Size.y * 0.5f && mouseY >= current.Position.y - current.Size.y * 0.5f) {
@@ -88,13 +108,20 @@ namespace Core {
         
         for (size_t i = 1; i < UI::Internal::System->Elements.size(); i++) {
             Surface& s = UI::Internal::System->Elements[i];
-
+            
             uint32_t colourIndex = UI::Internal::System->ActiveID == i ? 2 : UI::Internal::System->HoverID == i ? 1 : 0;
             glm::vec4& colour = s.Colours[colourIndex];
 
             if (s.Size.x * s.Size.y == 0.0f) { continue; }
 
             Renderer2D::DrawFlatQuad({ s.Position.x, s.Position.y, 0.0f }, { s.Size.x, s.Size.y, 0.0f }, colour);
+
+            if (s.AdditionalData.type() == typeid(Internal::TextData)) {
+                Internal::TextData& data = std::any_cast<Internal::TextData&>(s.AdditionalData);
+
+                Renderer2D::DrawString(data.Text, s.Position.x + data.Offset.x, s.Position.y + data.Offset.y, data.Scale, glm::vec4(1.0f), true);
+            }
+
         }
 
         Renderer2D::EndScene();
@@ -138,7 +165,8 @@ namespace Core {
         RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI button before calling UI Begin");
 
         UI::Internal::System->Elements.emplace_back(SurfaceType::Button, LayoutType::None, positioning, position, size * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, UI::Internal::System->OpenElement);
-        
+        Internal::System->Elements.back().AdditionalData = Internal::TextData("Button");
+
         UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
 
         size_t currentIndex = UI::Internal::System->Elements.size() - 1;
@@ -150,5 +178,9 @@ namespace Core {
         }
 
         return Input::IsButtonReleased(RC_MOUSE_BUTTON_LEFT) && UI::Internal::System->HoverID == currentIndex && UI::Internal::System->ActiveID == currentIndex;
+    }
+
+    void UI::SetFont(std::shared_ptr<Core::Font> font) { 
+        Internal::Font = font; 
     }
 }

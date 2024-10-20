@@ -16,8 +16,9 @@ void RaycasterLayer::OnAttach() {
     font->AddCharacterRange(0x00A1, 0x0FF); //Printable Latin-1 Supplement
     font->GenerateAtlas("tiny5/tiny5-Medium.ttf", 8);
     Core::Renderer2D::SetFont(font);
-
+    
     Core::UI::Init();
+    Core::UI::SetFont(font);
 }
 bool foo = false;
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 

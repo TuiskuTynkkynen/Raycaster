@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 
 #include <array>
+#include <any>
+#include <functional>
 
 namespace Core::UI {
     namespace {
@@ -45,6 +47,8 @@ namespace Core::UI {
         size_t SiblingID = 0;
         uint32_t ChildCount = 0;
         
+        std::any AdditionalData;
+
         Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None, PositioningType positioning = PositioningType::Auto,
                 glm::vec2 position = glm::vec2(1.0f), glm::vec2 size = glm::vec2(1.0f),
                 std::array<glm::vec4, 3> colours = DefaultColours, size_t parentID = 0) 

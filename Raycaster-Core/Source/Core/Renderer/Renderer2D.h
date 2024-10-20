@@ -24,7 +24,7 @@ namespace Core {
 		static void DrawLine(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour);
 		
 		template <typename T>
-		static void DrawString(const T& text, float x, float y, float scale, const glm::vec4& colour);
+		static void DrawString(const T& text, float x, float y, float scale, const glm::vec4& colour, bool flipVertivcal = false);
 
 		static void SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height);
 		static void SetFont(std::shared_ptr<Font> font);

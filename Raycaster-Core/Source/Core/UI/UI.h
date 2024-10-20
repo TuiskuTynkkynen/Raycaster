@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Types.h"
+#include "Core/Font/Font.h"
+
+#include <memory>
 
 namespace Core::UI {
     void Init();
@@ -17,5 +20,7 @@ namespace Core::UI {
 
     bool Button(PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultColours[0], const glm::vec4& hoverColour = DefaultColours[1], const glm::vec4& activeColour = DefaultColours[2]);
     inline bool Button(glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultColours[0], const glm::vec4& hoverColour = DefaultColours[1], const glm::vec4& activeColour = DefaultColours[2]) { return Button(PositioningType::Auto, glm::vec2(1.0f), relativeSize, primaryColour, hoverColour, activeColour); }
+
+    void SetFont(std::shared_ptr<Core::Font> font);
 }
 
