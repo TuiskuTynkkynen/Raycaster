@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 
 #include <array>
+#include <memory>
 
 namespace Core::UI {
     namespace {
@@ -10,6 +11,12 @@ namespace Core::UI {
             glm::vec4(0.125f, 0.125f, 0.5f, 1.0f),
             glm::vec4(0.325f, 0.325f, 0.7f, 1.0f),
             glm::vec4(0.7f, 0.7f, 0.325f, 1.0f)
+        };
+
+        std::array<glm::vec4, 3> DefaultTextColours = {
+            glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+            glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
+            glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
         };
     }
 
@@ -31,6 +38,8 @@ namespace Core::UI {
         Absolute,
     };
 
+    class Widget;
+
     struct Surface {
         SurfaceType Type;
         LayoutType Layout;
@@ -44,10 +53,18 @@ namespace Core::UI {
         size_t ParentID = 0;
         size_t SiblingID = 0;
         uint32_t ChildCount = 0;
-        
+
+        std::unique_ptr<Widget> Widget = nullptr;
+
         Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None, PositioningType positioning = PositioningType::Auto,
                 glm::vec2 position = glm::vec2(1.0f), glm::vec2 size = glm::vec2(1.0f),
                 std::array<glm::vec4, 3> colours = DefaultColours, size_t parentID = 0) 
             : Type(type), Layout(layout), Positioning(positioning), Position(position), Size(size), Colours(colours), ParentID(parentID) {}
+    };
+
+    class Widget {
+    public:
+        virtual void Update(Surface& current) = 0;
+        virtual bool Render(Surface& current) = 0;
     };
 }

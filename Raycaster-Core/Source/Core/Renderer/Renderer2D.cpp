@@ -312,7 +312,7 @@ namespace Core {
     }
 
     template <typename T>
-    void Renderer2D::DrawString(const T& text, float x, float y, float scale, const glm::vec4& colour) {
+    void Renderer2D::DrawString(const T& text, float x, float y, float scale, const glm::vec4& colour, bool flipHorizontal) {
         glm::vec3 position(0.0f);
         glm::vec3 size(1.0f);
         float startX = x;
@@ -337,11 +337,14 @@ namespace Core {
                 continue;
             }
 
+            float horizontalMultiplier = 1.0f - 2.0f * flipHorizontal;
+
             size.x = glyph.Size.x * scale;
             size.y = -glyph.Size.y * scale;
+            if (flipHorizontal) { size.y *= horizontalMultiplier; }
 
             position.x = x + glyph.Bearing.x * scale + size.x * 0.5f;
-            position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale - size.y * 0.5f;
+            position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale * horizontalMultiplier - size.y * 0.5f;
 
             glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
             transform = glm::scale(transform, size);
@@ -367,7 +370,9 @@ namespace Core {
         s_Data.Font = font;
     }
 
-    template void Renderer2D::DrawString<std::string>(const std::string&, float, float, float, const glm::vec4&);
-    template void Renderer2D::DrawString<std::wstring>(const std::wstring&, float, float, float, const glm::vec4&);
+    template void Renderer2D::DrawString<std::string>(const std::string&, float, float, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawString<std::wstring>(const std::wstring&, float, float, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawString<std::string_view>(const std::string_view&, float, float, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawString<std::wstring_view>(const std::wstring_view&, float, float, float, const glm::vec4&, bool);
 }
 

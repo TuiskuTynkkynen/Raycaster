@@ -16,10 +16,12 @@ void RaycasterLayer::OnAttach() {
     font->AddCharacterRange(0x00A1, 0x0FF); //Printable Latin-1 Supplement
     font->GenerateAtlas("tiny5/tiny5-Medium.ttf", 8);
     Core::Renderer2D::SetFont(font);
-
+    
     Core::UI::Init();
+    Core::UI::SetFont(font);
 }
 bool foo = false;
+bool vSync = false;
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
     static glm::mat4 identity(1.0f);
 
@@ -98,9 +100,9 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     
     Core::UI::BeginContainer({ 0.75f, 0.5f }, { 0.8f, 0.25f, 0.25f, 0.25f }, Core::UI::LayoutType::Horizontal);
         Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Vertical);
-            Core::UI::Button({ 1.0f, 0.25f });
-            Core::UI::Button({ 1.0f, 0.25f });
-            Core::UI::Button({ 1.0f, 0.25f });
+            Core::UI::Text("foo", { 1.0f, 0.25f });
+            Core::UI::Text("bar", { 1.0f, 0.25f });
+            Core::UI::Text("baz", { 1.0f, 0.25f });
         Core::UI::EndContainer();
 
         Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Vertical);
@@ -110,10 +112,13 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         Core::UI::EndContainer();
     Core::UI::EndContainer();
 
-    Core::UI::Button(Core::UI::PositioningType::Relative, { -0.45f, -0.45f }, { 0.075f, 0.075f });
-    Core::UI::Button(Core::UI::PositioningType::Absolute, { 0.95f, 0.05f }, { 0.075f, 0.075f });
+    Core::UI::Button(Core::UI::PositioningType::Relative, { -0.45f, 0.45f }, { 0.075f, 0.075f });
+    if (Core::UI::Button("VSync", Core::UI::PositioningType::Absolute, { 0.95f, 0.05f }, { 0.075f, 0.075f })) {
+        vSync = !vSync;
+        Core::Application::GetWindow().SetVSync(vSync);
+    }
 
-    foo ^= Core::UI::Button({ 0.75f, 0.2f });
+    foo ^= Core::UI::Button("Show fps counter", { 0.75f, 0.2f });
     
     
     Core::UI::End();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.h"
+#include "Core/Font/Font.h"
 
 #include <vector>
 #include <memory>
@@ -19,4 +20,5 @@ namespace Core::UI::Internal {
 	};
 
 	inline std::unique_ptr<UISystem> System;
+	inline std::shared_ptr<Core::Font> Font;
 }
