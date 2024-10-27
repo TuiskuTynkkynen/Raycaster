@@ -161,9 +161,10 @@ namespace Core {
             s_Data.WhiteTexture->BindData(whiteTextureData, 1, 1, 4);
         }
 
-        s_Data.TextureShader->setInt("Textures[0]", 0);
-        s_Data.TextureShader->setInt("Textures[1]", 1);
-        s_Data.TextureShader->setInt("Textures[2]", 2);
+        for (uint32_t i = 0; i < 16; i++) {
+            std::string uniform = "Textures[" + std::to_string(i) + "]";
+            s_Data.TextureShader->setInt(uniform.c_str(), i);
+        }
 
         s_Data.atlasWidth = s_Data.atlasHeight = 1;
         s_Data.TextureShader->setVec2("AtlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));

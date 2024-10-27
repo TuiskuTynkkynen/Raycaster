@@ -18,6 +18,12 @@ namespace Core::UI {
             glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
             glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
         };
+
+        std::array<glm::vec4, 3> DefaultTextureColours = {
+            glm::vec4(1.0f),
+            glm::vec4(1.0f),
+            glm::vec4(1.0f)
+        };
     }
 
     enum class LayoutType {

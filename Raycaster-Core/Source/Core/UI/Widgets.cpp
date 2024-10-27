@@ -2,8 +2,31 @@
 
 #include "Internal.h"
 #include "Core/Renderer/Renderer2D.h"
+#include "Core/Debug/Debug.h"
+
+#include <glm/gtc/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_transform_2d.hpp>
 
 namespace Core::UI::Widgets {
+    bool AtlasTextureWidget::Render(Surface& current) {
+        RC_ASSERT(Internal::TextureAtlas, "Tried to render UI element with texture before UI setting TextureAtlas")
+
+        uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
+
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
+
+        glm::vec2 atlasOffset(m_AtlasIndices[index] % (uint32_t)Internal::AtlasSize.x, m_AtlasIndices[index] / (uint32_t)Internal::AtlasSize.x);
+        
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
+        texTransform = glm::scale(texTransform, glm::vec2(m_Scale.x, -m_Scale.y) / Internal::AtlasSize);
+        
+        Renderer2D::DrawQuad(3, current.Colours[index], transform, texTransform);
+
+        return true;
+    }
+
 	template <typename T>
 	void TextWidget<T>::Update(Surface& current) {
         glm::vec2 size(0.0f);

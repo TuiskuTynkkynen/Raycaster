@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "Core/Font/Font.h"
+#include "Core/Renderer/Texture.h"
 
 #include <vector>
 #include <memory>
@@ -21,4 +22,6 @@ namespace Core::UI::Internal {
 
 	inline std::unique_ptr<UISystem> System;
 	inline std::shared_ptr<Core::Font> Font;
+	inline std::shared_ptr<Core::Texture2D> TextureAtlas;
+	inline glm::vec2 AtlasSize;
 }

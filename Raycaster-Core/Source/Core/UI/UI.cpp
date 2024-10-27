@@ -90,6 +90,9 @@ namespace Core {
         RenderAPI::SetViewPort(UI::Internal::System->Position.x, UI::Internal::System->Position.y, UI::Internal::System->Position.x + UI::Internal::System->Size.x, UI::Internal::System->Position.y + UI::Internal::System->Size.y);
         Renderer2D::BeginScene(glm::ortho(0.0f, 1.0f, 1.0f, 0.0f));
         
+        if(Internal::Font) { Internal::Font->ActivateAtlas(2); }
+        if(Internal::TextureAtlas) { Internal::TextureAtlas->Activate(3); }
+
         for (size_t i = 1; i < UI::Internal::System->Elements.size(); i++) {
             Surface& s = UI::Internal::System->Elements[i];
             
@@ -175,6 +178,50 @@ namespace Core {
         return Input::IsButtonReleased(RC_MOUSE_BUTTON_LEFT) && UI::Internal::System->HoverID == currentIndex && UI::Internal::System->ActiveID == currentIndex;
     }
 
+    bool UI::TextureButton(glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+        bool result = Button(positioning, position, size, primaryColour, hoverColour, activeColour);
+
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasIndices, atlasSize);
+
+        return result;
+    }
+
+    template <typename T>
+    bool UI::TextureButton(std::basic_string_view<T> text, glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
+        bool result = Button(positioning, position, size, buttonColours[0], buttonColours[1], buttonColours[2]);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasIndices, atlasSize);
+
+        size_t open = Internal::System->OpenElement;
+        Internal::System->OpenElement = UI::Internal::System->Elements.size() - 1;
+        Text(text, glm::vec2(0.9f), textColours[0], textColours[1], textColours[2]);
+        UI::Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+        Internal::System->OpenElement = open;
+
+        return result;
+    }
+    template bool UI::TextureButton<char>(std::string_view, glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template bool UI::TextureButton<wchar_t>(std::wstring_view, glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+
+    void UI::Texture(glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& colour) {
+        RC_ASSERT(UI::Internal::System, "Tried to create a UI texture before initializing UI");
+        RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI texture before calling UI Begin");
+
+        UI::Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ colour, colour, colour }, UI::Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasIndices, atlasSize);
+
+        UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = UI::Internal::System->Elements.size() - 1;
+        for (size_t i = currentIndex - 1; i > UI::Internal::System->OpenElement; i--) {
+            if (UI::Internal::System->Elements[i].ParentID == UI::Internal::System->OpenElement) {
+                UI::Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+    }
+
+
     void UI::Text(std::string_view text, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(UI::Internal::System, "Tried to create a UI text before initializing UI");
         RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
@@ -213,5 +260,11 @@ namespace Core {
 
     void UI::SetFont(std::shared_ptr<Core::Font> font) { 
         Internal::Font = font; 
+    }
+
+
+    void UI::SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize) {
+        Internal::TextureAtlas = atlas;
+        Internal::AtlasSize = atlasSize;
     }
 }

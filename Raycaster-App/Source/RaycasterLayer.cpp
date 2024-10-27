@@ -19,6 +19,9 @@ void RaycasterLayer::OnAttach() {
     
     Core::UI::Init();
     Core::UI::SetFont(font);
+    std::shared_ptr<Core::Texture2D> buttonTexture = std::make_unique<Core::Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
+    buttonTexture->BindImage("Button.png");
+    Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 2));
 }
 bool foo = false;
 bool vSync = false;
@@ -94,8 +97,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::UI::Begin({ 0, 0 }, { m_ViewPortWidth, m_ViewPortHeight });
 
     Core::UI::BeginContainer({ 0.75f, 0.2f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Horizontal);
-        Core::UI::Button({ 0.4f, 0.75f });
-        Core::UI::Button({ 0.4f, 0.75f });
+        Core::UI::TextureButton({ 0, 4, 8 }, { 4.0f, 1.0f }, { 0.4f, 0.75f });
+        Core::UI::TextureButton({ 0, 4, 8 }, { 4.0f, 1.0f }, { 0.4f, 0.75f });
     Core::UI::EndContainer();
     
     Core::UI::BeginContainer({ 0.75f, 0.5f }, { 0.8f, 0.25f, 0.25f, 0.25f }, Core::UI::LayoutType::Horizontal);
@@ -113,13 +116,12 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::UI::EndContainer();
 
     Core::UI::Button(Core::UI::PositioningType::Relative, { -0.45f, 0.45f }, { 0.075f, 0.075f });
-    if (Core::UI::Button("VSync", Core::UI::PositioningType::Absolute, { 0.95f, 0.05f }, { 0.075f, 0.075f })) {
+    if (Core::UI::TextureButton("VSync", { 12, 13, 14 }, { 1.0f, 1.0f }, Core::UI::PositioningType::Absolute, { 0.95f, 0.05f }, { 0.075f, 0.075f })) {
         vSync = !vSync;
         Core::Application::GetWindow().SetVSync(vSync);
     }
 
-    foo ^= Core::UI::Button("Show fps counter", { 0.75f, 0.2f });
-    
+    foo ^= Core::UI::TextureButton("Show fps counter", { 0, 4, 8 }, { 4.0f, 1.0f }, { 0.75f, 0.2f });
     
     Core::UI::End();
 }
