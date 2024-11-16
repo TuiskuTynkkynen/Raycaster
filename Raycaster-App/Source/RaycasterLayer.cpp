@@ -139,83 +139,17 @@ bool RaycasterLayer::OnWindowResizeEvent(Core::WindowResize& event) {
     return false;
 }
 
-std::unique_ptr<Core::VertexArray> QuadVertexArray;
-std::unique_ptr<Core::VertexBuffer> QuadVertexBuffer;
-std::unique_ptr<Core::ElementBuffer> QuadElementBuffer;
-
-void Layer2D::OnAttach() {
-    QuadVertexArray = std::make_unique<Core::VertexArray>();
-    QuadVertexBuffer = std::make_unique<Core::VertexBuffer>(sizeof(Core::Shapes::QuadVertex) * 100);
-
-    Core::VertexBufferLayout quadLayout;
-    quadLayout.Push<float>(3);
-    quadLayout.Push<float>(4);
-    quadLayout.Push<float>(2);
-    quadLayout.Push<float>(2);
-    quadLayout.Push<float>(1);
-
-    QuadVertexArray->AddBuffer(*QuadVertexBuffer, quadLayout);
-
-    if (false) {
-        std::vector<glm::vec2> positions = Core::Shapes::RoundedQuadPositions(glm::vec2(1.f), 0.5f, 1);
-        std::vector<Core::Shapes::QuadVertex> QuadVertices;
-        QuadVertices.resize(positions.size());
-
-        for (size_t i = 0; i < QuadVertices.size(); i++) {
-            auto& vert = QuadVertices[i];
-
-            vert.Position = { positions[i].x, positions[i].y, 0.f };
-            vert.Colour = { 1.f, 0.f, 0.f, 1.f };
-        }
-
-        RC_TRACE("{}", positions.size());
-        for (size_t i = 0; i < QuadVertices.size(); i++) {
-            auto& vert = QuadVertices[i];
-
-            RC_TRACE("{}",vert.Position);
-        }
-
-        QuadVertexBuffer->SetData(QuadVertices.data(), sizeof(Core::Shapes::QuadVertex) * positions.size());
-        return;
-    }
-
-    std::vector<Core::Shapes::QuadVertex> QuadVertices;
-    QuadVertices.reserve(100);
-    std::vector<uint32_t> quadIndices;
-    quadIndices.resize(200);
-    quadIndices.clear();
-
-    Core::Shapes::Triangle(glm::vec3(60.f, 60.f, 60.f), 1.f, QuadVertices, quadIndices);
-    Core::Shapes::Quad(glm::vec2(1.f), QuadVertices, quadIndices);
-    Core::Shapes::Quad(glm::vec2(1.f), QuadVertices, quadIndices);
-    for (Core::Shapes::QuadVertex& vert : QuadVertices) {
-        vert.Colour = { 1.f, 1.f, 1.f, 1.f };
-        vert.AtlasOffset = { 0.f, 0.f };
-        vert.TextureIndex = 1.f;
-    }
-    for (size_t i = 3; i < 7; i++) {
-        QuadVertices[i].Colour = {1.f, 1.f, 1.f, 0.4f};
-    }
-    for (size_t i = 7; i < 11; i++) {
-        QuadVertices[i].Position.x += 1.f;
-    }
-
-    QuadElementBuffer = std::make_unique<Core::ElementBuffer>(quadIndices.data(), 200);
-    QuadElementBuffer->Bind();
-
-    QuadVertexBuffer->SetData(QuadVertices.data(), sizeof(Core::Shapes::QuadVertex) * 100);
-}
-
 void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     static glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
     static glm::vec3 zero(0.0f);
     static glm::mat4 identity(1.0f);
     
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
-    
+
     Core::Renderer2D::BeginScene(identity);
-    //Core::RenderAPI::DrawVertices(*QuadVertexArray, 100);
-    Core::RenderAPI::DrawIndexed(*QuadVertexArray, 200);
+    Core::Renderer2D::DrawTextureQuad(glm::vec3(0.f), glm::vec3(1.f), { 1.f, 1.f, 1.f, 0.4f }, glm::vec2(0.f), glm::vec2(1.f), 0, 0.f);
+    Core::Renderer2D::DrawTextureQuad({ 1.f, 0.f, 0.f }, glm::vec3(1.f), glm::vec4(1.f), glm::vec2(0.f), glm::vec2(1.f), 0, 0.f);
+    Core::Renderer2D::DrawTextureTriangle(glm::vec3(60.f, 60.f, 60.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec4(1.f), glm::vec2(0.f), glm::vec2(1.f), 0, 0.f);
     Core::Renderer2D::EndScene();
     return;
 

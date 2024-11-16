@@ -6,6 +6,7 @@
 #include "ElementBuffer.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "Shapes.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -14,15 +15,7 @@
 #include <memory>
 #include <array>
 
-struct QuadVertex {
-    glm::vec3 Position{ 0.0f };
-    glm::vec4 Colour{ 0.0f };
-    glm::vec2 TextureCoords{ 0.0f };
-    glm::vec2 AtlasOffset{ 0.0f };
-
-    float TextureIndex = 0;
-};
-
+#include "Core/Debug/Debug.h"
 struct SimpleVertex {
     glm::vec3 Position{ 0.0f };
     glm::vec3 Colour{ 0.0f };
@@ -42,6 +35,10 @@ struct Renderer2DDAta {
     std::unique_ptr<Core::VertexBuffer> QuadVertexBuffer;
     std::unique_ptr<Core::ElementBuffer> QuadElementBuffer;
 
+    std::unique_ptr<Core::VertexArray> ShapeVertexArray;
+    std::unique_ptr<Core::VertexBuffer> ShapeVertexBuffer;
+    std::unique_ptr<Core::ElementBuffer> ShapeElementBuffer;
+
     uint32_t LineVertexCount = 0;
     std::vector<SimpleVertex> LineVertices;
     std::vector<SimpleVertex>::iterator LineBackIter;
@@ -51,12 +48,15 @@ struct Renderer2DDAta {
     std::vector<SimpleVertex>::iterator TriangleBackIter;
 
     uint32_t QuadIndexCount = 0;
-    std::vector<QuadVertex> QuadVertices;
-    std::vector<QuadVertex>::iterator QuadBackIter;
+    std::vector<Core::Shapes::Vertex> QuadVertices;
+    std::vector<Core::Shapes::Vertex>::iterator QuadBackIter;
 
     uint32_t BaseQuadVertexCount = 4;
     glm::vec4* BaseQuadVertexPositions = nullptr;
     glm::vec3* BaseQuadTextureCoords = nullptr;
+
+    std::vector<Core::Shapes::Vertex> ShapeVertices;
+    std::vector<uint32_t> ShapeIndices;
 
     std::unique_ptr<Core::Shader> TextureShader;
     std::unique_ptr<Core::Shader> SimpleShader;
@@ -112,7 +112,7 @@ namespace Core {
         s_Data.TriangleVertexArray->AddBuffer(*s_Data.TriangleVertexBuffer, simpleVertexLayout);
 
         s_Data.QuadVertexArray = std::make_unique<VertexArray>();
-        s_Data.QuadVertexBuffer = std::make_unique<VertexBuffer>(sizeof(QuadVertex) * s_Data.MaxVertices);
+        s_Data.QuadVertexBuffer = std::make_unique<VertexBuffer>(sizeof(Shapes::Vertex) * s_Data.MaxVertices);
 
         VertexBufferLayout quadLayout;
         quadLayout.Push<float>(3);
@@ -138,6 +138,16 @@ namespace Core {
         
         s_Data.QuadElementBuffer = std::make_unique<ElementBuffer>(quadIndices, s_Data.MaxIndices);
         delete[] quadIndices;
+
+        s_Data.ShapeVertices = std::vector<Core::Shapes::Vertex>();
+        s_Data.ShapeVertices.reserve(s_Data.MaxVertices);
+        s_Data.ShapeIndices = std::vector<uint32_t>();
+        s_Data.ShapeIndices.reserve(s_Data.MaxIndices);
+
+        s_Data.ShapeVertexArray = std::make_unique<VertexArray>();
+        s_Data.ShapeVertexBuffer = std::make_unique<VertexBuffer>(sizeof(Shapes::Vertex) * s_Data.MaxVertices);
+        s_Data.ShapeVertexArray->AddBuffer(*s_Data.ShapeVertexBuffer, quadLayout);
+        s_Data.ShapeElementBuffer = std::make_unique<ElementBuffer>(s_Data.MaxIndices);
 
         s_Data.TextureShader = std::make_unique<Shader>("2DShader.glsl");
         s_Data.TextureShader->Bind();
@@ -188,6 +198,7 @@ namespace Core {
 
         s_Data.SimpleShader->Bind();
         s_Data.SimpleShader->setMat4("ViewProjection", s_Data.ViewProjection);
+        s_Data.TextureShader->Bind();
     }
 
     void Renderer2D::EndScene() {
@@ -214,8 +225,10 @@ namespace Core {
             s_Data.Font->ActivateAtlas(2);
 
             uint32_t vertexCount =  s_Data.QuadBackIter - s_Data.QuadVertices.begin();
-            s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertices.data(), sizeof(QuadVertex) * vertexCount);
-            
+            s_Data.QuadVertexArray->Bind();
+            s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertices.data(), sizeof(Shapes::Vertex) * vertexCount);
+            s_Data.QuadElementBuffer->Bind();
+
             RenderAPI::DrawIndexed(*s_Data.QuadVertexArray, s_Data.QuadIndexCount);
             
             s_Data.QuadIndexCount = 0;
@@ -230,6 +243,22 @@ namespace Core {
 
             s_Data.TriangleVertexCount = 0;
             s_Data.TriangleBackIter = s_Data.TriangleVertices.begin();
+        }
+
+        if (s_Data.ShapeIndices.size()) {
+            s_Data.TextureShader->Bind();
+            s_Data.WhiteTexture->Activate(0);
+            s_Data.TextureAtlas->Activate(1);
+            s_Data.Font->ActivateAtlas(2);
+
+            s_Data.ShapeVertexArray->Bind();
+            s_Data.ShapeVertexBuffer->SetData(s_Data.ShapeVertices.data(), sizeof(Shapes::Vertex) * s_Data.ShapeVertices.size());
+            s_Data.ShapeElementBuffer->SetData(s_Data.ShapeIndices.data(), s_Data.ShapeIndices.size());
+            
+            RenderAPI::DrawIndexed(*s_Data.ShapeVertexArray, s_Data.ShapeIndices.size());
+
+            s_Data.ShapeVertices.clear();
+            s_Data.ShapeIndices.clear();
         }
 
         RenderAPI::SetDepthBuffer(true);
@@ -312,6 +341,56 @@ namespace Core {
         s_Data.LineVertexCount += 2;
     }
 
+    void Renderer2D::DrawTriangle(const glm::vec3& angles, uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
+        size_t VertexOffset = s_Data.ShapeVertices.size();
+        
+        Shapes::ShapeError error = Shapes::Triangle(angles, 1.0f, s_Data.ShapeVertices, s_Data.ShapeIndices);
+        if (error == Shapes::ShapeError::InvalidParameters) {
+            return;
+        }
+        if (error >= Shapes::ShapeError::VertexOverflow) {
+            Flush();
+            if (Shapes::Triangle(angles, 1.0f, s_Data.ShapeVertices, s_Data.ShapeIndices) != Shapes::ShapeError::None) {
+                return;
+            }
+        }
+
+        for (size_t i = VertexOffset; i < s_Data.ShapeVertices.size(); i++) {
+            s_Data.ShapeVertices[i].Position = transform * glm::vec4{ s_Data.ShapeVertices[i].Position, 1.0f };
+            s_Data.ShapeVertices[i].TextureCoords = textureTransform * glm::vec3{ s_Data.ShapeVertices[i].TextureCoords, 1.0f };
+
+            s_Data.ShapeVertices[i].Colour = colour;
+            s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
+            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+        }
+    }
+    
+    void Renderer2D::DrawTextureTriangle(const glm::vec3& angles, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
+        texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
+        texTransform = glm::scale(texTransform, textureScale);
+
+        DrawTriangle(angles, 1, colour, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
+    }
+    
+    void Renderer2D::DrawFlatTriangle(const glm::vec3& angles, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        DrawTriangle(angles, 0, colour, transform);
+    }
+    
+    void Renderer2D::DrawRotatedFlatTriangle(const glm::vec3& angles, const glm::vec3& position, float rotation, const  glm::vec3& rotationAxis, const  glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
+        transform = glm::scale(transform, scale);
+        
+        DrawTriangle(angles, 0, colour, transform);
+    }
+
     template <typename T>
     void Renderer2D::DrawString(const T& text, float x, float y, float scale, const glm::vec4& colour, bool flipHorizontal) {
         glm::vec3 position(0.0f);
@@ -375,5 +454,306 @@ namespace Core {
     template void Renderer2D::DrawString<std::wstring>(const std::wstring&, float, float, float, const glm::vec4&, bool);
     template void Renderer2D::DrawString<std::string_view>(const std::string_view&, float, float, float, const glm::vec4&, bool);
     template void Renderer2D::DrawString<std::wstring_view>(const std::wstring_view&, float, float, float, const glm::vec4&, bool);
+
+    void Renderer2D::DrawShapeQuad(uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
+        size_t VertexOffset = s_Data.ShapeVertices.size();
+
+        Shapes::ShapeError error = Shapes::Quad(glm::vec2(1.0f), s_Data.ShapeVertices, s_Data.ShapeIndices);
+        if (error == Shapes::ShapeError::InvalidParameters) {
+            return;
+        }
+        if (error >= Shapes::ShapeError::VertexOverflow) {
+            Flush();
+            if (Shapes::Quad(glm::vec2(1.0f), s_Data.ShapeVertices, s_Data.ShapeIndices) != Shapes::ShapeError::None) {
+                return;
+            }
+        }
+
+        for (size_t i = VertexOffset; i < s_Data.ShapeVertices.size(); i++) {
+            s_Data.ShapeVertices[i].Position = transform * glm::vec4{ s_Data.ShapeVertices[i].Position, 1.0f };
+            s_Data.ShapeVertices[i].TextureCoords = textureTransform * glm::vec3{ s_Data.ShapeVertices[i].TextureCoords, 1.0f };
+
+            s_Data.ShapeVertices[i].Colour = colour;
+            s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
+            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+        }
+    }
+
+    void Renderer2D::DrawTextureShapeQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
+        texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
+        texTransform = glm::scale(texTransform, textureScale);
+
+        DrawShapeQuad(1, colour, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
+    }
+
+    void Renderer2D::DrawFlatShapeQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        DrawShapeQuad(0, colour, transform);
+    }
+
+    void Renderer2D::DrawRotatedFlatShapeQuad(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
+        transform = glm::scale(transform, scale);
+
+        DrawShapeQuad(0, colour, transform);
+    }
+
+    void Renderer2D::DrawQuadEdge(const glm::vec2& size, float thickness, uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
+        size_t VertexOffset = s_Data.ShapeVertices.size();
+
+        Shapes::ShapeError error = Shapes::QuadEdge(size, thickness, s_Data.ShapeVertices, s_Data.ShapeIndices);
+        if (error == Shapes::ShapeError::InvalidParameters) {
+            return;
+        }
+        if (error >= Shapes::ShapeError::VertexOverflow) {
+            Flush();
+            if (Shapes::QuadEdge(size, thickness, s_Data.ShapeVertices, s_Data.ShapeIndices) != Shapes::ShapeError::None) {
+                return;
+            }
+        }
+
+        for (size_t i = VertexOffset; i < s_Data.ShapeVertices.size(); i++) {
+            s_Data.ShapeVertices[i].Position = transform * glm::vec4{ s_Data.ShapeVertices[i].Position, 1.0f };
+            s_Data.ShapeVertices[i].TextureCoords = textureTransform * glm::vec3{ s_Data.ShapeVertices[i].TextureCoords, 1.0f };
+
+            s_Data.ShapeVertices[i].Colour = colour;
+            s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
+            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+        }
+    }
+
+    void Renderer2D::DrawTextureQuadEdge(const glm::vec2& size, float thickness, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
+        texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
+        texTransform = glm::scale(texTransform, textureScale);
+
+        DrawQuadEdge(size, thickness, 1, colour, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
+    }
+
+    void Renderer2D::DrawFlatQuadEdge(const glm::vec2& size, float thickness, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        DrawQuadEdge(size, thickness, 0, colour, transform);
+    }
+
+    void Renderer2D::DrawRotatedFlatQuadEdge(const glm::vec2& size, float thickness, const glm::vec3& position, float rotation, const  glm::vec3& rotationAxis, const  glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
+        transform = glm::scale(transform, scale);
+
+        DrawQuadEdge(size, thickness, 0, colour, transform);
+    }
+
+    void Renderer2D::DrawRoundedQuad(const glm::vec2& size, float roundness, uint32_t segments, uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
+        size_t VertexOffset = s_Data.ShapeVertices.size();
+
+        Shapes::ShapeError error = Shapes::RoundedQuad(size, roundness, segments, s_Data.ShapeVertices, s_Data.ShapeIndices);
+        if (error == Shapes::ShapeError::InvalidParameters) {
+            return;
+        }
+        if (error >= Shapes::ShapeError::VertexOverflow) {
+            Flush();
+            if (Shapes::RoundedQuad(size, roundness, segments, s_Data.ShapeVertices, s_Data.ShapeIndices) != Shapes::ShapeError::None) {
+                return;
+            }
+        }
+
+        for (size_t i = VertexOffset; i < s_Data.ShapeVertices.size(); i++) {
+            s_Data.ShapeVertices[i].Position = transform * glm::vec4{ s_Data.ShapeVertices[i].Position, 1.0f };
+            s_Data.ShapeVertices[i].TextureCoords = textureTransform * glm::vec3{ s_Data.ShapeVertices[i].TextureCoords, 1.0f };
+
+            s_Data.ShapeVertices[i].Colour = colour;
+            s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
+            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+        }
+    }
+
+    void Renderer2D::DrawTextureRoundedQuad(const glm::vec2& size, float roundness, uint32_t segments, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
+        texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
+        texTransform = glm::scale(texTransform, textureScale);
+
+        DrawRoundedQuad(size, roundness, segments, 1, colour, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
+    }
+
+    void Renderer2D::DrawFlatRoundedQuad(const glm::vec2& size, float roundness, uint32_t segments, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        DrawRoundedQuad(size, roundness, segments, 0, colour, transform);
+    }
+
+    void Renderer2D::DrawRotatedFlatRoundedQuad(const glm::vec2& size, float roundness, uint32_t segments, const glm::vec3& position, float rotation, const  glm::vec3& rotationAxis, const  glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
+        transform = glm::scale(transform, scale);
+
+        DrawRoundedQuad(size, roundness, segments, 0, colour, transform);
+    }
+
+    void Renderer2D::DrawRoundedQuadEdge(const glm::vec2& size, float thickness, float roundness, uint32_t segments, uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
+        size_t VertexOffset = s_Data.ShapeVertices.size();
+
+        Shapes::ShapeError error = Shapes::RoundedQuadEdge(size, thickness, roundness, segments, s_Data.ShapeVertices, s_Data.ShapeIndices);
+        if (error == Shapes::ShapeError::InvalidParameters) {
+            return;
+        }
+        if (error >= Shapes::ShapeError::VertexOverflow) {
+            Flush();
+            if (Shapes::RoundedQuadEdge(size, thickness, roundness, segments, s_Data.ShapeVertices, s_Data.ShapeIndices) != Shapes::ShapeError::None) {
+                return;
+            }
+        }
+
+        for (size_t i = VertexOffset; i < s_Data.ShapeVertices.size(); i++) {
+            s_Data.ShapeVertices[i].Position = transform * glm::vec4{ s_Data.ShapeVertices[i].Position, 1.0f };
+            s_Data.ShapeVertices[i].TextureCoords = textureTransform * glm::vec3{ s_Data.ShapeVertices[i].TextureCoords, 1.0f };
+
+            s_Data.ShapeVertices[i].Colour = colour;
+            s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
+            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+        }
+    }
+
+    void Renderer2D::DrawTextureRoundedQuadEdge(const glm::vec2& size, float thickness, float roundness, uint32_t segments, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
+        texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
+        texTransform = glm::scale(texTransform, textureScale);
+
+        DrawRoundedQuadEdge(size, thickness, roundness, segments, 1, colour, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
+    }
+
+    void Renderer2D::DrawFlatRoundedQuadEdge(const glm::vec2& size, float thickness, float roundness, uint32_t segments, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        DrawRoundedQuadEdge(size, thickness, roundness, segments, 0, colour, transform);
+    }
+
+    void Renderer2D::DrawRotatedFlatRoundedQuadEdge(const glm::vec2& size, float thickness, float roundness, uint32_t segments, const glm::vec3& position, float rotation, const  glm::vec3& rotationAxis, const  glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
+        transform = glm::scale(transform, scale);
+
+        DrawRoundedQuadEdge(size, thickness, roundness, segments, 0, colour, transform);
+    }
+
+    void Renderer2D::DrawCircle(uint32_t segments, uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
+        size_t VertexOffset = s_Data.ShapeVertices.size();
+
+        Shapes::ShapeError error = Shapes::Circle(segments, 0.5f, s_Data.ShapeVertices, s_Data.ShapeIndices);
+        if (error == Shapes::ShapeError::InvalidParameters) {
+            return;
+        }
+        if (error >= Shapes::ShapeError::VertexOverflow) {
+            Flush();
+            if (Shapes::Circle(segments, 0.5f, s_Data.ShapeVertices, s_Data.ShapeIndices) != Shapes::ShapeError::None) {
+                return;
+            }
+        }
+
+        for (size_t i = VertexOffset; i < s_Data.ShapeVertices.size(); i++) {
+            s_Data.ShapeVertices[i].Position = transform * glm::vec4{ s_Data.ShapeVertices[i].Position, 1.0f };
+            s_Data.ShapeVertices[i].TextureCoords = textureTransform * glm::vec3{ s_Data.ShapeVertices[i].TextureCoords, 1.0f };
+
+            s_Data.ShapeVertices[i].Colour = colour;
+            s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
+            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+        }
+    }
+
+    void Renderer2D::DrawTextureCircle(uint32_t segments, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
+        texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
+        texTransform = glm::scale(texTransform, textureScale);
+
+        DrawCircle(segments, 1, colour, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
+    }
+
+    void Renderer2D::DrawFlatCircle(uint32_t segments, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        DrawCircle(segments, 0, colour, transform);
+    }
+
+    void Renderer2D::DrawRotatedFlatCircle(uint32_t segments, const glm::vec3& position, float rotation, const  glm::vec3& rotationAxis, const  glm::vec3& scale, const glm::vec4& colour) {
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::rotate(transform, glm::radians(rotation), rotationAxis);
+        transform = glm::scale(transform, scale);
+
+        DrawCircle(segments, 0, colour, transform);
+    }
+
+    template <typename T>
+    void Renderer2D::DrawShapeString(const T& text, float x, float y, float scale, const glm::vec4& colour, bool flipHorizontal) {
+        glm::vec3 position(0.0f);
+        glm::vec3 size(1.0f);
+        float startX = x;
+
+        for (auto c = text.begin(); c != text.end(); c++) {
+            if (*c == '\r') {
+                continue;
+            }
+            if (*c == '\n') {
+                x = startX;
+                y -= s_Data.Font->GetGlyphInfo(' ').Size.y * scale;
+                continue;
+            }
+
+            GlyphInfo glyph = s_Data.Font->GetGlyphInfo(*c);
+
+            if (glyph.Advance == 0) {
+                glyph = s_Data.Font->GetGlyphInfo('?');
+            }
+            if (glyph.Size.x * glyph.Size.y == 0) {
+                x += glyph.Advance * scale;
+                continue;
+            }
+
+            float horizontalMultiplier = 1.0f - 2.0f * flipHorizontal;
+
+            size.x = glyph.Size.x * scale;
+            size.y = -glyph.Size.y * scale;
+            if (flipHorizontal) { size.y *= horizontalMultiplier; }
+
+            position.x = x + glyph.Bearing.x * scale + size.x * 0.5f;
+            position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale * horizontalMultiplier - size.y * 0.5f;
+
+            glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+            transform = glm::scale(transform, size);
+
+            glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), glyph.TexPosition);
+            texTransform = glm::scale(texTransform, glyph.TexScale);
+
+            DrawShapeQuad(2, colour, transform, texTransform);
+            x += glyph.Advance * scale;
+        }
+    }
+
+    template void Renderer2D::DrawShapeString<std::string>(const std::string&, float, float, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawShapeString<std::wstring>(const std::wstring&, float, float, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawShapeString<std::string_view>(const std::string_view&, float, float, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawShapeString<std::wstring_view>(const std::wstring_view&, float, float, float, const glm::vec4&, bool);
 }
 

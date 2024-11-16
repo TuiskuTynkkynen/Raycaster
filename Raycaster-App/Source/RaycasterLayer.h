@@ -23,7 +23,7 @@ private :
 
 	bool OnWindowResizeEvent(Core::WindowResize& event);
 public:
-	void OnAttach() override;
+	void OnAttach() override {};
 	void OnDetach() override {};
 	void OnUpdate(Core::Timestep deltaTime) override;
 	void OnEvent(Core::Event& event) override;
