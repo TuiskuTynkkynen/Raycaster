@@ -171,6 +171,8 @@ namespace Core {
             return ShapeError::InvalidParameters;
         }
 
+        thickness *= std::max(size.x, size.y);
+
         size_t vertOffset = vertices.size();
         vertices.resize(vertOffset + 12);
         size_t indOffset = indices.size();
@@ -419,6 +421,9 @@ namespace Core {
         if (roundness * segments <= 0.f) {
             return QuadEdge(size, thickness, vertices, indices);
         }
+        if (thickness >= 0.5f) {
+            return RoundedQuad(size, roundness, segments, vertices, indices);
+        }
         if (vertices.capacity() - vertices.size() < (segments - 1) * 2 * 4 + 16) {
             return ShapeError::VertexOverflow;
         }
@@ -430,12 +435,12 @@ namespace Core {
             return ShapeError::InvalidParameters;
         }
 
+        thickness = thickness * std::max(abs(size.x), abs(size.y));
         roundness = std::min(roundness, 1.f) * 0.5f;
         const float radius = std::max(abs(size.x * roundness), abs(size.y * roundness));
         if (radius == 0.f) {
             return ShapeError::InvalidParameters;
         }
-
         const std::vector<glm::vec2> points = {
             glm::vec2(-size.x * 0.5f, size.y * 0.5f - radius),
             glm::vec2(radius - size.x * 0.5f, size.y * 0.5f),
