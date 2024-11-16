@@ -171,7 +171,7 @@ namespace Core {
             return ShapeError::InvalidParameters;
         }
 
-        thickness *= std::max(size.x, size.y);
+        thickness *= std::min(size.x, size.y);
 
         size_t vertOffset = vertices.size();
         vertices.resize(vertOffset + 12);
@@ -435,7 +435,7 @@ namespace Core {
             return ShapeError::InvalidParameters;
         }
 
-        thickness = thickness * std::max(abs(size.x), abs(size.y));
+        thickness = thickness * std::min(abs(size.x), abs(size.y));
         roundness = std::min(roundness, 1.f) * 0.5f;
         const float radius = std::max(abs(size.x * roundness), abs(size.y * roundness));
         if (radius == 0.f) {

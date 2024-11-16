@@ -145,14 +145,6 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     static glm::mat4 identity(1.0f);
     
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
-
-    Core::Renderer2D::BeginScene(identity);
-    Core::Renderer2D::DrawTextureQuad(glm::vec3(0.f), glm::vec3(1.f), { 1.f, 1.f, 1.f, 0.4f }, glm::vec2(0.f), glm::vec2(1.f), 0, 0.f);
-    Core::Renderer2D::DrawTextureQuad({ 1.f, 0.f, 0.f }, glm::vec3(1.f), glm::vec4(1.f), glm::vec2(0.f), glm::vec2(1.f), 0, 0.f);
-    Core::Renderer2D::DrawTextureTriangle(glm::vec3(60.f, 60.f, 60.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec4(1.f), glm::vec2(0.f), glm::vec2(1.f), 0, 0.f);
-    Core::Renderer2D::EndScene();
-    return;
-
     Core::Renderer2D::BeginScene(m_Scene->GetCamera());
 
     const std::vector<Core::Tile>& tiles = m_Scene->GetTiles();

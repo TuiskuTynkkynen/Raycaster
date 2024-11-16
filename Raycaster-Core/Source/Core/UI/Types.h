@@ -8,9 +8,9 @@
 namespace Core::UI {
     namespace {
         std::array<glm::vec4, 3> DefaultColours = {
-            glm::vec4(0.125f, 0.125f, 0.5f, 1.0f),
-            glm::vec4(0.325f, 0.325f, 0.7f, 1.0f),
-            glm::vec4(0.7f, 0.7f, 0.325f, 1.0f)
+            glm::vec4(0.1f, 0.1f, 0.125f, 1.0f),
+            glm::vec4(0.15f, 0.15f, 0.175f, 1.0f),
+            glm::vec4(0.2f, 0.2f, 0.25f, 1.0f),
         };
 
         std::array<glm::vec4, 3> DefaultTextColours = {

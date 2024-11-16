@@ -22,7 +22,7 @@ namespace Core::UI::Widgets {
         glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
         texTransform = glm::scale(texTransform, glm::vec2(m_Scale.x, -m_Scale.y) / Internal::AtlasSize);
         
-        Renderer2D::DrawQuad(3, current.Colours[index], transform, texTransform);
+        Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
 
         return true;
     }
@@ -51,7 +51,7 @@ namespace Core::UI::Widgets {
     bool TextWidget<T>::Render(Surface& current) {
         uint32_t colourIndex = UI::Internal::System->ActiveID == current.ParentID ? 2 : UI::Internal::System->HoverID == current.ParentID ? 1 : 0;
         
-        Renderer2D::DrawString(m_Text, current.Position.x, current.Position.y, m_Scale, current.Colours[colourIndex], true);
+        Renderer2D::DrawShapeString(m_Text, current.Position.x, current.Position.y, m_Scale, current.Colours[colourIndex], true);
         
         return true;
     }
