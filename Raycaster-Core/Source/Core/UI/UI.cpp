@@ -37,8 +37,8 @@ namespace Core {
         RC_ASSERT(UI::Internal::System, "Tried to update UI before initializing");
         RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to update UI before calling UI Begin");
 
-        float mouseX = Input::GetMouseX() / UI::Internal::System->Size.x;
-        float mouseY = Input::GetMouseY() / UI::Internal::System->Size.y;
+        glm::vec2 mousePosition(Input::GetMouseX(), Input::GetMouseY());
+        mousePosition /= UI::Internal::System->Size;
         UI::Internal::System->HoverID = 0;
         if (!Input::IsButtonPressed(RC_MOUSE_BUTTON_LEFT)) {
             UI::Internal::System->ActiveID = 0;
@@ -65,13 +65,10 @@ namespace Core {
             }
 
             layout->Next(current);
-            if (current.Widget) {
-                current.Widget->Update(current);
-            }
 
             if (current.Type >= SurfaceType::Hoverable && (!UI::Internal::System->ActiveID || UI::Internal::System->ActiveID == i)) {
-                if (mouseX <= current.Position.x + current.Size.x * 0.5f && mouseX >= current.Position.x - current.Size.x * 0.5f
-                    && mouseY <= current.Position.y + current.Size.y * 0.5f && mouseY >= current.Position.y - current.Size.y * 0.5f) {
+                if (mousePosition.x <= current.Position.x + current.Size.x * 0.5f && mousePosition.x >= current.Position.x - current.Size.x * 0.5f
+                    && mousePosition.y <= current.Position.y + current.Size.y * 0.5f && mousePosition.y >= current.Position.y - current.Size.y * 0.5f) {
 
                     UI::Internal::System->HoverID = i;
 
@@ -79,6 +76,10 @@ namespace Core {
                         UI::Internal::System->ActiveID = i;
                     }
                 }
+            }
+
+            if (current.Widget) {
+                current.Widget->Update(current, mousePosition);
             }
         }
     }
@@ -303,6 +304,34 @@ namespace Core {
 
         enabled ^= Input::IsButtonReleased(RC_MOUSE_BUTTON_LEFT) && UI::Internal::System->HoverID == currentIndex && UI::Internal::System->ActiveID == currentIndex;
     }
+
+    template <typename T>
+    void UI::Slider(T& value, T min, T max, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& sliderColours, const std::array<glm::vec4, 3>& boxColours) {
+        RC_ASSERT(UI::Internal::System, "Tried to create a UI slider before initializing UI");
+        RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
+
+        UI::Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, boxColours, UI::Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::SliderWidget<T>>(value, min, max, sliderColours);
+
+        UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = UI::Internal::System->Elements.size() - 1;
+        for (size_t i = currentIndex - 1; i > UI::Internal::System->OpenElement; i--) {
+            if (UI::Internal::System->Elements[i].ParentID == UI::Internal::System->OpenElement) {
+                UI::Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+    }
+
+    template void UI::Slider<int8_t>(int8_t&, int8_t, int8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<uint8_t>(uint8_t&, uint8_t, uint8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<int32_t>(int32_t&, int32_t, int32_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<uint32_t>(uint32_t&, uint32_t, uint32_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<int64_t>(int64_t&, int64_t, int64_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<uint64_t>(uint64_t&, uint64_t, uint64_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<float>(float&, float, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<double>(double&, double, double, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
 
     void UI::SetFont(std::shared_ptr<Core::Font> font) { 
         Internal::Font = font; 

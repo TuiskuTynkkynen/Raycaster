@@ -24,6 +24,12 @@ namespace Core::UI {
             glm::vec4(1.0f),
             glm::vec4(1.0f)
         };
+
+        std::array<glm::vec4, 3> DefaultHighlightColours = {
+            glm::vec4(0.2f, 0.25f, 0.4f, 1.0f),
+            glm::vec4(0.2f, 0.35f, 0.6f, 1.0f),
+            glm::vec4(0.3f, 0.3f, 0.7f, 1.0f),
+        };
     }
 
     enum class LayoutType {
@@ -72,7 +78,7 @@ namespace Core::UI {
 
     class Widget {
     public:
-        virtual void Update(Surface& current) = 0;
+        virtual void Update(Surface& current, glm::vec2 mousePosition) = 0;
         virtual bool Render(Surface& current) = 0;
     };
 }

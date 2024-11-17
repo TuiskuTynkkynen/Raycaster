@@ -53,6 +53,12 @@ namespace Core::UI {
     void TextureToggle(bool& enabled, const glm::uvec3& boxAtlasIndices, const glm::uvec3& checkAtlasIndices, glm::vec2 atlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultTextureColours[0], const glm::vec4& hoverColour = DefaultTextureColours[1], const glm::vec4& activeColour = DefaultTextureColours[2]);
     inline void TextureToggle(bool& enabled, const glm::uvec3& boxAtlasIndices, const glm::uvec3& checkAtlasIndices, glm::vec2 atlasScale, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultTextureColours[0], const glm::vec4& hoverColour = DefaultTextureColours[1], const glm::vec4& activeColour = DefaultTextureColours[2]) { TextureToggle(enabled, boxAtlasIndices, checkAtlasIndices, atlasScale, PositioningType::Auto, glm::vec2(1.0f), relativeSize, primaryColour, hoverColour, activeColour); }
 
+    template <typename T>
+    void Slider(T& value, T min, T max, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& sliderColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours);
+    template <typename T>
+    void Slider(T& value, T min, T max, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& sliderColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours) { Slider<T>(value, min, max, PositioningType::Auto, glm::vec2(1.0f), relativeSize, sliderColours, boxColours); }
+
+
     void SetFont(std::shared_ptr<Core::Font> font);
     void SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize);
 }
