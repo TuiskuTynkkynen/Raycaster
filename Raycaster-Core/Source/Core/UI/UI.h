@@ -47,6 +47,12 @@ namespace Core::UI {
     inline void Text(std::string_view text, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultTextColours[0], const glm::vec4& hoverColour = DefaultTextColours[1], const glm::vec4& activeColour = DefaultTextColours[2]) { Text(text, PositioningType::Auto, glm::vec2(0.0f), relativeSize, primaryColour, hoverColour, activeColour); }
     inline void Text(std::wstring_view text, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultTextColours[0], const glm::vec4& hoverColour = DefaultTextColours[1], const glm::vec4& activeColour = DefaultTextColours[2]) { Text(text, PositioningType::Auto, glm::vec2(0.0f), relativeSize, primaryColour, hoverColour, activeColour); }
 
+    void Toggle(bool& enabled, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultColours[0], const glm::vec4& hoverColour = DefaultColours[1], const glm::vec4& activeColour = DefaultColours[2]);
+    inline void Toggle(bool& enabled, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultColours[0], const glm::vec4& hoverColour = DefaultColours[1], const glm::vec4& activeColour = DefaultColours[2]) { Toggle(enabled, PositioningType::Auto, glm::vec2(1.0f), relativeSize, primaryColour, hoverColour, activeColour); }
+    
+    void TextureToggle(bool& enabled, const glm::uvec3& boxAtlasIndices, const glm::uvec3& checkAtlasIndices, glm::vec2 atlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultTextureColours[0], const glm::vec4& hoverColour = DefaultTextureColours[1], const glm::vec4& activeColour = DefaultTextureColours[2]);
+    inline void TextureToggle(bool& enabled, const glm::uvec3& boxAtlasIndices, const glm::uvec3& checkAtlasIndices, glm::vec2 atlasScale, glm::vec2 relativeSize, const glm::vec4& primaryColour = DefaultTextureColours[0], const glm::vec4& hoverColour = DefaultTextureColours[1], const glm::vec4& activeColour = DefaultTextureColours[2]) { TextureToggle(enabled, boxAtlasIndices, checkAtlasIndices, atlasScale, PositioningType::Auto, glm::vec2(1.0f), relativeSize, primaryColour, hoverColour, activeColour); }
+
     void SetFont(std::shared_ptr<Core::Font> font);
     void SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize);
 }

@@ -69,13 +69,13 @@ namespace Core {
                 current.Widget->Update(current);
             }
 
-            if (current.Type == SurfaceType::Button && (!UI::Internal::System->ActiveID || UI::Internal::System->ActiveID == i)) {
+            if (current.Type >= SurfaceType::Hoverable && (!UI::Internal::System->ActiveID || UI::Internal::System->ActiveID == i)) {
                 if (mouseX <= current.Position.x + current.Size.x * 0.5f && mouseX >= current.Position.x - current.Size.x * 0.5f
                     && mouseY <= current.Position.y + current.Size.y * 0.5f && mouseY >= current.Position.y - current.Size.y * 0.5f) {
 
                     UI::Internal::System->HoverID = i;
 
-                    if (Input::IsButtonPressed(RC_MOUSE_BUTTON_LEFT)) {
+                    if (current.Type >= SurfaceType::Activatable && Input::IsButtonPressed(RC_MOUSE_BUTTON_LEFT)) {
                         UI::Internal::System->ActiveID = i;
                     }
                 }
@@ -262,6 +262,46 @@ namespace Core {
                 break;
             }
         }
+    }
+
+    void UI::Toggle(bool& enabled, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+        RC_ASSERT(UI::Internal::System, "Tried to create a UI toggle before initializing UI");
+        RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI toggle before calling UI Begin");
+
+        UI::Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, UI::Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ToggleWidget>(enabled);
+
+        UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = UI::Internal::System->Elements.size() - 1;
+        for (size_t i = currentIndex - 1; i > UI::Internal::System->OpenElement; i--) {
+            if (UI::Internal::System->Elements[i].ParentID == UI::Internal::System->OpenElement) {
+                UI::Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        enabled ^= Input::IsButtonReleased(RC_MOUSE_BUTTON_LEFT) && UI::Internal::System->HoverID == currentIndex && UI::Internal::System->ActiveID == currentIndex;
+    }
+    
+    void UI::TextureToggle(bool& enabled, const glm::uvec3& boxAtlasIndices, const glm::uvec3& checkAtlasIndices, glm::vec2 atlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+        RC_ASSERT(UI::Internal::System, "Tried to create a UI toggle before initializing UI");
+        RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI toggle before calling UI Begin");
+
+        UI::Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * UI::Internal::System->Elements[UI::Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, UI::Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureToggleWidget>(enabled, boxAtlasIndices, checkAtlasIndices, atlasScale);
+
+        UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = UI::Internal::System->Elements.size() - 1;
+        for (size_t i = currentIndex - 1; i > UI::Internal::System->OpenElement; i--) {
+            if (UI::Internal::System->Elements[i].ParentID == UI::Internal::System->OpenElement) {
+                UI::Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        enabled ^= Input::IsButtonReleased(RC_MOUSE_BUTTON_LEFT) && UI::Internal::System->HoverID == currentIndex && UI::Internal::System->ActiveID == currentIndex;
     }
 
     void UI::SetFont(std::shared_ptr<Core::Font> font) { 

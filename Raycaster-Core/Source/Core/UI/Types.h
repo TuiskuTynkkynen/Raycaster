@@ -34,6 +34,8 @@ namespace Core::UI {
     
     enum class SurfaceType {
         None = 0,
+        Hoverable,
+        Activatable,
         Button,
     };
 

@@ -249,7 +249,7 @@ namespace Core {
         }
 
         roundness = std::min(roundness, 1.f) * 0.5f;
-        const float radius = std::max(abs(size.x * roundness), abs(size.y * roundness));
+        const float radius = std::min(abs(size.x * roundness), abs(size.y * roundness));
         if (radius == 0.f) {
             return result;
         }
@@ -330,7 +330,7 @@ namespace Core {
         }
 
         roundness = std::min(roundness, 1.f) * 0.5f;
-        const float radius = std::max(abs(size.x * roundness), abs(size.y * roundness));
+        const float radius = std::min(abs(size.x * roundness), abs(size.y * roundness));
         if (radius == 0.f) {
             return ShapeError::InvalidParameters;
         }
@@ -437,7 +437,7 @@ namespace Core {
 
         thickness = thickness * std::min(abs(size.x), abs(size.y));
         roundness = std::min(roundness, 1.f) * 0.5f;
-        const float radius = std::max(abs(size.x * roundness), abs(size.y * roundness));
+        const float radius = std::min(abs(size.x * roundness), abs(size.y * roundness));
         if (radius == 0.f) {
             return ShapeError::InvalidParameters;
         }

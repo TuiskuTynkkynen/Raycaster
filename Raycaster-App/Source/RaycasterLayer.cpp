@@ -116,7 +116,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         Core::UI::EndContainer();
     Core::UI::EndContainer();
 
-    Core::UI::Button(Core::UI::PositioningType::Relative, { -0.45f, 0.45f }, { 0.075f, 0.075f });
+    static bool enabled = false;
+    Core::UI::TextureToggle(enabled, { 12, 13, 14 }, { 15, 15, 16 }, { 1.0f, 1.0f }, Core::UI::PositioningType::Relative, { -0.45f, 0.45f }, { 0.075f, 0.075f });
     if (Core::UI::TextureButton("VSync", { 12, 13, 14 }, { 1.0f, 1.0f }, Core::UI::PositioningType::Absolute, { 0.95f, 0.05f }, { 0.075f, 0.075f })) {
         vSync = !vSync;
         Core::Application::GetWindow().SetVSync(vSync);
