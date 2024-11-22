@@ -115,7 +115,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Vertical);
             Core::UI::Button(Core::UI::PositioningType::Offset, {-0.05f, 0.0f}, { 1.0f, 0.25f });
             Core::UI::Button(Core::UI::PositioningType::Offset, {0.05f, 0.0f}, { 1.0f, 0.25f });
-            Core::UI::Button(Core::UI::PositioningType::Offset, {0.0f, -0.05f}, { 1.0f, 0.25f });
+            static int temp = -1;
+            Core::UI::TextureSlider(temp, 0, 5, { 0, 4, 4 }, { 4.0f, 1.0f }, { 0.15625, 0.875f }, { 17, 18, 18 }, { 0.625f, 0.875f }, Core::UI::PositioningType::Offset, { 0.0f, -0.05f }, { 1.0f, 0.25f });
         Core::UI::EndContainer();
     Core::UI::EndContainer();
 

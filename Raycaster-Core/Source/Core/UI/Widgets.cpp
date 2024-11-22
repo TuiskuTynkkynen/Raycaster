@@ -139,4 +139,59 @@ namespace Core::UI::Widgets {
     template SliderWidget<uint64_t>;
     template SliderWidget<float>;
     template SliderWidget<double>;
+
+    template <typename T>
+    void AtlasTextureSliderWidget<T>::Update(Surface& current, glm::vec2 mousePosition) {
+        if (&Internal::System->Elements[Internal::System->ActiveID] != &current) {
+            return;
+        }
+
+
+        if (std::is_integral<T>::value) {
+            m_Value = glm::clamp<T>(glm::round((mousePosition.x - current.Position.x + current.Size.x * 0.5f * (1.0f - m_SliderSize.x)) / (current.Size.x * (1.0f - m_SliderSize.x)) * (m_Max - m_Min)), m_Min, m_Max);
+        }
+        else {
+            m_Value = glm::clamp<T>((mousePosition.x - current.Position.x + current.Size.x * 0.5f * (1.0f - m_SliderSize.x)) / (current.Size.x * (1.0f - m_SliderSize.x)) * (m_Max - m_Min), m_Min, m_Max);
+        }
+    }
+
+    template <typename T>
+    bool AtlasTextureSliderWidget<T>::Render(Surface& current) {
+        uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
+        glm::vec4& colour = current.Colours[index];
+
+        //Box
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
+
+        glm::vec2 atlasOffset(m_BoxAtlasIndices[index] % (uint32_t)Internal::AtlasSize.x, m_BoxAtlasIndices[index] / (uint32_t)Internal::AtlasSize.x);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
+        texTransform = glm::scale(texTransform, glm::vec2(m_BoxScale.x, -m_BoxScale.y) / Internal::AtlasSize);
+
+        Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
+
+        //Slider
+        float sliderPos = current.Position.x + (current.Size.x * (1.0f - m_SliderSize.x)) * glm::clamp<float>((float)m_Value / (m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
+        transform = glm::translate(glm::mat4(1.0f), { sliderPos, current.Position.y, 0.0f });
+        transform = glm::scale(transform, { m_SliderSize.x * current.Size.x, m_SliderSize.y * current.Size.y, 0.0f });
+    
+        atlasOffset = glm::vec2(m_SliderAtlasIndices[index] % (uint32_t)Internal::AtlasSize.x, m_SliderAtlasIndices[index] / (uint32_t)Internal::AtlasSize.x);
+        texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
+        texTransform = glm::scale(texTransform, glm::vec2(m_SliderScale.x, -m_SliderScale.y) / Internal::AtlasSize);
+
+        Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
+        
+        return true;
+    }
+
+    template AtlasTextureSliderWidget<int8_t>;
+    template AtlasTextureSliderWidget<uint8_t>;
+    template AtlasTextureSliderWidget<int32_t>;
+    template AtlasTextureSliderWidget<uint32_t>;
+    template AtlasTextureSliderWidget<int64_t>;
+    template AtlasTextureSliderWidget<uint64_t>;
+    template AtlasTextureSliderWidget<float>;
+    template AtlasTextureSliderWidget<double>;
+
 }

@@ -57,8 +57,12 @@ namespace Core::UI {
     void Slider(T& value, T min, T max, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& sliderColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours);
     template <typename T>
     void Slider(T& value, T min, T max, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& sliderColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours) { Slider<T>(value, min, max, PositioningType::Auto, glm::vec2(1.0f), relativeSize, sliderColours, boxColours); }
-
-
+    
+    template <typename T>
+    void TextureSlider(T& value, T min, T max, const glm::uvec3& boxAtlasIndices, glm::vec2 boxAtlasScale, glm::vec2 sliderSize, const glm::uvec3& sliderAtlasIndices, glm::vec2 sliderAtlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& boxColours = DefaultTextureColours);
+    template <typename T>
+    void TextureSlider(T& value, T min, T max, const glm::uvec3& boxAtlasIndices, glm::vec2 boxAtlasScale, glm::vec2 sliderSize, const glm::uvec3& sliderAtlasIndices, glm::vec2 sliderAtlasScale, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& boxColours = DefaultTextureColours) { TextureSlider<T>(value, min, max, boxAtlasIndices, boxAtlasScale, sliderSize, sliderAtlasIndices, sliderAtlasScale, PositioningType::Auto, glm::vec2(1.0f), relativeSize, boxColours); }
+   
     void SetFont(std::shared_ptr<Core::Font> font);
     void SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize);
 }

@@ -72,4 +72,25 @@ namespace Core::UI::Widgets {
 
         const std::array<glm::vec4, 3> m_sliderColours;
     };
+
+    template <typename T>
+    class AtlasTextureSliderWidget : public Widget {
+    public:
+        AtlasTextureSliderWidget(T& value, T min, T max, glm::vec2 boxAtlasScale, const glm::uvec3& boxAtlasIndices, glm::vec2 sliderSize, glm::vec2 sliderAtlasScale, const glm::uvec3& sliderAtlasIndices)
+            : m_Value(value), m_Min(min), m_Max(max), m_BoxScale(boxAtlasScale), m_BoxAtlasIndices(boxAtlasIndices), m_SliderSize(sliderSize), m_SliderScale(sliderAtlasScale), m_SliderAtlasIndices(sliderAtlasIndices){}
+
+        void Update(Surface& current, glm::vec2 mousePosition) override;
+        bool Render(Surface& current) override;
+    private:
+        T& m_Value;
+        const T m_Min;
+        const T m_Max;
+
+        const glm::vec2 m_BoxScale;
+        const glm::uvec3 m_BoxAtlasIndices;
+        
+        const glm::vec2 m_SliderSize;
+        const glm::vec2 m_SliderScale;
+        const glm::uvec3 m_SliderAtlasIndices;
+    };
 }
