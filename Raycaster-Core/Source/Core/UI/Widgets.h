@@ -67,9 +67,9 @@ namespace Core::UI::Widgets {
         bool Render(Surface& current) override;
     private:
         T& m_Value;
-        T m_Min;
-        T m_Max;
+        const T m_Min;
+        const T m_Max;
 
-        std::array<glm::vec4, 3> m_sliderColours;
+        const std::array<glm::vec4, 3> m_sliderColours;
     };
 }

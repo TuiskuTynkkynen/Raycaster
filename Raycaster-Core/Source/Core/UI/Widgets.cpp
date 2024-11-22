@@ -119,11 +119,11 @@ namespace Core::UI::Widgets {
     template <typename T>
     bool SliderWidget<T>::Render(Surface& current) {
         uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
-        glm::vec4& colour = current.Colours[index];
+        const glm::vec4& colour = current.Colours[index];
 
         Renderer2D::DrawFlatRoundedQuad(current.Size, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), colour * 0.8f);
 
-        float sliderPos = current.Position.x + (current.Size.x * 0.89) * ((float)m_Value / (m_Max - m_Min) - 0.5f);
+        float sliderPos = current.Position.x + (current.Size.x * 0.89f) * glm::clamp<float>((float)m_Value / (m_Max - m_Min) - 0.5, -0.5f, 0.5f);
         Renderer2D::DrawFlatShapeQuad({ sliderPos, current.Position.y, 0.0f }, { current.Size.x * 0.1f, current.Size.y * 0.9f, 0.0f }, m_sliderColours[index]);
 
         Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });

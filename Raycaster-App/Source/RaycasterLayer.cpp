@@ -98,7 +98,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::UI::Begin({ 0, 0 }, { m_ViewPortWidth, m_ViewPortHeight });
 
     Core::UI::BeginContainer({ 0.75f, 0.2f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Horizontal);
-        static float val = 0;
+        static float val = -1.0f;
         std::string s = std::format("{:.2f}", val);
         Core::UI::Text(s, {0.2f, 0.5f});
         
