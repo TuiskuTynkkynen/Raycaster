@@ -203,5 +203,38 @@ namespace Core::UI::Widgets {
     template AtlasTextureSliderWidget<uint64_t>;
     template AtlasTextureSliderWidget<float>;
     template AtlasTextureSliderWidget<double>;
+    
+    void ScrollWidget::Update(Surface& current, glm::vec2 mousePosition) {
+        size_t parentIndex = current.ParentID;
+        size_t currentIndex = parentIndex + 1;
 
+        //Get the index of the current element
+        for (; currentIndex && currentIndex < UI::Internal::System->Elements.size(); currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
+            if (&UI::Internal::System->Elements[currentIndex] == &current) {
+                break;
+            }
+        }
+       
+        //Update the positions of the current element's children
+        for (size_t i = currentIndex + 1; i < UI::Internal::System->Elements.size() && UI::Internal::System->Elements[i].ParentID == currentIndex; i = UI::Internal::System->Elements[i].SiblingID) {
+            Surface& child = UI::Internal::System->Elements[i];
+            
+            if (child.Positioning <= PositioningType::Offset) {
+                child.Positioning = PositioningType::Offset;
+                child.Position[m_ScrollDimension] -= m_ScrollOffset * current.Size[m_ScrollDimension] * m_ScrollSpeed;
+            }
+        }
+    }
+
+    bool ScrollWidget::Render(Surface& current) {
+        uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
+        const glm::vec4& colour = current.Colours[index];
+
+        
+        if (current.Size.x * current.Size.y != 0.0f || colour.a != 0.0f) { 
+            Renderer2D::DrawFlatShapeQuad({ current.Position.x, current.Position.y, 0.0f }, { current.Size.x, current.Size.y, 0.0f }, colour);
+        }
+
+        return true;
+    }
 }

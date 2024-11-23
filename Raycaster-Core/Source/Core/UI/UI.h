@@ -19,6 +19,10 @@ namespace Core::UI {
     inline void BeginContainer(glm::vec2 relativeSize, const glm::vec4& colour = DefaultColours[0], LayoutType layout = LayoutType::Vertical) { return BeginContainer(PositioningType::Auto, glm::vec2(1.0f), relativeSize, colour, layout); }
     void EndContainer();
 
+    void BeginScrollContainer(float& offset, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, bool vertical = true, float speed = 1.0f, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]);
+    inline void BeginScrollContainer(float& offset, glm::vec2 relativeSize, bool vertical = true, float speed = 1.0f, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]) { BeginScrollContainer(offset, PositioningType::Auto, glm::vec2(1.0f), relativeSize, vertical, speed, primaryColour, hoverColour); }
+    inline void EndScrollContainer() { EndContainer(); }
+
     template <typename T>
     bool Button(std::basic_string_view<T> text, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& buttonColours = DefaultColours, const std::array<glm::vec4, 3>& textColours = DefaultTextColours);
     inline bool Button(std::string_view text, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& buttonColours = DefaultColours, const std::array<glm::vec4, 3>& textColours = DefaultTextColours) { return Button<char>(text, positioning, position, relativeSize, buttonColours, textColours); }

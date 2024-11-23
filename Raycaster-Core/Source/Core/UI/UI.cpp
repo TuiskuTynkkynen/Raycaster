@@ -204,6 +204,27 @@ namespace Core {
         Internal::System->OpenElement = parentId;
     }
 
+    void UI::BeginScrollContainer(float& offset, PositioningType positioning, glm::vec2 position, glm::vec2 size, bool vertical, float speed, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
+        RC_ASSERT(Internal::System, "Tried to begin a UI scroll container before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI scroll container before calling UI Begin");
+
+        LayoutType layout = vertical ? LayoutType::CropVertical : LayoutType::CropHorizontal;
+        Internal::System->Elements.emplace_back(SurfaceType::Hoverable, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{primaryColour, hoverColour}, Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ScrollWidget>(offset, vertical, speed);
+
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = Internal::System->Elements.size() - 1;
+        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        Internal::System->OpenElement = currentIndex;
+    }
+
     template <typename T>
     bool UI::Button(std::basic_string_view<T> text, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
         bool result = Button(positioning, position, size, buttonColours[0], buttonColours[1], buttonColours[2]);

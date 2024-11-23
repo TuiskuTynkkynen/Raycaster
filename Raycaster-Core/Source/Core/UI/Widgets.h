@@ -97,4 +97,18 @@ namespace Core::UI::Widgets {
         const glm::vec2 m_SliderScale;
         const glm::uvec3 m_SliderAtlasIndices;
     };
+
+    class ScrollWidget : public Widget {
+    public:
+        ScrollWidget(float& offset, bool vertical = true, float speed = 1.0f)
+            : m_ScrollOffset(offset), m_ScrollDimension(vertical), m_ScrollSpeed(speed) {}
+
+        void Update(Surface& current, glm::vec2 mousePosition) override;
+        bool Render(Surface& current) override;
+    private:
+        float& m_ScrollOffset;
+
+        size_t m_ScrollDimension;
+        float m_ScrollSpeed;
+    };
 }
