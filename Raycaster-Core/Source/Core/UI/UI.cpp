@@ -45,6 +45,11 @@ namespace Core {
             UI::Internal::System->ActiveID = 0;
         }
 
+        constexpr auto AABB = [](glm::vec2 mousePosition, glm::vec2 position, glm::vec2 size) -> bool {
+            return (mousePosition.x <= position.x + size.x * 0.5f && mousePosition.x >= position.x - size.x * 0.5f
+                && mousePosition.y <= position.y + size.y * 0.5f && mousePosition.y >= position.y - size.y * 0.5f);
+        };
+
         size_t lastParentId = -1;
         std::unique_ptr<Layout> layout = std::make_unique<NoLayout>(UI::Internal::System->Elements.front());
         for (size_t i = 1; i < UI::Internal::System->Elements.size(); i++) {
@@ -77,9 +82,11 @@ namespace Core {
             layout->Next(current);
 
             if (current.Type >= SurfaceType::Hoverable && (!UI::Internal::System->ActiveID || UI::Internal::System->ActiveID == i)) {
-                if (mousePosition.x <= current.Position.x + current.Size.x * 0.5f && mousePosition.x >= current.Position.x - current.Size.x * 0.5f
-                    && mousePosition.y <= current.Position.y + current.Size.y * 0.5f && mousePosition.y >= current.Position.y - current.Size.y * 0.5f) {
+                if (parent.Layout >= LayoutType::Crop && !AABB(mousePosition, parent.Position, parent.Size)) {
+                    continue;
+                }
 
+                if (AABB(mousePosition, current.Position, current.Size)) {
                     UI::Internal::System->HoverID = i;
 
                     if (current.Type >= SurfaceType::Activatable && Input::IsButtonPressed(RC_MOUSE_BUTTON_LEFT)) {
