@@ -51,4 +51,19 @@ namespace Core {
             glDisable(GL_DEPTH_TEST);
         }
     }
+
+    void RenderAPI::SetScissor(bool enabled) {
+        switch (enabled) {
+        case true:
+            glEnable(GL_SCISSOR_TEST);
+            return;
+        case false:
+            glDisable(GL_SCISSOR_TEST);
+            return;
+        }
+    }
+
+    void RenderAPI::SetScissorRectangle(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height) {
+        glScissor(offsetX, offsetY, width, height);
+    }
 }

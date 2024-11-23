@@ -19,5 +19,8 @@ namespace Core::RenderAPI {
 
     void SetLineWidth(uint32_t width);
     void SetDepthBuffer(bool enabled);
+
+    void SetScissor(bool enabed);
+    void SetScissorRectangle(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height);
 }
 
