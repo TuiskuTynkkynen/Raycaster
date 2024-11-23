@@ -365,7 +365,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::SliderWidget<T>>(value, min, max, sliderColours);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::SliderWidget<T>>(value, min, max, false, sliderColours);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -393,7 +393,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, boxAtlasScale, boxAtlasIndices, sliderSize, sliderAtlasScale, sliderAtlasIndices);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, false, boxAtlasScale, boxAtlasIndices, sliderSize, sliderAtlasScale, sliderAtlasIndices);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
