@@ -97,7 +97,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
 
     Core::UI::Begin({ 0, 0 }, { m_ViewPortWidth, m_ViewPortHeight });
 
-    Core::UI::BeginContainer({ 0.75f, 0.2f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Horizontal);
+    Core::UI::BeginContainer({ 0.75f, 0.2f }, Core::UI::DefaultBackgroundColours[0], Core::UI::LayoutType::Horizontal);
         static float val = -1.0f;
         std::string s = std::format("{:.2f}", val);
         Core::UI::Text(s, {0.2f, 0.5f});
@@ -105,14 +105,14 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         Core::UI::Slider(val, 0.f, 5.f, { 0.4f, 0.5f });
     Core::UI::EndContainer();
     
-    Core::UI::BeginContainer({ 0.75f, 0.5f }, { 0.8f, 0.25f, 0.25f, 0.25f }, Core::UI::LayoutType::Horizontal);
-        Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Vertical);
+    Core::UI::BeginContainer({ 0.75f, 0.5f }, Core::UI::DefaultBackgroundColours[0], Core::UI::LayoutType::Horizontal);
+        Core::UI::BeginContainer({ 0.45f, 1.0f }, Core::UI::DefaultBackgroundColours[0], Core::UI::LayoutType::Vertical);
             Core::UI::Text("foo", { 1.0f, 0.25f });
             Core::UI::Text("bar", { 1.0f, 0.25f });
             Core::UI::Text("baz", { 1.0f, 0.25f });
         Core::UI::EndContainer();
 
-        Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::CropVertical);
+        Core::UI::BeginContainer({ 0.45f, 1.0f }, Core::UI::DefaultBackgroundColours[0], Core::UI::LayoutType::CropVertical);
             Core::UI::Button(Core::UI::PositioningType::Offset, {-0.05f, 0.0f}, { 0.9f, 0.25f });
             Core::UI::Button(Core::UI::PositioningType::Offset, {0.1f, 0.0f}, { 1.0f, 0.25f });
             static int temp = -1;

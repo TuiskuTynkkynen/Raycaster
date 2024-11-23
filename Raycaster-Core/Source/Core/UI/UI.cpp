@@ -22,14 +22,14 @@ namespace Core {
         Internal::System.reset();
     }
 
-    void UI::Begin(glm::uvec2 screenPosition, glm::uvec2 screenSize, LayoutType layout) {
+    void UI::Begin(glm::uvec2 screenPosition, glm::uvec2 screenSize, LayoutType layout, const glm::vec4& colour) {
         RC_ASSERT(Internal::System, "UI has not been initialized");
         Internal::System->Elements.clear();
 
         Internal::System->Position = screenPosition;
         Internal::System->Size = screenSize;
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, layout, PositioningType::Auto, glm::vec2(0.5f), glm::vec2(1.0f), std::array<glm::vec4, 3>{glm::vec4(0.0f), glm::vec4(0.0f), glm::vec4(0.0f)});
+        Internal::System->Elements.emplace_back(SurfaceType::None, layout, PositioningType::Auto, glm::vec2(0.5f), glm::vec2(1.0f), std::array<glm::vec4, 3>{colour, colour, colour});
         Internal::System->OpenElement = 0;
     }
 
@@ -112,7 +112,7 @@ namespace Core {
         
         size_t scissorID = 0;
         std::vector<size_t> scissorIDs;
-        for (size_t i = 1; i < Internal::System->Elements.size(); i++) {
+        for (size_t i = 0; i < Internal::System->Elements.size(); i++) {
             Surface& s = Internal::System->Elements[i];
 
             {
