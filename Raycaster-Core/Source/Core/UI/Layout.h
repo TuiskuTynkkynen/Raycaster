@@ -33,5 +33,16 @@ namespace Core::UI {
 		float m_Padding = 0.0f;
 		float m_RelativePosition = 0.0f;
 	};
+
+	template <typename layout>
+	class CropLayout : public Layout {
+	public:
+		CropLayout(layout internalLayout) 
+			: m_Layout(internalLayout) { static_assert(std::derived_from<layout, Layout>); }
+
+		void Next(Surface& s) override { m_Layout.Next(s); };
+	private:
+		layout m_Layout;
+	};
 }
 

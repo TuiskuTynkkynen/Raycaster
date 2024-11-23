@@ -32,9 +32,9 @@ namespace Core::UI {
         RC_ASSERT(currentIndex < Internal::System->Elements.size(), "currentIndex supplied to LinearLayout constructor must be smaller than UI element count");
         
         const Surface& parent = Internal::System->Elements[Internal::System->Elements[currentIndex].ParentID];
-        RC_ASSERT(parent.Layout == LayoutType::Vertical || parent.Layout == LayoutType::Horizontal, "Parent of current element supplied to LinearLayout constructor must have a Vertical or Horizontal layout");
+        RC_ASSERT(parent.Layout == LayoutType::Vertical || parent.Layout == LayoutType::Horizontal || parent.Layout == LayoutType::CropVertical || parent.Layout == LayoutType::CropHorizontal, "Parent of current element supplied to LinearLayout constructor must have a Vertical or Horizontal layout");
 
-        m_PaddingDimension = parent.Layout == LayoutType::Vertical;
+        m_PaddingDimension = parent.Layout == LayoutType::Vertical || parent.Layout == LayoutType::CropVertical;
         m_Padding = parent.Size[m_PaddingDimension];
         
         uint32_t paddingCount = 1;

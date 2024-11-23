@@ -36,6 +36,9 @@ namespace Core::UI {
         None = 0,
         Vertical,
         Horizontal,
+        Crop,
+        CropVertical,
+        CropHorizontal,
     };
     
     enum class SurfaceType {

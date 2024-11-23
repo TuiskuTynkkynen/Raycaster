@@ -31,6 +31,7 @@ namespace Core {
         UI::Internal::System->Size = screenSize;
 
         UI::Internal::System->Elements.emplace_back(SurfaceType::None, layout, PositioningType::Auto, glm::vec2(0.5f), glm::vec2(1.0f), std::array<glm::vec4, 3>{glm::vec4(0.0f), glm::vec4(0.0f), glm::vec4(0.0f)});
+        UI::Internal::System->OpenElement = 0;
     }
 
     void UI::Update() {
@@ -59,6 +60,15 @@ namespace Core {
                 case Core::UI::LayoutType::Horizontal:
                     layout = std::make_unique<LinearLayout>(i);
                     break;
+                case LayoutType::Crop:
+                    layout = std::make_unique<CropLayout<NoLayout>>(NoLayout(parent));
+                    break;
+                case LayoutType::CropVertical:
+                case LayoutType::CropHorizontal:
+                    layout = std::make_unique<CropLayout<LinearLayout>>(LinearLayout(i));
+                    break;
+                default:
+                    RC_WARN("Invalid LayoutType");
                 }
 
                 lastParentId = current.ParentID;
@@ -93,10 +103,47 @@ namespace Core {
         
         if(Internal::Font) { Internal::Font->ActivateAtlas(2); }
         if(Internal::TextureAtlas) { Internal::TextureAtlas->Activate(3); }
-
+        
+        size_t scissorID = 0;
+        std::vector<size_t> scissorIDs;
         for (size_t i = 1; i < UI::Internal::System->Elements.size(); i++) {
             Surface& s = UI::Internal::System->Elements[i];
-            
+
+            {
+                //Remove unneeded elments
+                while (!scissorIDs.empty() && scissorIDs.back() >= s.ParentID) {
+                    scissorIDs.pop_back();
+                }
+
+                //Insert current elements parent if a scissor test based on it is needed
+                if (Internal::System->Elements[s.ParentID].Layout >= LayoutType::Crop) {
+                    scissorIDs.push_back(s.ParentID);
+                }
+
+                //Set scissor test parameters to scissorIDs.back() position and size if not already set
+                if (!scissorIDs.empty() && scissorIDs.back() != scissorID) {
+                    scissorID = scissorIDs.back();
+                    Surface& parent = UI::Internal::System->Elements[scissorID];
+
+                    float offsetX = Internal::System->Size.x * (parent.Position.x - parent.Size.x * 0.5f);
+                    float offsetY = Internal::System->Size.y * (1.0f - parent.Position.y - parent.Size.y * 0.5f);
+                    glm::uvec2 size = Internal::System->Size * parent.Size;
+
+                    Renderer2D::Flush();
+
+                    RenderAPI::SetScissor(true);
+                    RenderAPI::SetScissorRectangle(offsetX, offsetY, size.x, size.y);
+                }
+
+                //Remove scissor test if it is not needed
+                if (scissorIDs.empty() && scissorID) {
+                    scissorID = 0;
+
+                    Renderer2D::Flush();
+                    RenderAPI::SetScissor(false);
+                }
+            }
+
             if (s.Widget && s.Widget->Render(s)) {
                 continue;
             }
@@ -104,7 +151,7 @@ namespace Core {
             uint32_t colourIndex = UI::Internal::System->ActiveID == i ? 2 : UI::Internal::System->HoverID == i ? 1 : 0;
             glm::vec4& colour = s.Colours[colourIndex];
 
-            if (s.Size.x * s.Size.y == 0.0f) { continue; }
+            if (s.Size.x * s.Size.y == 0.0f || colour.a == 0.0f) { continue; }
 
             if (s.Type == SurfaceType::None) {
                 Renderer2D::DrawFlatShapeQuad({ s.Position.x, s.Position.y, 0.0f }, { s.Size.x, s.Size.y, 0.0f },  colour);
