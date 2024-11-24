@@ -10,7 +10,7 @@ namespace Core::UI::Widgets {
         AtlasTextureWidget(const glm::uvec3& atlasIndices, glm::vec2 atlasScale)
             : m_AtlasIndices(atlasIndices), m_Scale(atlasScale) {}
 
-        void Update(Surface& current, glm::vec2 mousePosition) override {}
+        void Update(Surface& current) override {}
         bool Render(Surface& current) override;
     private:
         glm::uvec3 m_AtlasIndices;
@@ -22,7 +22,7 @@ namespace Core::UI::Widgets {
     public:
         TextWidget(std::basic_string_view<T> text) : m_Text(text) {}
 
-        void Update(Surface& current, glm::vec2 mousePosition) override;
+        void Update(Surface& current) override;
         bool Render(Surface& current) override;
 
     private:
@@ -34,7 +34,7 @@ namespace Core::UI::Widgets {
     public:
         ToggleWidget(bool enabled) : m_Enabled(enabled) {}
 
-        void Update(Surface& current, glm::vec2 mousePosition) override {}
+        void Update(Surface& current) override {}
         bool Render(Surface& current) override;
 
     private:
@@ -46,7 +46,7 @@ namespace Core::UI::Widgets {
         AtlasTextureToggleWidget(bool enabled, const glm::uvec3& boxAtlasIndices, const glm::uvec3& checkAtlasIndices, const glm::vec2& atlasScale)
             : m_Enabled(enabled), m_BoxAtlasIndices(boxAtlasIndices), m_CheckAtlasIndices(checkAtlasIndices), m_Scale(atlasScale) {}
 
-        void Update(Surface& current, glm::vec2 mousePosition) override {}
+        void Update(Surface& current) override {}
         bool Render(Surface& current) override;
 
     private:
@@ -63,7 +63,7 @@ namespace Core::UI::Widgets {
         SliderWidget(T& value, T min, T max, bool vertical, const std::array<glm::vec4, 3>& sliderColours)
             : m_Value(value), m_Min(min), m_Max(max), m_SliderDimension(vertical), m_SliderColours(sliderColours) { }
 
-        void Update(Surface& current, glm::vec2 mousePosition) override;
+        void Update(Surface& current) override;
         bool Render(Surface& current) override;
     private:
         T& m_Value;
@@ -81,7 +81,7 @@ namespace Core::UI::Widgets {
         AtlasTextureSliderWidget(T& value, T min, T max, bool vertical, glm::vec2 boxAtlasScale, const glm::uvec3& boxAtlasIndices, glm::vec2 sliderSize, glm::vec2 sliderAtlasScale, const glm::uvec3& sliderAtlasIndices)
             : m_Value(value), m_Min(min), m_Max(max), m_SliderDimension(vertical), m_BoxScale(boxAtlasScale), m_BoxAtlasIndices(boxAtlasIndices), m_SliderSize(sliderSize), m_SliderScale(sliderAtlasScale), m_SliderAtlasIndices(sliderAtlasIndices) {}
 
-        void Update(Surface& current, glm::vec2 mousePosition) override;
+        void Update(Surface& current) override;
         bool Render(Surface& current) override;
     private:
         T& m_Value;
@@ -103,7 +103,7 @@ namespace Core::UI::Widgets {
         ScrollWidget(float& offset, bool vertical = true, float speed = 1.0f)
             : m_ScrollOffset(offset), m_ScrollDimension(vertical), m_ScrollSpeed(speed) {}
 
-        void Update(Surface& current, glm::vec2 mousePosition) override;
+        void Update(Surface& current) override;
         bool Render(Surface& current) override;
     private:
         float& m_ScrollOffset;

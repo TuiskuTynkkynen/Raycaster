@@ -9,6 +9,11 @@
 #include "Core/Renderer/RenderAPI.h"
 #include "Core/Renderer/Renderer2D.h"
 
+bool AABB(glm::vec2 mousePosition, glm::vec2 position, glm::vec2 size) {
+    return (mousePosition.x <= position.x + size.x * 0.5f && mousePosition.x >= position.x - size.x * 0.5f
+        && mousePosition.y <= position.y + size.y * 0.5f && mousePosition.y >= position.y - size.y * 0.5f);
+}
+
 namespace Core {
     void UI::Init() {
         RC_ASSERT(!Internal::System, "UI has already been initialized");
@@ -37,18 +42,15 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to update UI before initializing");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to update UI before calling UI Begin");
 
-        glm::vec2 mousePosition(Input::GetMouseX(), Input::GetMouseY());
-        mousePosition /= Internal::System->Size;
         Internal::System->HoverID = 0;
-        if (!Input::IsButtonPressed(RC_MOUSE_BUTTON_LEFT)) {
+        if (Internal::MouseState.Left == Internal::MouseButtonState::None) {
             Internal::System->ActiveID = 0;
         }
-
-        constexpr auto AABB = [](glm::vec2 mousePosition, glm::vec2 position, glm::vec2 size) -> bool {
-            return (mousePosition.x <= position.x + size.x * 0.5f && mousePosition.x >= position.x - size.x * 0.5f
-                && mousePosition.y <= position.y + size.y * 0.5f && mousePosition.y >= position.y - size.y * 0.5f);
-        };
-
+        
+        Internal::MouseState.Left = Internal::MouseButtonState(Internal::MouseState.Left == Internal::MouseButtonState::Held);
+        Internal::MouseState.Right = Internal::MouseButtonState(Internal::MouseState.Right == Internal::MouseButtonState::Held);
+        Internal::MouseState.ScrollOffset = 0.0f;
+        
         size_t lastParentId = -1;
         std::unique_ptr<Layout> layout = std::make_unique<NoLayout>(Internal::System->Elements.front());
         for (size_t i = 1; i < Internal::System->Elements.size(); i++) {
@@ -81,21 +83,17 @@ namespace Core {
             layout->Next(current);
 
             if (current.Type >= SurfaceType::Hoverable && (!Internal::System->ActiveID || Internal::System->ActiveID == i)) {
-                if (parent.Layout >= LayoutType::Crop && !AABB(mousePosition, parent.Position, parent.Size)) {
+                if (parent.Layout >= LayoutType::Crop && !AABB(Internal::MouseState.Position, parent.Position, parent.Size)) {
                     continue;
                 }
 
-                if (AABB(mousePosition, current.Position, current.Size)) {
+                if (AABB(Internal::MouseState.Position, current.Position, current.Size)) {
                     Internal::System->HoverID = i;
-
-                    if (current.Type >= SurfaceType::Activatable && Input::IsButtonPressed(RC_MOUSE_BUTTON_LEFT)) {
-                        Internal::System->ActiveID = i;
-                    }
                 }
             }
 
             if (current.Widget) {
-                current.Widget->Update(current, mousePosition);
+                current.Widget->Update(current);
             }
         }
     }
@@ -174,8 +172,6 @@ namespace Core {
     void UI::End() {
         Update();
         Render();
-
-        Internal::System->Elements.clear();
     }
 
     void UI::BeginContainer(PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, LayoutType layout) {
@@ -257,7 +253,7 @@ namespace Core {
             }
         }
 
-        return Input::IsButtonReleased(RC_MOUSE_BUTTON_LEFT) && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
+        return Internal::MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
     }
 
     bool UI::TextureButton(glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
@@ -357,7 +353,7 @@ namespace Core {
             }
         }
 
-        enabled ^= Input::IsButtonReleased(RC_MOUSE_BUTTON_LEFT) && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
+        enabled ^= Internal::MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
     }
     
     void UI::TextureToggle(bool& enabled, const glm::uvec3& boxAtlasIndices, const glm::uvec3& checkAtlasIndices, glm::vec2 atlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
@@ -377,7 +373,7 @@ namespace Core {
             }
         }
 
-        enabled ^= Input::IsButtonReleased(RC_MOUSE_BUTTON_LEFT) && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
+        enabled ^= Internal::MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
     }
 
     template <typename T>
@@ -440,9 +436,68 @@ namespace Core {
         Internal::Font = font; 
     }
 
-
     void UI::SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize) {
         Internal::TextureAtlas = atlas;
         Internal::AtlasSize = atlasSize;
     }
+
+    bool UI::OnMouseMovedEvent(MouseMoved& event){
+        Internal::MouseState.Position = event.GetPosition() / Internal::System->Size;
+
+        return false;
+    }
+
+    bool UI::OnMouseButtonPressedEvent(MouseButtonPressed& event){
+        switch (event.GetButton()) {
+        case RC_MOUSE_BUTTON_LEFT:
+            Internal::MouseState.Left = Internal::MouseButtonState::Held;
+            break;
+        case RC_MOUSE_BUTTON_RIGHT:
+            Internal::MouseState.Right = Internal::MouseButtonState::Held;
+            break;
+        }
+
+        if ((!Internal::System->ActiveID || Internal::System->ActiveID == Internal::System->HoverID)) {
+            if (Internal::System->HoverID >= Internal::System->Elements.size()) {
+                return false;
+            }
+
+            const Surface& current = Internal::System->Elements[Internal::System->HoverID];
+            const Surface& parent = Internal::System->Elements[current.ParentID];
+
+            if (parent.Layout >= LayoutType::Crop && !AABB(Internal::MouseState.Position, parent.Position, parent.Size)) {
+                return false;
+            }
+
+            if (AABB(Internal::MouseState.Position, current.Position, current.Size)) {
+                if (current.Type >= SurfaceType::Activatable) {
+                    Internal::System->ActiveID = Internal::System->HoverID;
+                }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool UI::OnMouseButtonReleasedEvent(MouseButtonReleased& event){
+        switch (event.GetButton()) {
+        case RC_MOUSE_BUTTON_LEFT:
+            Internal::MouseState.Left = Internal::MouseButtonState::Released;
+            break;
+        case RC_MOUSE_BUTTON_RIGHT:
+            Internal::MouseState.Right = Internal::MouseButtonState::Released;
+            break;
+        }
+
+        return Internal::System->HoverID || Internal::System->ActiveID;
+    }
+
+    bool UI::OnMouseScrollEvent(MouseScrolled& event){
+        Internal::MouseState.ScrollOffset = event.GetOffsetY();
+
+        return Internal::System->HoverID || Internal::System->ActiveID;
+    }
+
 }

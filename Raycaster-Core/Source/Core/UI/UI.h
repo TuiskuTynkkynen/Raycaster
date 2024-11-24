@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "Core/Font/Font.h"
+#include "Core/Events/MouseEvent.h"
 
 #include <memory>
 #include <string>
@@ -69,4 +70,9 @@ namespace Core::UI {
    
     void SetFont(std::shared_ptr<Core::Font> font);
     void SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize);
+
+    bool OnMouseMovedEvent(MouseMoved& event);
+    bool OnMouseButtonPressedEvent(MouseButtonPressed& event);
+    bool OnMouseButtonReleasedEvent(MouseButtonReleased& event);
+    bool OnMouseScrollEvent(MouseScrolled& event);
 }

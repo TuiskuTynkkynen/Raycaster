@@ -28,7 +28,7 @@ namespace Core::UI::Widgets {
     }
 
     template <typename T>
-    void TextWidget<T>::Update(Surface& current, glm::vec2 mousePosition) {
+    void TextWidget<T>::Update(Surface& current) {
         glm::vec2 size(0.0f);
         size.y = Internal::Font->GetGlyphInfo(' ').Size.y;
 
@@ -104,15 +104,15 @@ namespace Core::UI::Widgets {
     }
 
     template <typename T>
-    void SliderWidget<T>::Update(Surface& current, glm::vec2 mousePosition) {
+    void SliderWidget<T>::Update(Surface& current) {
         if (&Internal::System->Elements[Internal::System->ActiveID] != &current) {
             return;
         }
 
         if (std::is_integral<T>::value) {
-            m_Value = glm::clamp<T>(glm::round((mousePosition[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * 0.85f) / (current.Size[m_SliderDimension] * 0.85f) * (m_Max - m_Min)), m_Min, m_Max);
+            m_Value = glm::clamp<T>(glm::round((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * 0.85f) / (current.Size[m_SliderDimension] * 0.85f) * (m_Max - m_Min)), m_Min, m_Max);
         } else {
-            m_Value = glm::clamp<T>((mousePosition[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * 0.85f) / (current.Size[m_SliderDimension] * 0.85f) * (m_Max - m_Min), m_Min, m_Max);
+            m_Value = glm::clamp<T>((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * 0.85f) / (current.Size[m_SliderDimension] * 0.85f) * (m_Max - m_Min), m_Min, m_Max);
         }
     }
 
@@ -148,17 +148,17 @@ namespace Core::UI::Widgets {
     template SliderWidget<double>;
 
     template <typename T>
-    void AtlasTextureSliderWidget<T>::Update(Surface& current, glm::vec2 mousePosition) {
+    void AtlasTextureSliderWidget<T>::Update(Surface& current) {
         if (&Internal::System->Elements[Internal::System->ActiveID] != &current) {
             return;
         }
 
 
         if (std::is_integral<T>::value) {
-            m_Value = glm::clamp<T>(glm::round((mousePosition[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min)), m_Min, m_Max);
+            m_Value = glm::clamp<T>(glm::round((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min)), m_Min, m_Max);
         }
         else {
-            m_Value = glm::clamp<T>((mousePosition[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min), m_Min, m_Max);
+            m_Value = glm::clamp<T>((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min), m_Min, m_Max);
         }
     }
 
@@ -204,7 +204,7 @@ namespace Core::UI::Widgets {
     template AtlasTextureSliderWidget<float>;
     template AtlasTextureSliderWidget<double>;
     
-    void ScrollWidget::Update(Surface& current, glm::vec2 mousePosition) {
+    void ScrollWidget::Update(Surface& current) {
         size_t parentIndex = current.ParentID;
         size_t currentIndex = parentIndex + 1;
 

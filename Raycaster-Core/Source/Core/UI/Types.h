@@ -87,7 +87,7 @@ namespace Core::UI {
 
     class Widget {
     public:
-        virtual void Update(Surface& current, glm::vec2 mousePosition) = 0;
+        virtual void Update(Surface& current) = 0;
         virtual bool Render(Surface& current) = 0;
     };
 }
