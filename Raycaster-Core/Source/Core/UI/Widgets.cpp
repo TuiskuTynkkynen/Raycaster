@@ -8,6 +8,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_transform_2d.hpp>
 
+constexpr float SCROLLSTEP = 0.25f;
+
 namespace Core::UI::Widgets {
     bool AtlasTextureWidget::Render(Surface& current) {
         RC_ASSERT(Internal::TextureAtlas, "Tried to render UI element with texture before UI setting TextureAtlas")
@@ -207,22 +209,35 @@ namespace Core::UI::Widgets {
     void ScrollWidget::Update(Surface& current) {
         size_t parentIndex = current.ParentID;
         size_t currentIndex = parentIndex + 1;
-
+        
         //Get the index of the current element
         for (; currentIndex && currentIndex < UI::Internal::System->Elements.size(); currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
             if (&UI::Internal::System->Elements[currentIndex] == &current) {
                 break;
             }
         }
-       
+        
+        float scrollSize = 0.0f;
+        uint32_t childCount = 0;
+
         //Update the positions of the current element's children
         for (size_t i = currentIndex + 1; i < UI::Internal::System->Elements.size() && UI::Internal::System->Elements[i].ParentID == currentIndex; i = UI::Internal::System->Elements[i].SiblingID) {
             Surface& child = UI::Internal::System->Elements[i];
             
             if (child.Positioning <= PositioningType::Offset) {
                 child.Positioning = PositioningType::Offset;
-                child.Position[m_ScrollDimension] -= m_ScrollOffset * current.Size[m_ScrollDimension] * m_ScrollSpeed;
+                child.Position[m_ScrollDimension] -= m_ScrollOffset * m_ScrollSpeed;
+
+                scrollSize += child.Size[m_ScrollDimension];
+                childCount++;
             }
+        }
+
+        if (currentIndex == Internal::System->HoverID && Internal::MouseState.ScrollOffset) {
+            scrollSize += 0.025f * current.Size[m_ScrollDimension] * (childCount + 2) - current.Size[m_ScrollDimension];
+            
+            m_ScrollOffset -= SCROLLSTEP * Internal::MouseState.ScrollOffset;
+            m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, glm::max(glm::abs(scrollSize / (current.Size[m_ScrollDimension] * m_ScrollSpeed)), 0.0f));
         }
     }
 

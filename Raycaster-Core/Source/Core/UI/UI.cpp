@@ -49,7 +49,6 @@ namespace Core {
         
         Internal::MouseState.Left = Internal::MouseButtonState(Internal::MouseState.Left == Internal::MouseButtonState::Held);
         Internal::MouseState.Right = Internal::MouseButtonState(Internal::MouseState.Right == Internal::MouseButtonState::Held);
-        Internal::MouseState.ScrollOffset = 0.0f;
         
         size_t lastParentId = -1;
         std::unique_ptr<Layout> layout = std::make_unique<NoLayout>(Internal::System->Elements.front());
@@ -96,6 +95,8 @@ namespace Core {
                 current.Widget->Update(current);
             }
         }
+
+        Internal::MouseState.ScrollOffset = 0.0f;
     }
 
     void UI::Render() {
