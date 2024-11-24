@@ -91,6 +91,9 @@ namespace Core {
 			if (action == GLFW_PRESS) {
 				MouseButtonPressed event (button);
 				data.EventCallback(event);
+			} else {
+				MouseButtonReleased event (button);
+				data.EventCallback(event);
 			}
 		});
 

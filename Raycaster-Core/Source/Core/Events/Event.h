@@ -9,7 +9,7 @@ namespace Core {
 		None = 0,
 		WindowClose, WindowResize, WindowFocus, WindowLostFocus,
 		KeyPressed,
-		MouseButtonPressed, MouseMoved, MouseScrolled 
+		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled 
 	};
 
 	enum EventCategory {
@@ -20,12 +20,9 @@ namespace Core {
 		EventCategoryMouse	     = Bit(3),
 	};
 
-	class Event
-	{
-		friend class EventDispatcher;
-
+	class Event {
 	public:
-		bool handled = false;
+		bool Handled = false;
 
 		virtual EventType GetType() const = 0;
 		virtual int GetCategory() const = 0;
@@ -33,15 +30,13 @@ namespace Core {
 		inline bool IsInCategory(EventCategory category) const {
 			return GetCategory() & category;
 		}
+
+		friend class EventDispatcher;
 	};
 
 	class EventDispatcher {
 		template<typename T>
 		using EventFunction = std::function<bool(T&)>;
-	
-	private:
-		Event& m_Event;
-	
 	public:
 		EventDispatcher(Event& event) 
 			: m_Event(event) {}
@@ -49,10 +44,12 @@ namespace Core {
 		template<typename T>
 		bool Dispatch(EventFunction<T> func) {
 			if (m_Event.GetType() == T::GetStaticType()) {
-				m_Event.handled = func(*(T*)&m_Event);
+				m_Event.Handled = func(*(T*)&m_Event);
 				return true;
 			}
 			return false;
 		}
+	private:
+		Event& m_Event;
 	};
 }

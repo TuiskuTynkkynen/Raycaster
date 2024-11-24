@@ -49,7 +49,7 @@ namespace Core {
 		dispatcer.Dispatch<WindowResize>(std::bind(&Application::OnWindowResizeEvent, this, std::placeholders::_1));
 
 		for (auto iterator = m_LayerStack.end(); iterator != m_LayerStack.begin();) {
-			if (event.handled) {
+			if (event.Handled) {
 				break;
 			}
 
