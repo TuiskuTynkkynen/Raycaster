@@ -90,4 +90,9 @@ namespace Core::UI {
         virtual void Update(Surface& current) = 0;
         virtual bool Render(Surface& current) = 0;
     };
+
+    struct AtlasProperties {
+        glm::uvec3 Indices{};
+        glm::vec2 Size{};
+    };
 }

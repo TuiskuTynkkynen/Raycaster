@@ -257,18 +257,18 @@ namespace Core {
         return Internal::MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
     }
 
-    bool UI::TextureButton(glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+    bool UI::TextureButton(const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         bool result = Button(positioning, position, size, primaryColour, hoverColour, activeColour);
 
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasIndices, atlasSize);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
 
         return result;
     }
 
     template <typename T>
-    bool UI::TextureButton(std::basic_string_view<T> text, glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
+    bool UI::TextureButton(std::basic_string_view<T> text, const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
         bool result = Button(positioning, position, size, buttonColours[0], buttonColours[1], buttonColours[2]);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasIndices, atlasSize);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
 
         size_t open = Internal::System->OpenElement;
         Internal::System->OpenElement = Internal::System->Elements.size() - 1;
@@ -279,15 +279,15 @@ namespace Core {
         return result;
     }
 
-    template bool UI::TextureButton<char>(std::string_view, glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
-    template bool UI::TextureButton<wchar_t>(std::wstring_view, glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template bool UI::TextureButton<char>(std::string_view, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template bool UI::TextureButton<wchar_t>(std::wstring_view, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
 
-    void UI::Texture(glm::uvec3 atlasIndices, glm::vec2 atlasSize, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& colour) {
+    void UI::Texture(const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& colour) {
         RC_ASSERT(Internal::System, "Tried to create a UI texture before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI texture before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ colour, colour, colour }, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasIndices, atlasSize);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -357,12 +357,12 @@ namespace Core {
         enabled ^= Internal::MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
     }
     
-    void UI::TextureToggle(bool& enabled, const glm::uvec3& boxAtlasIndices, const glm::uvec3& checkAtlasIndices, glm::vec2 atlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+    void UI::TextureToggle(bool& enabled, const AtlasProperties& boxAtlasProperties, const glm::uvec3& checkAtlasIndices, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI toggle before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI toggle before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureToggleWidget>(enabled, boxAtlasIndices, checkAtlasIndices, atlasScale);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureToggleWidget>(enabled, boxAtlasProperties.Indices, checkAtlasIndices, boxAtlasProperties.Size);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -406,12 +406,12 @@ namespace Core {
     template void UI::Slider<double>(double&, double, double, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
 
     template <typename T>
-    void UI::TextureSlider(T& value, T min, T max, bool vertical, const glm::uvec3& boxAtlasIndices, glm::vec2 boxAtlasScale, glm::vec2 sliderSize, const glm::uvec3& sliderAtlasIndices, glm::vec2 sliderAtlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours) {
+    void UI::TextureSlider(T& value, T min, T max, bool vertical, const AtlasProperties& boxAtlasProperties, glm::vec2 sliderSize, const AtlasProperties& sliderAtlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours) {
         RC_ASSERT(Internal::System, "Tried to create a UI slider before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, vertical, boxAtlasScale, boxAtlasIndices, sliderSize, sliderAtlasScale, sliderAtlasIndices);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, vertical, boxAtlasProperties.Size, boxAtlasProperties.Indices, sliderSize, sliderAtlasProperties.Size, sliderAtlasProperties.Indices);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -424,14 +424,14 @@ namespace Core {
         }
     }
     
-    template void UI::TextureSlider<int8_t>(int8_t&, int8_t, int8_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<uint8_t>(uint8_t&, uint8_t, uint8_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<int32_t>(int32_t&, int32_t, int32_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<uint32_t>(uint32_t&, uint32_t, uint32_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<int64_t>(int64_t&, int64_t, int64_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<uint64_t>(uint64_t&, uint64_t, uint64_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<float>(float&, float, float, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<double>(double&, double, double, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<int8_t>(int8_t&, int8_t, int8_t, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<uint8_t>(uint8_t&, uint8_t, uint8_t, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<int32_t>(int32_t&, int32_t, int32_t, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<uint32_t>(uint32_t&, uint32_t, uint32_t, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<int64_t>(int64_t&, int64_t, int64_t, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<uint64_t>(uint64_t&, uint64_t, uint64_t, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<float>(float&, float, float, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<double>(double&, double, double, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
 
     void UI::ScrollBar(float& offset, float buttonSize, glm::vec2 position, glm::vec2 size, std::array<glm::vec4, 3>& baseColours, std::array<glm::vec4, 3>& highlightColours) {
         BeginContainer(PositioningType::Relative, position, size, glm::vec4(0.0f), LayoutType::None);

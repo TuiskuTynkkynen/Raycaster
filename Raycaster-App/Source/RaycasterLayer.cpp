@@ -124,18 +124,18 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
             Core::UI::Button(Core::UI::PositioningType::Offset, {-0.05f, 0.0f}, { 0.9f, 0.25f });
             Core::UI::Button(Core::UI::PositioningType::Offset, {0.1f, 0.0f}, { 1.0f, 0.25f });
             static int temp = -1;
-            Core::UI::TextureSlider(temp, 0, 5, { 0, 4, 4 }, { 4.0f, 1.0f }, { 0.15625, 0.875f }, { 17, 18, 18 }, { 0.625f, 0.875f }, Core::UI::PositioningType::Offset, { 0.0f, -0.05f }, { 0.9f, 0.25f });
+            Core::UI::TextureSlider(temp, 0, 5, { { 0, 4, 4 }, { 4.0f, 1.0f } }, { 0.15625, 0.875f }, { { 17, 18, 18 }, { 0.625f, 0.875f } }, Core::UI::PositioningType::Offset, { 0.0f, -0.05f }, { 0.9f, 0.25f });
         Core::UI::EndContainer();
     Core::UI::EndContainer();
 
     static bool enabled = false;
-    Core::UI::TextureToggle(enabled, { 12, 13, 14 }, { 15, 15, 16 }, { 1.0f, 1.0f }, Core::UI::PositioningType::Relative, { -0.45f, 0.45f }, { 0.075f, 0.075f });
-    if (Core::UI::TextureButton("VSync", { 12, 13, 14 }, { 1.0f, 1.0f }, Core::UI::PositioningType::Absolute, { 0.95f, 0.05f }, { 0.075f, 0.075f })) {
+    Core::UI::TextureToggle(enabled, { { 12, 13, 14 }, { 1.0f, 1.0f } }, { 15, 15, 16 }, Core::UI::PositioningType::Relative, { -0.45f, 0.45f }, { 0.075f, 0.075f });
+    if (Core::UI::TextureButton("VSync", { { 12, 13, 14 }, { 1.0f, 1.0f } }, Core::UI::PositioningType::Absolute, { 0.95f, 0.05f }, { 0.075f, 0.075f })) {
         vSync = !vSync;
         Core::Application::GetWindow().SetVSync(vSync);
     }
 
-    foo ^= Core::UI::TextureButton("Show fps counter", { 0, 4, 8 }, { 4.0f, 1.0f }, { 0.75f, 0.2f });
+    foo ^= Core::UI::TextureButton("Show fps counter", { { 0, 4, 8 }, { 4.0f, 1.0f } }, { 0.75f, 0.2f });
     
     Core::UI::End();
 }
