@@ -60,8 +60,8 @@ namespace Core::UI::Widgets {
     template <typename T>
     class SliderWidget : public Widget {
     public:
-        SliderWidget(T& value, T min, T max, bool vertical, const std::array<glm::vec4, 3>& sliderColours)
-            : m_Value(value), m_Min(min), m_Max(max), m_SliderDimension(vertical), m_SliderColours(sliderColours) { }
+        SliderWidget(T& value, T min, T max, bool vertical, float sliderSize, const std::array<glm::vec4, 3>& sliderColours)
+            : m_Value(value), m_Min(min), m_Max(max), m_SliderDimension(vertical), m_SliderSize(sliderSize), m_SliderColours(sliderColours) { }
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
@@ -71,6 +71,7 @@ namespace Core::UI::Widgets {
         const T m_Max;
 
         size_t m_SliderDimension;
+        float m_SliderSize;
 
         const std::array<glm::vec4, 3> m_SliderColours;
     };

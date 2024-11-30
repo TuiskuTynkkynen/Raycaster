@@ -378,12 +378,12 @@ namespace Core {
     }
 
     template <typename T>
-    void UI::Slider(T& value, T min, T max, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& sliderColours, const std::array<glm::vec4, 3>& boxColours) {
+    void UI::Slider(T& value, T min, T max, bool vertical, float sliderSize, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& sliderColours, const std::array<glm::vec4, 3>& boxColours) {
         RC_ASSERT(Internal::System, "Tried to create a UI slider before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::SliderWidget<T>>(value, min, max, false, sliderColours);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::SliderWidget<T>>(value, min, max, vertical, sliderSize, sliderColours);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -396,22 +396,22 @@ namespace Core {
         }
     }
 
-    template void UI::Slider<int8_t>(int8_t&, int8_t, int8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
-    template void UI::Slider<uint8_t>(uint8_t&, uint8_t, uint8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
-    template void UI::Slider<int32_t>(int32_t&, int32_t, int32_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
-    template void UI::Slider<uint32_t>(uint32_t&, uint32_t, uint32_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
-    template void UI::Slider<int64_t>(int64_t&, int64_t, int64_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
-    template void UI::Slider<uint64_t>(uint64_t&, uint64_t, uint64_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
-    template void UI::Slider<float>(float&, float, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
-    template void UI::Slider<double>(double&, double, double, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<int8_t>(int8_t&, int8_t, int8_t, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<uint8_t>(uint8_t&, uint8_t, uint8_t, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<int32_t>(int32_t&, int32_t, int32_t, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<uint32_t>(uint32_t&, uint32_t, uint32_t, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<int64_t>(int64_t&, int64_t, int64_t, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<uint64_t>(uint64_t&, uint64_t, uint64_t, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<float>(float&, float, float, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Slider<double>(double&, double, double, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
 
     template <typename T>
-    void UI::TextureSlider(T& value, T min, T max, const glm::uvec3& boxAtlasIndices, glm::vec2 boxAtlasScale, glm::vec2 sliderSize, const glm::uvec3& sliderAtlasIndices, glm::vec2 sliderAtlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours) {
+    void UI::TextureSlider(T& value, T min, T max, bool vertical, const glm::uvec3& boxAtlasIndices, glm::vec2 boxAtlasScale, glm::vec2 sliderSize, const glm::uvec3& sliderAtlasIndices, glm::vec2 sliderAtlasScale, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours) {
         RC_ASSERT(Internal::System, "Tried to create a UI slider before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, false, boxAtlasScale, boxAtlasIndices, sliderSize, sliderAtlasScale, sliderAtlasIndices);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, vertical, boxAtlasScale, boxAtlasIndices, sliderSize, sliderAtlasScale, sliderAtlasIndices);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -424,14 +424,14 @@ namespace Core {
         }
     }
     
-    template void UI::TextureSlider<int8_t>(int8_t&, int8_t, int8_t, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<uint8_t>(uint8_t&, uint8_t, uint8_t, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<int32_t>(int32_t&, int32_t, int32_t, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<uint32_t>(uint32_t&, uint32_t, uint32_t, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<int64_t>(int64_t&, int64_t, int64_t, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<uint64_t>(uint64_t&, uint64_t, uint64_t, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<float>(float&, float, float, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
-    template void UI::TextureSlider<double>(double&, double, double, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<int8_t>(int8_t&, int8_t, int8_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<uint8_t>(uint8_t&, uint8_t, uint8_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<int32_t>(int32_t&, int32_t, int32_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<uint32_t>(uint32_t&, uint32_t, uint32_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<int64_t>(int64_t&, int64_t, int64_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<uint64_t>(uint64_t&, uint64_t, uint64_t, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<float>(float&, float, float, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
+    template void UI::TextureSlider<double>(double&, double, double, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
 
     void UI::SetFont(std::shared_ptr<Core::Font> font) { 
         Internal::Font = font; 

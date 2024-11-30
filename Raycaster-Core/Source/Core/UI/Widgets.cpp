@@ -111,10 +111,11 @@ namespace Core::UI::Widgets {
             return;
         }
 
+        float maxPosition = (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
         if (std::is_integral<T>::value) {
-            m_Value = glm::clamp<T>(glm::round((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * 0.85f) / (current.Size[m_SliderDimension] * 0.85f) * (m_Max - m_Min)), m_Min, m_Max);
+            m_Value = glm::clamp<T>(glm::round((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min)), m_Min, m_Max);
         } else {
-            m_Value = glm::clamp<T>((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * 0.85f) / (current.Size[m_SliderDimension] * 0.85f) * (m_Max - m_Min), m_Min, m_Max);
+            m_Value = glm::clamp<T>((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min), m_Min, m_Max);
         }
     }
 
@@ -126,12 +127,13 @@ namespace Core::UI::Widgets {
         Renderer2D::DrawFlatRoundedQuad(current.Size, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), colour * 0.8f);
 
         glm::vec3 sliderPosition(0.0f);
-        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + (current.Size[m_SliderDimension] * 0.85f) * glm::clamp<float>((float)m_Value / (m_Max - m_Min) - 0.5, -0.5f, 0.5f);
+        float maxPosition = current.Size[m_SliderDimension] * (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
+        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + maxPosition * glm::clamp<float>((float)m_Value / (m_Max - m_Min) - 0.5, -0.5f, 0.5f);
         sliderPosition[1 - m_SliderDimension] = current.Position[1 - m_SliderDimension];
         
         glm::vec3 sliderSize(0.0f);
-        sliderSize[m_SliderDimension] = current.Size[m_SliderDimension] * 0.1f;
-        sliderSize[1 - m_SliderDimension] = current.Size[1 - m_SliderDimension] * 0.95f;
+        sliderSize[m_SliderDimension] = current.Size[m_SliderDimension] * m_SliderSize;
+        sliderSize[1 - m_SliderDimension] = current.Size[1 - m_SliderDimension] * 0.85f;
 
         Renderer2D::DrawFlatShapeQuad(sliderPosition, sliderSize, m_SliderColours[index]);
 
