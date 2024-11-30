@@ -9,8 +9,8 @@
 
 namespace Core::UI::Internal {
 	struct UISystem {
-		glm::vec2 Position;
-		glm::vec2 Size;
+		glm::vec2 Position{};
+		glm::vec2 Size{};
 
 		size_t HoverID = 0;
 		size_t ActiveID = 0;
@@ -32,7 +32,7 @@ namespace Core::UI::Internal {
 		MouseButtonState Left = MouseButtonState::None;
 		MouseButtonState Right = MouseButtonState::None;
 
-		float ScrollOffset;
+		float ScrollOffset = 0.0f;
 	};
 
 	inline std::unique_ptr<UISystem> System;

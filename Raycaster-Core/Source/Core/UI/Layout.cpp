@@ -17,7 +17,7 @@ namespace Core::UI {
             position = m_Position - s.Position * Internal::System->Elements[s.ParentID].Size;
             break;
         case Core::UI::PositioningType::Relative:
-            s.Position += Internal::System->Elements[s.ParentID].Position;
+            position = m_Position + position * Internal::System->Elements[s.ParentID].Size;
             return;
         case Core::UI::PositioningType::Absolute:
             return;
@@ -70,7 +70,7 @@ namespace Core::UI {
             positioning = s.Position * parent.Size;
             break;
         case Core::UI::PositioningType::Relative:
-            s.Position += parent.Position;
+            s.Position = parent.Position + s.Position * parent.Size;
             return;
         case Core::UI::PositioningType::Absolute:
             return;
