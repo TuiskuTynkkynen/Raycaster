@@ -130,9 +130,9 @@ namespace Core {
                     scissorID = scissorIDs.back();
                     Surface& parent = Internal::System->Elements[scissorID];
 
-                    float offsetX = Internal::System->Size.x * (parent.Position.x - parent.Size.x * 0.5f);
-                    float offsetY = Internal::System->Size.y * (1.0f - parent.Position.y - parent.Size.y * 0.5f);
-                    glm::uvec2 size = Internal::System->Size * parent.Size;
+                    float offsetX = glm::round(Internal::System->Size.x * (parent.Position.x - parent.Size.x * 0.5f));
+                    float offsetY = glm::round(Internal::System->Size.y * (1.0f - parent.Position.y - parent.Size.y * 0.5f));
+                    glm::uvec2 size = glm::round(Internal::System->Size * parent.Size);
 
                     Renderer2D::Flush();
 
