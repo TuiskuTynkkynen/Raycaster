@@ -433,6 +433,34 @@ namespace Core {
     template void UI::TextureSlider<float>(float&, float, float, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
     template void UI::TextureSlider<double>(double&, double, double, bool, const glm::uvec3&, glm::vec2, glm::vec2, const glm::uvec3&, glm::vec2, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
 
+    void UI::ScrollBar(float& offset, float buttonSize, glm::vec2 position, glm::vec2 size, std::array<glm::vec4, 3>& baseColours, std::array<glm::vec4, 3>& highlightColours) {
+        BeginContainer(PositioningType::Relative, position, size, glm::vec4(0.0f), LayoutType::None);
+        size_t index = Internal::System->Elements.size() - 1;
+
+        Slider(offset, 0.0f, 0.0f, true, glm::vec2(1.0f, 1.0f - buttonSize * 2), highlightColours, baseColours);
+
+        std::function renderTriangleButton = [highlightColours](Surface& current, float flip) -> bool {
+            uint32_t colourIndex = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
+            glm::vec4& colour = current.Colours[colourIndex];
+
+            Renderer2D::DrawFlatRoundedQuad(current.Size * 0.99f, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), colour);
+            Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });
+
+            Renderer2D::DrawFlatTriangle(glm::vec3(60.0f), { current.Position.x, current.Position.y, 0.0f }, { current.Size.x * 0.5f, flip * current.Size.y * 0.5f, 0.0f }, highlightColours[colourIndex]);
+
+            return true;
+        };
+
+        bool downButton = Button(PositioningType::Relative, glm::vec2(0.0f, -0.5f * (1.0f - buttonSize)), glm::vec2(1.0f, buttonSize), baseColours[0], baseColours[1], baseColours[2]);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, -1.0f));
+
+        bool upButton = Button(PositioningType::Relative, glm::vec2(0.0f, 0.5f * (1.0f - buttonSize)), glm::vec2(1.0f, buttonSize), baseColours[0], baseColours[1], baseColours[2]);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, 1.0f));
+        
+        Internal::System->Elements[index].Widget = std::make_unique<Widgets::ScrollBarWidget>(offset, downButton, upButton);
+        EndContainer();
+    }
+
     void UI::SetFont(std::shared_ptr<Core::Font> font) { 
         Internal::Font = font; 
     }

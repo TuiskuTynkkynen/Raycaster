@@ -3,8 +3,21 @@
 #include "Types.h"
 
 #include <string>
+#include <functional>
 
 namespace Core::UI::Widgets {
+    class CustomRenderWidget : public Widget {
+    public:
+        CustomRenderWidget(std::function<bool(Surface&)> renderFuntion)
+            : m_RenderFunction(renderFuntion) {
+        }
+
+        void Update(Surface& current) override {}
+        bool Render(Surface& current) override { return m_RenderFunction(current); }
+    private:
+        std::function<bool(Surface&)> m_RenderFunction;
+    };
+
     class AtlasTextureWidget : public Widget {
     public:
         AtlasTextureWidget(const glm::uvec3& atlasIndices, glm::vec2 atlasScale)
@@ -57,6 +70,20 @@ namespace Core::UI::Widgets {
         glm::vec2 m_Scale;
     };
 
+    class ScrollBarWidget : public Widget {
+    public:
+        ScrollBarWidget(float& offset, bool moveDown, bool moveUp)
+            : m_ScrollOffset(offset), moveDirection(moveUp - moveDown) {
+        }
+
+        void Update(Surface& current) override;
+        bool Render(Surface& current) override { return true; }
+    private:
+        float& m_ScrollOffset;
+
+        int32_t moveDirection;
+    };
+
     template <typename T>
     class SliderWidget : public Widget {
     public:
@@ -67,13 +94,15 @@ namespace Core::UI::Widgets {
         bool Render(Surface& current) override;
     private:
         T& m_Value;
-        const T m_Min;
-        const T m_Max;
+        T m_Min;
+        T m_Max;
 
         size_t m_SliderDimension;
         float m_SliderSize;
 
         const std::array<glm::vec4, 3> m_SliderColours;
+
+        friend void ScrollBarWidget::Update(Surface&);
     };
 
     template <typename T>
@@ -111,5 +140,8 @@ namespace Core::UI::Widgets {
 
         size_t m_ScrollDimension;
         float m_ScrollSpeed;
+        float m_ScrollSize = 0.0f;
+
+        friend void ScrollBarWidget::Update(Surface&);
     };
 }

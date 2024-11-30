@@ -78,6 +78,10 @@ namespace Core::UI {
     template <typename T>
     void TextureSlider(T& value, T min, T max, const glm::uvec3& boxAtlasIndices, glm::vec2 boxAtlasScale, glm::vec2 sliderSize, const glm::uvec3& sliderAtlasIndices, glm::vec2 sliderAtlasScale, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& boxColours = DefaultTextureColours) { TextureSlider<T>(value, min, max, false, boxAtlasIndices, boxAtlasScale, sliderSize, sliderAtlasIndices, sliderAtlasScale, PositioningType::Auto, glm::vec2(1.0f), relativeSize, boxColours); }
    
+    void ScrollBar(float& offset, float buttonSize, glm::vec2 position, glm::vec2 relativeSize, std::array<glm::vec4, 3>& baseColours = DefaultColours, std::array<glm::vec4, 3>& highlightColours = DefaultHighlightColours);
+    inline void ScrollBar(float& offset, float buttonSize, glm::vec2 relativeSize, std::array<glm::vec4, 3>& baseColours = DefaultColours, std::array<glm::vec4, 3>& highlightColours = DefaultHighlightColours) { ScrollBar(offset, buttonSize, glm::vec2(0.5f * (1.0f - relativeSize.x), 0.0f), relativeSize, baseColours, highlightColours); }
+    inline void ScrollBar(float& offset, glm::vec2 relativeSize, std::array<glm::vec4, 3>& baseColours = DefaultColours, std::array<glm::vec4, 3>& highlightColours = DefaultHighlightColours) { ScrollBar(offset, 0.1f, glm::vec2(0.5f * (1.0f - relativeSize.x), 0.0f), relativeSize, baseColours, highlightColours); }
+
     void SetFont(std::shared_ptr<Core::Font> font);
     void SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize);
 

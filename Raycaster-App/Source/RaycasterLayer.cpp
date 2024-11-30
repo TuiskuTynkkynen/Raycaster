@@ -107,12 +107,17 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     
     Core::UI::BeginContainer({ 0.75f, 0.5f }, { 0.8f, 0.25f, 0.25f, 0.25f }, Core::UI::LayoutType::Horizontal);
         Core::UI::BeginScrollContainer(val, { 0.45f, 1.0f }, true, 0.8f, { 0.25f, 0.25f, 0.25f, 0.5f }, { 0.25f, 0.25f, 0.25f, 0.5f });
-            Core::UI::Text("text 0", { 1.0f, 0.25f });
-            Core::UI::Text("text 1", { 1.0f, 0.25f });
-            Core::UI::Text("text 2", { 1.0f, 0.25f });
-            Core::UI::Text("text 3", { 1.0f, 0.25f });
-            Core::UI::Text("text 4", { 1.0f, 0.25f });
-            Core::UI::Text("text 5", { 1.0f, 0.25f });
+            Core::UI::Text("text 0", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 1", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 2", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 3", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 4", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 5", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 6", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 7", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 8", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::Text("text 9", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
+            Core::UI::ScrollBar(val, glm::vec2(0.2f, 1.0f));
         Core::UI::EndScrollContainer();
 
         Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::CropVertical);

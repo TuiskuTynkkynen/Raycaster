@@ -8,7 +8,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_transform_2d.hpp>
 
-constexpr float SCROLLSTEP = 0.25f;
+constexpr float SCROLLSTEP = 0.125f;
 
 namespace Core::UI::Widgets {
     bool AtlasTextureWidget::Render(Surface& current) {
@@ -134,9 +134,9 @@ namespace Core::UI::Widgets {
         glm::vec3 sliderSize(0.0f);
         sliderSize[m_SliderDimension] = current.Size[m_SliderDimension] * m_SliderSize;
         sliderSize[1 - m_SliderDimension] = current.Size[1 - m_SliderDimension] * 0.85f;
-
+        
         Renderer2D::DrawFlatShapeQuad(sliderPosition, sliderSize, m_SliderColours[index]);
-
+        
         Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });
 
         return true;
@@ -219,10 +219,8 @@ namespace Core::UI::Widgets {
             }
         }
         
-        float scrollSize = 0.0f;
-        uint32_t childCount = 0;
-
         //Update the positions of the current element's children
+        uint32_t childCount = 0;
         for (size_t i = currentIndex + 1; i < UI::Internal::System->Elements.size() && UI::Internal::System->Elements[i].ParentID == currentIndex; i = UI::Internal::System->Elements[i].SiblingID) {
             Surface& child = UI::Internal::System->Elements[i];
             
@@ -230,16 +228,17 @@ namespace Core::UI::Widgets {
                 child.Positioning = PositioningType::Offset;
                 child.Position[m_ScrollDimension] -= m_ScrollOffset * m_ScrollSpeed;
 
-                scrollSize += child.Size[m_ScrollDimension];
+                m_ScrollSize += child.Size[m_ScrollDimension];
                 childCount++;
             }
         }
 
+        m_ScrollSize += 0.025f * current.Size[m_ScrollDimension] * (childCount + 2) - current.Size[m_ScrollDimension];
+        m_ScrollSize = glm::abs(m_ScrollSize / (current.Size[m_ScrollDimension] * m_ScrollSpeed));
+
         if (currentIndex == Internal::System->HoverID && Internal::MouseState.ScrollOffset) {
-            scrollSize += 0.025f * current.Size[m_ScrollDimension] * (childCount + 2) - current.Size[m_ScrollDimension];
-            
             m_ScrollOffset -= SCROLLSTEP * Internal::MouseState.ScrollOffset;
-            m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, glm::max(glm::abs(scrollSize / (current.Size[m_ScrollDimension] * m_ScrollSpeed)), 0.0f));
+            m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, m_ScrollSize);
         }
     }
 
@@ -253,5 +252,47 @@ namespace Core::UI::Widgets {
         }
 
         return true;
+    }
+
+    void ScrollBarWidget::Update(Surface& current) {
+        //Get the index of the current element
+        size_t currentIndex = current.ParentID + 1;
+        for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
+            if (currentIndex >= UI::Internal::System->Elements.size()) {
+                currentIndex = 0;
+            }
+
+            if (&UI::Internal::System->Elements[currentIndex] == &current) {
+                break;
+            }
+        }
+
+        if(!currentIndex || current.ChildCount != 3 || currentIndex + 3 >= UI::Internal::System->Elements.size()){
+            RC_WARN("UI element with ScrollBarWidget should have three children");
+            return;
+        }
+
+        //Set the slider max value to scrollSize
+        Surface& parent = Internal::System->Elements[current.ParentID];
+        if (parent.Widget && typeid(*parent.Widget) == typeid(ScrollWidget)) {
+            float scrollSize = ((ScrollWidget*)parent.Widget.get())->m_ScrollSize;
+            
+            if (moveDirection != 0) {
+                m_ScrollOffset += moveDirection * SCROLLSTEP;
+                m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, scrollSize);
+            }
+
+            Surface& child = Internal::System->Elements[currentIndex + 1];
+            if(child.Widget) {
+                if (typeid(*child.Widget) == typeid(SliderWidget<float>)) {
+                    ((SliderWidget<float>*)child.Widget.get())->m_Max = scrollSize;
+                    
+                    size_t scrollDimension = ((ScrollWidget*)parent.Widget.get())->m_ScrollDimension;
+                    ((SliderWidget<float>*)child.Widget.get())->m_SliderSize = glm::clamp(glm::abs(parent.Size[scrollDimension] / scrollSize), 0.05f, 0.9f);
+                } else {
+                    RC_WARN("The first child of UI element with ScrollBarWidget should have a SliderWidget member");
+                }
+            }
+        }
     }
 }
