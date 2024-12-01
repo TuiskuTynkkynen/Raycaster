@@ -84,6 +84,23 @@ namespace Core::UI::Widgets {
         int32_t moveDirection;
     };
 
+    class AtlasTextureScrollBarWidget : public Widget {
+    public:
+        AtlasTextureScrollBarWidget(float& offset, bool moveDown, bool moveUp, const glm::uvec3& atlasIndices, glm::vec2 atlasScale)
+            : m_ScrollOffset(offset), moveDirection(moveUp - moveDown), m_AtlasIndices(atlasIndices), m_Scale(atlasScale) {
+        }
+
+        void Update(Surface& current) override;
+        bool Render(Surface& current) override;
+    private:
+        float& m_ScrollOffset;
+
+        int32_t moveDirection;
+
+        glm::uvec3 m_AtlasIndices;
+        glm::vec2 m_Scale;
+    };
+
     template <typename T>
     class SliderWidget : public Widget {
     public:
@@ -115,8 +132,8 @@ namespace Core::UI::Widgets {
         bool Render(Surface& current) override;
     private:
         T& m_Value;
-        const T m_Min;
-        const T m_Max;
+        T m_Min;
+        T m_Max;
 
         size_t m_SliderDimension;
 
@@ -126,6 +143,8 @@ namespace Core::UI::Widgets {
         const glm::vec2 m_SliderSize;
         const glm::vec2 m_SliderScale;
         const glm::uvec3 m_SliderAtlasIndices;
+
+        friend void AtlasTextureScrollBarWidget::Update(Surface&);
     };
 
     class ScrollWidget : public Widget {
@@ -143,5 +162,6 @@ namespace Core::UI::Widgets {
         float m_ScrollSize = 0.0f;
 
         friend void ScrollBarWidget::Update(Surface&);
+        friend void AtlasTextureScrollBarWidget::Update(Surface&);
     };
 }

@@ -10,8 +10,8 @@
 #include "Core/Renderer/Renderer2D.h"
 
 bool AABB(glm::vec2 mousePosition, glm::vec2 position, glm::vec2 size) {
-    return (mousePosition.x <= position.x + size.x * 0.5f && mousePosition.x >= position.x - size.x * 0.5f
-        && mousePosition.y <= position.y + size.y * 0.5f && mousePosition.y >= position.y - size.y * 0.5f);
+    return (mousePosition.x <= position.x + glm::abs(size.x) * 0.5f && mousePosition.x >= position.x - glm::abs(size.x) * 0.5f
+        && mousePosition.y <= position.y + glm::abs(size.y) * 0.5f && mousePosition.y >= position.y - glm::abs(size.y) * 0.5f);
 }
 
 namespace Core {
@@ -179,7 +179,7 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to begin a UI container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour }, Internal::System->OpenElement);
+        Internal::System->Elements.emplace_back(SurfaceType::None, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, primaryColour, primaryColour }, Internal::System->OpenElement);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -458,6 +458,20 @@ namespace Core {
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, 1.0f));
         
         Internal::System->Elements[index].Widget = std::make_unique<Widgets::ScrollBarWidget>(offset, downButton, upButton);
+        EndContainer();
+    }
+    
+    void UI::TextureScrollBar(float& offset, glm::vec2 buttonOffset, glm::vec2 buttonSize, const AtlasProperties& buttonAtlasProperties, glm::vec2 sliderSize, const AtlasProperties& sliderAtlasProperties, const AtlasProperties& baseAtlasProperties, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& colours) {
+        BeginContainer(PositioningType::Relative, position, size, colours[0], LayoutType::None);
+        size_t index = Internal::System->Elements.size() - 1;
+
+        TextureSlider<float>(offset, 0.0f, 0.0f, true, { glm::uvec3(0), glm::vec2(0.0f) }, sliderSize, sliderAtlasProperties, glm::vec2(1.0f, 1.0f - 0.5f * buttonOffset.y), colours);
+        
+        bool downButton = TextureButton(buttonAtlasProperties, PositioningType::Relative, glm::vec2(buttonOffset.x, -buttonOffset.y), buttonSize, colours[0], colours[1], colours[2]);
+        
+        bool upButton = TextureButton(buttonAtlasProperties, PositioningType::Relative, buttonOffset, glm::vec2(buttonSize.x, -buttonSize.y), colours[0], colours[1], colours[2]);
+        
+        Internal::System->Elements[index].Widget = std::make_unique<Widgets::AtlasTextureScrollBarWidget>(offset, downButton, upButton, baseAtlasProperties.Indices, baseAtlasProperties.Size);
         EndContainer();
     }
 

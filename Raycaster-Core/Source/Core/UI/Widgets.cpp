@@ -295,4 +295,76 @@ namespace Core::UI::Widgets {
             }
         }
     }
+
+    void AtlasTextureScrollBarWidget::Update(Surface& current) {
+        //Get the index of the current element
+        size_t currentIndex = current.ParentID + 1;
+        for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
+            if (currentIndex >= UI::Internal::System->Elements.size()) {
+                currentIndex = 0;
+            }
+
+            if (&UI::Internal::System->Elements[currentIndex] == &current) {
+                break;
+            }
+        }
+
+        if(!currentIndex || current.ChildCount != 3 || currentIndex + 3 >= UI::Internal::System->Elements.size()){
+            RC_WARN("UI element with ScrollBarWidget should have three children");
+            return;
+        }
+
+        //Set the slider max value to scrollSize
+        Surface& parent = Internal::System->Elements[current.ParentID];
+        if (parent.Widget && typeid(*parent.Widget) == typeid(ScrollWidget)) {
+            float scrollSize = ((ScrollWidget*)parent.Widget.get())->m_ScrollSize;
+            
+            if (moveDirection != 0) {
+                m_ScrollOffset += moveDirection * SCROLLSTEP;
+                m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, scrollSize);
+            }
+
+            Surface& child = Internal::System->Elements[currentIndex + 1];
+            if(child.Widget) {
+                if (typeid(*child.Widget) == typeid(AtlasTextureSliderWidget<float>)) {
+                    ((AtlasTextureSliderWidget<float>*)child.Widget.get())->m_Max = scrollSize;
+                } else {
+                    RC_WARN("The first child of UI element with AtlasTextureScrollBarWidget should have a AtlasTextureSliderWidget member");
+                }
+            }
+        }
+    }
+
+    bool AtlasTextureScrollBarWidget::Render(Surface& current) {
+        RC_ASSERT(Internal::TextureAtlas, "Tried to render UI TextureScrollBar element before UI setting TextureAtlas")
+        
+            
+            size_t parentIndex = current.ParentID;
+        size_t currentIndex = parentIndex + 1;
+
+        //Get the index of the current element
+        for (; currentIndex && currentIndex < UI::Internal::System->Elements.size(); currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
+            if (&UI::Internal::System->Elements[currentIndex] == &current) {
+                break;
+            }
+        }
+
+        //Update the positions of the current element's children
+        uint32_t maxIndex = 0;
+        for (size_t i = currentIndex + 1; i < UI::Internal::System->Elements.size() && UI::Internal::System->Elements[i].ParentID == currentIndex; i = UI::Internal::System->Elements[i].SiblingID) {
+            maxIndex = glm::max(maxIndex, uint32_t(Internal::System->HoverID == i));
+        }
+
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
+
+        glm::vec2 atlasOffset(m_AtlasIndices[maxIndex] % (uint32_t)Internal::AtlasSize.x, m_AtlasIndices[maxIndex] / (uint32_t)Internal::AtlasSize.x * -1.0f);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
+        texTransform = glm::scale(texTransform, glm::vec2(m_Scale.x, -m_Scale.y) / Internal::AtlasSize);
+
+        Renderer2D::DrawShapeQuad(3, current.Colours[maxIndex], transform, texTransform);
+
+        return true;
+    }
 }

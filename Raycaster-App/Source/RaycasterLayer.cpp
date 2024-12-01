@@ -22,7 +22,7 @@ void RaycasterLayer::OnAttach() {
     Core::UI::SetFont(font);
     std::shared_ptr<Core::Texture2D> buttonTexture = std::make_unique<Core::Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
     buttonTexture->BindImage("Button.png");
-    Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 2));
+    Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
 }
 bool foo = false;
 bool vSync = false;
@@ -117,7 +117,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
             Core::UI::Text("text 7", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
             Core::UI::Text("text 8", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
             Core::UI::Text("text 9", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::ScrollBar(val, glm::vec2(0.2f, 1.0f));
+            
+            Core::UI::TextureScrollBar(val, { 0.75f, 0.125f }, { {27, 28, 29}, {0.75f, 0.625f} }, { 0.875f, 0.1f }, { {20, 21, 22}, { 0.875f, 0.5f } }, { {24, 25, 26}, { 1.0f, 5.0f } }, { 0.2f, 1.0f });
         Core::UI::EndScrollContainer();
 
         Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::CropVertical);
