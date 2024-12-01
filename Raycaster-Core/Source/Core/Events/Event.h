@@ -5,51 +5,53 @@
 #define Bit(x) (1 << x)
 
 namespace Core {
-	enum class EventType {
-		None = 0,
-		WindowClose, WindowResize, WindowFocus, WindowLostFocus,
-		KeyPressed,
-		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled 
-	};
+    enum class EventType {
+        None = 0,
+        WindowClose, WindowResize, WindowFocus, WindowLostFocus,
+        KeyPressed,
+        MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
+        TextInput,
+    };
 
-	enum EventCategory {
-		None = 0,
-		EventCategoryWindow      = Bit(0),
-		EventCategoryInput       = Bit(1),
-		EventCategoryKeyboard    = Bit(2),
-		EventCategoryMouse	     = Bit(3),
-	};
+    enum EventCategory {
+        None = 0,
+        EventCategoryWindow      = Bit(0),
+        EventCategoryInput       = Bit(1),
+        EventCategoryKeyboard    = Bit(2),
+        EventCategoryMouse	     = Bit(3),
+        EventCategoryText	     = Bit(4),
+    };
 
-	class Event {
-	public:
-		bool Handled = false;
+    class Event {
+    public:
+        bool Handled = false;
 
-		virtual EventType GetType() const = 0;
-		virtual int GetCategory() const = 0;
+        virtual EventType GetType() const = 0;
+        virtual int GetCategory() const = 0;
 
-		inline bool IsInCategory(EventCategory category) const {
-			return GetCategory() & category;
-		}
+        inline bool IsInCategory(EventCategory category) const {
+            return GetCategory() & category;
+        }
 
-		friend class EventDispatcher;
-	};
+        friend class EventDispatcher;
+    };
 
-	class EventDispatcher {
-		template<typename T>
-		using EventFunction = std::function<bool(T&)>;
-	public:
-		EventDispatcher(Event& event) 
-			: m_Event(event) {}
+    class EventDispatcher {
+        template<typename T>
+        using EventFunction = std::function<bool(T&)>;
+    public:
+        EventDispatcher(Event& event) 
+            : m_Event(event) {}
 
-		template<typename T>
-		bool Dispatch(EventFunction<T> func) {
-			if (m_Event.GetType() == T::GetStaticType()) {
-				m_Event.Handled = func(*(T*)&m_Event);
-				return true;
-			}
-			return false;
-		}
-	private:
-		Event& m_Event;
-	};
+        template<typename T>
+        bool Dispatch(EventFunction<T> func) {
+            if (m_Event.GetType() == T::GetStaticType()) {
+                m_Event.Handled = func(*(T*)&m_Event);
+                return true;
+            }
+            return false;
+        }
+    private:
+        Event& m_Event;
+    };
 }

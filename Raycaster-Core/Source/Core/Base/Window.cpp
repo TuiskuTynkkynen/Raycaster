@@ -1,6 +1,7 @@
 #include "Window.h"
 #include "Core/Events/KeyEvent.h"
 #include "Core/Events/MouseEvent.h"
+#include "Core/Events/TextEvent.h"
 #include "Core/Events/WindowEvent.h"
 #include "Core/Debug/Debug.h"
 
@@ -108,6 +109,13 @@ namespace Core {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			MouseScrolled event(offsetX, offsetY);
+			data.EventCallback(event);
+		});
+
+		glfwSetCharCallback(m_Window, [](GLFWwindow* window, uint32_t codePoint) {
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+			TextInput event(codePoint);
 			data.EventCallback(event);
 		});
 	}
