@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <memory>
+#include <bitset>
 
 namespace Core::UI::Internal {
 	struct UISystem {
@@ -27,7 +28,6 @@ namespace Core::UI::Internal {
 	};
 
 	struct UIMouseState {
-		
 		glm::vec2 Position{};
 		MouseButtonState Left = MouseButtonState::None;
 		MouseButtonState Right = MouseButtonState::None;
@@ -35,9 +35,38 @@ namespace Core::UI::Internal {
 		float ScrollOffset = 0.0f;
 	};
 
+	enum UIKeys {
+		Escape = 0,
+		Enter,
+		Tab,
+		Backspace,
+		Delete,
+		Rigth,
+		Left,
+		Down,
+		Up,
+		PageUp,
+		PageDown,
+		Home,
+		End,
+		Shift,
+		Control,
+		KeyCount
+	};
+	
+	struct UIKeyboardState {
+		std::bitset<UIKeys::KeyCount> SpecialKeys;
+		std::vector<uint32_t> InputedText;
+	};
+
+	struct UIInputState {
+		UIMouseState MouseState;
+		UIKeyboardState KeyboardState;
+	};
+
 	inline std::unique_ptr<UISystem> System;
 	inline std::shared_ptr<Core::Font> Font;
 	inline std::shared_ptr<Core::Texture2D> TextureAtlas;
 	inline glm::vec2 AtlasSize;
-	inline UIMouseState MouseState;
+	inline std::unique_ptr<UIInputState> Input;
 }

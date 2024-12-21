@@ -113,9 +113,9 @@ namespace Core::UI::Widgets {
 
         float maxPosition = (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
         if (std::is_integral<T>::value) {
-            m_Value = glm::clamp<T>(glm::round((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min)), m_Min, m_Max);
+            m_Value = glm::clamp<T>(glm::round((Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min)), m_Min, m_Max);
         } else {
-            m_Value = glm::clamp<T>((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min), m_Min, m_Max);
+            m_Value = glm::clamp<T>((Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min), m_Min, m_Max);
         }
     }
 
@@ -159,10 +159,10 @@ namespace Core::UI::Widgets {
 
 
         if (std::is_integral<T>::value) {
-            m_Value = glm::clamp<T>(glm::round((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min)), m_Min, m_Max);
+            m_Value = glm::clamp<T>(glm::round((Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min)), m_Min, m_Max);
         }
         else {
-            m_Value = glm::clamp<T>((Internal::MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min), m_Min, m_Max);
+            m_Value = glm::clamp<T>((Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min), m_Min, m_Max);
         }
     }
 
@@ -236,8 +236,8 @@ namespace Core::UI::Widgets {
         m_ScrollSize += 0.025f * current.Size[m_ScrollDimension] * (childCount + 2) - current.Size[m_ScrollDimension];
         m_ScrollSize = glm::abs(m_ScrollSize / (current.Size[m_ScrollDimension] * m_ScrollSpeed));
 
-        if (currentIndex == Internal::System->HoverID && Internal::MouseState.ScrollOffset) {
-            m_ScrollOffset -= SCROLLSTEP * Internal::MouseState.ScrollOffset;
+        if (currentIndex == Internal::System->HoverID && Internal::Input->MouseState.ScrollOffset) {
+            m_ScrollOffset -= SCROLLSTEP * Internal::Input->MouseState.ScrollOffset;
             m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, m_ScrollSize);
         }
     }
