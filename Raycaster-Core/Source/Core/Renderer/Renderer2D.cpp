@@ -396,6 +396,7 @@ namespace Core {
         glm::vec3 position(0.0f);
         glm::vec3 size(1.0f);
         float startX = x;
+        float horizontalMultiplier = 1.0f - 2.0f * flipHorizontal;
 
         for (auto c = text.begin(); c != text.end(); c++) {
             if (*c == '\r') {
@@ -403,7 +404,7 @@ namespace Core {
             }
             if (*c == '\n') {
                 x = startX;
-                y -= s_Data.Font->GetGlyphInfo(' ').Size.y * scale;
+                y -= s_Data.Font->GetGlyphInfo(' ').Size.y * scale * horizontalMultiplier;
                 continue;
             }
 
@@ -417,11 +418,8 @@ namespace Core {
                 continue;
             }
 
-            float horizontalMultiplier = 1.0f - 2.0f * flipHorizontal;
-
             size.x = glyph.Size.x * scale;
-            size.y = -glyph.Size.y * scale;
-            if (flipHorizontal) { size.y *= horizontalMultiplier; }
+            size.y = -glyph.Size.y * scale * horizontalMultiplier;
 
             position.x = x + glyph.Bearing.x * scale + size.x * 0.5f;
             position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale * horizontalMultiplier - size.y * 0.5f;
@@ -710,6 +708,7 @@ namespace Core {
         glm::vec3 position(0.0f);
         glm::vec3 size(1.0f);
         float startX = x;
+        float horizontalMultiplier = 1.0f - 2.0f * flipHorizontal;
 
         for (auto c = text.begin(); c != text.end(); c++) {
             if (*c == '\r') {
@@ -717,7 +716,7 @@ namespace Core {
             }
             if (*c == '\n') {
                 x = startX;
-                y -= s_Data.Font->GetGlyphInfo(' ').Size.y * scale;
+                y -= s_Data.Font->GetGlyphInfo(' ').Size.y * scale * horizontalMultiplier;
                 continue;
             }
 
@@ -731,11 +730,8 @@ namespace Core {
                 continue;
             }
 
-            float horizontalMultiplier = 1.0f - 2.0f * flipHorizontal;
-
             size.x = glyph.Size.x * scale;
-            size.y = -glyph.Size.y * scale;
-            if (flipHorizontal) { size.y *= horizontalMultiplier; }
+            size.y = -glyph.Size.y * scale * horizontalMultiplier;
 
             position.x = x + glyph.Bearing.x * scale + size.x * 0.5f;
             position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale * horizontalMultiplier - size.y * 0.5f;
