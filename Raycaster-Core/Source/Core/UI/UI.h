@@ -92,6 +92,8 @@ namespace Core::UI {
     void SetFont(std::shared_ptr<Core::Font> font);
     void SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize);
 
+    void OnEvent(Event& event);
+
     bool OnMouseMovedEvent(MouseMoved& event);
     bool OnMouseButtonPressedEvent(MouseButtonPressed& event);
     bool OnMouseButtonReleasedEvent(MouseButtonReleased& event);

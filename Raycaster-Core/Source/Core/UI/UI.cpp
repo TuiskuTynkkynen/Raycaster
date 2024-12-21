@@ -489,6 +489,17 @@ namespace Core {
         Internal::AtlasSize = atlasSize;
     }
 
+    void UI::OnEvent(Event& event) {
+        EventDispatcher dispatcher(event);
+
+        dispatcher.Dispatch<MouseMoved>(OnMouseMovedEvent);
+        dispatcher.Dispatch<MouseButtonPressed>(OnMouseButtonPressedEvent);
+        dispatcher.Dispatch<MouseButtonReleased>(OnMouseButtonReleasedEvent);
+        dispatcher.Dispatch<MouseScrolled>(OnMouseScrollEvent);
+        dispatcher.Dispatch<KeyPressed>(OnKeyPressedEvent);
+        dispatcher.Dispatch<TextInput>(OnTextInputEvent);
+    }
+
     bool UI::OnMouseMovedEvent(MouseMoved& event){
         Internal::Input->MouseState.Position = event.GetPosition() / Internal::System->Size;
 

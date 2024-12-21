@@ -144,12 +144,7 @@ void RaycasterLayer::OnEvent(Core::Event& event) {
     Core::EventDispatcher dispatcer(event);
     dispatcer.Dispatch<Core::WindowResize>(std::bind(&RaycasterLayer::OnWindowResizeEvent, this, std::placeholders::_1));
 
-    dispatcer.Dispatch<Core::MouseMoved>(Core::UI::OnMouseMovedEvent);
-    dispatcer.Dispatch<Core::MouseButtonPressed>(Core::UI::OnMouseButtonPressedEvent);
-    dispatcer.Dispatch<Core::MouseButtonReleased>(Core::UI::OnMouseButtonReleasedEvent);
-    dispatcer.Dispatch<Core::MouseScrolled>(Core::UI::OnMouseScrollEvent);
-    dispatcer.Dispatch<Core::KeyPressed>(Core::UI::OnKeyPressedEvent);
-    dispatcer.Dispatch<Core::TextInput>(Core::UI::OnTextInputEvent);
+    Core::UI::OnEvent(event);
 }
 
 bool RaycasterLayer::OnWindowResizeEvent(Core::WindowResize& event) {
