@@ -337,9 +337,8 @@ namespace Core::UI::Widgets {
 
     bool AtlasTextureScrollBarWidget::Render(Surface& current) {
         RC_ASSERT(Internal::TextureAtlas, "Tried to render UI TextureScrollBar element before UI setting TextureAtlas")
-        
-            
-            size_t parentIndex = current.ParentID;
+    
+        size_t parentIndex = current.ParentID;
         size_t currentIndex = parentIndex + 1;
 
         //Get the index of the current element
@@ -350,20 +349,21 @@ namespace Core::UI::Widgets {
         }
 
         //Update the positions of the current element's children
-        uint32_t maxIndex = 0;
-        for (size_t i = currentIndex + 1; i < UI::Internal::System->Elements.size() && UI::Internal::System->Elements[i].ParentID == currentIndex; i = UI::Internal::System->Elements[i].SiblingID) {
-            maxIndex = glm::max(maxIndex, uint32_t(Internal::System->HoverID == i));
+        bool hovered = false;
+        for (size_t i = currentIndex + 1; !hovered && i < UI::Internal::System->Elements.size() && UI::Internal::System->Elements[i].ParentID == currentIndex; i = UI::Internal::System->Elements[i].SiblingID) {
+            hovered |= Internal::System->HoverID == i;
+            hovered |= Internal::System->ActiveID == i;
         }
 
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
         transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
 
-        glm::vec2 atlasOffset(m_AtlasIndices[maxIndex] % (uint32_t)Internal::AtlasSize.x, m_AtlasIndices[maxIndex] / (uint32_t)Internal::AtlasSize.x * -1.0f);
+        glm::vec2 atlasOffset(m_AtlasIndices[(size_t)hovered] % (uint32_t)Internal::AtlasSize.x, m_AtlasIndices[(size_t)hovered] / (uint32_t)Internal::AtlasSize.x * -1.0f);
 
         glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
         texTransform = glm::scale(texTransform, glm::vec2(m_Scale.x, -m_Scale.y) / Internal::AtlasSize);
 
-        Renderer2D::DrawShapeQuad(3, current.Colours[maxIndex], transform, texTransform);
+        Renderer2D::DrawShapeQuad(3, current.Colours[(size_t)hovered], transform, texTransform);
 
         return true;
     }
