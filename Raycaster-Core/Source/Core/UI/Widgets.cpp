@@ -34,25 +34,34 @@ namespace Core::UI::Widgets {
         glm::vec2 size(0.0f);
         size.y = Internal::Font->GetGlyphInfo(' ').Size.y;
 
+        uint32_t lineCount = 0;
+        float lineWidth = 0.0f;
         for (size_t i = 0; i < m_Text.length(); i++) {
-            if (i == m_Text.length() - 1) {
-                size.x += Internal::Font->GetGlyphInfo(m_Text[i]).Size.x;
-                break;
+            if(i == m_Text.length() - 1 || m_Text[i + 1] == '\n') {
+                lineWidth += Internal::Font->GetGlyphInfo(m_Text[i]).Size.x;
+                size.x = glm::max(size.x, lineWidth);
+                lineWidth = 0.0f;
+
+                lineCount++;
+                i++;
+                continue;
             }
-            size.x += Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+
+            lineWidth += Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
         }
 
-        glm::vec2 scale = (current.Size) / size;
+        glm::vec2 scale(size.x, size.y * lineCount);
+        scale = current.Size / scale;
         m_Scale = std::min(scale.x, scale.y);
 
-        size *= m_Scale * glm::vec2(-0.5f, 0.25f);
+        size *= m_Scale * glm::vec2(-0.5f, 0.75f - lineCount * 0.5f);
         current.Position += size;
     }
 
     template <typename T>
     bool TextWidget<T>::Render(Surface& current) {
         uint32_t colourIndex = UI::Internal::System->ActiveID == current.ParentID ? 2 : UI::Internal::System->HoverID == current.ParentID ? 1 : 0;
-        
+
         Renderer2D::DrawShapeString(m_Text, current.Position.x, current.Position.y, m_Scale, current.Colours[colourIndex], true);
         
         return true;
