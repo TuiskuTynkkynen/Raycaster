@@ -3,6 +3,8 @@
 #include "Types.h"
 #include "Core/Font/Font.h"
 #include "Core/Events/MouseEvent.h"
+#include "Core/Events/KeyEvent.h"
+#include "Core/Events/TextEvent.h"
 
 #include <memory>
 #include <string>
@@ -94,4 +96,6 @@ namespace Core::UI {
     bool OnMouseButtonPressedEvent(MouseButtonPressed& event);
     bool OnMouseButtonReleasedEvent(MouseButtonReleased& event);
     bool OnMouseScrollEvent(MouseScrolled& event);
+    bool OnKeyPressedEvent(KeyPressed& event);
+    bool OnTextInputEvent(TextInput& event);
 }

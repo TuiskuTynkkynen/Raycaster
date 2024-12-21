@@ -51,7 +51,7 @@ namespace Core {
         
         Internal::Input->MouseState.Left = Internal::MouseButtonState(Internal::Input->MouseState.Left == Internal::MouseButtonState::Held);
         Internal::Input->MouseState.Right = Internal::MouseButtonState(Internal::Input->MouseState.Right == Internal::MouseButtonState::Held);
-        
+
         size_t lastParentId = -1;
         std::unique_ptr<Layout> layout = std::make_unique<NoLayout>(Internal::System->Elements.front());
         for (size_t i = 1; i < Internal::System->Elements.size(); i++) {
@@ -99,6 +99,9 @@ namespace Core {
         }
 
         Internal::Input->MouseState.ScrollOffset = 0.0f;
+
+        Internal::Input->KeyboardState.InputedText.clear();
+        Internal::Input->KeyboardState.SpecialKeys.reset();
     }
 
     void UI::Render() {
@@ -543,5 +546,70 @@ namespace Core {
         Internal::Input->MouseState.ScrollOffset = event.GetOffsetY();
 
         return Internal::System->HoverID || Internal::System->ActiveID;
+    }
+
+    bool UI::OnKeyPressedEvent(KeyPressed& event) {
+        RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+        if (Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
+            return false;
+        }
+
+        switch (event.GetKeyCode()) {
+        case RC_KEY_ESCAPE:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Escape] = true;
+            return true;
+        case RC_KEY_ENTER:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Enter] = true;
+            return true;
+        case RC_KEY_TAB:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Tab] = true;
+            return true;
+        case RC_KEY_BACKSPACE:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Backspace] = true;
+            return true;
+        case RC_KEY_DELETE:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Delete] = true;
+            return true;
+        case RC_KEY_RIGHT:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Rigth] = true;
+            return true;
+        case RC_KEY_LEFT:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Left] = true;
+            return true;
+        case RC_KEY_DOWN:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Down] = true;
+            return true;
+        case RC_KEY_UP:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Up] = true;
+            return true;
+        case RC_KEY_PAGE_UP:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::PageUp] = true;
+            return true;
+        case RC_KEY_PAGE_DOWN:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::PageDown] = true;
+            return true;
+        case RC_KEY_HOME:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Home] = true;
+            return true;
+        case RC_KEY_END:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::End] = true;
+            return true;
+        case RC_KEY_LEFT_SHIFT:
+        case RC_KEY_RIGHT_SHIFT:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Shift] = true;
+            return true;
+        case RC_KEY_LEFT_CONTROL:
+        case RC_KEY_RIGHT_CONTROL:
+            Internal::Input->KeyboardState.SpecialKeys[Internal::Control] = true;
+            return true;
+        }
+    }
+
+    bool UI::OnTextInputEvent(TextInput& event) {
+        RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+        if (Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
+            return false;
+        }
+        Internal::Input->KeyboardState.InputedText.push_back(event.GetCharacter());
     }
 }

@@ -1,7 +1,6 @@
 #include "RaycasterLayer.h"
 
 #include "Core/UI/UI.h"
-#include "Core/Renderer/Shapes.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -145,10 +144,12 @@ void RaycasterLayer::OnEvent(Core::Event& event) {
     Core::EventDispatcher dispatcer(event);
     dispatcer.Dispatch<Core::WindowResize>(std::bind(&RaycasterLayer::OnWindowResizeEvent, this, std::placeholders::_1));
 
-    dispatcer.Dispatch<Core::MouseMoved>(std::bind(&Core::UI::OnMouseMovedEvent, std::placeholders::_1));
-    dispatcer.Dispatch<Core::MouseButtonPressed>(std::bind(&Core::UI::OnMouseButtonPressedEvent, std::placeholders::_1));
-    dispatcer.Dispatch<Core::MouseButtonReleased>(std::bind(&Core::UI::OnMouseButtonReleasedEvent, std::placeholders::_1));
-    dispatcer.Dispatch<Core::MouseScrolled>(std::bind(&Core::UI::OnMouseScrollEvent, std::placeholders::_1));
+    dispatcer.Dispatch<Core::MouseMoved>(Core::UI::OnMouseMovedEvent);
+    dispatcer.Dispatch<Core::MouseButtonPressed>(Core::UI::OnMouseButtonPressedEvent);
+    dispatcer.Dispatch<Core::MouseButtonReleased>(Core::UI::OnMouseButtonReleasedEvent);
+    dispatcer.Dispatch<Core::MouseScrolled>(Core::UI::OnMouseScrollEvent);
+    dispatcer.Dispatch<Core::KeyPressed>(Core::UI::OnKeyPressedEvent);
+    dispatcer.Dispatch<Core::TextInput>(Core::UI::OnTextInputEvent);
 }
 
 bool RaycasterLayer::OnWindowResizeEvent(Core::WindowResize& event) {

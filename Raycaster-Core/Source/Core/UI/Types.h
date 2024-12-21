@@ -52,6 +52,7 @@ namespace Core::UI {
         Hoverable,
         Activatable,
         Button,
+        TextInput,
     };
 
     enum class PositioningType {
