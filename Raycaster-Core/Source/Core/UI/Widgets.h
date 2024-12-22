@@ -34,6 +34,7 @@ namespace Core::UI::Widgets {
     class TextWidget : public Widget {
     public:
         TextWidget(std::basic_string_view<T> text) : m_Text(text) {}
+        TextWidget(std::basic_string_view<T> text, float scale) : m_Text(text), m_Scale(scale) {}
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;

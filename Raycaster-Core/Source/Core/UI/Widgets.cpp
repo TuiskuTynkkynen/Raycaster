@@ -28,11 +28,15 @@ namespace Core::UI::Widgets {
 
         return true;
     }
-
+    
     template <typename T>
     void TextWidget<T>::Update(Surface& current) {
         glm::vec2 size(0.0f);
         size.y = Internal::Font->GetGlyphInfo(' ').Size.y;
+        
+        if (m_Scale) {
+            m_Scale *= current.Size.y / size.y;
+        }
 
         uint32_t lineCount = 0;
         float lineWidth = 0.0f;
@@ -50,9 +54,11 @@ namespace Core::UI::Widgets {
             lineWidth += Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
         }
 
-        glm::vec2 scale(size.x, size.y * lineCount);
-        scale = current.Size / scale;
-        m_Scale = std::min(scale.x, scale.y);
+        if (!m_Scale) {
+            glm::vec2 scale(size.x, size.y * lineCount);
+            scale = current.Size / scale;
+            m_Scale = std::min(scale.x, scale.y);
+        }
 
         size *= m_Scale * glm::vec2(-0.5f, 0.75f - lineCount * 0.5f);
         current.Position += size;
