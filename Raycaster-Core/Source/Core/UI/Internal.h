@@ -35,7 +35,8 @@ namespace Core::UI::Internal {
 		float ScrollOffset = 0.0f;
 	};
 
-	enum UIKeys {
+	namespace InputKeys {
+		enum UIKeys {
 		Escape = 0,
 		Enter,
 		Tab,
@@ -53,9 +54,10 @@ namespace Core::UI::Internal {
 		Control,
 		KeyCount
 	};
+	}
 	
 	struct UIKeyboardState {
-		std::bitset<UIKeys::KeyCount> SpecialKeys;
+		std::bitset<InputKeys::KeyCount> SpecialKeys;
 		std::vector<uint32_t> InputedText;
 	};
 

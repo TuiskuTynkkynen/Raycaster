@@ -567,53 +567,55 @@ namespace Core {
 
         switch (event.GetKeyCode()) {
         case RC_KEY_ESCAPE:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Escape] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Escape] = true;
             return true;
         case RC_KEY_ENTER:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Enter] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Enter] = true;
             return true;
         case RC_KEY_TAB:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Tab] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Tab] = true;
             return true;
         case RC_KEY_BACKSPACE:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Backspace] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Backspace] = true;
             return true;
         case RC_KEY_DELETE:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Delete] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Delete] = true;
             return true;
         case RC_KEY_RIGHT:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Rigth] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Rigth] = true;
             return true;
         case RC_KEY_LEFT:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Left] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Left] = true;
             return true;
         case RC_KEY_DOWN:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Down] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Down] = true;
             return true;
         case RC_KEY_UP:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Up] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Up] = true;
             return true;
         case RC_KEY_PAGE_UP:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::PageUp] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::PageUp] = true;
             return true;
         case RC_KEY_PAGE_DOWN:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::PageDown] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::PageDown] = true;
             return true;
         case RC_KEY_HOME:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Home] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Home] = true;
             return true;
         case RC_KEY_END:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::End] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::End] = true;
             return true;
         case RC_KEY_LEFT_SHIFT:
         case RC_KEY_RIGHT_SHIFT:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Shift] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Shift] = true;
             return true;
         case RC_KEY_LEFT_CONTROL:
         case RC_KEY_RIGHT_CONTROL:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::Control] = true;
+            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Control] = true;
             return true;
         }
+
+        return false;
     }
 
     bool UI::OnTextInputEvent(TextInput& event) {
