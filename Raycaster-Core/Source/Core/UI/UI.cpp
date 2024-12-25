@@ -84,11 +84,15 @@ namespace Core {
             layout->Next(current);
 
             if (current.Type >= SurfaceType::Hoverable && (!Internal::System->ActiveID || Internal::System->ActiveID == i)) {
-                if (parent.Layout >= LayoutType::Crop && !AABB(Internal::Input->MouseState.Position, parent.Position, parent.Size)) {
+                bool skip = false;
                     continue;
                 }
 
-                if (AABB(Internal::Input->MouseState.Position, current.Position, current.Size)) {
+                if (!skip && parent.Layout >= LayoutType::Crop && !AABB(Internal::Input->MouseState.Position, parent.Position, parent.Size)) {
+                    skip = true;
+                }
+
+                if (!skip && AABB(Internal::Input->MouseState.Position, current.Position, current.Size)) {
                     Internal::System->HoverID = i;
                 }
             }
