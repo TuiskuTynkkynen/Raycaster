@@ -58,6 +58,25 @@ namespace Core::UI::Widgets {
         float TextScale = 1.0f;
     };
     
+    template <typename T>
+    class TextInputWidget : public Widget {
+    public:
+        TextInputWidget(std::vector<T>& text, size_t& selectionStart, size_t& selectionEnd, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& highlightedTextColours)
+            : m_Text(text), m_SelectionStart(selectionStart), m_SelectionEnd(selectionEnd), m_HighlightColours(highlightColours), m_HiglightedTextColours(highlightedTextColours) {
+        }
+
+        void Update(Surface& current) override;
+        bool Render(Surface& current) override;
+    private:
+        std::vector<T>& m_Text;
+        
+        size_t& m_SelectionStart;
+        size_t& m_SelectionEnd;
+
+        const std::array<glm::vec4, 3> m_HighlightColours;
+        const std::array<glm::vec4, 3> m_HiglightedTextColours;
+    };
+
     class ToggleWidget : public Widget {
     public:
         ToggleWidget(bool enabled) : m_Enabled(enabled) {}
@@ -178,5 +197,7 @@ namespace Core::UI::Widgets {
 
         friend void ScrollBarWidget::Update(Surface&);
         friend void AtlasTextureScrollBarWidget::Update(Surface&);
+        template <typename T>
+        friend void TextInputWidget<T>::Update(Surface&);
     };
 }

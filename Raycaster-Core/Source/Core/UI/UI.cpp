@@ -90,7 +90,7 @@ namespace Core {
                 if (parent.Type >= SurfaceType::Capture && current.ParentID == Internal::System->HoverID) {
                     skip = true;
                 }
-
+                
                 if (!skip && parent.Layout >= LayoutType::Crop && !AABB(Internal::Input->MouseState.Position, parent.Position, parent.Size)) {
                     skip = true;
                 }
@@ -347,6 +347,88 @@ namespace Core {
                 break;
             }
         }
+    }
+
+    void UI::TextInputField(std::vector<char>& text, std::string_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours, const std::array<glm::vec4, 3>& highlightedTextColours) {
+        RC_ASSERT(Internal::System, "Tried to create a UI text input field before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
+        RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
+        
+        Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<char>>(text, selectionStart, selectionEnd, highlightColours, highlightedTextColours);
+
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = Internal::System->Elements.size() - 1;
+        size_t parentIndex = Internal::System->OpenElement;
+
+        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        Internal::System->OpenElement = currentIndex;
+
+        BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
+        {
+            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Auto, glm::vec2(0.0f), Internal::System->Elements[Internal::System->OpenElement].Size, textColours, Internal::System->OpenElement);
+            Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(label, textScale);
+            Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+            size_t currentIndex = Internal::System->Elements.size() - 1;
+            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                    Internal::System->Elements[i].SiblingID = currentIndex;
+                    break;
+                }
+            }
+        }
+        EndScrollContainer();
+        
+        Internal::System->OpenElement = parentIndex;
+    }
+    
+    void UI::TextInputField(std::vector<wchar_t>& text, std::wstring_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours, const std::array<glm::vec4, 3>& highlightedTextColours) {
+        RC_ASSERT(Internal::System, "Tried to create a UI text input field before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
+        RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
+        
+        Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, highlightColours, highlightedTextColours);
+
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = Internal::System->Elements.size() - 1;
+        size_t parentIndex = Internal::System->OpenElement;
+
+        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        Internal::System->OpenElement = currentIndex;
+
+        BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
+        {
+            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Auto, glm::vec2(0.0f), Internal::System->Elements[Internal::System->OpenElement].Size, textColours, Internal::System->OpenElement);
+            Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(label, textScale);
+            Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+            size_t currentIndex = Internal::System->Elements.size() - 1;
+            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                    Internal::System->Elements[i].SiblingID = currentIndex;
+                    break;
+                }
+            }
+        }
+        EndScrollContainer();
+        
+        Internal::System->OpenElement = parentIndex;
     }
 
     void UI::Toggle(bool& enabled, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {

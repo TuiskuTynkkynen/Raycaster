@@ -135,9 +135,14 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         Core::Application::GetWindow().SetVSync(vSync);
     }
 
-    foo ^= Core::UI::TextureButton("Show fps counter", { { 0, 4, 8 }, { 4.0f, 1.0f } }, { 0.75f, 0.2f });
+    //foo ^= Core::UI::TextureButton("Show fps counter", { { 0, 4, 8 }, { 4.0f, 1.0f } }, { 0.75f, 0.2f });
     
-    Core::UI::End();
+    static std::vector<wchar_t> text;
+    text.reserve(10);
+    static float textInputScroll = 0.0f;
+    Core::UI::TextInputField(text, L"...", textInputScroll, { 0.75f, 0.2f });
+
+   Core::UI::End();
 }
 
 void RaycasterLayer::OnEvent(Core::Event& event) {

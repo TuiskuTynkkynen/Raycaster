@@ -92,9 +92,89 @@ namespace Core::UI::Widgets {
     template TextDisplayWidget<char>;
     template TextDisplayWidget<wchar_t>;
     
-    
-    
-    
+    template <typename T>
+    void TextInputWidget<T>::Update(Surface& current) {
+        if (&current == &Internal::System->Elements[Internal::System->ActiveID]) {
+            if (!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Backspace)) {
+                m_Text.pop_back();
+            } else {
+                for (size_t i = 0; i < Internal::Input->KeyboardState.InputedText.size() && m_Text.size() < m_Text.capacity(); i++) {
+                    m_Text.emplace_back(Internal::Input->KeyboardState.InputedText[i]);
+                }
+            }
+        }
+
+        //Get the index of the current element
+        size_t currentIndex = current.ParentID + 1;
+        for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
+            if (currentIndex >= UI::Internal::System->Elements.size()) {
+                currentIndex = 0;
+            }
+
+            if (&UI::Internal::System->Elements[currentIndex] == &current) {
+                break;
+            }
+        }
+
+        if (!currentIndex || currentIndex + 2 >= UI::Internal::System->Elements.size()) {
+            RC_WARN("UI element with TextInputWidget should have two descendants");
+            return;
+        }
+
+        float edgeWidth = (2 * 0.075f) * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
+        glm::vec2 innerSize = glm::vec2(1.0f) - edgeWidth / current.Size;
+        
+        Surface& scrollContainer = Internal::System->Elements[currentIndex + 1];
+        if (scrollContainer.Widget && typeid(*scrollContainer.Widget) == typeid(ScrollWidget)) {
+            scrollContainer.Size *= innerSize;
+        } else {
+            RC_WARN("The first child of UI element with TextInputWidget<T> should have a ScrollWidget<T> member");
+            return;
+        }
+
+        Surface& textDisplay = Internal::System->Elements[currentIndex + 2];
+        if (textDisplay.Widget && typeid(*textDisplay.Widget) == typeid(TextDisplayWidget<T>)) {
+            auto& widget = *((TextDisplayWidget<T>*)textDisplay.Widget.get());
+
+            textDisplay.Size *= innerSize;
+            
+            textDisplay.Positioning = PositioningType::Offset;
+            textDisplay.Position = glm::vec2(- 0.5f, 0.25f);
+            
+
+            if (!m_Text.empty()) {
+                float textWidth = Internal::Font->GetGlyphInfo(' ').Advance * 0.5f;
+                
+                for (size_t i = 0; i < m_Text.size(); i++) {
+                    textWidth += Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+                }
+                textWidth *= widget.TextScale * textDisplay.Size.y / Internal::Font->GetGlyphInfo(' ').Size.y;
+
+                ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset = glm::max(0.0f, textWidth - scrollContainer.Size.x) / scrollContainer.Size.x;
+                
+                widget.Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
+            }
+
+        } else {
+            RC_WARN("The first grandchild of UI element with TextInputWidget<T> should have a TextDisplayWidget<T> member");
+            return;
+        }
+
+    }
+
+    template <typename T>
+    bool TextInputWidget<T>::Render(Surface& current) {
+        uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
+        
+        Renderer2D::DrawFlatRoundedQuad(current.Size * 0.99f, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), current.Colours[index]);
+        Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), m_HighlightColours[index]);
+
+        return true;
+    }
+
+    template TextInputWidget<char>;
+    template TextInputWidget<wchar_t>;
+
     bool ToggleWidget::Render(Surface& current) {
         constexpr glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
 
