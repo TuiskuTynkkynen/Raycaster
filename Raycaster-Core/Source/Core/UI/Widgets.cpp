@@ -76,6 +76,25 @@ namespace Core::UI::Widgets {
     template TextWidget<char>;
     template TextWidget<wchar_t>;
 
+    template <typename T>
+    void TextDisplayWidget<T>::Update(Surface& current) {
+        float lineHeight = Internal::Font->GetGlyphInfo(' ').Size.y;
+        TextScale *= current.Size.y / lineHeight;
+    }
+
+    template <typename T>
+    bool TextDisplayWidget<T>::Render(Surface& current) {
+        Renderer2D::DrawShapeString(Text, current.Position.x, current.Position.y, TextScale, current.Colours[0], true);
+
+        return true;
+    }
+
+    template TextDisplayWidget<char>;
+    template TextDisplayWidget<wchar_t>;
+    
+    
+    
+    
     bool ToggleWidget::Render(Surface& current) {
         constexpr glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
 

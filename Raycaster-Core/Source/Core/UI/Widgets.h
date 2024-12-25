@@ -44,6 +44,20 @@ namespace Core::UI::Widgets {
         float m_Scale = 0.0f;
     };
 
+    template <typename T>
+    class TextDisplayWidget : public Widget {
+    public:
+        TextDisplayWidget() {}
+        TextDisplayWidget(float textScale) : TextScale(textScale) {}
+        TextDisplayWidget(std::basic_string_view<T> text, float textScale) : Text(text), TextScale(textScale) {}
+
+        void Update(Surface& current) override;
+        bool Render(Surface& current) override;
+
+        std::basic_string_view<T> Text{};
+        float TextScale = 1.0f;
+    };
+    
     class ToggleWidget : public Widget {
     public:
         ToggleWidget(bool enabled) : m_Enabled(enabled) {}
