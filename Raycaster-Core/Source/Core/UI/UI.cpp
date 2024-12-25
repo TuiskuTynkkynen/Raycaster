@@ -44,8 +44,10 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to update UI before initializing");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to update UI before calling UI Begin");
 
+        bool isCaptured = Internal::System->Elements[Internal::System->ActiveID].Type >= SurfaceType::Capture;
+
         Internal::System->HoverID = 0;
-        if (Internal::Input->MouseState.Left == Internal::MouseButtonState::None) {
+        if (Internal::Input->MouseState.Left == Internal::MouseButtonState::None && !isCaptured) {
             Internal::System->ActiveID = 0;
         }
         
@@ -83,9 +85,10 @@ namespace Core {
 
             layout->Next(current);
 
-            if (current.Type >= SurfaceType::Hoverable && (!Internal::System->ActiveID || Internal::System->ActiveID == i)) {
+            if (current.Type >= SurfaceType::Hoverable && (!Internal::System->ActiveID || Internal::System->ActiveID == i || isCaptured)) {
                 bool skip = false;
-                    continue;
+                if (parent.Type >= SurfaceType::Capture && current.ParentID == Internal::System->HoverID) {
+                    skip = true;
                 }
 
                 if (!skip && parent.Layout >= LayoutType::Crop && !AABB(Internal::Input->MouseState.Position, parent.Position, parent.Size)) {
@@ -519,8 +522,11 @@ namespace Core {
             Internal::Input->MouseState.Right = Internal::MouseButtonState::Held;
             break;
         }
+        if (Internal::System->ActiveID != Internal::System->HoverID && Internal::System->Elements[Internal::System->ActiveID].Type >= SurfaceType::Capture) {
+            Internal::System->ActiveID = 0;
+        }
 
-        if ((!Internal::System->ActiveID || Internal::System->ActiveID == Internal::System->HoverID)) {
+        if (!Internal::System->ActiveID || Internal::System->ActiveID == Internal::System->HoverID) {
             if (Internal::System->HoverID >= Internal::System->Elements.size()) {
                 return false;
             }
