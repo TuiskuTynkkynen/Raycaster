@@ -620,9 +620,12 @@ namespace Core {
 
     bool UI::OnTextInputEvent(TextInput& event) {
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+        
         if (Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
             return false;
         }
+
         Internal::Input->KeyboardState.InputedText.push_back(event.GetCharacter());
+        return true;
     }
 }
