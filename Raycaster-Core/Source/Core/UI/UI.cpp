@@ -580,6 +580,8 @@ namespace Core {
     }
 
     void UI::OnEvent(Event& event) {
+        RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+
         EventDispatcher dispatcher(event);
 
         dispatcher.Dispatch<MouseMoved>(OnMouseMovedEvent);
@@ -591,12 +593,16 @@ namespace Core {
     }
 
     bool UI::OnMouseMovedEvent(MouseMoved& event){
+        RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+
         Internal::Input->MouseState.Position = event.GetPosition() / Internal::System->Size;
 
         return false;
     }
 
     bool UI::OnMouseButtonPressedEvent(MouseButtonPressed& event){
+        RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+
         switch (event.GetButton()) {
         case RC_MOUSE_BUTTON_LEFT:
             Internal::Input->MouseState.Left = Internal::MouseButtonState::Held;
@@ -605,6 +611,11 @@ namespace Core {
             Internal::Input->MouseState.Right = Internal::MouseButtonState::Held;
             break;
         }
+
+        if (Internal::System->Elements.empty()) {
+            return false;
+        }
+
         if (Internal::System->ActiveID != Internal::System->HoverID && Internal::System->Elements[Internal::System->ActiveID].Type >= SurfaceType::Capture) {
             Internal::System->ActiveID = 0;
         }
@@ -634,6 +645,8 @@ namespace Core {
     }
 
     bool UI::OnMouseButtonReleasedEvent(MouseButtonReleased& event){
+        RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+
         switch (event.GetButton()) {
         case RC_MOUSE_BUTTON_LEFT:
             Internal::Input->MouseState.Left = Internal::MouseButtonState::Released;
@@ -647,6 +660,8 @@ namespace Core {
     }
 
     bool UI::OnMouseScrollEvent(MouseScrolled& event){
+        RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+
         Internal::Input->MouseState.ScrollOffset = event.GetOffsetY();
 
         return Internal::System->HoverID || Internal::System->ActiveID;
@@ -654,7 +669,8 @@ namespace Core {
 
     bool UI::OnKeyPressedEvent(KeyPressed& event) {
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
-        if (Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
+
+        if (Internal::System->Elements.empty() || Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
             return false;
         }
 
@@ -713,8 +729,8 @@ namespace Core {
 
     bool UI::OnTextInputEvent(TextInput& event) {
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
-        
-        if (Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
+
+        if (Internal::System->Elements.empty() || Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
             return false;
         }
 
