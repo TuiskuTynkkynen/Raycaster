@@ -143,18 +143,23 @@ namespace Core::UI::Widgets {
             
 
             if (!m_Text.empty()) {
-                float textWidth = Internal::Font->GetGlyphInfo(' ').Advance * 0.5f;
+                m_CaretSize = glm::vec2(Internal::Font->GetGlyphInfo(' ').Advance * 0.25f, Internal::Font->GetGlyphInfo(' ').Size.y);
+                float textWidth = m_CaretSize.x * 3.0f;
                 
                 for (size_t i = 0; i < m_Text.size(); i++) {
                     textWidth += Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
                 }
-                textWidth *= widget.TextScale * textDisplay.Size.y / Internal::Font->GetGlyphInfo(' ').Size.y;
+                textWidth *= widget.TextScale * textDisplay.Size.y / m_CaretSize.y;
 
-                ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset = glm::max(0.0f, textWidth - scrollContainer.Size.x) / scrollContainer.Size.x;
+                float scrollOffset = glm::max(0.0f, textWidth - scrollContainer.Size.x);
+                ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset = scrollOffset / scrollContainer.Size.x;
                 
+                m_CaretSize.x *= widget.TextScale * textDisplay.Size.y / m_CaretSize.y;
+                m_CaretSize.y = widget.TextScale * textDisplay.Size.y * 0.75f;
+                m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset - m_CaretSize.x * 1.5f;
+
                 widget.Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
             }
-
         } else {
             RC_WARN("The first grandchild of UI element with TextInputWidget<T> should have a TextDisplayWidget<T> member");
             return;
@@ -168,7 +173,13 @@ namespace Core::UI::Widgets {
         
         Renderer2D::DrawFlatRoundedQuad(current.Size * 0.99f, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), current.Colours[index]);
         Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), m_HighlightColours[index]);
+        
+        if (index == 2 && m_CaretSize.x * m_CaretSize.y){
+            glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition, current.Position.y, 0.0f });
+            transform = glm::scale(transform, { m_CaretSize.x, m_CaretSize.y, 0.0f });
 
+            Renderer2D::DrawShapeQuad(0, m_HighlightColours[index], transform);
+        }
         return true;
     }
 

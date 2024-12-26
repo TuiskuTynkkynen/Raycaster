@@ -72,9 +72,12 @@ namespace Core::UI::Widgets {
         
         size_t& m_SelectionStart;
         size_t& m_SelectionEnd;
-
+        
         const std::array<glm::vec4, 3> m_HighlightColours;
         const std::array<glm::vec4, 3> m_HiglightedTextColours;
+
+        glm::vec2 m_CaretSize{};
+        float m_CaretPosition = 0.0f;
     };
 
     class ToggleWidget : public Widget {
