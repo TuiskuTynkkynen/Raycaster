@@ -94,15 +94,28 @@ namespace Core::UI::Widgets {
     
     template <typename T>
     void TextInputWidget<T>::Update(Surface& current) {
+        m_SelectionStart = glm::min(m_SelectionStart, m_Text.size());
+        m_SelectionEnd = glm::min(m_SelectionEnd, m_Text.size());
+
         if (&current == &Internal::System->Elements[Internal::System->ActiveID]) {
-            if (!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Backspace)) {
+            if (!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Left)) {
                 Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
-                m_Text.pop_back();
+                if (m_SelectionStart) {
+                    m_SelectionStart = m_SelectionEnd = glm::max((size_t)0, m_SelectionStart - 1);
+                }
+            } else if (!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Rigth)) {
+                Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
+                m_SelectionStart = m_SelectionEnd = glm::min(m_Text.size(), m_SelectionStart + 1);
+            } else if(!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Backspace) && m_SelectionStart) {
+                Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
+                m_Text.erase(m_Text.begin() + --m_SelectionStart);
+                m_SelectionEnd = m_SelectionStart;
             } else {
                 for (size_t i = 0; i < Internal::Input->KeyboardState.InputedText.size() && m_Text.size() < m_Text.capacity(); i++) {
                     Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
-                    m_Text.emplace_back(Internal::Input->KeyboardState.InputedText[i]);
+                    m_Text.emplace(m_Text.begin() + m_SelectionStart++, Internal::Input->KeyboardState.InputedText[i]);
                 }
+                m_SelectionEnd = m_SelectionStart;
             }
         }
 
@@ -148,17 +161,24 @@ namespace Core::UI::Widgets {
                 m_CaretSize = glm::vec2(Internal::Font->GetGlyphInfo(' ').Advance * 0.25f, Internal::Font->GetGlyphInfo(' ').Size.y);
                 float textWidth = m_CaretSize.x * 3.0f;
                 
-                for (size_t i = 0; i < m_Text.size(); i++) {
+                for (size_t i = 0; i < m_SelectionStart; i++) {
                     textWidth += Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
                 }
                 textWidth *= widget.TextScale * textDisplay.Size.y / m_CaretSize.y;
 
-                float scrollOffset = glm::max(0.0f, textWidth - scrollContainer.Size.x);
-                ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset = scrollOffset / scrollContainer.Size.x;
+                float& scrollContainerOffset = ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset;
+                float scrollOffset = scrollContainerOffset * scrollContainer.Size.x;
                 
+                //Update scroll offset if caret is too far to either side
+                if (textWidth - scrollOffset > scrollContainer.Size.x || textWidth - scrollOffset < 0.0f) {
+                    scrollOffset = glm::max(0.0f, textWidth - scrollContainer.Size.x);
+                    scrollContainerOffset = scrollOffset / scrollContainer.Size.x;
+                }
+
                 m_CaretSize.x *= widget.TextScale * textDisplay.Size.y / m_CaretSize.y;
                 m_CaretSize.y = widget.TextScale * textDisplay.Size.y * 0.75f;
-                m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset - m_CaretSize.x * 1.5f;
+                m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset;
+                m_CaretPosition -= m_SelectionStart == m_Text.size() ? m_CaretSize.x * 1.5f : m_CaretSize.x * 2.0f; // TODO smarter way of offsetting caret pos
 
                 widget.Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
             }

@@ -138,9 +138,10 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     //foo ^= Core::UI::TextureButton("Show fps counter", { { 0, 4, 8 }, { 4.0f, 1.0f } }, { 0.75f, 0.2f });
     
     static std::vector<wchar_t> text;
-    text.reserve(10);
+    text.reserve(20);
     static float textInputScroll = 0.0f;
-    Core::UI::TextInputField(text, L"...", textInputScroll, { 0.75f, 0.2f });
+    static size_t caret = 0;
+    Core::UI::TextInputField(text, L"...", textInputScroll, caret, { 0.75f, 0.2f });
 
    Core::UI::End(deltaTime);
 }
