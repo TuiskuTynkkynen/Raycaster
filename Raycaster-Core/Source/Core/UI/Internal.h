@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.h"
+#include "Core/Base/Timestep.h"
 #include "Core/Font/Font.h"
 #include "Core/Renderer/Texture.h"
 
@@ -19,6 +20,8 @@ namespace Core::UI::Internal {
 		size_t OpenElement = 0;
 
 		std::vector<Surface> Elements;
+
+		Timestep Time{};
 	};
 
 	enum class MouseButtonState {

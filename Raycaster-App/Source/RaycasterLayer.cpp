@@ -142,7 +142,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     static float textInputScroll = 0.0f;
     Core::UI::TextInputField(text, L"...", textInputScroll, { 0.75f, 0.2f });
 
-   Core::UI::End();
+   Core::UI::End(deltaTime);
 }
 
 void RaycasterLayer::OnEvent(Core::Event& event) {

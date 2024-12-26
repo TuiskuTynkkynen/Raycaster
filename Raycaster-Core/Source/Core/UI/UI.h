@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.h"
+#include "Core/Base/Timestep.h"
 #include "Core/Font/Font.h"
 #include "Core/Events/MouseEvent.h"
 #include "Core/Events/KeyEvent.h"
@@ -14,9 +15,9 @@ namespace Core::UI {
     void Shutdown();
 
     void Begin(glm::uvec2 screenPosition, glm::uvec2 screenSize, LayoutType layout = LayoutType::Vertical, const glm::vec4& colour = DefaultBackgroundColours[0]);
-    void Update();
+    void Update(Timestep deltaTime);
     void Render();
-    void End();
+    void End(Timestep deltaTime);
 
     void BeginContainer(PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& colour = DefaultBackgroundColours[0], LayoutType layout = LayoutType::Vertical);
     inline void BeginContainer(glm::vec2 relativeSize, const glm::vec4& colour = DefaultColours[0], LayoutType layout = LayoutType::Vertical) { return BeginContainer(PositioningType::Auto, glm::vec2(1.0f), relativeSize, colour, layout); }

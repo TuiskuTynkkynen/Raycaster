@@ -96,9 +96,11 @@ namespace Core::UI::Widgets {
     void TextInputWidget<T>::Update(Surface& current) {
         if (&current == &Internal::System->Elements[Internal::System->ActiveID]) {
             if (!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Backspace)) {
+                Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
                 m_Text.pop_back();
             } else {
                 for (size_t i = 0; i < Internal::Input->KeyboardState.InputedText.size() && m_Text.size() < m_Text.capacity(); i++) {
+                    Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
                     m_Text.emplace_back(Internal::Input->KeyboardState.InputedText[i]);
                 }
             }
@@ -174,7 +176,7 @@ namespace Core::UI::Widgets {
         Renderer2D::DrawFlatRoundedQuad(current.Size * 0.99f, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), current.Colours[index]);
         Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), m_HighlightColours[index]);
         
-        if (index == 2 && m_CaretSize.x * m_CaretSize.y){
+        if (index == 2 && uint32_t(Internal::System->Time) % 2 == 0 && m_CaretSize.x * m_CaretSize.y) {
             glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition, current.Position.y, 0.0f });
             transform = glm::scale(transform, { m_CaretSize.x, m_CaretSize.y, 0.0f });
 

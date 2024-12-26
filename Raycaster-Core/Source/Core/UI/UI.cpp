@@ -40,10 +40,12 @@ namespace Core {
         Internal::System->OpenElement = 0;
     }
 
-    void UI::Update() {
+    void UI::Update(Timestep deltaTime) {
         RC_ASSERT(Internal::System, "Tried to update UI before initializing");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to update UI before calling UI Begin");
-
+        
+        Internal::System->Time = Internal::System->Time + deltaTime;
+        
         bool isCaptured = Internal::System->Elements[Internal::System->ActiveID].Type >= SurfaceType::Capture;
 
         Internal::System->HoverID = 0;
@@ -183,8 +185,8 @@ namespace Core {
         RenderAPI::SetScissor(false);
     }
 
-    void UI::End() {
-        Update();
+    void UI::End(Timestep deltaTime) {
+        Update(deltaTime);
         Render();
     }
 
