@@ -180,6 +180,7 @@ namespace Core {
         }
 
         Renderer2D::EndScene();
+        RenderAPI::SetScissor(false);
     }
 
     void UI::End() {
