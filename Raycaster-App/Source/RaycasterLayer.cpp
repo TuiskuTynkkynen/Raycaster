@@ -141,7 +141,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     text.reserve(20);
     static float textInputScroll = 0.0f;
     static size_t caret = 0;
-    Core::UI::TextInputField(text, L"...", textInputScroll, caret, { 0.75f, 0.2f });
+    static size_t selection = 0;
+    Core::UI::TextInputField(text, L"...", textInputScroll, caret, selection, { 0.75f, 0.2f });
 
    Core::UI::End(deltaTime);
 }
