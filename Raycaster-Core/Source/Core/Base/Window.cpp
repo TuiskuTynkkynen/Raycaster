@@ -71,8 +71,7 @@ namespace Core {
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int modifiers){
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
-			switch (action)
-			{
+			switch (action) {
 			case GLFW_PRESS: {
 				KeyPressed event(key, false);
 				data.EventCallback(event);
@@ -80,6 +79,11 @@ namespace Core {
 				break;
 			case GLFW_REPEAT: {
 				KeyPressed event(key, true);
+				data.EventCallback(event);
+				}
+				break;
+			case GLFW_RELEASE: {
+				KeyReleased event(key);
 				data.EventCallback(event);
 				}
 				break;
