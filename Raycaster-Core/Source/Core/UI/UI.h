@@ -115,5 +115,6 @@ namespace Core::UI {
     bool OnMouseButtonReleasedEvent(MouseButtonReleased& event);
     bool OnMouseScrollEvent(MouseScrolled& event);
     bool OnKeyPressedEvent(KeyPressed& event);
+    bool OnKeyReleasedEvent(KeyReleased& event);
     bool OnTextInputEvent(TextInput& event);
 }

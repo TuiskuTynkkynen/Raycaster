@@ -98,15 +98,15 @@ namespace Core::UI::Widgets {
         m_SelectionEnd = glm::min(m_SelectionEnd, m_Text.size());
 
         if (&current == &Internal::System->Elements[Internal::System->ActiveID]) {
-            if (!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Left)) {
+            if (!m_Text.empty() && Internal::Input->TestInputKey(Internal::Keys::Left)) {
                 Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
                 if (m_SelectionStart) {
                     m_SelectionStart = m_SelectionEnd = glm::max((size_t)0, m_SelectionStart - 1);
                 }
-            } else if (!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Rigth)) {
+            } else if (!m_Text.empty() && Internal::Input->TestInputKey(Internal::Keys::Rigth)) {
                 Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
                 m_SelectionStart = m_SelectionEnd = glm::min(m_Text.size(), m_SelectionStart + 1);
-            } else if(!m_Text.empty() && Internal::Input->KeyboardState.SpecialKeys.test(Internal::InputKeys::Backspace) && m_SelectionStart) {
+            } else if(!m_Text.empty() && Internal::Input->TestInputKey(Internal::Keys::Backspace) && m_SelectionStart) {
                 Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
                 m_Text.erase(m_Text.begin() + --m_SelectionStart);
                 m_SelectionEnd = m_SelectionStart;

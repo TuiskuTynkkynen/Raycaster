@@ -9,9 +9,57 @@
 #include "Core/Renderer/RenderAPI.h"
 #include "Core/Renderer/Renderer2D.h"
 
-bool AABB(glm::vec2 mousePosition, glm::vec2 position, glm::vec2 size) {
-    return (mousePosition.x <= position.x + glm::abs(size.x) * 0.5f && mousePosition.x >= position.x - glm::abs(size.x) * 0.5f
-        && mousePosition.y <= position.y + glm::abs(size.y) * 0.5f && mousePosition.y >= position.y - glm::abs(size.y) * 0.5f);
+namespace Core::UI {
+    static constexpr Internal::Keys::InputKeys KeyCodeToInputKey(int32_t keyCode) {
+        switch (keyCode) {
+        case RC_KEY_ESCAPE:
+            return Internal::Keys::Escape;
+        case RC_KEY_ENTER:
+            return Internal::Keys::Enter;
+        case RC_KEY_TAB:
+            return Internal::Keys::Tab;
+        case RC_KEY_BACKSPACE:
+            return Internal::Keys::Backspace;
+        case RC_KEY_DELETE:
+            return Internal::Keys::Delete;
+        case RC_KEY_RIGHT:
+            return Internal::Keys::Rigth;
+        case RC_KEY_LEFT:
+            return Internal::Keys::Left;
+        case RC_KEY_DOWN:
+            return Internal::Keys::Down;
+        case RC_KEY_UP:
+            return Internal::Keys::Up;
+        case RC_KEY_PAGE_UP:
+            return Internal::Keys::PageUp;
+        case RC_KEY_PAGE_DOWN:
+            return Internal::Keys::PageDown;
+        case RC_KEY_HOME:
+            return Internal::Keys::Home;
+        case RC_KEY_END:
+            return Internal::Keys::End;
+        default:
+            return Internal::Keys::KeyCount;
+        }
+    }
+    
+    static constexpr Internal::Keys::ModKeys KeyCodeToModKey(int32_t keyCode) {
+        switch (keyCode) {
+        case RC_KEY_LEFT_SHIFT:
+        case RC_KEY_RIGHT_SHIFT:
+            return Internal::Keys::Shift;
+        case RC_KEY_LEFT_CONTROL:
+        case RC_KEY_RIGHT_CONTROL:
+            return Internal::Keys::Control;
+        default:
+            return Internal::Keys::ModCount;
+        }
+    }
+
+    bool AABB(glm::vec2 mousePosition, glm::vec2 position, glm::vec2 size) {
+        return (mousePosition.x <= position.x + glm::abs(size.x) * 0.5f && mousePosition.x >= position.x - glm::abs(size.x) * 0.5f
+            && mousePosition.y <= position.y + glm::abs(size.y) * 0.5f && mousePosition.y >= position.y - glm::abs(size.y) * 0.5f);
+    }
 }
 
 namespace Core {
@@ -110,7 +158,7 @@ namespace Core {
         Internal::Input->MouseState.ScrollOffset = 0.0f;
 
         Internal::Input->KeyboardState.InputedText.clear();
-        Internal::Input->KeyboardState.SpecialKeys.reset();
+        Internal::Input->KeyboardState.InputKeys.reset();
     }
 
     void UI::Render() {
@@ -591,6 +639,7 @@ namespace Core {
         dispatcher.Dispatch<MouseButtonReleased>(OnMouseButtonReleasedEvent);
         dispatcher.Dispatch<MouseScrolled>(OnMouseScrollEvent);
         dispatcher.Dispatch<KeyPressed>(OnKeyPressedEvent);
+        dispatcher.Dispatch<KeyReleased>(OnKeyReleasedEvent);
         dispatcher.Dispatch<TextInput>(OnTextInputEvent);
     }
 
@@ -676,53 +725,31 @@ namespace Core {
             return false;
         }
 
-        switch (event.GetKeyCode()) {
-        case RC_KEY_ESCAPE:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Escape] = true;
+        Internal::Keys::InputKeys key = KeyCodeToInputKey(event.GetKeyCode());
+        if (key < Internal::Keys::InputKeys::KeyCount) {
+            Internal::Input->KeyboardState.InputKeys[key] = true;
             return true;
-        case RC_KEY_ENTER:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Enter] = true;
+        }
+
+        Internal::Keys::ModKeys mod = KeyCodeToModKey(event.GetKeyCode());
+        if (mod < Internal::Keys::ModKeys::ModCount) {
+            Internal::Input->KeyboardState.ModKeys[mod] = true;
             return true;
-        case RC_KEY_TAB:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Tab] = true;
-            return true;
-        case RC_KEY_BACKSPACE:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Backspace] = true;
-            return true;
-        case RC_KEY_DELETE:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Delete] = true;
-            return true;
-        case RC_KEY_RIGHT:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Rigth] = true;
-            return true;
-        case RC_KEY_LEFT:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Left] = true;
-            return true;
-        case RC_KEY_DOWN:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Down] = true;
-            return true;
-        case RC_KEY_UP:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Up] = true;
-            return true;
-        case RC_KEY_PAGE_UP:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::PageUp] = true;
-            return true;
-        case RC_KEY_PAGE_DOWN:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::PageDown] = true;
-            return true;
-        case RC_KEY_HOME:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Home] = true;
-            return true;
-        case RC_KEY_END:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::End] = true;
-            return true;
-        case RC_KEY_LEFT_SHIFT:
-        case RC_KEY_RIGHT_SHIFT:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Shift] = true;
-            return true;
-        case RC_KEY_LEFT_CONTROL:
-        case RC_KEY_RIGHT_CONTROL:
-            Internal::Input->KeyboardState.SpecialKeys[Internal::InputKeys::Control] = true;
+        }
+
+        return false;
+    }
+
+    bool UI::OnKeyReleasedEvent(KeyReleased& event) {
+        RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
+
+        if (Internal::System->Elements.empty() || Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
+            return false;
+        }
+
+        Internal::Keys::ModKeys key = KeyCodeToModKey(event.GetKeyCode());
+        if (key < Internal::Keys::ModKeys::ModCount) {
+            Internal::Input->KeyboardState.ModKeys[key] = false;
             return true;
         }
 

@@ -38,35 +38,43 @@ namespace Core::UI::Internal {
 		float ScrollOffset = 0.0f;
 	};
 
-	namespace InputKeys {
-		enum UIKeys {
-		Escape = 0,
-		Enter,
-		Tab,
-		Backspace,
-		Delete,
-		Rigth,
-		Left,
-		Down,
-		Up,
-		PageUp,
-		PageDown,
-		Home,
-		End,
-		Shift,
-		Control,
-		KeyCount
-	};
+	namespace Keys {
+		enum InputKeys : char8_t {
+			Escape = 0,
+			Enter,
+			Tab,
+			Backspace,
+			Delete,
+			Rigth,
+			Left,
+			Down,
+			Up,
+			PageUp,
+			PageDown,
+			Home,
+			End,
+			KeyCount
+		};
+
+		enum ModKeys : char8_t {
+			Shift = 0,
+			Control,
+			ModCount
+		};
 	}
 	
 	struct UIKeyboardState {
-		std::bitset<InputKeys::KeyCount> SpecialKeys;
+		std::bitset<Keys::KeyCount> InputKeys;
+		std::bitset<Keys::ModCount> ModKeys;
 		std::vector<uint32_t> InputedText;
 	};
 
 	struct UIInputState {
 		UIMouseState MouseState;
 		UIKeyboardState KeyboardState;
+
+		inline bool TestInputKey(Keys::InputKeys key) const { return KeyboardState.InputKeys.test(key); }
+		inline bool TestModKey(Keys::ModKeys mod) const { return KeyboardState.ModKeys.test(mod); }
 	};
 
 	inline std::unique_ptr<UISystem> System;
