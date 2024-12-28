@@ -100,24 +100,62 @@ namespace Core::UI::Widgets {
         auto updateSelection = [this]() -> bool {
             int32_t direction = Internal::Input->TestInputKey(Internal::Keys::Rigth) - Internal::Input->TestInputKey(Internal::Keys::Left);
             
+            bool skipWordSearch = false;
             if (Internal::Input->TestInputKey(Internal::Keys::Home)) {
                 direction = -m_SelectionStart;
+                skipWordSearch = true;
             }
 
             if (Internal::Input->TestInputKey(Internal::Keys::End)) {
                 direction = m_Text.size() - m_SelectionStart;
+                skipWordSearch = true;
             }
-            
-            if (direction && !Internal::Input->TestModKey(Internal::Keys::Shift) && m_SelectionEnd != m_SelectionStart) {
+
+            if (!direction) {
+                return false;
+            }
+
+            if (!Internal::Input->TestModKey(Internal::Keys::Shift) && m_SelectionEnd != m_SelectionStart) {
                 m_SelectionEnd = m_SelectionStart;
                 return true;
             }
 
-            if (!direction || (!m_SelectionStart && direction == -1)) {
-                return false;
+            if (!skipWordSearch && Internal::Input->TestModKey(Internal::Keys::Control)) {
+                enum class CharacterType : char8_t {
+                    None = 0,
+                    Space,
+                    Alphanumeric,
+                    Other,
+                };
+                
+                int32_t offset = 0;
+                
+                size_t current = (1 + direction) / 2;
+                size_t previous = 1 - current;
+                std::array<CharacterType, 2> window = { CharacterType::None, CharacterType::None };
+                for (int32_t i = m_SelectionStart - (direction < 0); direction && i < m_Text.size(); i += direction) {
+                    uint32_t c = m_Text[i];
+
+                    window[previous] = window[current];
+                    window[current] = c == ' ' ? CharacterType::Space : (c > 0xBF || (c >= 'A' && c <= 'z') || (c >= '0' && c <= '9')) ? CharacterType::Alphanumeric : CharacterType::Other;
+                    
+                    if (window[0] == CharacterType::Space && window[1] > CharacterType::Space) {
+                        break;
+                    }
+
+                    if ((char8_t)window[0] + (char8_t)window[1] == (char8_t)CharacterType::Alphanumeric + (char8_t)CharacterType::Other) {
+                        break;
+                    }
+
+                    offset += direction;
+                }
+
+                if (offset) {
+                    direction = offset;
+                }
             }
 
-            m_SelectionStart = glm::clamp(m_SelectionStart + direction, (size_t)0, m_Text.size());
+            m_SelectionStart = glm::clamp((int32_t)m_SelectionStart + direction, 0, (int32_t)m_Text.size());
             if (!Internal::Input->TestModKey(Internal::Keys::Shift)) {
                 m_SelectionEnd = m_SelectionStart;
             }
