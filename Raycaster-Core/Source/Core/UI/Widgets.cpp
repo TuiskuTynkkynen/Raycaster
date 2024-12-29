@@ -1,6 +1,7 @@
 #include "Widgets.h"
 
 #include "Internal.h"
+#include "Core/Base/Clipboard.h"
 #include "Core/Renderer/Renderer2D.h"
 #include "Core/Debug/Debug.h"
 
@@ -163,14 +164,22 @@ namespace Core::UI::Widgets {
         };
         auto removeText = [this]() -> bool {
             size_t offset = Internal::Input->TestInputKey(Internal::Keys::Backspace) ? 1 : Internal::Input->TestInputKey(Internal::Keys::Delete) ? 0 : 2;
+            bool cut = Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::X) && m_SelectionStart != m_SelectionEnd;
 
-            if (offset == 2) {
+            if (offset == 2 && !cut) {
                 return false;
             }
 
             if (m_SelectionStart != m_SelectionEnd) {
                 size_t min = glm::min(m_SelectionStart, m_SelectionEnd);
-                m_Text.erase(m_Text.begin() + min, m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd));
+                auto selectionEnd = m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd);
+                
+                if (cut) {
+                    std::basic_string<T> selection(m_Text.begin() + min, selectionEnd);
+                    Clipboard::SetClipboard<T>(selection);
+                }
+
+                m_Text.erase(m_Text.begin() + min, selectionEnd);
                 m_SelectionStart = m_SelectionEnd = min;
                 return true;
             }
@@ -186,6 +195,11 @@ namespace Core::UI::Widgets {
         };
         auto insertText = [this]() -> bool {
             size_t inputSize = Internal::Input->KeyboardState.InputedText.size();
+            bool paste = Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::V);
+            
+            if (!inputSize && !paste) {
+                return false;
+            }
 
             if (inputSize) {
                 if (m_SelectionStart != m_SelectionEnd) {
@@ -202,6 +216,14 @@ namespace Core::UI::Widgets {
                     m_Text.emplace(m_Text.begin() + m_SelectionStart++, Internal::Input->KeyboardState.InputedText[i]);
                 }
 
+            if (!inputSize) {
+                std::basic_string<T> clipboard = Clipboard::GetClipboard<T>();
+
+                for (size_t i = 0; i < clipboard.size() && m_Text.size() < m_Text.capacity(); i++) {
+                    m_Text.emplace(m_Text.begin() + m_SelectionStart++, clipboard[i]);
+                }
+            }
+
                 m_SelectionEnd = m_SelectionStart;
                 return true;
             } 
@@ -213,6 +235,11 @@ namespace Core::UI::Widgets {
             bool mutate = !m_Text.empty() && (updateSelection() || removeText());
             if (mutate || insertText()) {
                 Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
+            } else if (m_SelectionStart != m_SelectionEnd && Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::C)) {
+                auto selectionBegin = m_Text.begin() + glm::min(m_SelectionStart, m_SelectionEnd);
+                auto selectionEnd = m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd);
+                std::basic_string<T> selection(selectionBegin, selectionEnd);
+                Clipboard::SetClipboard<T>(selection);
             }
         }
 
