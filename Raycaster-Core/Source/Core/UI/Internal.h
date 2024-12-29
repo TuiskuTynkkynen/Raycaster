@@ -40,7 +40,11 @@ namespace Core::UI::Internal {
 
 	namespace Keys {
 		enum InputKeys : char8_t {
-			Escape = 0,
+			A = 0,
+			C,
+			V,
+			X,
+			Escape,
 			Enter,
 			Tab,
 			Backspace,

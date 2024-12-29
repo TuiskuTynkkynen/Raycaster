@@ -12,6 +12,14 @@
 namespace Core::UI {
     static constexpr Internal::Keys::InputKeys KeyCodeToInputKey(int32_t keyCode) {
         switch (keyCode) {
+        case RC_KEY_A:
+            return Internal::Keys::A;
+        case RC_KEY_C:
+            return Internal::Keys::C;
+        case RC_KEY_V:
+            return Internal::Keys::V;
+        case RC_KEY_X:
+            return Internal::Keys::X;
         case RC_KEY_ESCAPE:
             return Internal::Keys::Escape;
         case RC_KEY_ENTER:
