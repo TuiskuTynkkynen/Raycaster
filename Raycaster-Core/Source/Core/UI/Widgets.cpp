@@ -92,22 +92,28 @@ namespace Core::UI::Widgets {
 
     template TextDisplayWidget<char>;
     template TextDisplayWidget<wchar_t>;
-
+    
     template <typename T>
     void TextInputWidget<T>::Update(Surface& current) {
         m_SelectionStart = glm::min(m_SelectionStart, m_Text.size());
         m_SelectionEnd = glm::min(m_SelectionEnd, m_Text.size());
 
         auto updateSelection = [this]() -> bool {
+            if (Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::A)) {
+                m_SelectionStart = m_Text.size();
+                m_SelectionEnd = 0;
+                return true;
+            }
+
             int32_t direction = Internal::Input->TestInputKey(Internal::Keys::Rigth) - Internal::Input->TestInputKey(Internal::Keys::Left);
             
             bool skipWordSearch = false;
-            if (Internal::Input->TestInputKey(Internal::Keys::Home)) {
+            if (Internal::Input->TestInputKey(Internal::Keys::Home) || Internal::Input->TestInputKey(Internal::Keys::Up) || Internal::Input->TestInputKey(Internal::Keys::PageUp)) {
                 direction = -m_SelectionStart;
                 skipWordSearch = true;
             }
 
-            if (Internal::Input->TestInputKey(Internal::Keys::End)) {
+            if (Internal::Input->TestInputKey(Internal::Keys::End) || Internal::Input->TestInputKey(Internal::Keys::Down) || Internal::Input->TestInputKey(Internal::Keys::PageDown)) {
                 direction = m_Text.size() - m_SelectionStart;
                 skipWordSearch = true;
             }
@@ -117,7 +123,8 @@ namespace Core::UI::Widgets {
             }
 
             if (!Internal::Input->TestModKey(Internal::Keys::Shift) && m_SelectionEnd != m_SelectionStart) {
-                m_SelectionEnd = m_SelectionStart;
+                size_t caret = direction < 0 ? glm::min(m_SelectionEnd, m_SelectionStart) : glm::max(m_SelectionEnd, m_SelectionStart);
+                m_SelectionEnd = m_SelectionStart = caret;
                 return true;
             }
 
@@ -165,7 +172,7 @@ namespace Core::UI::Widgets {
         auto removeText = [this]() -> bool {
             size_t offset = Internal::Input->TestInputKey(Internal::Keys::Backspace) ? 1 : Internal::Input->TestInputKey(Internal::Keys::Delete) ? 0 : 2;
             bool cut = Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::X) && m_SelectionStart != m_SelectionEnd;
-
+            
             if (offset == 2 && !cut) {
                 return false;
             }
@@ -201,20 +208,19 @@ namespace Core::UI::Widgets {
                 return false;
             }
 
-            if (inputSize) {
-                if (m_SelectionStart != m_SelectionEnd) {
-                    size_t min = glm::min(m_SelectionStart, m_SelectionEnd);
-                    m_Text.erase(m_Text.begin() + min, m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd));
-                    m_SelectionStart = m_SelectionEnd = min;
-                }
+            if (m_SelectionStart != m_SelectionEnd) {
+                size_t min = glm::min(m_SelectionStart, m_SelectionEnd);
+                m_Text.erase(m_Text.begin() + min, m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd));
+                m_SelectionStart = m_SelectionEnd = min;
+            }
 
-                if (m_Text.size() == m_Text.capacity()) {
-                    return false;
-                }
+            if (m_Text.size() == m_Text.capacity()) {
+                return false;
+            }
 
-                for (size_t i = 0; i < inputSize && m_Text.size() < m_Text.capacity(); i++) {
-                    m_Text.emplace(m_Text.begin() + m_SelectionStart++, Internal::Input->KeyboardState.InputedText[i]);
-                }
+            for (size_t i = 0; i < inputSize && m_Text.size() < m_Text.capacity(); i++) {
+                m_Text.emplace(m_Text.begin() + m_SelectionStart++, Internal::Input->KeyboardState.InputedText[i]);
+            }
 
             if (!inputSize) {
                 std::basic_string<T> clipboard = Clipboard::GetClipboard<T>();
@@ -224,11 +230,9 @@ namespace Core::UI::Widgets {
                 }
             }
 
-                m_SelectionEnd = m_SelectionStart;
-                return true;
-            } 
+            m_SelectionEnd = m_SelectionStart;
+            return true;
 
-            return false;
         };
 
         if (&current == &Internal::System->Elements[Internal::System->ActiveID]) {
