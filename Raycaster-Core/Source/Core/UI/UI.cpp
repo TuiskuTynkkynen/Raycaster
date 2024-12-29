@@ -408,13 +408,13 @@ namespace Core {
         }
     }
 
-    void UI::TextInputField(std::vector<char>& text, std::string_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours, const std::array<glm::vec4, 3>& highlightedTextColours) {
+    void UI::TextInputField(std::vector<char>& text, std::string_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
         RC_ASSERT(Internal::System, "Tried to create a UI text input field before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
         RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
         
         Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<char>>(text, selectionStart, selectionEnd, highlightColours, highlightedTextColours);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<char>>(text, selectionStart, selectionEnd, highlightColours);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -449,13 +449,13 @@ namespace Core {
         Internal::System->OpenElement = parentIndex;
     }
     
-    void UI::TextInputField(std::vector<wchar_t>& text, std::wstring_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours, const std::array<glm::vec4, 3>& highlightedTextColours) {
+    void UI::TextInputField(std::vector<wchar_t>& text, std::wstring_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
         RC_ASSERT(Internal::System, "Tried to create a UI text input field before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
         RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
         
         Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, highlightColours, highlightedTextColours);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, highlightColours);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 

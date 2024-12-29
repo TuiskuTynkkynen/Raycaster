@@ -61,9 +61,8 @@ namespace Core::UI::Widgets {
     template <typename T>
     class TextInputWidget : public Widget {
     public:
-        TextInputWidget(std::vector<T>& text, size_t& selectionStart, size_t& selectionEnd, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& highlightedTextColours)
-            : m_Text(text), m_SelectionStart(selectionStart), m_SelectionEnd(selectionEnd), m_HighlightColours(highlightColours), m_HiglightedTextColours(highlightedTextColours) {
-        }
+        TextInputWidget(std::vector<T>& text, size_t& selectionStart, size_t& selectionEnd, const std::array<glm::vec4, 3>& highlightColours)
+            : m_Text(text), m_SelectionStart(selectionStart), m_SelectionEnd(selectionEnd), m_HighlightColours(highlightColours) {}
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
@@ -74,7 +73,6 @@ namespace Core::UI::Widgets {
         size_t& m_SelectionEnd;
         
         const std::array<glm::vec4, 3> m_HighlightColours;
-        const std::array<glm::vec4, 3> m_HiglightedTextColours;
 
         glm::vec2 m_CaretSize{};
         float m_CaretPosition = 0.0f;
