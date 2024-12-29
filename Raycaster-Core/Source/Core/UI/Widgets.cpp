@@ -301,7 +301,11 @@ namespace Core::UI::Widgets {
                 size_t selEnd = (swapSelection) ? m_SelectionStart : m_SelectionEnd;
                 for (size_t i = 0; i < selEnd; i++) {
                     float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
-                        
+                    
+                    if (charWidth == 0) {
+                        charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+                    }
+                    
                     if (i < m_SelectionStart) {
                         textWidth += charWidth;
                     }
