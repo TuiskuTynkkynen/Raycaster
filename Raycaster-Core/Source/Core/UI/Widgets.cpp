@@ -97,6 +97,7 @@ namespace Core::UI::Widgets {
     void TextInputWidget<T>::Update(Surface& current) {
         m_SelectionStart = glm::min(m_SelectionStart, m_Text.size());
         m_SelectionEnd = glm::min(m_SelectionEnd, m_Text.size());
+        bool canMouseSelect = true;
 
         auto updateSelection = [this]() -> bool {
             if (Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::A)) {
@@ -239,6 +240,7 @@ namespace Core::UI::Widgets {
             bool mutate = !m_Text.empty() && (updateSelection() || removeText());
             if (mutate || insertText()) {
                 Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
+                canMouseSelect = false;
             } else if (m_SelectionStart != m_SelectionEnd && Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::C)) {
                 auto selectionBegin = m_Text.begin() + glm::min(m_SelectionStart, m_SelectionEnd);
                 auto selectionEnd = m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd);
@@ -287,68 +289,118 @@ namespace Core::UI::Widgets {
             
         textDisplay.Positioning = PositioningType::Offset;
         textDisplay.Position = glm::vec2(- 0.5f, 0.25f);
-            
-
-        if (!m_Text.empty()) {
-            m_CaretSize = glm::vec2(Internal::Font->GetGlyphInfo(' ').Advance * 0.25f, Internal::Font->GetGlyphInfo(' ').Size.y);
-            float textWidth = m_CaretSize.x * 3.0f;
-                
-            bool swapSelection = m_SelectionEnd < m_SelectionStart;
-            {
-                float selectedWidth = 0.0f;
-                    
-                size_t selStart = (swapSelection) ? m_SelectionEnd : m_SelectionStart;
-                size_t selEnd = (swapSelection) ? m_SelectionStart : m_SelectionEnd;
-                for (size_t i = 0; i < selEnd; i++) {
-                    float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
-                    
-                    if (charWidth == 0) {
-                        charWidth = Internal::Font->GetGlyphInfo('?').Advance;
-                    }
-                    
-                    if (i < m_SelectionStart) {
-                        textWidth += charWidth;
-                    }
-
-                    if (i >= selStart) {
-                        selectedWidth += charWidth;
-                    }
-                }
-
-                if (selectedWidth) {
-                    m_CaretSize.x = selectedWidth;
-                }
-            }
-
-            m_CaretSize.x *= widget.TextScale * textDisplay.Size.y / m_CaretSize.y;
-                
-            float& scrollContainerOffset = ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset;
-            float scrollOffset = scrollContainerOffset * scrollContainer.Size.x;
-                
-            //Update scroll offset if caret is too far to either side
-            textWidth *= widget.TextScale * textDisplay.Size.y / m_CaretSize.y;
-            if (textWidth - scrollOffset > scrollContainer.Size.x || textWidth - scrollOffset < m_CaretSize.x * 1.5f * (m_SelectionStart == m_SelectionEnd)) {
-                scrollOffset = glm::max(0.0f, textWidth - scrollContainer.Size.x);
-                scrollContainerOffset = scrollOffset / scrollContainer.Size.x;
-            }
-
-            m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset;
-            m_CaretSize.y = widget.TextScale * textDisplay.Size.y * 0.75f;
-            if(m_SelectionStart != m_SelectionEnd) {
-                m_CaretPosition -= m_CaretSize.x * 0.5f * -(1.0f - swapSelection * 2.0f) + 0.5f * (1.0f - innerSize.x);
-
-                float sign = 1.0f - 2.0f * (m_CaretPosition < 0.0f);
-                float size = innerSize.x * current.Size.x * 0.5f;
-                if (sign * m_CaretPosition + m_CaretSize.x * 0.5f > size) {
-                    m_CaretSize.x = sign * (size - sign * m_CaretPosition + m_CaretSize.x * 0.5f);
-                    m_CaretPosition = sign * size - m_CaretSize.x * 0.5f;
-                }
-            } else {
-                m_CaretPosition -= m_SelectionStart == m_Text.size() ? m_CaretSize.x * 1.5f : m_CaretSize.x * 2.0f; // TODO smarter way of offsetting caret pos
-            }
-
-            widget.Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
+        
+        if (m_Text.empty()) {
+            return;
         }
+
+        widget.Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
+
+        m_CaretSize = glm::vec2(Internal::Font->GetGlyphInfo(' ').Advance * 0.25f, Internal::Font->GetGlyphInfo(' ').Size.y);
+        float fontSizeMultiplier = widget.TextScale * textDisplay.Size.y / m_CaretSize.y;
+        float textWidth = m_CaretSize.x * 3.0f;
+                
+        bool swapSelection = m_SelectionEnd < m_SelectionStart;
+        {
+            float selectedWidth = 0.0f;
+                    
+            size_t selStart = (swapSelection) ? m_SelectionEnd : m_SelectionStart;
+            size_t selEnd = (swapSelection) ? m_SelectionStart : m_SelectionEnd;
+            for (size_t i = 0; i < selEnd; i++) {
+                float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+                    
+                if (charWidth == 0) {
+                    charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+                }
+                    
+                if (i < m_SelectionStart) {
+                    textWidth += charWidth;
+                }
+
+                if (i >= selStart) {
+                    selectedWidth += charWidth;
+                }
+            }
+
+            if (selectedWidth) {
+                m_CaretSize.x = selectedWidth;
+            }
+        }
+
+        m_CaretSize.x *= fontSizeMultiplier;
+                
+        float& scrollContainerOffset = ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset;
+        float scrollOffset = scrollContainerOffset * scrollContainer.Size.x;
+                
+        //Update scroll offset if caret is too far to either side
+        textWidth *= fontSizeMultiplier;
+        if (textWidth - scrollOffset > scrollContainer.Size.x || textWidth - scrollOffset < m_CaretSize.x * 1.5f * (m_SelectionStart == m_SelectionEnd)) {
+            scrollOffset = glm::max(0.0f, textWidth - scrollContainer.Size.x);
+            scrollContainerOffset = scrollOffset / scrollContainer.Size.x;
+        }
+
+        m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset;
+        m_CaretSize.y = widget.TextScale * textDisplay.Size.y * 0.75f;
+        if(m_SelectionStart != m_SelectionEnd) {
+            m_CaretPosition -= m_CaretSize.x * 0.5f * -(1.0f - swapSelection * 2.0f) + 0.5f * (1.0f - innerSize.x);
+
+            float sign = 1.0f - 2.0f * (m_CaretPosition < 0.0f);
+            float size = innerSize.x * current.Size.x * 0.5f;
+            if (sign * m_CaretPosition + m_CaretSize.x * 0.5f > size) {
+                m_CaretSize.x = sign * (size - sign * m_CaretPosition + m_CaretSize.x * 0.5f);
+                m_CaretPosition = sign * size - m_CaretSize.x * 0.5f;
+            }
+        } else {
+            m_CaretPosition -= m_SelectionStart == m_Text.size() ? m_CaretSize.x * 1.5f : m_CaretSize.x * 2.0f; // TODO smarter way of offsetting caret pos
+        }
+
+        if (!canMouseSelect || Internal::Input->MouseState.Left != Internal::MouseButtonState::Held) {
+            return;
+        }
+        //Mouse selection
+
+        glm::vec2 relativeMousePosition = (Internal::Input->MouseState.Position - current.Position);
+        bool inside = glm::abs(relativeMousePosition.x) < current.Size.x * innerSize.x * 0.5f && glm::abs(relativeMousePosition.y) < current.Size.y * innerSize.y * 0.5f;
+            
+        if (!inside) {
+            if (Internal::System->Time < 0.0f && Internal::System->Time > -0.125f) { // FIXME Definitely shouldn't be relying on unrelated global state (Internal::System::Time)
+                int32_t direction = 1 - 2 * (relativeMousePosition.x < 0.0f);
+                        
+                if (m_SelectionStart + direction <= m_Text.size()) {
+                    m_SelectionStart += direction;
+                }
+
+                Internal::System->Time = -0.2f; // Definitely shouldn't be mutating global state here
+            }
+
+            return;
+        }
+
+        float mouseOffset = (relativeMousePosition.x + textDisplay.Size.x * 0.5f + scrollOffset) / fontSizeMultiplier;
+        float textOffset = 0.0f;
+
+        size_t i = 0;
+        for (; i < m_Text.size(); i++) {
+            float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+
+            if (charWidth == 0) {
+                charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+            }
+
+            if (textOffset + 0.5f * charWidth >= mouseOffset) {
+                break;
+            }
+
+            textOffset += charWidth;
+        }
+
+        m_SelectionStart = i;
+
+        if (Internal::System->Time >= -0.1f) {
+            m_SelectionEnd = i;
+        }
+
+        Internal::System->Time = -0.2f; // Definitely shouldn't be mutating global state here
     }
 
     template <typename T>
