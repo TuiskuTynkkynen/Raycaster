@@ -85,7 +85,7 @@ namespace Core::UI::Widgets {
 
     template <typename T>
     bool TextDisplayWidget<T>::Render(Surface& current) {
-        Renderer2D::DrawShapeString(Text, current.Position.x, current.Position.y, TextScale, current.Colours[0], true);
+        Renderer2D::DrawShapeString(Text, current.Position.x, current.Position.y, TextScale, current.Colours[ColourIndex], true);
 
         return true;
     }
@@ -284,7 +284,8 @@ namespace Core::UI::Widgets {
         }
 
         auto& widget = *((TextDisplayWidget<T>*)textDisplay.Widget.get());
-
+        widget.ColourIndex = !m_Text.empty() + (&Internal::System->Elements[Internal::System->ActiveID] == &current);
+        
         textDisplay.Size *= innerSize;
             
         textDisplay.Positioning = PositioningType::Offset;

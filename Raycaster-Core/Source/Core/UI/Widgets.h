@@ -55,6 +55,9 @@ namespace Core::UI::Widgets {
         bool Render(Surface& current) override;
 
         std::basic_string_view<T> Text{};
+        
+        size_t ColourIndex = 0;
+
         float TextScale = 1.0f;
     };
     
