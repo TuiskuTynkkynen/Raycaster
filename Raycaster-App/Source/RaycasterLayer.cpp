@@ -136,13 +136,20 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     }
 
     //foo ^= Core::UI::TextureButton("Show fps counter", { { 0, 4, 8 }, { 4.0f, 1.0f } }, { 0.75f, 0.2f });
-    
-    static std::vector<wchar_t> text;
+
+    static std::vector<char> text;
     text.reserve(20);
     static float textInputScroll = 0.0f;
     static size_t caret = 0;
     static size_t selection = 0;
-    Core::UI::TextInputField(text, L"...", textInputScroll, caret, selection, { 0.75f, 0.2f });
+
+    static float value = 0;
+
+    static const std::function<float(std::string)> from = [](std::string str) { return std::stof(str); };
+    static const std::function<std::string(float)> to = [](float val) { return std::format("{:.2f}", val); };
+    static const std::function<std::optional<float>(float)> validate = [](float val) -> std::optional<float> { if (val >= 0.0f) { return val; } else { return std::nullopt;  } };
+
+    Core::UI::NumericInputField(value, from, to, validate, text, textInputScroll, caret, selection, { 0.75f, 0.2f });
 
    Core::UI::End(deltaTime);
 }

@@ -423,6 +423,56 @@ namespace Core::UI::Widgets {
     template TextInputWidget<char>;
     template TextInputWidget<wchar_t>;
 
+    template <typename ValueType, typename CharType>
+    void NumericInputWidget<ValueType, CharType>::Update(Surface& current) {
+        if (Internal::System->ActiveID != m_TextInputID) {
+            if (m_Text.empty()) {
+                std::basic_string<CharType> valueString = m_ValueTypeToString(m_Value);
+
+                for (size_t i = 0; i < valueString.size() && m_Text.size() < m_Text.capacity(); i++) {
+                    m_Text.emplace_back(valueString[i]);
+                }
+            }
+
+            return;
+        }
+
+        if (!Internal::Input->TestInputKey(Internal::Keys::Enter)) {
+            return;
+        }
+
+        try {
+            ValueType val = m_ValueTypeFromString({ m_Text.begin(), m_Text.end() });
+
+            std::optional<ValueType> validated = m_ValidateValue(val);
+            if (!validated) {
+                throw 1;
+            }
+            
+            m_Value = validated.value();
+            Internal::System->ActiveID = 0;
+
+        } catch (...) {}
+
+        m_Text.clear();
+
+        std::basic_string valueString = m_ValueTypeToString(m_Value);
+        for (size_t i = 0; i < valueString.size() && m_Text.size() < m_Text.capacity(); i++) {
+            m_Text.emplace_back(valueString[i]);
+        }
+    }
+
+    template NumericInputWidget<int32_t, char>;
+    template NumericInputWidget<int32_t, wchar_t>;
+    template NumericInputWidget<int64_t, char>;
+    template NumericInputWidget<int64_t, wchar_t>;
+    template NumericInputWidget<uint64_t, char>;
+    template NumericInputWidget<uint64_t, wchar_t>;
+    template NumericInputWidget<float, char>;
+    template NumericInputWidget<float, wchar_t>;
+    template NumericInputWidget<double, char>;
+    template NumericInputWidget<double, wchar_t>;
+
     bool ToggleWidget::Render(Surface& current) {
         constexpr glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
 

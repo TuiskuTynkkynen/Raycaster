@@ -4,6 +4,7 @@
 
 #include <string>
 #include <functional>
+#include <optional>
 
 namespace Core::UI::Widgets {
     class CustomRenderWidget : public Widget {
@@ -79,6 +80,26 @@ namespace Core::UI::Widgets {
 
         glm::vec2 m_CaretSize{};
         float m_CaretPosition = 0.0f;
+    };
+
+    template <typename ValueType, typename CharType>
+    class NumericInputWidget : public Widget {
+    public:
+        NumericInputWidget(ValueType& value, std::vector<CharType>& text, std::function<ValueType(std::basic_string<CharType>)> fromString, std::function<std::basic_string<CharType>(ValueType)> toString, std::function<std::optional<ValueType>(ValueType)> validate, size_t textInputID)
+            : m_Value(value), m_Text(text), m_ValueTypeFromString(fromString), m_ValueTypeToString(toString), m_ValidateValue(validate), m_TextInputID(textInputID) {}
+
+        void Update(Surface& current) override;
+        bool Render(Surface& current) override { return true; }
+    private:
+        std::function<ValueType(std::basic_string<CharType>)> m_ValueTypeFromString;
+        std::function<std::basic_string<CharType>(ValueType)> m_ValueTypeToString;
+        std::function<std::optional<ValueType>(ValueType)> m_ValidateValue;
+
+        std::vector<CharType>& m_Text;
+
+        ValueType& m_Value;
+
+        size_t m_TextInputID;
     };
 
     class ToggleWidget : public Widget {

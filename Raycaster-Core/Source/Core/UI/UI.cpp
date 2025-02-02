@@ -490,6 +490,110 @@ namespace Core {
         Internal::System->OpenElement = parentIndex;
     }
 
+    template <typename ValueType, typename CharType>
+    void UI::NumericInputField(ValueType& value, const std::function<ValueType(std::basic_string<CharType>)> valueFromString, const std::function<std::basic_string<CharType>(ValueType)> valueToString, const std::function<std::optional<ValueType>(ValueType)> validate, std::vector<CharType>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, UI::PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        RC_ASSERT(UI::Internal::System, "Tried to create a UI text input field before initializing UI");
+        RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
+        RC_ASSERT(UI::Internal::Font, "Tried to create a UI text input field before setting UI font");
+
+        size_t currentIndex = UI::Internal::System->Elements.size();
+        size_t parentIndex = UI::Internal::System->OpenElement;
+
+        UI::Internal::System->Elements.emplace_back(UI::SurfaceType::None, UI::LayoutType::None, positioning, position, size * UI::Internal::System->Elements[parentIndex].Size, boxColours, parentIndex);
+        UI::Internal::System->Elements.back().Widget = std::make_unique<UI::Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, currentIndex + 1);
+
+        UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
+
+        for (size_t i = currentIndex - 1; i > UI::Internal::System->OpenElement; i--) {
+            if (UI::Internal::System->Elements[i].ParentID == UI::Internal::System->OpenElement) {
+                UI::Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+        
+        UI::Internal::System->OpenElement = currentIndex;
+
+        UI::TextInputField(text, std::basic_string<CharType>(), textScale, scrollOffset, selectionStart, selectionEnd, glm::vec2(1.0f), boxColours, highlightColours, textColours);
+        
+        UI::Internal::System->OpenElement = parentIndex;
+    }
+
+    template void UI::NumericInputField(int32_t&, const std::function<int32_t(std::basic_string<char>)>, const std::function<std::basic_string<char>(int32_t)>, const std::function<std::optional<int32_t>(int32_t)>, std::vector<char>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(int32_t&, const std::function<int32_t(std::basic_string<wchar_t>)>, const std::function<std::basic_string<wchar_t>(int32_t)>, const std::function<std::optional<int32_t>(int32_t)>, std::vector<wchar_t>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(int64_t&, const std::function<int64_t(std::basic_string<char>)>, const std::function<std::basic_string<char>(int64_t)>, const std::function<std::optional<int64_t>(int64_t)>, std::vector<char>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(int64_t&, const std::function<int64_t(std::basic_string<wchar_t>)>, const std::function<std::basic_string<wchar_t>(int64_t)>, const std::function<std::optional<int64_t>(int64_t)>, std::vector<wchar_t>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(uint64_t&, const std::function<uint64_t(std::basic_string<char>)>, const std::function<std::basic_string<char>(uint64_t)>, const std::function<std::optional<uint64_t>(uint64_t)>, std::vector<char>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(uint64_t&, const std::function<uint64_t(std::basic_string<wchar_t>)>, const std::function<std::basic_string<wchar_t>(uint64_t)>, const std::function<std::optional<uint64_t>(uint64_t)>, std::vector<wchar_t>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(float&, const std::function<float(std::basic_string<char>)>, const std::function<std::basic_string<char>(float)>, const std::function<std::optional<float>(float)>, std::vector<char>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(float&, const std::function<float(std::basic_string<wchar_t>)>, const std::function<std::basic_string<wchar_t>(float)>, const std::function<std::optional<float>(float)>, std::vector<wchar_t>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(double&, const std::function<double(std::basic_string<char>)>, const std::function<std::basic_string<char>(double)>, const std::function<std::optional<double>(double)>, std::vector<char>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::NumericInputField(double&, const std::function<double(std::basic_string<wchar_t>)>, const std::function<std::basic_string<wchar_t>(double)>, const std::function<std::optional<double>(double)>, std::vector<wchar_t>&, float, float&, size_t&, size_t&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+
+    template <>
+    void UI::NumericInputField(int32_t& value, const std::function<std::optional<int32_t>(int32_t)> validate, std::vector<char>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<int32_t(std::string)> from = [](std::string str) { return std::stoi(str); };
+        static const std::function<std::string(int32_t)> to = [](int32_t val) { return std::to_string(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+    template <>
+    void UI::NumericInputField(int32_t& value, const std::function<std::optional<int32_t>(int32_t)> validate, std::vector<wchar_t>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<int32_t(std::wstring)> from = [](std::wstring str) { return std::stoi(str); };
+        static const std::function<std::wstring(int32_t)> to = [](int32_t val) { return std::to_wstring(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+    
+    template <>
+    void UI::NumericInputField(int64_t& value, const std::function<std::optional<int64_t>(int64_t)> validate, std::vector<char>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<int64_t(std::string)> from = [](std::string str) { return std::stol(str); };
+        static const std::function<std::string(int64_t)> to = [](int64_t val) { return std::to_string(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+    template <>
+    void UI::NumericInputField(int64_t& value, const std::function<std::optional<int64_t>(int64_t)> validate, std::vector<wchar_t>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<int64_t(std::wstring)> from = [](std::wstring str) { return std::stol(str); };
+        static const std::function<std::wstring(int64_t)> to = [](int64_t val) { return std::to_wstring(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+    
+    template <>
+    void UI::NumericInputField(uint64_t& value, const std::function<std::optional<uint64_t>(uint64_t)> validate, std::vector<char>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<uint64_t(std::string)> from = [](std::string str) { return std::stoul(str); };
+        static const std::function<std::string(uint64_t)> to = [](uint64_t val) { return std::to_string(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+    template <>
+    void UI::NumericInputField(uint64_t& value, const std::function<std::optional<uint64_t>(uint64_t)> validate, std::vector<wchar_t>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<uint64_t(std::wstring)> from = [](std::wstring str) { return std::stoul(str); };
+        static const std::function<std::wstring(uint64_t)> to = [](uint64_t val) { return std::to_wstring(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+
+    template <>
+    void UI::NumericInputField(float& value, const std::function<std::optional<float>(float)> validate, std::vector<char>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<float(std::string)> from = [](std::string str) { return std::stof(str); };
+        static const std::function<std::string(float)> to = [](float val) { return std::to_string(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+    template <>
+    void UI::NumericInputField(float& value, const std::function<std::optional<float>(float)> validate, std::vector<wchar_t>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<float(std::wstring)> from = [](std::wstring str) { return std::stof(str); };
+        static const std::function<std::wstring(float)> to = [](float val) { return std::to_wstring(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+
+    template <>
+    void UI::NumericInputField(double& value, const std::function<std::optional<double>(double)> validate, std::vector<char>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<double(std::string)> from = [](std::string str) { return std::stod(str); };
+        static const std::function<std::string(double)> to = [](double val) { return std::to_string(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+    template <>
+    void UI::NumericInputField(double& value, const std::function<std::optional<double>(double)> validate, std::vector<wchar_t>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
+        static const std::function<double(std::wstring)> from = [](std::wstring str) { return std::stod(str); };
+        static const std::function<std::wstring(double)> to = [](double val) { return std::to_wstring(val); };
+        NumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, positioning, position, size, boxColours, highlightColours, textColours);
+    }
+
     void UI::Toggle(bool& enabled, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI toggle before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI toggle before calling UI Begin");
