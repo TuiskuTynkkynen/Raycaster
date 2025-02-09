@@ -70,6 +70,12 @@ namespace Core::UI {
         Absolute,
     };
 
+    enum class HoverResult : uint8_t {
+        None = 0,
+        Hovered,
+        Active,
+    };
+
     class Widget;
 
     struct Surface {

@@ -103,7 +103,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         
         Core::UI::Slider(val, 0.f, 5.f, { 0.4f, 0.5f });
     Core::UI::EndContainer();
-    
+
     Core::UI::BeginContainer({ 0.75f, 0.5f }, { 0.8f, 0.25f, 0.25f, 0.25f }, Core::UI::LayoutType::Horizontal);
         Core::UI::BeginScrollContainer(val, { 0.45f, 1.0f }, true, 0.8f, { 0.25f, 0.25f, 0.25f, 0.5f }, { 0.25f, 0.25f, 0.25f, 0.5f });
             Core::UI::Text("text 0", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
@@ -121,7 +121,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         Core::UI::EndScrollContainer();
 
         Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::CropVertical);
-            Core::UI::Button(Core::UI::PositioningType::Offset, {-0.05f, 0.0f}, { 0.9f, 0.25f });
+            static Core::UI::HoverResult hover;
+            hover = Core::UI::HoverButton((hover == Core::UI::HoverResult::Active ? "Active" : hover == Core::UI::HoverResult::Hovered ? "Hovered" : "None"), Core::UI::PositioningType::Offset, {-0.05f, 0.0f}, {0.9f, 0.25f});
             Core::UI::Button(Core::UI::PositioningType::Offset, {0.1f, 0.0f}, { 1.0f, 0.25f });
             static int temp = -1;
             Core::UI::TextureSlider(temp, 0, 5, { { 0, 4, 4 }, { 4.0f, 1.0f } }, { 0.15625, 0.875f }, { { 17, 18, 18 }, { 0.625f, 0.875f } }, Core::UI::PositioningType::Offset, { 0.0f, -0.05f }, { 0.9f, 0.25f });
@@ -148,9 +149,9 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     static const std::function<float(std::string)> from = [](std::string str) { return std::stof(str); };
     static const std::function<std::string(float)> to = [](float val) { return std::format("{:.2f}", val); };
     static const std::function<std::optional<float>(float)> validate = [](float val) -> std::optional<float> { if (val >= 0.0f) { return val; } else { return std::nullopt;  } };
-
+    
     Core::UI::NumericInputField(value, from, to, validate, text, textInputScroll, caret, selection, { 0.75f, 0.2f });
-
+    
    Core::UI::End(deltaTime);
 }
 

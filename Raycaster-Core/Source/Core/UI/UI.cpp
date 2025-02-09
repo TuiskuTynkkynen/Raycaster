@@ -353,6 +353,66 @@ namespace Core {
     template bool UI::TextureButton<char>(std::string_view, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
     template bool UI::TextureButton<wchar_t>(std::wstring_view, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
 
+    UI::HoverResult UI::HoverButton(PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+        RC_ASSERT(Internal::System, "Tried to create a UI button before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI button before calling UI Begin");
+
+        Internal::System->Elements.emplace_back(SurfaceType::Button, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
+
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = Internal::System->Elements.size() - 1;
+        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        return HoverResult((Internal::System->HoverID == currentIndex) + (Internal::Input->MouseState.Left == Internal::MouseButtonState::Released && Internal::System->ActiveID == currentIndex));
+    }
+
+    template <typename T>
+    UI::HoverResult UI::HoverButton(std::basic_string_view<T> text, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
+        HoverResult result = HoverButton(positioning, position, size, buttonColours[0], buttonColours[1], buttonColours[2]);
+
+        size_t open = Internal::System->OpenElement;
+        Internal::System->OpenElement = Internal::System->Elements.size() - 1;
+        Text(text, glm::vec2(0.9f), textColours[0], textColours[1], textColours[2]);
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+        Internal::System->OpenElement = open;
+
+        return result;
+    }
+
+    template UI::HoverResult UI::HoverButton<char>(std::string_view, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template UI::HoverResult UI::HoverButton<wchar_t>(std::wstring_view, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+
+    UI::HoverResult UI::HoverTextureButton(const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+        HoverResult result = HoverButton(positioning, position, size, primaryColour, hoverColour, activeColour);
+
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
+
+        return result;
+    }
+
+    template <typename T>
+    UI::HoverResult UI::HoverTextureButton(std::basic_string_view<T> text, const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
+        HoverResult result = HoverButton(positioning, position, size, buttonColours[0], buttonColours[1], buttonColours[2]);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
+
+        size_t open = Internal::System->OpenElement;
+        Internal::System->OpenElement = Internal::System->Elements.size() - 1;
+        Text(text, glm::vec2(0.9f), textColours[0], textColours[1], textColours[2]);
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+        Internal::System->OpenElement = open;
+
+        return result;
+    }
+
+    template UI::HoverResult UI::HoverTextureButton<char>(std::string_view, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template UI::HoverResult UI::HoverTextureButton<wchar_t>(std::wstring_view, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+
     void UI::Texture(const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& colour) {
         RC_ASSERT(Internal::System, "Tried to create a UI texture before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI texture before calling UI Begin");
