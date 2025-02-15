@@ -550,6 +550,114 @@ namespace Core {
         Internal::System->OpenElement = parentIndex;
     }
 
+    void UI::TextureTextInputField(std::vector<char>& text, std::string_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, const InputAtlasProperties& atlasProps, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& textColours) {
+        RC_ASSERT(Internal::System, "Tried to create a UI text input field before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
+        RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
+
+        Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextureTextInputWidget<char>>(text, selectionStart, selectionEnd, atlasProps.BoxSize, atlasProps.BoxAtlasIndices, atlasProps.CaretSize, atlasProps.SelectionMiddleSize, atlasProps.SelectionEndsSize, glm::uvec3(atlasProps.SelectionLeftEndIndex, atlasProps.SelectionMiddleIndex, atlasProps.SelectionRightEndIndex));
+        
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = Internal::System->Elements.size() - 1;
+        size_t parentIndex = Internal::System->OpenElement;
+
+        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        Internal::System->OpenElement = currentIndex;
+
+        BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
+        {
+            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Auto, glm::vec2(0.0f), Internal::System->Elements[Internal::System->OpenElement].Size, textColours, Internal::System->OpenElement);
+            Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(label, textScale);
+            Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+            size_t currentIndex = Internal::System->Elements.size() - 1;
+            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                    Internal::System->Elements[i].SiblingID = currentIndex;
+                    break;
+                }
+            }
+        }
+        EndScrollContainer();
+        
+        {
+            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Offset, glm::vec2(0.0f), glm::vec2(0.0f), boxColours, Internal::System->OpenElement);
+            Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
+
+            size_t currentIndex = Internal::System->Elements.size() - 1;
+            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                    Internal::System->Elements[i].SiblingID = currentIndex;
+                    break;
+                }
+            }
+        }
+
+        Internal::System->OpenElement = parentIndex;
+    }
+    
+    void UI::TextureTextInputField(std::vector<wchar_t>& text, std::wstring_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, const InputAtlasProperties& atlasProps, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& textColours) {
+        RC_ASSERT(Internal::System, "Tried to create a UI text input field before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
+        RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
+
+        Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextureTextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, atlasProps.BoxSize, atlasProps.BoxAtlasIndices, atlasProps.CaretSize, atlasProps.SelectionMiddleSize, atlasProps.SelectionEndsSize, glm::uvec3(atlasProps.SelectionLeftEndIndex, atlasProps.SelectionMiddleIndex, atlasProps.SelectionRightEndIndex));
+        
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = Internal::System->Elements.size() - 1;
+        size_t parentIndex = Internal::System->OpenElement;
+
+        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        Internal::System->OpenElement = currentIndex;
+
+        BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
+        {
+            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Auto, glm::vec2(0.0f), Internal::System->Elements[Internal::System->OpenElement].Size, textColours, Internal::System->OpenElement);
+            Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(label, textScale);
+            Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+            size_t currentIndex = Internal::System->Elements.size() - 1;
+            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                    Internal::System->Elements[i].SiblingID = currentIndex;
+                    break;
+                }
+            }
+        }
+        EndScrollContainer();
+        
+        {
+            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Relative, glm::vec2(0.0f), glm::vec2(0.0f), boxColours, Internal::System->OpenElement);
+            Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
+
+            size_t currentIndex = Internal::System->Elements.size() - 1;
+            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                    Internal::System->Elements[i].SiblingID = currentIndex;
+                    break;
+                }
+            }
+        }
+
+        Internal::System->OpenElement = parentIndex;
+    }
+    
     template <typename ValueType, typename CharType>
     void UI::NumericInputField(ValueType& value, const std::function<ValueType(std::basic_string<CharType>)> valueFromString, const std::function<std::basic_string<CharType>(ValueType)> valueToString, const std::function<std::optional<ValueType>(ValueType)> validate, std::vector<CharType>& text, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, UI::PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
         RC_ASSERT(UI::Internal::System, "Tried to create a UI text input field before initializing UI");

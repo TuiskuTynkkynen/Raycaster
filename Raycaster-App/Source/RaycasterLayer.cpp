@@ -144,13 +144,19 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     static size_t caret = 0;
     static size_t selection = 0;
 
-    static float value = 0;
+    const Core::UI::InputAtlasProperties props{
+        .BoxAtlasIndices = { 0, 4, 8 },
+        .BoxSize = { 4.0f, 1.0f },
+        .CaretIndex = 30,
+        .CaretSize = { 0.625f, 0.875f },
+        .SelectionMiddleIndex = 32,
+        .SelectionMiddleSize = { 0.1875f, 0.875f },
+        .SelectionLeftEndIndex = 31,
+        .SelectionRightEndIndex = 33,
+        .SelectionEndsSize = { 0.1875f, 0.875f },
+    };
 
-    static const std::function<float(std::string)> from = [](std::string str) { return std::stof(str); };
-    static const std::function<std::string(float)> to = [](float val) { return std::format("{:.2f}", val); };
-    static const std::function<std::optional<float>(float)> validate = [](float val) -> std::optional<float> { if (val >= 0.0f) { return val; } else { return std::nullopt;  } };
-    
-    Core::UI::NumericInputField(value, from, to, validate, text, textInputScroll, caret, selection, { 0.75f, 0.2f });
+    Core::UI::TextureTextInputField(text, "...", textInputScroll, caret, selection, props, { 0.75f, 0.2f });
     
    Core::UI::End(deltaTime);
 }

@@ -110,4 +110,19 @@ namespace Core::UI {
         glm::uvec3 Indices{};
         glm::vec2 Size{};
     };
+
+    struct InputAtlasProperties {
+        const glm::uvec3 BoxAtlasIndices{};
+        const glm::vec2 BoxSize{};
+
+        const uint32_t CaretIndex{};
+        const glm::vec2 CaretSize{};
+
+        const uint32_t SelectionMiddleIndex{};
+        const glm::vec2 SelectionMiddleSize{};
+
+        const uint32_t SelectionLeftEndIndex{};
+        const uint32_t SelectionRightEndIndex{};
+        const glm::vec2 SelectionEndsSize{};
+    };
 }
