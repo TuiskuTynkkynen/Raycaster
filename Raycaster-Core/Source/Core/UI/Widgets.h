@@ -253,4 +253,14 @@ namespace Core::UI::Widgets {
         template <typename T>
         friend void TextureTextInputWidget<T>::Update(Surface&);
     };
+
+    class HoverWidget : public Widget {
+    public:
+        HoverWidget(size_t previousHoverID) : m_PreviousHoverID(previousHoverID) {}
+
+        void Update(Surface& current) override;
+        bool Render(Surface& current) override { return false; }
+    private:
+        size_t m_PreviousHoverID;
+    };
 }

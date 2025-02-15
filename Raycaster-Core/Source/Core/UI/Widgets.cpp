@@ -1195,4 +1195,32 @@ namespace Core::UI::Widgets {
 
         return true;
     }
+
+    void HoverWidget::Update(Surface& current) {
+        size_t parentIndex = current.ParentID;
+        size_t currentIndex = parentIndex + 1;
+        
+        //Get the index of the current element
+        for (; currentIndex && currentIndex < UI::Internal::System->Elements.size(); currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
+            if (&UI::Internal::System->Elements[currentIndex] == &current) {
+                break;
+            }
+        }
+
+        if (Internal::System->HoverID > parentIndex) {
+            if (Internal::System->HoverID != currentIndex || (m_PreviousHoverID >= parentIndex && m_PreviousHoverID <= currentIndex)) {
+                return;
+            }
+
+            Internal::System->HoverID = 0;
+        }
+
+        //Hide the the children of this element
+        for (size_t i = currentIndex + 1; i < UI::Internal::System->Elements.size() && UI::Internal::System->Elements[i].ParentID >= currentIndex; i++) {
+            UI::Internal::System->Elements[i].Size = glm::vec2(0.0f);
+        }
+
+        //Hide this element
+        current.Size = glm::vec2(0.0f);
+    }
 }

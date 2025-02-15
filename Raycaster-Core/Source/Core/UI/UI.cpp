@@ -293,6 +293,26 @@ namespace Core {
         Internal::System->OpenElement = currentIndex;
     }
 
+    void UI::BeginHoverContainer(PositioningType positioning, glm::vec2 position, glm::vec2 size, LayoutType layout, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
+        RC_ASSERT(Internal::System, "Tried to begin a UI container before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
+
+        Internal::System->Elements.emplace_back(SurfaceType::Hoverable, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, hoverColour }, Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::HoverWidget>(Internal::System->HoverID);
+
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+        size_t currentIndex = Internal::System->Elements.size() - 1;
+        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        Internal::System->OpenElement = currentIndex;
+    }
+
     template <typename T>
     bool UI::Button(std::basic_string_view<T> text, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
         bool result = Button(positioning, position, size, buttonColours[0], buttonColours[1], buttonColours[2]);

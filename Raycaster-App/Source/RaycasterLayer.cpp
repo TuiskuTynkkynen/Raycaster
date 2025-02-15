@@ -127,6 +127,10 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
             static int temp = -1;
             Core::UI::TextureSlider(temp, 0, 5, { { 0, 4, 4 }, { 4.0f, 1.0f } }, { 0.15625, 0.875f }, { { 17, 18, 18 }, { 0.625f, 0.875f } }, Core::UI::PositioningType::Offset, { 0.0f, -0.05f }, { 0.9f, 0.25f });
         Core::UI::EndContainer();
+
+        Core::UI::BeginHoverContainer({ 0.52f, 0.0f }, { 0.1f, 0.2f });
+            Core::UI::Text("foo", { 1.0f, 0.5f });
+        Core::UI::EndHoverContainer();
     Core::UI::EndContainer();
 
     static bool enabled = false;
@@ -150,7 +154,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     static const std::function<std::string(float)> to = [](float val) { return std::format("{:.2f}", val); };
     static const std::function<std::optional<float>(float)> validate = [](float val) -> std::optional<float> { if (val >= 0.0f) { return val; } else { return std::nullopt;  } };
     
-    
+   
     const Core::UI::InputAtlasProperties props{
         .BoxAtlasIndices = { 0, 4, 8 },
         .BoxSize = { 4.0f, 1.0f },
