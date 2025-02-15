@@ -81,6 +81,32 @@ namespace Core::UI::Widgets {
         glm::vec2 m_CaretSize{};
         float m_CaretPosition = 0.0f;
     };
+    
+    template <typename T>
+    class TextureTextInputWidget : public Widget {
+    public:
+        TextureTextInputWidget(std::vector<T>& text, size_t& selectionStart, size_t& selectionEnd, const glm::vec2 boxScale, const glm::uvec3 boxAtlasIndices, const glm::vec2 caretScale, const glm::vec2 selectionMiddleScale, const glm::vec2 selectionEndsScale, const glm::uvec3 selectionAtlasIndices)
+            : m_Text(text), m_SelectionStart(selectionStart), m_SelectionEnd(selectionEnd), m_BoxScale(boxScale), m_BoxAtlasIndices(boxAtlasIndices), m_CaretAspectRatio(caretScale.x / caretScale.y), m_SelectionMiddleScale(selectionMiddleScale), m_SelectionEndsScale(selectionEndsScale), m_SelectionAtlasIndices(selectionAtlasIndices) {}
+
+        void Update(Surface& current) override;
+        bool Render(Surface& current) override;
+    private:
+        std::vector<T>& m_Text;
+
+        size_t& m_SelectionStart;
+        size_t& m_SelectionEnd;
+
+        glm::vec2 m_CaretSize{};
+        float m_CaretPosition = 0.0f;
+        float m_CaretAspectRatio;
+
+        const glm::vec2 m_BoxScale;
+        const glm::uvec3 m_BoxAtlasIndices;
+
+        const glm::vec2 m_SelectionMiddleScale;
+        const glm::vec2 m_SelectionEndsScale;
+        const glm::uvec3 m_SelectionAtlasIndices;
+    };
 
     template <typename ValueType, typename CharType>
     class NumericInputWidget : public Widget {
@@ -224,5 +250,7 @@ namespace Core::UI::Widgets {
         friend void AtlasTextureScrollBarWidget::Update(Surface&);
         template <typename T>
         friend void TextInputWidget<T>::Update(Surface&);
+        template <typename T>
+        friend void TextureTextInputWidget<T>::Update(Surface&);
     };
 }

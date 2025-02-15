@@ -422,7 +422,423 @@ namespace Core::UI::Widgets {
 
     template TextInputWidget<char>;
     template TextInputWidget<wchar_t>;
+    
+    template <typename T>
+    void TextureTextInputWidget<T>::Update(Surface& current) {
+        m_SelectionStart = glm::min(m_SelectionStart, m_Text.size());
+        m_SelectionEnd = glm::min(m_SelectionEnd, m_Text.size());
+        bool canMouseSelect = true;
 
+        auto updateSelection = [this]() -> bool {
+            if (Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::A)) {
+                m_SelectionStart = m_Text.size();
+                m_SelectionEnd = 0;
+                return true;
+            }
+
+            int32_t direction = Internal::Input->TestInputKey(Internal::Keys::Rigth) - Internal::Input->TestInputKey(Internal::Keys::Left);
+
+            bool skipWordSearch = false;
+            if (Internal::Input->TestInputKey(Internal::Keys::Home) || Internal::Input->TestInputKey(Internal::Keys::Up) || Internal::Input->TestInputKey(Internal::Keys::PageUp)) {
+                direction = -m_SelectionStart;
+                skipWordSearch = true;
+            }
+
+            if (Internal::Input->TestInputKey(Internal::Keys::End) || Internal::Input->TestInputKey(Internal::Keys::Down) || Internal::Input->TestInputKey(Internal::Keys::PageDown)) {
+                direction = m_Text.size() - m_SelectionStart;
+                skipWordSearch = true;
+            }
+
+            if (!direction) {
+                return false;
+            }
+
+            if (!Internal::Input->TestModKey(Internal::Keys::Shift) && m_SelectionEnd != m_SelectionStart) {
+                size_t caret = direction < 0 ? glm::min(m_SelectionEnd, m_SelectionStart) : glm::max(m_SelectionEnd, m_SelectionStart);
+                m_SelectionEnd = m_SelectionStart = caret;
+                return true;
+            }
+
+            if (!skipWordSearch && Internal::Input->TestModKey(Internal::Keys::Control)) {
+                enum class CharacterType : char8_t {
+                    None = 0,
+                    Space,
+                    Alphanumeric,
+                    Other,
+                };
+
+                int32_t offset = 0;
+
+                size_t current = (1 + direction) / 2;
+                size_t previous = 1 - current;
+                std::array<CharacterType, 2> window = { CharacterType::None, CharacterType::None };
+                for (int32_t i = m_SelectionStart - (direction < 0); direction && i < m_Text.size(); i += direction) {
+                    uint32_t c = m_Text[i];
+
+                    window[previous] = window[current];
+                    window[current] = c == ' ' ? CharacterType::Space : (c > 0xBF || (c >= 'A' && c <= 'z') || (c >= '0' && c <= '9')) ? CharacterType::Alphanumeric : CharacterType::Other;
+
+                    if (window[0] == CharacterType::Space && window[1] > CharacterType::Space) {
+                        break;
+                    }
+
+                    if ((char8_t)window[0] + (char8_t)window[1] == (char8_t)CharacterType::Alphanumeric + (char8_t)CharacterType::Other) {
+                        break;
+                    }
+
+                    offset += direction;
+                }
+
+                if (offset) {
+                    direction = offset;
+                }
+            }
+
+            m_SelectionStart = glm::clamp((int32_t)m_SelectionStart + direction, 0, (int32_t)m_Text.size());
+            if (!Internal::Input->TestModKey(Internal::Keys::Shift)) {
+                m_SelectionEnd = m_SelectionStart;
+            }
+
+            return true;
+        };
+        auto removeText = [this]() -> bool {
+            size_t offset = Internal::Input->TestInputKey(Internal::Keys::Backspace) ? 1 : Internal::Input->TestInputKey(Internal::Keys::Delete) ? 0 : 2;
+            bool cut = Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::X) && m_SelectionStart != m_SelectionEnd;
+
+            if (offset == 2 && !cut) {
+                return false;
+            }
+
+            if (m_SelectionStart != m_SelectionEnd) {
+                size_t min = glm::min(m_SelectionStart, m_SelectionEnd);
+                auto selectionEnd = m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd);
+
+                if (cut) {
+                    std::basic_string<T> selection(m_Text.begin() + min, selectionEnd);
+                    Clipboard::SetClipboard<T>(selection);
+                }
+
+                m_Text.erase(m_Text.begin() + min, selectionEnd);
+                m_SelectionStart = m_SelectionEnd = min;
+                return true;
+            }
+
+            size_t eraseAt = m_SelectionStart - offset;
+            if (eraseAt < m_Text.size()) {
+                m_Text.erase(m_Text.begin() + eraseAt);
+                m_SelectionStart = m_SelectionEnd = eraseAt;
+                return true;
+            }
+
+            return false;
+        };
+        auto insertText = [this]() -> bool {
+            size_t inputSize = Internal::Input->KeyboardState.InputedText.size();
+            bool paste = Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::V);
+
+            if (!inputSize && !paste) {
+                return false;
+            }
+
+            if (m_SelectionStart != m_SelectionEnd) {
+                size_t min = glm::min(m_SelectionStart, m_SelectionEnd);
+                m_Text.erase(m_Text.begin() + min, m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd));
+                m_SelectionStart = m_SelectionEnd = min;
+            }
+
+            if (m_Text.size() == m_Text.capacity()) {
+                return false;
+            }
+
+            for (size_t i = 0; i < inputSize && m_Text.size() < m_Text.capacity(); i++) {
+                m_Text.emplace(m_Text.begin() + m_SelectionStart++, Internal::Input->KeyboardState.InputedText[i]);
+            }
+
+            if (!inputSize) {
+                std::basic_string<T> clipboard = Clipboard::GetClipboard<T>();
+
+                for (size_t i = 0; i < clipboard.size() && m_Text.size() < m_Text.capacity(); i++) {
+                    m_Text.emplace(m_Text.begin() + m_SelectionStart++, clipboard[i]);
+                }
+            }
+
+            m_SelectionEnd = m_SelectionStart;
+            return true;
+        };
+
+        if (&current == &Internal::System->Elements[Internal::System->ActiveID]) {
+            bool mutate = !m_Text.empty() && (updateSelection() || removeText());
+            if (mutate || insertText()) {
+                Internal::System->Time = 0.0f; // Definitely shouldn't be mutating global state here
+                canMouseSelect = false;
+            } else if (m_SelectionStart != m_SelectionEnd && Internal::Input->TestModKey(Internal::Keys::Control) && Internal::Input->TestInputKey(Internal::Keys::C)) {
+                auto selectionBegin = m_Text.begin() + glm::min(m_SelectionStart, m_SelectionEnd);
+                auto selectionEnd = m_Text.begin() + glm::max(m_SelectionStart, m_SelectionEnd);
+                std::basic_string<T> selection(selectionBegin, selectionEnd);
+                Clipboard::SetClipboard<T>(selection);
+            }
+        }
+
+        //Get the index of the current element
+        size_t currentIndex = current.ParentID + 1;
+        for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
+            if (currentIndex >= UI::Internal::System->Elements.size()) {
+                currentIndex = 0;
+            }
+
+            if (&UI::Internal::System->Elements[currentIndex] == &current) {
+                break;
+            }
+        }
+
+        if (!currentIndex || currentIndex + 3 >= UI::Internal::System->Elements.size()) {
+            RC_WARN("UI element with TextureTextInputWidget should have three descendants");
+            return;
+        }
+
+        float edgeWidth = (2 * 0.075f) * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
+        glm::vec2 innerSize = glm::vec2(1.0f) - edgeWidth / current.Size;
+
+        Surface& scrollContainer = Internal::System->Elements[currentIndex + 1];
+        scrollContainer.Size *= innerSize;
+        if (!scrollContainer.Widget || typeid(*scrollContainer.Widget) != typeid(ScrollWidget)) {
+            RC_WARN("The first child of UI element with TextureTextInputWidget<T> should have a ScrollWidget<T> member");
+            return;
+        }
+        
+        Surface& textDisplay = Internal::System->Elements[currentIndex + 2];
+        if (!textDisplay.Widget || typeid(*textDisplay.Widget) != typeid(TextDisplayWidget<T>)) {
+            RC_WARN("The first grandchild of UI element with TextureTextInputWidget<T> should have a TextDisplayWidget<T> member");
+            return;
+        }
+
+        auto& widget = *((TextDisplayWidget<T>*)textDisplay.Widget.get());
+        widget.ColourIndex = !m_Text.empty() + (&Internal::System->Elements[Internal::System->ActiveID] == &current);
+
+        textDisplay.Size *= innerSize;
+
+        textDisplay.Positioning = PositioningType::Offset;
+        textDisplay.Position = glm::vec2(-0.5f, 0.25f);
+
+        if (m_Text.empty()) {
+            return;
+        }
+
+        widget.Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
+
+        m_CaretSize = glm::vec2(Internal::Font->GetGlyphInfo(' ').Advance * 0.25f, widget.TextScale * textDisplay.Size.y * 0.75f);
+        float fontSizeMultiplier = widget.TextScale * textDisplay.Size.y / Internal::Font->GetGlyphInfo(' ').Size.y;
+        float textWidth = m_CaretSize.x * 3.0f;
+
+        bool swapSelection = m_SelectionEnd < m_SelectionStart;
+        {
+            float selectedWidth = 0.0f;
+
+            size_t selStart = (swapSelection) ? m_SelectionEnd : m_SelectionStart;
+            size_t selEnd = (swapSelection) ? m_SelectionStart : m_SelectionEnd;
+            for (size_t i = 0; i < selEnd; i++) {
+                float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+
+                if (charWidth == 0) {
+                    charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+                }
+
+                if (i < m_SelectionStart) {
+                    textWidth += charWidth;
+                }
+
+                if (i >= selStart) {
+                    selectedWidth += charWidth;
+                }
+            }
+
+            if (selectedWidth) {
+                m_CaretSize.x = selectedWidth;
+            }
+        }
+
+        m_CaretSize.x *= fontSizeMultiplier;
+
+        float caretWidth = m_SelectionStart == m_SelectionEnd ? m_CaretAspectRatio * m_CaretSize.y : 0.0f;
+
+        float& scrollContainerOffset = ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset;
+        float scrollOffset = scrollContainerOffset * scrollContainer.Size.x;
+        
+        //Update scroll offset if caret is too far to either side
+        textWidth = textWidth * fontSizeMultiplier;
+        bool right = textWidth + caretWidth - scrollOffset > scrollContainer.Size.x;
+        if (right ||textWidth - scrollOffset < m_CaretSize.x * 1.5f * (m_SelectionStart == m_SelectionEnd)) {
+            scrollOffset = glm::max(0.0f, textWidth + right * caretWidth - scrollContainer.Size.x);
+            scrollContainerOffset = scrollOffset / scrollContainer.Size.x;
+        }
+        
+        m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset;
+        if (m_SelectionStart != m_SelectionEnd) {
+            m_CaretPosition -= m_CaretSize.x * 0.5f * -(1.0f - swapSelection * 2.0f) + 0.5f * (1.0f - innerSize.x);
+
+            float sign = 1.0f - 2.0f * (m_CaretPosition < 0.0f);
+            float size = innerSize.x * current.Size.x * 0.5f;
+            if (sign * m_CaretPosition + m_CaretSize.x * 0.5f > size) {
+                m_CaretSize.x = sign * (size - sign * m_CaretPosition + m_CaretSize.x * 0.5f);
+                m_CaretPosition = sign * size - m_CaretSize.x * 0.5f;
+            }
+        } else {
+            Surface& caretSurface = Internal::System->Elements[currentIndex + 3];
+            if (!caretSurface.Widget || typeid(*caretSurface.Widget) != typeid(AtlasTextureWidget)) {
+                 RC_WARN("The second child of UI element with TextureTextInputWidget should have a AtlasTextureWidget member");
+                return;
+            }
+
+            if (&Internal::System->Elements[Internal::System->ActiveID] == &current) {
+                m_CaretPosition += caretWidth * 0.25f;
+
+                caretSurface.Size.x = caretWidth;
+                caretSurface.Size.y = m_CaretSize.y;
+
+                caretSurface.Position.x = -m_CaretPosition / current.Size.x;
+            }
+        }
+
+        if (!canMouseSelect || Internal::Input->MouseState.Left != Internal::MouseButtonState::Held) {
+            return;
+        }
+        //Mouse selection
+
+        glm::vec2 relativeMousePosition = (Internal::Input->MouseState.Position - current.Position);
+        bool inside = glm::abs(relativeMousePosition.x) < current.Size.x * innerSize.x * 0.5f && glm::abs(relativeMousePosition.y) < current.Size.y * innerSize.y * 0.5f;
+
+        if (!inside) {
+            if (Internal::System->Time < 0.0f && Internal::System->Time > -0.125f) { // FIXME Definitely shouldn't be relying on unrelated global state (Internal::System::Time)
+                int32_t direction = 1 - 2 * (relativeMousePosition.x < 0.0f);
+
+                if (m_SelectionStart + direction <= m_Text.size()) {
+                    m_SelectionStart += direction;
+                }
+
+                Internal::System->Time = -0.2f; // Definitely shouldn't be mutating global state here
+            }
+
+            return;
+        }
+
+        float mouseOffset = (relativeMousePosition.x + textDisplay.Size.x * 0.5f + scrollOffset) / fontSizeMultiplier;
+        float textOffset = 0.0f;
+
+        size_t i = 0;
+        for (; i < m_Text.size(); i++) {
+            float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+
+            if (charWidth == 0) {
+                charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+            }
+
+            if (textOffset + 0.5f * charWidth >= mouseOffset) {
+                break;
+            }
+
+            textOffset += charWidth;
+        }
+
+        m_SelectionStart = i;
+
+        if (Internal::System->Time >= -0.1f) {
+            m_SelectionEnd = i;
+        }
+
+        Internal::System->Time = -0.2f; // Definitely shouldn't be mutating global state here
+    }
+
+
+    template <typename T>
+    bool TextureTextInputWidget<T>::Render(Surface& current) {
+        uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
+
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
+
+        glm::vec2 atlasOffset(m_BoxAtlasIndices[index] % (uint32_t)Internal::AtlasSize.x, m_BoxAtlasIndices[index] / (uint32_t)Internal::AtlasSize.x * -1.0f);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
+        texTransform = glm::scale(texTransform, glm::vec2(m_BoxScale.x, -m_BoxScale.y) / Internal::AtlasSize);
+
+        Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
+
+        if (index != 2 || !m_CaretSize.y) {
+            return true;
+        }
+
+        if (m_SelectionStart == m_SelectionEnd) {
+            //Get the index of the current element
+            size_t currentIndex = current.ParentID + 1;
+            for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
+                if (currentIndex >= UI::Internal::System->Elements.size()) {
+                    currentIndex = 0;
+                }
+
+                if (&UI::Internal::System->Elements[currentIndex] == &current) {
+                    break;
+                }
+            }
+
+            if (!currentIndex || currentIndex + 3 >= UI::Internal::System->Elements.size()) {
+                RC_WARN("UI element with TextureTextInputWidget should have three descendants");
+                return true;
+            }
+
+            Surface& caretSurface = Internal::System->Elements[currentIndex + 3];
+            if (!caretSurface.Widget || typeid(*caretSurface.Widget) != typeid(AtlasTextureWidget)) {
+                RC_WARN("The second child of UI element with TextureTextInputWidget should have a AtlasTextureWidget member");
+                return true;
+            }
+
+            caretSurface.Size.x *= uint32_t(Internal::System->Time) % 2 == 0;
+            return true;
+        } 
+
+        float selectionEndsWidth = m_CaretSize.y * m_SelectionEndsScale.x / m_SelectionEndsScale.y;
+
+        if (abs(m_CaretSize.x) > selectionEndsWidth) {
+            //Selection middle
+            transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition, current.Position.y, 0.0f });
+            transform = glm::scale(transform, { abs(m_CaretSize.x) - 2.0f * selectionEndsWidth, m_CaretSize.y, 0.0f });
+
+            atlasOffset = glm::vec2(m_SelectionAtlasIndices[1] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[1] / (uint32_t)Internal::AtlasSize.x * -1.0f);
+
+            texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
+            texTransform = glm::scale(texTransform, glm::vec2(m_SelectionMiddleScale.x, -m_SelectionMiddleScale.y) / Internal::AtlasSize);
+
+            Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
+        
+            //Selection rigth
+            transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition + 0.5f * (abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, 0.0f });
+            transform = glm::scale(transform, { selectionEndsWidth, m_CaretSize.y, 0.0f });
+
+            atlasOffset = glm::vec2(m_SelectionAtlasIndices[2] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[2] / (uint32_t)Internal::AtlasSize.x * -1.0f);
+
+            texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
+            texTransform = glm::scale(texTransform, glm::vec2(m_SelectionEndsScale.x, -m_SelectionEndsScale.y) / Internal::AtlasSize);
+
+            Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
+        }
+
+        //Selection left
+        transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition - 0.5f * (abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, 0.0f });
+        transform = glm::scale(transform, { selectionEndsWidth, m_CaretSize.y, 0.0f });
+
+        atlasOffset = glm::vec2(m_SelectionAtlasIndices[0] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[0] / (uint32_t)Internal::AtlasSize.x * -1.0f);
+
+        texTransform = glm::translate(glm::mat3(1.0f), atlasOffset / Internal::AtlasSize);
+        texTransform = glm::scale(texTransform, glm::vec2(m_SelectionEndsScale.x, -m_SelectionEndsScale.y) / Internal::AtlasSize);
+
+        Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
+        
+
+        return true;
+    }
+
+    template TextureTextInputWidget<char>;
+    template TextureTextInputWidget<wchar_t>;
+    
     template <typename ValueType, typename CharType>
     void NumericInputWidget<ValueType, CharType>::Update(Surface& current) {
         if (Internal::System->ActiveID != m_TextInputID) {
