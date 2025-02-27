@@ -19,3 +19,7 @@ External dependencies should be added to Raycaster-Core/Source/Libraries
   -  Version 2.13.2  
   -  Cannot be in seperate directory  
   -  In Raycaster-Core/Source/Libraries  
+- [miniaudio](https://github.com/mackron/miniaudio) for handling audio  
+  -  Version 0.11.21  
+  -  Just the header file  
+  -  In Raycaster-Core/Source/Libraries/miniaudio  

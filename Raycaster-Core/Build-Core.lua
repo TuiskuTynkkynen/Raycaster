@@ -22,7 +22,11 @@ project "Raycaster-Core"
       "Source/Libraries/glad/include",
       "Source/Libraries/glad/src",
    }
-
+   
+   -- Required by miniaudio
+   filter { "system:linux" }
+      links { "lpthread", "lm", "ldl" }
+   
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
    objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 

@@ -1,6 +1,7 @@
 #include "RaycasterLayer.h"
 
 #include "Core/UI/UI.h"
+#include "Core/Audio/Audio.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -18,6 +19,13 @@ void RaycasterLayer::OnAttach() {
     std::shared_ptr<Core::Texture2D> buttonTexture = std::make_unique<Core::Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
     buttonTexture->BindImage("Button.png");
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
+
+    Core::Audio::Init();
+    Core::Audio::Play("Source/Audio/sound.wav");
+}
+
+void RaycasterLayer::OnDetach() {
+    Core::Audio::Shutdown();
 }
 
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
