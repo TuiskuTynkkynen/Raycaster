@@ -4,10 +4,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-float timeDelta = 0;
-uint32_t frameCount = 0;
-float frameTime = 0;
-
 void RaycasterLayer::OnAttach() {
     Core::Renderer2D::SetTextureAtlas("wolfenstein_texture_atlas.png", 11, 2);
 
@@ -23,8 +19,7 @@ void RaycasterLayer::OnAttach() {
     buttonTexture->BindImage("Button.png");
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
 }
-bool foo = false;
-bool vSync = false;
+
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
     static glm::mat4 identity(1.0f);
 
@@ -77,100 +72,24 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
 
     Core::Renderer2D::EndScene();
 
+    Core::UI::Begin({ 0,0 }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Vertical, glm::vec4(0.0f));
+    static float timeDelta = 0;
+    static uint32_t frameCount = 0;
+    static float frameTime = 0;
+
     frameCount++;
     timeDelta += deltaTime;
     if (timeDelta >= 0.1f) {
         frameTime = 1000.0f * timeDelta / frameCount;
+
         frameCount = 0;
         timeDelta = 0.0f;
     }
     
-    colour = glm::vec4(0.2f, 0.8f, 0.2f, 1.0f);
-    glm::mat4 projection = glm::ortho(0.0f, (float)m_ViewPortWidth, 0.0f, (float)m_ViewPortHeight);
-    Core::Renderer2D::BeginScene(projection);
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
-    if (foo) {
-            Core::Renderer2D::DrawString(frameStats, 5.0f, m_ViewPortHeight - 15.0f, 2.0f, colour);
-    }
-    Core::Renderer2D::EndScene();
-
-    Core::UI::Begin({ 0, 0 }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Vertical, glm::vec4(0.0f));
-
-    Core::UI::BeginContainer({ 0.75f, 0.2f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::Horizontal);
-        static float val = -1.0f;
-        std::string s = std::format("{:.2f}", val);
-        Core::UI::Text(s, {0.2f, 0.5f});
-        
-        Core::UI::Slider(val, 0.f, 5.f, { 0.4f, 0.5f });
-    Core::UI::EndContainer();
-
-    Core::UI::BeginContainer({ 0.75f, 0.5f }, { 0.8f, 0.25f, 0.25f, 0.25f }, Core::UI::LayoutType::Horizontal);
-        Core::UI::BeginScrollContainer(val, { 0.45f, 1.0f }, true, 0.8f, { 0.25f, 0.25f, 0.25f, 0.5f }, { 0.25f, 0.25f, 0.25f, 0.5f });
-            Core::UI::Text("text 0", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 1", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 2", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 3", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 4", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 5", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 6", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 7", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 8", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            Core::UI::Text("text 9", Core::UI::PositioningType::Offset, { -0.1f, 0.0f }, { 0.75f, 0.25f });
-            
-            Core::UI::TextureScrollBar(val, { 0.75f, 0.125f }, { {27, 28, 29}, {0.75f, 0.625f} }, { 0.875f, 0.1f }, { {20, 21, 22}, { 0.875f, 0.5f } }, { {24, 25, 26}, { 1.0f, 5.0f } }, { 0.2f, 1.0f });
-        Core::UI::EndScrollContainer();
-
-        Core::UI::BeginContainer({ 0.45f, 1.0f }, { 0.25f, 0.25f, 0.25f, 0.5f }, Core::UI::LayoutType::CropVertical);
-            static Core::UI::HoverResult hover;
-            hover = Core::UI::HoverButton((hover == Core::UI::HoverResult::Active ? "Active" : hover == Core::UI::HoverResult::Hovered ? "Hovered" : "None"), Core::UI::PositioningType::Offset, {-0.05f, 0.0f}, {0.9f, 0.25f});
-            Core::UI::Button(Core::UI::PositioningType::Offset, {0.1f, 0.0f}, { 1.0f, 0.25f });
-            static int temp = -1;
-            Core::UI::TextureSlider(temp, 0, 5, { { 0, 4, 4 }, { 4.0f, 1.0f } }, { 0.15625, 0.875f }, { { 17, 18, 18 }, { 0.625f, 0.875f } }, Core::UI::PositioningType::Offset, { 0.0f, -0.05f }, { 0.9f, 0.25f });
-        Core::UI::EndContainer();
-
-        Core::UI::BeginHoverContainer({ 0.52f, 0.0f }, { 0.1f, 0.2f });
-            Core::UI::Text("foo", { 1.0f, 0.5f });
-        Core::UI::EndHoverContainer();
-    Core::UI::EndContainer();
-
-    static bool enabled = false;
-    Core::UI::TextureToggle(enabled, { { 12, 13, 14 }, { 1.0f, 1.0f } }, { 15, 15, 16 }, Core::UI::PositioningType::Relative, { -0.45f, 0.45f }, { 0.075f, 0.075f });
-    if (Core::UI::TextureButton("VSync", { { 12, 13, 14 }, { 1.0f, 1.0f } }, Core::UI::PositioningType::Absolute, { 0.95f, 0.05f }, { 0.075f, 0.075f })) {
-        vSync = !vSync;
-        Core::Application::GetWindow().SetVSync(vSync);
-    }
-
-    //foo ^= Core::UI::TextureButton("Show fps counter", { { 0, 4, 8 }, { 4.0f, 1.0f } }, { 0.75f, 0.2f });
-
-    static std::vector<char> text;
-    text.reserve(20);
-    static float textInputScroll = 0.0f;
-    static size_t caret = 0;
-    static size_t selection = 0;
-
-    static float value = 0;
+    Core::UI::Text(frameStats, 0.5f, Core::UI::PositioningType::Relative, {-0.495f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
     
-    static const std::function<float(std::string)> from = [](std::string str) { return std::stof(str); };
-    static const std::function<std::string(float)> to = [](float val) { return std::format("{:.2f}", val); };
-    static const std::function<std::optional<float>(float)> validate = [](float val) -> std::optional<float> { if (val >= 0.0f) { return val; } else { return std::nullopt;  } };
-    
-   
-    const Core::UI::InputAtlasProperties props{
-        .BoxAtlasIndices = { 0, 4, 8 },
-        .BoxSize = { 4.0f, 1.0f },
-        .CaretIndex = 30,
-        .CaretSize = { 0.625f, 0.875f },
-        .SelectionMiddleIndex = 32,
-        .SelectionMiddleSize = { 0.1875f, 0.875f },
-        .SelectionLeftEndIndex = 31,
-        .SelectionRightEndIndex = 33,
-        .SelectionEndsSize = { 0.1875f, 0.875f },
-    };
-
-    Core::UI::TextureNumericInputField(value, from, to, validate, text, textInputScroll, caret, selection, props, { 0.75f, 0.2f });
-    //Core::UI::TextureTextInputField(text, "...", textInputScroll, caret, selection, props, { 0.75f, 0.2f });
-    
-   Core::UI::End(deltaTime);
+    Core::UI::End(deltaTime);
 }
 
 void RaycasterLayer::OnEvent(Core::Event& event) {
