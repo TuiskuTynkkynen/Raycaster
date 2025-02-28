@@ -21,7 +21,6 @@ void RaycasterLayer::OnAttach() {
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
 
     Core::Audio::Init();
-    Core::Audio::Play("Source/Audio/sound.wav");
 }
 
 void RaycasterLayer::OnDetach() {
@@ -95,8 +94,29 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     }
     
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
-    Core::UI::Text(frameStats, 0.5f, Core::UI::PositioningType::Relative, {-0.495f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
+
+    Core::UI::Begin({ 0.0f, 0.0f }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Vertical, glm::vec4(0.0f));
     
+    Core::UI::Text(frameStats, 0.5f, Core::UI::PositioningType::Relative, {-0.495f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
+
+    Core::UI::BeginContainer({ 0.5, 0.5f }, glm::vec4(0.0f));
+        if (Core::UI::Button("Swtich device", { 0.5f, 0.5f })) {
+            Core::Audio::GetDevices();
+            Core::Audio::SetDevice(0);
+        }
+    
+        if (Core::UI::Button("Play sound", { 0.5f, 0.5f })) {
+            Core::Audio::Play("Source/Audio/sound.wav");
+        }
+        Core::UI::EndContainer();
+
+    Core::UI::BeginContainer({ 0.5f, 0.25f }, glm::vec4(0.0f));
+    static auto foo = Core::Audio::GetDevices();
+    for (size_t i = 0; i < foo.size(); i++) {
+        Core::UI::Text(foo[i], { 1.0f, 0.25f });
+    }
+    Core::UI::EndContainer();
+
     Core::UI::End(deltaTime);
 }
 

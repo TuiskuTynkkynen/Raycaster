@@ -11,7 +11,14 @@ namespace Core::Audio::Internal {
 		ma_context Context;
 		ma_device Device;
 		ma_engine Engine;
+		
+		struct DeviceInfo {
+			ma_device_id id;
+			char name[MA_MAX_DEVICE_NAME_LENGTH + 1];   /* +1 for null terminator. */
+		};
+		std::vector<DeviceInfo> AviableDevices;
 	};
+
 
 	inline std::unique_ptr<AudioSystem> System;
 }

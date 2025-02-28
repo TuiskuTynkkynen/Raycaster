@@ -14,7 +14,7 @@ void notification_callback(const ma_device_notification* pNotification) {
     ma_device_info* devices;
     ma_uint32 count;
     ma_context_get_devices(&Core::Audio::Internal::System->Context, &devices, &count, nullptr, nullptr);
-    
+
     size_t defaultDeviceIndex = 0;
     for (; defaultDeviceIndex < count && !devices[defaultDeviceIndex].isDefault; defaultDeviceIndex++) { }
 
@@ -71,6 +71,75 @@ namespace Core {
 		ma_result result = ma_engine_play_sound(&Internal::System->Engine, filePath, NULL);
 	}
     
+    std::vector<std::string_view> Audio::GetDevices() {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        Internal::System->AviableDevices.clear();
+
+        uint32_t playbackDeviceCount = 0;
+        auto enumerationCallback = [](ma_context* pContext, ma_device_type deviceType, const ma_device_info* pInfo, void* pUserData) -> ma_bool32 {
+            if (deviceType != ma_device_type_playback) {
+                return false;
+            }
+
+            Internal::System->AviableDevices.emplace_back(pInfo->id);
+
+            for (size_t i = 0; pInfo->name[i]; i++) {
+                Internal::System->AviableDevices.back().name[i] = pInfo->name[i];
+            }
+            
+            uint32_t* count = (uint32_t*)pUserData;
+            (*count)++;
+
+            return true;
+        };
+        
+        ma_result result = ma_context_enumerate_devices(&Internal::System->Context, enumerationCallback, &playbackDeviceCount);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Retreiving device information failed with error code {}", (int32_t)result);
+        }
+
+        std::vector<std::string_view> names;
+        names.reserve(playbackDeviceCount);
+
+        for (size_t i = 0; i < playbackDeviceCount; i++) {
+            names.emplace_back(Internal::System->AviableDevices[i].name);
+        }
+
+        return names;
+    }
+
+    void Audio::SetDevice(size_t deviceIndex) {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        if (deviceIndex >= Internal::System->Context.playbackDeviceInfoCount) {
+            RC_WARN("Audio System SetDevice() called with invalid device index/name");
+            return;
+        }
+
+        //Shutdown old engine and device
+        ShutdownEngine();
+        ShutdownDevice();
+
+        //Create new engine and device
+        RC_ASSERT(InitDevice(&Internal::System->Context.pDeviceInfos[deviceIndex].id, data_callback, notification_callback), "Audio System SetDevice failed");
+        RC_ASSERT(InitEngine(), "Audio System SetDevice failed");
+    }
+
+    void Audio::SetDevice(std::string_view deviceName) {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        size_t deviceIndex = -1;
+        for (size_t i = 0; i < Internal::System->AviableDevices.size(); i++) {
+            if (Internal::System->AviableDevices[i].name == deviceName) {
+                deviceIndex = i;
+                break;
+            }
+        }
+
+        SetDevice(deviceIndex);
+    }
+
     bool Audio::InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback) {
         if (ma_device__is_initialized(&Internal::System->Device)) {
             RC_ERROR("Tried to intialize already initialized device");
