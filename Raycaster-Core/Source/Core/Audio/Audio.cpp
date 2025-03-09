@@ -26,11 +26,6 @@ void notification_callback(const ma_device_notification* pNotification) {
 }
 
 namespace Core::Audio {
-    constexpr ma_format FORMAT = ma_format_f32;
-    constexpr ma_uint32 SAMPLERATE = 48000;
-    constexpr ma_uint32 CHANNELS = 0;
-    constexpr ma_uint32 LISTNERS = 1;
-
     bool InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback);
     static inline void ShutdownDevice(){ ma_device_uninit(&Internal::System->Device); }
     

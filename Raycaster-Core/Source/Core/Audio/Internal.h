@@ -21,3 +21,10 @@ namespace Core::Audio::Internal {
 
 	inline std::unique_ptr<AudioSystem> System;
 }
+
+namespace Core::Audio {
+		constexpr ma_format FORMAT = ma_format_f32;
+		constexpr ma_uint32 SAMPLERATE = 48000;
+		constexpr ma_uint32 CHANNELS = 0;
+		constexpr ma_uint32 LISTNERS = 1;
+}
