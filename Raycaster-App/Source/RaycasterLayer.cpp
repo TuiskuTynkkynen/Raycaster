@@ -2,6 +2,7 @@
 
 #include "Core/UI/UI.h"
 #include "Core/Audio/Audio.h"
+#include "Core/Audio/Sound.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -95,26 +96,45 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
 
-    Core::UI::Begin({ 0.0f, 0.0f }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Vertical, glm::vec4(0.0f));
+    Core::UI::Begin({ 0.0f, 0.0f }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Horizontal, glm::vec4(0.0f));
     
     Core::UI::Text(frameStats, 0.5f, Core::UI::PositioningType::Relative, {-0.495f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
-    Core::UI::BeginContainer({ 0.5, 0.5f }, glm::vec4(0.0f));
-        if (Core::UI::Button("Swtich device", { 0.5f, 0.5f })) {
+    Core::UI::BeginContainer({ 0.5, 1.0f }, glm::vec4(0.0f));
+        if (Core::UI::Button("Swtich device", { 0.5f, 0.125f })) {
             Core::Audio::GetDevices();
             Core::Audio::SetDevice(0);
         }
-    
-        if (Core::UI::Button("Play sound", { 0.5f, 0.5f })) {
-            Core::Audio::Play("Source/Audio/sound.wav");
+        
+        static Core::Audio::Sound sound("sound.wav", Core::Audio::SoundTypes::DisablePitch | Core::Audio::SoundTypes::DisableSpatialization);
+        if (Core::UI::Button("Play", { 0.5f, 0.125f })) {
+            sound.Start();
         }
-        Core::UI::EndContainer();
+
+        if (Core::UI::Button("Play fade in", { 0.5f, 0.125f })) {
+            sound.Start(std::chrono::milliseconds(1000));
+        }
+        
+        if (Core::UI::Button("Fade out", { 0.5f, 0.125f })) {
+            sound.SetFadeOut(std::chrono::milliseconds(5000));
+        }
+
+        if (Core::UI::Button("Re", { 0.5f, 0.125f })) {
+            sound.Reinit();
+        }
+    Core::UI::EndContainer();
 
     Core::UI::BeginContainer({ 0.5f, 0.25f }, glm::vec4(0.0f));
     static auto foo = Core::Audio::GetDevices();
     for (size_t i = 0; i < foo.size(); i++) {
-        Core::UI::Text(foo[i], { 1.0f, 0.25f });
+        Core::UI::Text(foo[i], Core::UI::PositioningType::Offset, { -0.25f, 0.0f }, { 1.0f, 0.25f });
     }
+    
+    float time = sound.GetTime().count() / 1000.0f;
+    float fade = sound.GetFadeVolume();
+    std::wstring timeText = std::to_wstring(time) + L"s\n" + std::to_wstring(fade) + L" volume";
+    Core::UI::Text(timeText, Core::UI::PositioningType::Offset, {-0.25f, 0.0f}, {1.0f, 0.5f});
+
     Core::UI::EndContainer();
 
     Core::UI::End(deltaTime);
