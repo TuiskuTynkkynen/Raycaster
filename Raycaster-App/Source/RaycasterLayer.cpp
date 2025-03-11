@@ -106,7 +106,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
             Core::Audio::SetDevice(0);
         }
         
-        static Core::Audio::Sound sound("sound.wav", Core::Audio::SoundTypes::DisablePitch | Core::Audio::SoundTypes::DisableSpatialization);
+        static Core::Audio::Sound sound("sound.wav", Core::Audio::Sound::DisablePitch | Core::Audio::Sound::DisableSpatialization);
         if (Core::UI::Button("Play", { 0.5f, 0.125f })) {
             sound.Start();
         }

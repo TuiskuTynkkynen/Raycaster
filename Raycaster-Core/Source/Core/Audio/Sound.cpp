@@ -11,11 +11,11 @@ namespace Core::Audio {
     static ma_uint32 ParseFlags(uint8_t flags) {
         ma_uint32 result = 0;
         
-        result |= bool(flags & SoundTypes::DisablePitch) * MA_SOUND_FLAG_NO_PITCH;
-        result |= bool(flags & SoundTypes::DisableSpatialization) * MA_SOUND_FLAG_NO_SPATIALIZATION;
-        result |= bool(flags & SoundTypes::StreamData) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_STREAM;
-        result |= bool(flags ^ SoundTypes::LoadSynchronous) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_ASYNC;
-        result |= bool(flags ^ SoundTypes::DecodeDynamically) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_DECODE;
+        result |= bool(flags & Sound::DisablePitch) * MA_SOUND_FLAG_NO_PITCH;
+        result |= bool(flags & Sound::DisableSpatialization) * MA_SOUND_FLAG_NO_SPATIALIZATION;
+        result |= bool(flags & Sound::StreamData) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_STREAM;
+        result |= bool(flags ^ Sound::LoadSynchronous) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_ASYNC;
+        result |= bool(flags ^ Sound::DecodeDynamically) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_DECODE;
 
         return result;
     }
@@ -43,14 +43,14 @@ namespace Core::Audio {
         ma_sound_set_looping(copy, ma_sound_is_looping(original));
         ma_sound_set_volume(copy, ma_sound_get_volume(original));
 
-        if (!(flags & SoundTypes::DisablePitch)) {
+        if (!(flags & Sound::DisablePitch)) {
             ma_sound_set_pitch(copy, ma_sound_get_pitch(original));
         }
 
         ma_sound_set_pan_mode(copy, ma_sound_get_pan_mode(original));
         ma_sound_set_pan(copy, ma_sound_get_pan(original));
 
-        if (!(flags & SoundTypes::DisableSpatialization)) {
+        if (!(flags & Sound::DisableSpatialization)) {
             ma_sound_set_spatialization_enabled(copy, ma_sound_is_spatialization_enabled(original));
             ma_sound_set_positioning(copy, ma_sound_get_positioning(original));
 
@@ -204,7 +204,7 @@ namespace Core::Audio {
     }
     
     std::optional<Sound> Sound::Copy() const {
-        if (m_Flags & SoundTypes::StreamData){
+        if (m_Flags & StreamData){
             RC_WARN("Cannot copy sound intialized with StreamData flag");
             return std::nullopt;
         }
@@ -219,7 +219,7 @@ namespace Core::Audio {
     }
     
     std::optional<Sound> Sound::CopyDeep() const {
-        if (m_Flags & SoundTypes::StreamData){
+        if (m_Flags & StreamData){
             RC_WARN("Cannot copy sound intialized with StreamData flag");
             return std::nullopt;
         }
@@ -334,7 +334,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetPitch(float pitch) {
-        if (m_Flags & SoundTypes::DisablePitch) {
+        if (m_Flags & DisablePitch) {
             RC_WARN("Can not set pitch of Audio System sound created with DisablePitch flag");
             return;
         }
@@ -353,7 +353,7 @@ namespace Core::Audio {
     }
     
     void Sound::SetSpatialization(bool spatial) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set spatialization of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -361,35 +361,35 @@ namespace Core::Audio {
         ma_sound_set_spatialization_enabled(m_InternalSound, spatial);
     }
     
-    void Sound::SetPositioning(SoundTypes::SoundPositioning positioning) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+    void Sound::SetPositioning(Positioning positioning) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set positioning of Audio System sound created with DisableSpatialization flag");
             return;
         }
 
-        ma_positioning pos = positioning == SoundTypes::SoundPositioning::Absolute ? ma_positioning_absolute : ma_positioning_relative;
+        ma_positioning pos = positioning == Positioning::Absolute ? ma_positioning_absolute : ma_positioning_relative;
 
         ma_sound_set_positioning(m_InternalSound, pos);
     }
     
-    void Sound::SetAttenuation(SoundTypes::SoundAttenuationMode attenuation) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+    void Sound::SetAttenuation(AttenuationMode attenuation) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set attentuation of Audio System sound created with DisableSpatialization flag");
             return;
         }
 
         ma_attenuation_model att;
         switch (attenuation) {
-        case SoundTypes::SoundAttenuationMode::None:
+        case AttenuationMode::None:
             att = ma_attenuation_model_none;
             break;
-        case SoundTypes::SoundAttenuationMode::Inverse:
+        case AttenuationMode::Inverse:
             att = ma_attenuation_model_inverse;
             break;
-        case SoundTypes::SoundAttenuationMode::Linear:
+        case AttenuationMode::Linear:
             att = ma_attenuation_model_linear;
             break;
-        case SoundTypes::SoundAttenuationMode::Exponential:
+        case AttenuationMode::Exponential:
             att = ma_attenuation_model_exponential;
             break;
         default:
@@ -407,7 +407,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetSpatialData(glm::vec3 position, glm::vec3 direction, glm::vec3 velocity) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set spatial data of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -418,7 +418,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetPosition(glm::vec3 position) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set position of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -427,7 +427,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetDirection(glm::vec3 direction) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set direction of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -436,7 +436,7 @@ namespace Core::Audio {
     }
     
     void Sound::SetVelocity(glm::vec3 velocity) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set velocity of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -445,7 +445,7 @@ namespace Core::Audio {
     }
     
     void Sound::SetSpatialParameters(float rolloff, float gainMin, float gainMax, float distanceMin, float distanceMax, float coneInnerAngleRadians, float coneOuterAngleRadians, float coneOuterGain) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set spatial parameters of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -462,7 +462,7 @@ namespace Core::Audio {
     }
     
     void Sound::SetRolloff(float rolloff) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set rolloff of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -471,7 +471,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetGainRange(float min, float max) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set gain range of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -481,7 +481,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetDistanceRange(float min, float max) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set distance range of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -491,7 +491,7 @@ namespace Core::Audio {
     }
     
     void Sound::SetCone(float innerAngleRadians, float outerAngleRadians, float outerGain) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set cone of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -500,7 +500,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetConeDegrees(float innerAngleDegrees, float outerAngleDegrees, float outerGain) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set cone of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -509,7 +509,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetSpatialFactors(float dopplerFactor, float directionalAttenuationFactor) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set spatial factors of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -519,7 +519,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetDopplerFactor(float dopplerFactor) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set doppler factor of Audio System sound created with DisableSpatialization flag");
             return;
         }
@@ -528,7 +528,7 @@ namespace Core::Audio {
     }
 
     void Sound::SetDirectionalAttenuationFactor(float directionalAttenuationFactor) {
-        if (m_Flags & SoundTypes::DisableSpatialization) {
+        if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set directional attenuation factor of Audio System sound created with DisableSpatialization flag");
             return;
         }

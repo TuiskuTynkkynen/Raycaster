@@ -10,7 +10,8 @@
 struct InternalSoundObject;
 
 namespace Core::Audio {
-    namespace SoundTypes {
+    class Sound {
+    public:
         enum Flags : uint8_t {
             None					= 0,
             DisablePitch			= Bit(0),
@@ -19,21 +20,18 @@ namespace Core::Audio {
             LoadSynchronous			= Bit(3),
             DecodeDynamically		= Bit(4),
         };
-
-        enum class SoundPositioning {
+        
+        enum class Positioning {
             Absolute = 0,
             Relative // Relative to listner
         };
 
-        enum class SoundAttenuationMode {
+        enum class AttenuationMode {
             None = 0,
             Inverse,
             Linear,
             Exponential
         };
-    }
-
-    class Sound {
     public:
         Sound(const char* filePath, uint8_t flags);
         Sound(const std::string_view& filePath, uint8_t flags);
@@ -42,7 +40,7 @@ namespace Core::Audio {
         ~Sound();
 
         Sound(const Sound& other) = delete;
-        Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(std::exchange(other.m_Flags, SoundTypes::None)) {}
+        Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(std::exchange(other.m_Flags, None)) {}
 
         Sound& operator = (const Sound& other) = delete;
         Sound& operator = (const Sound&& other) = delete;
@@ -80,8 +78,8 @@ namespace Core::Audio {
         void SetFade(std::chrono::milliseconds length, float startVolume, float endVolume, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
         
         void SetSpatialization(bool spatial);
-        void SetPositioning(SoundTypes::SoundPositioning positioning);
-        void SetAttenuation(SoundTypes::SoundAttenuationMode attenuation);
+        void SetPositioning(Positioning positioning);
+        void SetAttenuation(AttenuationMode attenuation);
 
         glm::vec3 GetDirectionToListner();
 
@@ -102,7 +100,7 @@ namespace Core::Audio {
         void SetDirectionalAttenuationFactor(float directionalAttenuationFactor);
     private:
         Sound(InternalSoundObject* internalSound, uint8_t flags);
-
+        
         InternalSoundObject* m_InternalSound;
         uint8_t m_Flags;
     };
