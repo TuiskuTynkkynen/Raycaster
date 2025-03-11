@@ -194,27 +194,57 @@ namespace Core::Audio {
         }
         
         RC_ASSERT(m_Sounds.size() == m_SoundNames.size(), "Size of sound and sound names vectors should always be equal");
-        bool moved = false;
+        struct Moved {
+            uint32_t From;
+            uint32_t To;
+        };
+        std::vector<Moved> moved;
+        
+        // First pass move all nullopts to back
         for (size_t i = 0; i < m_Sounds.size(); i++) {
             if (!m_Sounds[i]) {
-                moved = true;
+                uint32_t oldIndex = m_Sounds.size() - 1;
+                moved.emplace_back(oldIndex, i);
 
+                auto& back = m_Sounds.back();
+                if (back) {
                 m_Sounds[i].emplace(std::move(m_Sounds.back().value()));
+                }
                 m_Sounds.pop_back();
 
                 m_SoundNames[i] = m_SoundNames.back();
                 m_SoundNames.pop_back();
             }
+            }
+        
+        // Second pass remove all nullopts from back
+        for (size_t i = m_Sounds.size(); i > 0;) {
+            if (m_Sounds[--i]) {
+                break;
+            }
+
+            m_Sounds.pop_back();
+            m_SoundNames.pop_back();
         }
 
         m_IsDense = true;
         
-        if (!moved) {
+        if (moved.empty()) {
             return;
         }
 
         m_Epoch++;
         for (auto& [name, index] : m_SoundIndices) {
+            for (size_t i = 0; i < moved.size(); i++) {
+                if (moved[i].From == index.Value) {
+                    index.Value = moved[i].To;
+
+                    moved[i] = moved.back();
+                    moved.pop_back();
+                    break;
+                }
+            }
+
             index.Epoch = m_Epoch;
         }
     }
