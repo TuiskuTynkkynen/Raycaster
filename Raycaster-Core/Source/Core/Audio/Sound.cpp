@@ -33,24 +33,18 @@ namespace Core::Audio {
         return copy;
     }
     
-    static InternalSoundObject* CreateDeepCopy(const InternalSoundObject* original, Sound::Flags flags) {
-        InternalSoundObject* copy = CreateShallowCopy(original, flags);
-
-        if (!copy) {
-            return nullptr;
-        }
-
+    static void CopyInternalAttributes(InternalSoundObject* copy, const InternalSoundObject* original, Sound::Flags flags){
         ma_sound_set_looping(copy, ma_sound_is_looping(original));
         ma_sound_set_volume(copy, ma_sound_get_volume(original));
 
-        if (!(flags & Sound::DisablePitch)) {
+        if (flags ^ Sound::DisablePitch) {
             ma_sound_set_pitch(copy, ma_sound_get_pitch(original));
         }
 
         ma_sound_set_pan_mode(copy, ma_sound_get_pan_mode(original));
         ma_sound_set_pan(copy, ma_sound_get_pan(original));
 
-        if (!(flags & Sound::DisableSpatialization)) {
+        if (flags ^ Sound::DisableSpatialization) {
             ma_sound_set_spatialization_enabled(copy, ma_sound_is_spatialization_enabled(original));
             ma_sound_set_positioning(copy, ma_sound_get_positioning(original));
 
@@ -80,6 +74,16 @@ namespace Core::Audio {
             ma_sound_set_doppler_factor(copy, ma_sound_get_doppler_factor(original));
             ma_sound_set_directional_attenuation_factor(copy, ma_sound_get_directional_attenuation_factor(original));
         }
+    }
+
+    static InternalSoundObject* CreateDeepCopy(const InternalSoundObject* original, Sound::Flags flags) {
+        InternalSoundObject* copy = CreateShallowCopy(original, flags);
+
+        if (!copy) {
+            return nullptr;
+        }
+
+        CopyInternalAttributes(copy, original, flags);
 
         return copy;
     }
@@ -145,7 +149,7 @@ namespace Core::Audio {
 
     void Sound::Reinit() {
         if (!CanReinit()) {
-            RC_WARN("Can not reinit sound intialized with StreamData flag");
+            RC_WARN("Can not reinitialize sound intialized with StreamData flag. ReinitFromFile should be called instead");
             return;
         }
 
@@ -156,6 +160,56 @@ namespace Core::Audio {
             return;
         }
 
+        ReinitInternalSound(internalSoundCopy);
+
+        // Clean up old ma_sound
+        ma_sound_uninit(m_InternalSound);
+        delete m_InternalSound;
+
+        m_InternalSound = internalSoundCopy;
+    }
+    
+    void Sound::ReinitFromFile(const char* filePath) {
+        std::filesystem::path directoryPath = filePath;
+        if (directoryPath.is_relative()) {
+            directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
+        }
+
+        ReinitFromFile(directoryPath);
+    }
+
+    void Sound::ReinitFromFile(const std::string_view& filePath) {
+        std::filesystem::path directoryPath = filePath;
+        if (directoryPath.is_relative()) {
+            directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
+        }
+
+        ReinitFromFile(directoryPath);
+    }
+
+    void Sound::ReinitFromFile(const std::filesystem::path& filePath) {
+        InternalSoundObject* internalSoundCopy = new InternalSoundObject;
+
+        std::string fileString = filePath.string();
+        ma_result result = ma_sound_init_from_file(&Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, internalSoundCopy);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing sound from file, \"{}\", failed with error {}", filePath.string(), (int32_t)result);
+            
+            delete internalSoundCopy;
+            return;
+        }
+
+        CopyInternalAttributes(internalSoundCopy, m_InternalSound, m_Flags);
+        ReinitInternalSound(internalSoundCopy);
+
+        // Clean up old ma_sound
+        ma_sound_uninit(m_InternalSound);
+        delete m_InternalSound;
+
+        m_InternalSound = internalSoundCopy;
+    }
+
+    void Sound::ReinitInternalSound(InternalSoundObject* internalSound) {
         {
             auto length = GetLength();
             std::chrono::milliseconds time = GetTime();
@@ -168,7 +222,7 @@ namespace Core::Audio {
 
             using namespace std::chrono_literals;
             ma_uint64 frame = SAMPLERATE * time / 1s;
-            ma_sound_seek_to_pcm_frame(internalSoundCopy, frame);
+            ma_sound_seek_to_pcm_frame(internalSound, frame);
         }
 
         {
@@ -196,22 +250,16 @@ namespace Core::Audio {
                     absoluteStartTime = currentTime;
                 }
 
-                ma_sound_set_fade_start_in_pcm_frames(internalSoundCopy, startVolume, endVolume, fadeLength, absoluteStartTime);
+                ma_sound_set_fade_start_in_pcm_frames(internalSound, startVolume, endVolume, fadeLength, absoluteStartTime);
             }
         }
 
         if (IsPlaying()) {
             Stop();
-            ma_sound_start(internalSoundCopy);
+            ma_sound_start(internalSound);
         }
-
-        // Clean up old ma_sound
-        ma_sound_uninit(m_InternalSound);
-        delete m_InternalSound;
-
-        m_InternalSound = internalSoundCopy;
     }
-    
+
     std::optional<Sound> Sound::Copy() const {
         if (m_Flags & StreamData){
             RC_WARN("Cannot copy sound intialized with StreamData flag");

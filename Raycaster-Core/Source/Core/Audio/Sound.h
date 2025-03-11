@@ -52,6 +52,10 @@ namespace Core::Audio {
         bool CanReinit();
         void Reinit();
 
+        void ReinitFromFile(const char* filePath); // Used for sound that can not reinit normally
+        void ReinitFromFile(const std::string_view& filePath); // Used for sound that can not reinit normally
+        void ReinitFromFile(const std::filesystem::path& filePath); // Used for sound that can not reinit normally
+
         std::optional<Sound> Copy() const; //Copies only the sound and flags
         std::optional<Sound> CopyDeep() const; //Copies sound and it's parameters
 
@@ -132,6 +136,8 @@ namespace Core::Audio {
     private:
         Sound(InternalSoundObject* internalSound, Flags flags);
         
+        void ReinitInternalSound(InternalSoundObject* internalSound);
+
         InternalSoundObject* m_InternalSound;
         Flags m_Flags;
     };
