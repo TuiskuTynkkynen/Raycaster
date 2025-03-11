@@ -21,10 +21,10 @@ namespace Core::Audio {
         SoundManager& operator = (const SoundManager& other) = delete;
         SoundManager& operator = (const SoundManager&& other) = delete;
 
-        void RegisterSound(std::string_view filePath, uint8_t flags);
-        void RegisterSound(std::string_view name, std::string_view filePath, uint8_t flags);
+        void RegisterSound(std::string_view filePath, Sound::Flags flags);
+        void RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags);
         // Different argument order to prevent 
-        void RegisterSound(std::string_view name, uint8_t flags, std::filesystem::path filePath);
+        void RegisterSound(std::string_view name, Sound::Flags  flags, std::filesystem::path filePath);
         
         void CopySound(std::string_view copyName, Index originalIndex);
         void CopySound(std::string_view copyName, std::string_view originalName);

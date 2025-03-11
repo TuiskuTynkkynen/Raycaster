@@ -8,19 +8,19 @@
 struct InternalSoundObject : ma_sound {};
 
 namespace Core::Audio {
-    static ma_uint32 ParseFlags(uint8_t flags) {
+    static ma_uint32 ParseFlags(Sound::Flags flags) {
         ma_uint32 result = 0;
-        
-        result |= bool(flags & Sound::DisablePitch) * MA_SOUND_FLAG_NO_PITCH;
-        result |= bool(flags & Sound::DisableSpatialization) * MA_SOUND_FLAG_NO_SPATIALIZATION;
-        result |= bool(flags & Sound::StreamData) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_STREAM;
-        result |= bool(flags ^ Sound::LoadSynchronous) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_ASYNC;
-        result |= bool(flags ^ Sound::DecodeDynamically) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_DECODE;
+
+        result |= (flags & Sound::DisablePitch) * MA_SOUND_FLAG_NO_PITCH;
+        result |= (flags & Sound::DisableSpatialization) * MA_SOUND_FLAG_NO_SPATIALIZATION;
+        result |= (flags & Sound::StreamData) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_STREAM;
+        result |= (flags ^ Sound::LoadSynchronous) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_ASYNC;
+        result |= (flags ^ Sound::DecodeDynamically) * MA_RESOURCE_MANAGER_DATA_SOURCE_FLAG_DECODE;
 
         return result;
     }
 
-    static InternalSoundObject* CreateShallowCopy(const InternalSoundObject* original, uint8_t flags) {
+    static InternalSoundObject* CreateShallowCopy(const InternalSoundObject* original, Sound::Flags flags) {
         InternalSoundObject* copy = new InternalSoundObject;
         ma_result result = ma_sound_init_copy(&Internal::System->Engine, original, flags, 0, copy);
 
@@ -33,7 +33,7 @@ namespace Core::Audio {
         return copy;
     }
     
-    static InternalSoundObject* CreateDeepCopy(const InternalSoundObject* original, uint8_t flags) {
+    static InternalSoundObject* CreateDeepCopy(const InternalSoundObject* original, Sound::Flags flags) {
         InternalSoundObject* copy = CreateShallowCopy(original, flags);
 
         if (!copy) {
@@ -86,7 +86,7 @@ namespace Core::Audio {
 }
 
 namespace Core::Audio {
-    Sound::Sound(const std::filesystem::path& filePath, uint8_t flags) : m_Flags(flags) {
+    Sound::Sound(const std::filesystem::path& filePath, Flags flags) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         m_InternalSound = new InternalSoundObject;
         
@@ -98,7 +98,7 @@ namespace Core::Audio {
         }
     }
 
-    Sound::Sound(const std::string_view& filePath, uint8_t flags) : m_Flags(flags) {
+    Sound::Sound(const std::string_view& filePath, Flags flags) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         m_InternalSound = new InternalSoundObject;
 
@@ -114,7 +114,7 @@ namespace Core::Audio {
         }
     }
 
-    Sound::Sound(const char* filePath, uint8_t flags) : m_Flags(flags) {
+    Sound::Sound(const char* filePath, Flags flags) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         m_InternalSound = new InternalSoundObject;
         
@@ -130,7 +130,7 @@ namespace Core::Audio {
         }
     }
 
-    Sound::Sound(InternalSoundObject* internalSound, uint8_t flags) : m_Flags(flags), m_InternalSound(internalSound) {
+    Sound::Sound(InternalSoundObject* internalSound, Flags flags) : m_Flags(flags), m_InternalSound(internalSound) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
     }
 
@@ -564,4 +564,7 @@ namespace Core::Audio {
         ma_sound_set_fade_start_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames, startTime);
     }
 
+    Sound::Flags::Flags(uint8_t flags) : Data(flags) {
+        RC_ASSERT(Data < InvalidFlag);
+    }
 }

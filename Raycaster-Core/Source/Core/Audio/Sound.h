@@ -12,15 +12,19 @@ struct InternalSoundObject;
 namespace Core::Audio {
     class Sound {
     public:
-        enum Flags : uint8_t {
+        enum FlagEnum : uint8_t {
             None					= 0,
             DisablePitch			= Bit(0),
             DisableSpatialization	= Bit(1),
             StreamData				= Bit(2),
             LoadSynchronous			= Bit(3),
             DecodeDynamically		= Bit(4),
+
+            InvalidFlag = Bit(5), // MUST NOT BE SET
         };
         
+        class Flags;
+
         enum class Positioning {
             Absolute = 0,
             Relative // Relative to listner
@@ -33,9 +37,9 @@ namespace Core::Audio {
             Exponential
         };
     public:
-        Sound(const char* filePath, uint8_t flags);
-        Sound(const std::string_view& filePath, uint8_t flags);
-        Sound(const std::filesystem::path& filePath, uint8_t flags);
+        Sound(const char* filePath, Flags flags);
+        Sound(const std::string_view& filePath, Flags flags);
+        Sound(const std::filesystem::path& filePath, Flags flags);
 
         ~Sound();
 
@@ -98,10 +102,36 @@ namespace Core::Audio {
         void SetSpatialFactors(float dopplerFactor, float directionalAttenuationFactor);
         void SetDopplerFactor(float dopplerFactor);
         void SetDirectionalAttenuationFactor(float directionalAttenuationFactor);
+    public:
+            class Flags {
+            public:
+                Flags(std::same_as<FlagEnum> auto... flags) { Data = (None + ... + flags); }
+
+                Flags operator~() const { return ~Data; }
+
+                Flags operator&(const Flags& other) const { return Data & other.Data; }
+
+                Flags operator&(const FlagEnum& other) const { return Data & other; }
+
+                Flags operator|(const Flags& other) const { return Data | other.Data; }
+
+                Flags operator|(const FlagEnum& other) const { return Data | other; }
+
+                Flags operator^(const Flags& other) const { return Data ^ other.Data; }
+
+                Flags operator^(const FlagEnum& other) const { return (Data & other) ^ other; }
+
+                operator bool() const { return Data; }
+                bool operator!() const { return !Data; }
+
+                uint8_t Data;
+            private:
+                Flags(uint8_t flags);
+            };
     private:
-        Sound(InternalSoundObject* internalSound, uint8_t flags);
+        Sound(InternalSoundObject* internalSound, Flags flags);
         
         InternalSoundObject* m_InternalSound;
-        uint8_t m_Flags;
+        Flags m_Flags;
     };
 }

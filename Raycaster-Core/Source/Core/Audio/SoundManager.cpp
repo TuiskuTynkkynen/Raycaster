@@ -9,7 +9,7 @@ namespace Core::Audio {
         }
     }
 
-    void SoundManager::RegisterSound(std::string_view filePath, uint8_t flags) {
+    void SoundManager::RegisterSound(std::string_view filePath, Sound::Flags flags) {
         if (m_SoundIndices.contains(filePath)) {
             return;
         }
@@ -43,7 +43,7 @@ namespace Core::Audio {
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
 
-    void SoundManager::RegisterSound(std::string_view name, std::string_view filePath, uint8_t flags) {
+    void SoundManager::RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags) {
         if (m_SoundIndices.contains(name)) {
             return;
         }
@@ -77,7 +77,7 @@ namespace Core::Audio {
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
 
-    void SoundManager::RegisterSound(std::string_view name, uint8_t flags, std::filesystem::path filePath) {
+    void SoundManager::RegisterSound(std::string_view name, Sound::Flags flags, std::filesystem::path filePath) {
         if (m_SoundIndices.contains(name)) {
             return;
         }
