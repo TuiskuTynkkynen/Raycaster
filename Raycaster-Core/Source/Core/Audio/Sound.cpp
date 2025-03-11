@@ -139,7 +139,16 @@ namespace Core::Audio {
         delete m_InternalSound;
     }
 
+    bool Sound::CanReinit() {
+        return m_Flags ^ StreamData;
+    }
+
     void Sound::Reinit() {
+        if (!CanReinit()) {
+            RC_WARN("Can not reinit sound intialized with StreamData flag");
+            return;
+        }
+
         InternalSoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags);
 
         if (!internalSoundCopy) {

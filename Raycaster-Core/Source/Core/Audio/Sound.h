@@ -49,6 +49,7 @@ namespace Core::Audio {
         Sound& operator = (const Sound& other) = delete;
         Sound& operator = (const Sound&& other) = delete;
 
+        bool CanReinit();
         void Reinit();
 
         std::optional<Sound> Copy() const; //Copies only the sound and flags
