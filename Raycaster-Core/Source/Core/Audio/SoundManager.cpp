@@ -14,11 +14,10 @@ namespace Core::Audio {
             return;
         }
 
-        std::string_view name = StoreName(filePath);
 
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(filePath, Index{ .Epoch = m_Epoch, .Value = index });
+            m_SoundIndices.emplace(StoreName(filePath), Index{ .Epoch = m_Epoch, .Value = index });
 
             m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -29,7 +28,7 @@ namespace Core::Audio {
             m_IsDense = true;
 
             uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(filePath, Index{ .Epoch = m_Epoch, .Value = index });
+            m_SoundIndices.emplace(StoreName(filePath), Index{ .Epoch = m_Epoch, .Value = index });
 
             m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -38,7 +37,7 @@ namespace Core::Audio {
         iter->emplace(filePath, flags);
 
         uint32_t index = iter - m_Sounds.begin();
-        m_SoundIndices.emplace(filePath, Index{ .Epoch = m_Epoch, .Value = index });
+        m_SoundIndices.emplace(StoreName(filePath, index), Index{ .Epoch = m_Epoch, .Value = index });
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
@@ -52,7 +51,7 @@ namespace Core::Audio {
 
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(name, Index{ .Epoch = m_Epoch, .Value = index });
+            m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
 
            m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -63,7 +62,7 @@ namespace Core::Audio {
             m_IsDense = true;
 
             uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(name, Index{ .Epoch = m_Epoch, .Value = index });
+            m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
 
            m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -72,7 +71,7 @@ namespace Core::Audio {
         iter->emplace(filePath, flags);
 
         uint32_t index = iter - m_Sounds.begin();
-        m_SoundIndices.emplace(name, Index{ .Epoch = m_Epoch, .Value = index });
+        m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
@@ -86,7 +85,7 @@ namespace Core::Audio {
 
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(name, Index{ .Epoch = m_Epoch, .Value = index });
+            m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
 
            m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -97,7 +96,7 @@ namespace Core::Audio {
             m_IsDense = true;
 
             uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(name, Index{ .Epoch = m_Epoch, .Value = index });
+            m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
 
            m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -106,7 +105,7 @@ namespace Core::Audio {
         iter->emplace(filePath, flags);
 
         uint32_t index = iter - m_Sounds.begin();
-        m_SoundIndices.emplace(name, Index{ .Epoch = m_Epoch, .Value = index });
+        m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
@@ -160,7 +159,7 @@ namespace Core::Audio {
         }
 
         uint32_t index = iter - m_Sounds.begin();
-        m_SoundIndices.emplace(StoreName(copyName), Index{ .Epoch = m_Epoch, .Value = index });
+        m_SoundIndices.emplace(StoreName(copyName, index), Index{ .Epoch = m_Epoch, .Value = index });
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
@@ -269,6 +268,15 @@ namespace Core::Audio {
         name.copy(cString, name.size(), (size_t)0);
 
         m_SoundNames.emplace_back(cString);
+
+        return std::string_view(cString, name.size());
+    }
+
+    std::string_view SoundManager::StoreName(std::string_view name, uint32_t index) {
+        char* cString = new char[name.size()];
+        name.copy(cString, name.size(), (size_t)0);
+
+        m_SoundNames[index] = cString;
 
         return std::string_view(cString, name.size());
     }

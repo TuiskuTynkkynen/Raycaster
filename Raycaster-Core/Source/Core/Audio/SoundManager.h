@@ -51,5 +51,6 @@ namespace Core::Audio {
         std::unordered_map<std::string_view, Index> m_SoundIndices;
 
         std::string_view StoreName(std::string_view name);
+        std::string_view StoreName(std::string_view namem, uint32_t index);
     };
 }
