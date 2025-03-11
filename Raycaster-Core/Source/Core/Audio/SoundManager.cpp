@@ -14,10 +14,12 @@ namespace Core::Audio {
             return;
         }
 
-
+        
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(filePath), Index{ .Epoch = m_Epoch, .Value = index });
+            
+            StoreFilePath(filePath, index, flags);
 
             m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -29,6 +31,8 @@ namespace Core::Audio {
 
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(filePath), Index{ .Epoch = m_Epoch, .Value = index });
+            
+            StoreFilePath(filePath, index, flags);
 
             m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -38,6 +42,8 @@ namespace Core::Audio {
 
         uint32_t index = iter - m_Sounds.begin();
         m_SoundIndices.emplace(StoreName(filePath, index), Index{ .Epoch = m_Epoch, .Value = index });
+        
+        StoreFilePath(filePath, index, flags);
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
@@ -47,11 +53,11 @@ namespace Core::Audio {
             return;
         }
 
-        name = StoreName(name);
-
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
+        
+            StoreFilePath(filePath, index, flags);
 
            m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -63,8 +69,10 @@ namespace Core::Audio {
 
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
+           
+            StoreFilePath(filePath, index, flags);
 
-           m_Sounds.emplace_back(Sound(filePath, flags));
+            m_Sounds.emplace_back(Sound(filePath, flags));
             return;
         }
 
@@ -72,6 +80,8 @@ namespace Core::Audio {
 
         uint32_t index = iter - m_Sounds.begin();
         m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
+        
+        StoreFilePath(filePath, index, flags);
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
@@ -81,11 +91,12 @@ namespace Core::Audio {
             return;
         }
 
-        name = StoreName(name);
 
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
+           
+            StoreFilePath(filePath, index, flags);
 
            m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -97,6 +108,8 @@ namespace Core::Audio {
 
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
+            
+            StoreFilePath(filePath, index, flags);
 
            m_Sounds.emplace_back(Sound(filePath, flags));
             return;
@@ -106,6 +119,8 @@ namespace Core::Audio {
 
         uint32_t index = iter - m_Sounds.begin();
         m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
+
+        StoreFilePath(filePath, index, flags);
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
@@ -185,6 +200,11 @@ namespace Core::Audio {
 
             delete[] m_SoundNames[index.value().Value];
             m_SoundNames[index.value().Value] = nullptr;
+
+            auto iter = m_StreamedFiles.find(index.value().Value);
+            if (iter != m_StreamedFiles.end()) {
+                m_StreamedFiles.erase(iter);
+            }
         }
     }
     
@@ -208,14 +228,19 @@ namespace Core::Audio {
 
                 auto& back = m_Sounds.back();
                 if (back) {
-                m_Sounds[i].emplace(std::move(m_Sounds.back().value()));
+                    m_Sounds[i].emplace(std::move(m_Sounds.back().value()));
                 }
                 m_Sounds.pop_back();
 
                 m_SoundNames[i] = m_SoundNames.back();
                 m_SoundNames.pop_back();
+
+                auto iter = m_StreamedFiles.find(oldIndex);
+                if (iter != m_StreamedFiles.end()) {
+                    m_StreamedFiles.emplace(i, iter->second);
+                }
             }
-            }
+        }
         
         // Second pass remove all nullopts from back
         for (size_t i = m_Sounds.size(); i > 0;) {
@@ -250,10 +275,20 @@ namespace Core::Audio {
     }
 
     void SoundManager::ReinitSounds() {
-        for (auto& sound : m_Sounds) {
-            if (sound) {
-                sound.value().Reinit();
+        for (size_t i = 0; i < m_Sounds.size(); i++) {
+            if (!m_Sounds[i] || !m_Sounds[i].value().CanReinit()) {
+                continue;
             }
+
+            m_Sounds[i].value().Reinit();
+        }
+
+        for (auto& [index, file] : m_StreamedFiles) {
+            if (!m_Sounds[index]) {
+                continue;
+            }
+
+            m_Sounds[index].value().ReinitFromFile(file);
         }
     }
 
@@ -309,5 +344,26 @@ namespace Core::Audio {
         m_SoundNames[index] = cString;
 
         return std::string_view(cString, name.size());
+    }
+
+    void SoundManager::StoreFilePath(const std::string_view& filePath, uint32_t soundIndex, Sound::Flags flags) {
+        if (flags ^ Sound::StreamData) {
+            return;
+        }
+
+        std::filesystem::path directoryPath = filePath;
+        if (directoryPath.is_relative()) {
+            directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
+        }
+
+        m_StreamedFiles.emplace(soundIndex, directoryPath);
+    }
+
+    void SoundManager::StoreFilePath(const std::filesystem::path& filePath, uint32_t soundIndex, Sound::Flags flags) {
+        if (flags ^ Sound::StreamData) {
+            return;
+        }
+
+        m_StreamedFiles.emplace(soundIndex, filePath);
     }
 }

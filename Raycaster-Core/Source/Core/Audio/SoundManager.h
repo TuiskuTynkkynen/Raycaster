@@ -48,9 +48,13 @@ namespace Core::Audio {
 
         std::vector<std::optional<Sound>> m_Sounds;
         std::vector<const char*> m_SoundNames;
+        std::unordered_map<uint32_t, std::filesystem::path> m_StreamedFiles;
         std::unordered_map<std::string_view, Index> m_SoundIndices;
 
         std::string_view StoreName(std::string_view name);
-        std::string_view StoreName(std::string_view namem, uint32_t index);
+        std::string_view StoreName(std::string_view name, uint32_t index);
+
+        void StoreFilePath(const std::string_view& filePath, uint32_t soundIndex, Sound::Flags flags);
+        void StoreFilePath(const std::filesystem::path& filePath, uint32_t soundIndex, Sound::Flags flags);
     };
 }
