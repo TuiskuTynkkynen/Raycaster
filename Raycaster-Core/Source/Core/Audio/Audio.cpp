@@ -72,7 +72,7 @@ namespace Core {
     std::vector<std::string_view> Audio::GetDevices() {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
-        Internal::System->AviableDevices.clear();
+        Internal::System->AvailableDevices.clear();
 
         uint32_t playbackDeviceCount = 0;
         auto enumerationCallback = [](ma_context* pContext, ma_device_type deviceType, const ma_device_info* pInfo, void* pUserData) -> ma_bool32 {
@@ -80,10 +80,10 @@ namespace Core {
                 return false;
             }
 
-            Internal::System->AviableDevices.emplace_back(pInfo->id);
+            Internal::System->AvailableDevices.emplace_back(pInfo->id);
 
             for (size_t i = 0; pInfo->name[i]; i++) {
-                Internal::System->AviableDevices.back().name[i] = pInfo->name[i];
+                Internal::System->AvailableDevices.back().name[i] = pInfo->name[i];
             }
             
             uint32_t* count = (uint32_t*)pUserData;
@@ -101,7 +101,7 @@ namespace Core {
         names.reserve(playbackDeviceCount);
 
         for (size_t i = 0; i < playbackDeviceCount; i++) {
-            names.emplace_back(Internal::System->AviableDevices[i].name);
+            names.emplace_back(Internal::System->AvailableDevices[i].name);
         }
 
         return names;
@@ -128,8 +128,8 @@ namespace Core {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         size_t deviceIndex = -1;
-        for (size_t i = 0; i < Internal::System->AviableDevices.size(); i++) {
-            if (Internal::System->AviableDevices[i].name == deviceName) {
+        for (size_t i = 0; i < Internal::System->AvailableDevices.size(); i++) {
+            if (Internal::System->AvailableDevices[i].name == deviceName) {
                 deviceIndex = i;
                 break;
             }

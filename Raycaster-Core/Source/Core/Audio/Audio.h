@@ -12,6 +12,6 @@ namespace Core::Audio {
 	std::vector<std::string_view> GetDevices();
 
 	void SetDevice(size_t deviceIndex);
-	void SetDevice(std::string_view deviceIndex);
+	void SetDevice(std::string_view name);
 }
 

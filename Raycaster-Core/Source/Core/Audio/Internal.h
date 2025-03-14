@@ -15,7 +15,7 @@ namespace Core::Audio::Internal {
 			ma_device_id id;
 			char name[MA_MAX_DEVICE_NAME_LENGTH + 1];   /* +1 for null terminator. */
 		};
-		std::vector<DeviceInfo> AviableDevices;
+		std::vector<DeviceInfo> AvailableDevices;
 	};
 
 
