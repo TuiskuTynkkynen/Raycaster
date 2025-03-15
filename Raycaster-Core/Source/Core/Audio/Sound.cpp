@@ -613,12 +613,14 @@ namespace Core::Audio {
             fadeInFrames = SAMPLERATE * length / 1s;
         }
         
-        ma_uint64 startTime = ma_engine_get_time_in_pcm_frames(&Internal::System->Engine);
         if (startAfter != 0ms) {
-            startTime += SAMPLERATE * startAfter / 1s;
+            ma_uint64 startTime = ma_engine_get_time_in_pcm_frames(&Internal::System->Engine) + SAMPLERATE * startAfter / 1s;
+
+            ma_sound_set_fade_start_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames, startTime);
+            return;
         }
 
-        ma_sound_set_fade_start_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames, startTime);
+        ma_sound_set_fade_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames);
     }
 
     Sound::Flags::Flags(uint8_t flags) : Data(flags) {
