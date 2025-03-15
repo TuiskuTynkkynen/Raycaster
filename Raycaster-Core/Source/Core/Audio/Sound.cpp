@@ -602,7 +602,13 @@ namespace Core::Audio {
     }
 
     void Sound::SetFadeOut(std::chrono::milliseconds length, std::chrono::milliseconds startAfter) {
+        // If volume is not zero, start from the current volume
+        if (GetFadeVolume()) {
         SetFade(length, -1.0f, 0.0f, startAfter);
+            return;
+        }
+
+        SetFade(length, 1.0f, 0.0f, startAfter);
     }
 
     void Sound::SetFade(std::chrono::milliseconds length, float startVolume, float endVolume, std::chrono::milliseconds startAfter) {
