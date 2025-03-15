@@ -325,7 +325,7 @@ namespace Core::Audio {
     void Sound::Start(std::chrono::milliseconds fadeLength, float volumeMin, float volumeMax) {
         using namespace std::chrono_literals;
         
-        if (GetFadeVolume() == 0.0f) {
+        if (GetFadeVolume() == 0.0f && m_InternalSound->engineNode.fader.cursorInFrames < m_InternalSound->engineNode.fader.lengthInFrames) {
             SkipTo(0ms);
             if (fadeLength == 0ms) {
                 SetFade(0ms, 1.0f, 1.0f);
@@ -604,7 +604,7 @@ namespace Core::Audio {
     void Sound::SetFadeOut(std::chrono::milliseconds length, std::chrono::milliseconds startAfter) {
         // If volume is not zero, start from the current volume
         if (GetFadeVolume()) {
-        SetFade(length, -1.0f, 0.0f, startAfter);
+            SetFade(length, -1.0f, 0.0f, startAfter);
             return;
         }
 
