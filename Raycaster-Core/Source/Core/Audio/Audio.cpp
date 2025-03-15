@@ -53,7 +53,6 @@ namespace Core {
 	
 	void Audio::Shutdown() {
 		RC_ASSERT(Internal::System, "Audio System has not been initialized");
-		Internal::System.reset();
 
         ShutdownEngine();
         
@@ -61,6 +60,8 @@ namespace Core {
 		ma_context_uninit(&Internal::System->Context);
 
         ma_resource_manager_uninit(&Internal::System->ResourceManager);
+
+		Internal::System.reset();
     }
 
 	void Audio::Play(const char* filePath) {
