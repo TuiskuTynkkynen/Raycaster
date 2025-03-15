@@ -226,6 +226,8 @@ namespace Core::Audio {
         }
 
         {
+            internalSound->engineNode.fadeSettings = m_InternalSound->engineNode.fadeSettings;
+
             float startVolume = m_InternalSound->engineNode.fader.volumeBeg;
             float endVolume = m_InternalSound->engineNode.fader.volumeEnd;
 
@@ -234,23 +236,37 @@ namespace Core::Audio {
 
                 ma_uint64 currentTime = ma_engine_get_time_in_pcm_frames(&Internal::System->Engine);
                 int64_t relativeStartTime = -m_InternalSound->engineNode.fader.cursorInFrames;
+                
+                if (relativeStartTime < 0 && glm::abs(relativeStartTime) < fadeLength) {
+                    if (m_ScheduledFade) {
+                        ma_uint64 absoluteStartTime = relativeStartTime + currentTime;
 
-                ma_uint64 absoluteStartTime = relativeStartTime + currentTime;
+                        // If fade should have started before current engine got initialized -> causes uint underflow in absoluteStartTime
+                        if (relativeStartTime < 0 && glm::abs(relativeStartTime) > currentTime) {
+                            float fadeProgress = 1.0f;
+                            if (fadeLength != 0) {
+                                fadeProgress = glm::abs(relativeStartTime) / (float)fadeLength;
+                            }
 
-                // If fade should have started before current engine got initialized -> causes uint underflow in absoluteStartTime
-                if (relativeStartTime < 0 && glm::abs(relativeStartTime) > currentTime) {
-                    float fadeProgress = 1.0f;
-                    if (fadeLength != 0) {
-                        fadeProgress = glm::abs(relativeStartTime) / (float)fadeLength;
+                            // Lerp start volume based on the progress
+                            startVolume = glm::mix(startVolume, endVolume, fadeProgress);
+
+                            absoluteStartTime = currentTime;
+                        }
+
+                        ma_sound_set_fade_start_in_pcm_frames(internalSound, startVolume, endVolume, fadeLength, absoluteStartTime);
+                    } else {
+                        float fadeProgress = 1.0f;
+                        if (fadeLength != 0) {
+                            fadeProgress = glm::abs(relativeStartTime) / (float)fadeLength;
+                        }
+
+                        // Lerp start volume based on the progress
+                        startVolume = glm::mix(startVolume, endVolume, fadeProgress);
+
+                        ma_sound_set_fade_in_pcm_frames(internalSound, startVolume, endVolume, fadeLength);
                     }
-
-                    // Lerp start volume based on the progress
-                    startVolume = (1.0f - fadeProgress) * startVolume + fadeProgress * endVolume;
-
-                    absoluteStartTime = currentTime;
                 }
-
-                ma_sound_set_fade_start_in_pcm_frames(internalSound, startVolume, endVolume, fadeLength, absoluteStartTime);
             }
         }
 
@@ -623,10 +639,12 @@ namespace Core::Audio {
             ma_uint64 startTime = ma_engine_get_time_in_pcm_frames(&Internal::System->Engine) + SAMPLERATE * startAfter / 1s;
 
             ma_sound_set_fade_start_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames, startTime);
+            m_ScheduledFade = true;
             return;
         }
 
         ma_sound_set_fade_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames);
+        m_ScheduledFade = false;
     }
 
     Sound::Flags::Flags(uint8_t flags) : Data(flags) {

@@ -140,5 +140,7 @@ namespace Core::Audio {
 
         InternalSoundObject* m_InternalSound;
         Flags m_Flags;
+        
+        bool m_ScheduledFade = false;
     };
 }
