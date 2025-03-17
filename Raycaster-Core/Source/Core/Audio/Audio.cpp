@@ -8,10 +8,13 @@
 #include "Core/Debug/Debug.h"
 
 void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
-	ma_engine_read_pcm_frames(&Core::Audio::Internal::System->Engine, pOutput, frameCount, NULL);
+	RC_ASSERT(Core::Audio::Internal::System->Engine);
+	
+	ma_engine_read_pcm_frames(Core::Audio::Internal::System->Engine, pOutput, frameCount, NULL);
 }
 
 void notification_callback(const ma_device_notification* pNotification) {
+	RC_ASSERT(Core::Audio::Internal::System->Engine);
 	RC_INFO("Notification type = {}", (uint32_t)pNotification->type);
 
 	ma_device_info* devices;
@@ -22,15 +25,23 @@ void notification_callback(const ma_device_notification* pNotification) {
     for (; defaultDeviceIndex < count && !devices[defaultDeviceIndex].isDefault; defaultDeviceIndex++) { }
 
 	RC_INFO("default = {}, {}", defaultDeviceIndex, devices[defaultDeviceIndex].name);
-	RC_INFO("current = {}", Core::Audio::Internal::System->Engine.pDevice->playback.name);
+	RC_INFO("current = {}", Core::Audio::Internal::System->Engine->pDevice->playback.name);
 }
 
 namespace Core::Audio {
 	bool InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback);
-    static inline void ShutdownDevice(){ ma_device_uninit(&Internal::System->Device); }
 
+	static inline void ShutdownDevice() { 
+		ma_device_uninit(Internal::System->Device);
+		delete Internal::System->Device;
+		Internal::System->Device = nullptr;
+	}
 	bool InitEngine();
-    static inline void ShutdownEngine(){ ma_engine_uninit(&Internal::System->Engine); }
+	
+	static inline void ShutdownEngine() { 
+		ma_engine_uninit(Internal::System->Engine);
+		delete Internal::System->Engine;
+		Internal::System->Engine = nullptr;
 }
 
 namespace Core {
@@ -83,7 +94,7 @@ namespace Core {
 
 		std::string pathString = path.string();
 
-		ma_result result = ma_engine_play_sound(&Internal::System->Engine, pathString.c_str(), NULL);
+		ma_result result = ma_engine_play_sound(Internal::System->Engine, pathString.c_str(), NULL);
 		if (result != MA_SUCCESS) {
 			RC_WARN("Playing inline sound, {}, failed with error code {}", pathString, (int32_t)result);
 		}
@@ -285,10 +296,12 @@ namespace Core {
 	}
 
 	bool Audio::InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback) {
-		if (ma_device__is_initialized(&Internal::System->Device)) {
+		if (Internal::System->Device) {
 			RC_ERROR("Tried to intialize already initialized device");
 			return false;
 		}
+
+		Internal::System->Device = new ma_device;
 
 		ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
 
@@ -300,7 +313,7 @@ namespace Core {
 		deviceConfig.notificationCallback = notificationCallback;
 		deviceConfig.playback.pDeviceID = playbackId;
 
-		ma_result result = ma_device_init(&Internal::System->Context, &deviceConfig, &Internal::System->Device);
+		ma_result result = ma_device_init(&Internal::System->Context, &deviceConfig, Internal::System->Device);
 		if (result != MA_SUCCESS) {
 			RC_ERROR("Failed to initialize device with error {}", (int32_t)result);
 			return false;
@@ -310,16 +323,25 @@ namespace Core {
 	}
 
 	bool Audio::InitEngine() {
+		if (Internal::System->Engine) {
+			RC_ERROR("Tried to intialize already initialized engine");
+			return false;
+		}
+
+		RC_ASSERT(Internal::System->Device, "Tried to initialize engine before device")
+
+		Internal::System->Engine = new ma_engine;
+
 		ma_engine_config engineConfig = ma_engine_config_init();
 		engineConfig.channels = CHANNELS;
 		engineConfig.sampleRate = SAMPLERATE;
 		engineConfig.listenerCount = LISTNERS;
 
 		engineConfig.pContext = &Internal::System->Context;
-		engineConfig.pDevice = &Internal::System->Device;
+		engineConfig.pDevice = Internal::System->Device;
 		engineConfig.pResourceManager = &Internal::System->ResourceManager;
 
-		ma_result result = ma_engine_init(&engineConfig, &Internal::System->Engine);
+		ma_result result = ma_engine_init(&engineConfig, Internal::System->Engine);
 		if (result != MA_SUCCESS) {
 			RC_ERROR("Failed to initialize engine with error {}", (int32_t)result);
 			return false;

@@ -22,7 +22,7 @@ namespace Core::Audio {
 
     static InternalSoundObject* CreateShallowCopy(const InternalSoundObject* original, Sound::Flags flags) {
         InternalSoundObject* copy = new InternalSoundObject;
-        ma_result result = ma_sound_init_copy(&Internal::System->Engine, original, flags, 0, copy);
+        ma_result result = ma_sound_init_copy(Internal::System->Engine, original, flags, 0, copy);
 
         if (result != MA_SUCCESS) {
             RC_WARN("Cypying sound failed with error {}", (int32_t)result);
@@ -96,7 +96,7 @@ namespace Core::Audio {
         
         std::string fileString = filePath.string();
 
-        ma_result result = ma_sound_init_from_file(&Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
+        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
         if (result != MA_SUCCESS) {
             RC_WARN("Initializing sound, \"{}\", failed with error {}", filePath.string(), (int32_t)result);
         }
@@ -112,7 +112,7 @@ namespace Core::Audio {
         }
         std::string fileString = directoryPath.string();
 
-        ma_result result = ma_sound_init_from_file(&Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
+        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
         if (result != MA_SUCCESS) {
             RC_WARN("Initializing sound, \"{}\", failed with error {}", filePath, (int32_t)result);
         }
@@ -128,7 +128,7 @@ namespace Core::Audio {
         }
         std::string fileString = directoryPath.string();
 
-        ma_result result = ma_sound_init_from_file(&Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
+        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
         if (result != MA_SUCCESS) {
             RC_WARN("Initializing sound, \"{}\", failed with error {}", filePath, (int32_t)result);
         }
@@ -191,7 +191,7 @@ namespace Core::Audio {
         InternalSoundObject* internalSoundCopy = new InternalSoundObject;
 
         std::string fileString = filePath.string();
-        ma_result result = ma_sound_init_from_file(&Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, internalSoundCopy);
+        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, internalSoundCopy);
         if (result != MA_SUCCESS) {
             RC_WARN("Reinitializing sound from file, \"{}\", failed with error {}", filePath.string(), (int32_t)result);
             
@@ -234,7 +234,8 @@ namespace Core::Audio {
             if (startVolume != 1.0f || endVolume != 1.0f) {
                 ma_uint64 fadeLength = m_InternalSound->engineNode.fader.lengthInFrames;
 
-                ma_uint64 currentTime = ma_engine_get_time_in_pcm_frames(&Internal::System->Engine);
+                RC_ASSERT(Internal::System->Engine);
+                ma_uint64 currentTime = ma_engine_get_time_in_pcm_frames(Internal::System->Engine);
                 int64_t relativeStartTime = -m_InternalSound->engineNode.fader.cursorInFrames;
                 
                 if (relativeStartTime < 0 && glm::abs(relativeStartTime) < fadeLength) {
@@ -636,7 +637,8 @@ namespace Core::Audio {
         }
         
         if (startAfter != 0ms) {
-            ma_uint64 startTime = ma_engine_get_time_in_pcm_frames(&Internal::System->Engine) + SAMPLERATE * startAfter / 1s;
+            RC_ASSERT(Internal::System->Engine);
+            ma_uint64 startTime = ma_engine_get_time_in_pcm_frames(Internal::System->Engine) + SAMPLERATE * startAfter / 1s;
 
             ma_sound_set_fade_start_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames, startTime);
             m_ScheduledFade = true;
