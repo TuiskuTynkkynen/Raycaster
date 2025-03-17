@@ -296,6 +296,20 @@ namespace Core::Audio {
         return index.Epoch == m_Epoch && index.Value < m_Sounds.size();
     }
 
+    SoundManager::Index SoundManager::ValidateIndex(Index index, std::string_view name) {
+        // Valid or already invalidated index
+        if ((index.Epoch == -1 && index.Value == -1) || IndexIsValid(index)) {
+            return index;
+        }
+
+        if (auto iter = m_SoundIndices.find(name); iter != m_SoundIndices.end()) {
+            return iter->second;
+        }
+
+        // Could not validate
+        return Index{};
+    }
+
     std::optional<SoundManager::Index> SoundManager::GetSoundIndex(std::string_view name) {
         auto iter = m_SoundIndices.find(name);
         

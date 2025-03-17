@@ -36,6 +36,7 @@ namespace Core::Audio {
         void ReinitSounds();
 
         bool IndexIsValid(Index index);
+        Index ValidateIndex(Index index, std::string_view name);
         std::optional<Index> GetSoundIndex(std::string_view name);
 
         Sound* GetSound(Index index);
