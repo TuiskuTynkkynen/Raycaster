@@ -185,7 +185,7 @@ namespace Core::Audio {
             return;
         }
 
-        CopySound(copyName, index.value());
+        CopySound(copyName, index);
     }
 
     void SoundManager::UnregisterSound(std::string_view name) {
@@ -298,7 +298,7 @@ namespace Core::Audio {
 
     SoundManager::Index SoundManager::ValidateIndex(Index index, std::string_view name) {
         // Valid or already invalidated index
-        if ((index.Epoch == -1 && index.Value == -1) || IndexIsValid(index)) {
+        if (index || IndexIsValid(index)) {
             return index;
         }
 
@@ -310,11 +310,11 @@ namespace Core::Audio {
         return Index{};
     }
 
-    std::optional<SoundManager::Index> SoundManager::GetSoundIndex(std::string_view name) {
+    SoundManager::Index SoundManager::GetSoundIndex(std::string_view name) {
         auto iter = m_SoundIndices.find(name);
         
         if (iter == m_SoundIndices.end()) {
-            return  std::nullopt;
+            return  Index{}; // Return invalidated index
         }
 
         return iter->second;
@@ -335,7 +335,7 @@ namespace Core::Audio {
             return nullptr;
         }
         
-        return GetSound(index.value());
+        return GetSound(index);
     }
 
     size_t SoundManager::SoundCount() {

@@ -9,8 +9,12 @@ namespace Core::Audio {
     class SoundManager {
     public:
         struct Index {
-            uint32_t Epoch = -1;
-            uint32_t Value = -1;
+            uint32_t Epoch = UINT32_MAX;
+            uint32_t Value = UINT32_MAX;
+
+            operator bool() {
+                return (Epoch != UINT32_MAX || Value != UINT32_MAX);
+            }
         };
         SoundManager(uint32_t initialCapacity = 0) { m_Sounds.reserve(initialCapacity); m_SoundIndices.reserve(initialCapacity); m_SoundNames.reserve(initialCapacity); }
 
@@ -37,7 +41,7 @@ namespace Core::Audio {
 
         bool IndexIsValid(Index index);
         Index ValidateIndex(Index index, std::string_view name);
-        std::optional<Index> GetSoundIndex(std::string_view name);
+        Index GetSoundIndex(std::string_view name);
 
         Sound* GetSound(Index index);
         Sound* GetSound(std::string_view name);
