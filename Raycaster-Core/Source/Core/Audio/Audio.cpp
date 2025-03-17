@@ -8,28 +8,28 @@
 #include "Core/Debug/Debug.h"
 
 void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
-    ma_engine_read_pcm_frames(&Core::Audio::Internal::System->Engine, pOutput, frameCount, NULL);
+	ma_engine_read_pcm_frames(&Core::Audio::Internal::System->Engine, pOutput, frameCount, NULL);
 }
 
 void notification_callback(const ma_device_notification* pNotification) {
-    RC_INFO("Notification type = {}", (uint32_t)pNotification->type);
+	RC_INFO("Notification type = {}", (uint32_t)pNotification->type);
 
-    ma_device_info* devices;
-    ma_uint32 count;
-    ma_context_get_devices(&Core::Audio::Internal::System->Context, &devices, &count, nullptr, nullptr);
+	ma_device_info* devices;
+	ma_uint32 count;
+	ma_context_get_devices(&Core::Audio::Internal::System->Context, &devices, &count, nullptr, nullptr);
 
-    size_t defaultDeviceIndex = 0;
+	size_t defaultDeviceIndex = 0;
     for (; defaultDeviceIndex < count && !devices[defaultDeviceIndex].isDefault; defaultDeviceIndex++) { }
 
-    RC_INFO("default = {}, {}", defaultDeviceIndex, devices[defaultDeviceIndex].name);
-    RC_INFO("current = {}", Core::Audio::Internal::System->Engine.pDevice->playback.name);
+	RC_INFO("default = {}, {}", defaultDeviceIndex, devices[defaultDeviceIndex].name);
+	RC_INFO("current = {}", Core::Audio::Internal::System->Engine.pDevice->playback.name);
 }
 
 namespace Core::Audio {
-    bool InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback);
+	bool InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback);
     static inline void ShutdownDevice(){ ma_device_uninit(&Internal::System->Device); }
-    
-    bool InitEngine();
+
+	bool InitEngine();
     static inline void ShutdownEngine(){ ma_engine_uninit(&Internal::System->Engine); }
 }
 
@@ -37,154 +37,294 @@ namespace Core {
 	void Audio::Init() {
 		RC_ASSERT(!Internal::System, "Audio System has already been initialized");
 		Internal::System = std::make_unique<Internal::AudioSystem>();
-        
-        ma_resource_manager_config managerConfig = ma_resource_manager_config_init();
-        managerConfig.decodedFormat = FORMAT;
-        managerConfig.decodedChannels = CHANNELS;
-        managerConfig.decodedSampleRate = SAMPLERATE;
-        
-        bool success = ma_resource_manager_init(&managerConfig, &Internal::System->ResourceManager) == MA_SUCCESS;
-        RC_ASSERT(success, "Failed to initialize Audio System. Could not initialize resource manager.\n");
-	
-        success = ma_context_init(nullptr, 0, nullptr, &Internal::System->Context) == MA_SUCCESS;
-        RC_ASSERT(success, "Failed to initialize Audio System. Could not initialize context.\n");
-        
-        success = Audio::InitDevice(nullptr, data_callback, notification_callback);
-        RC_ASSERT(success, "Failed to intitialize Audio System");
-        
-        success = Audio::InitEngine();
-        RC_ASSERT(success, "Failed to intitialize Audio System");   
-    }
-	
+
+		ma_resource_manager_config managerConfig = ma_resource_manager_config_init();
+		managerConfig.decodedFormat = FORMAT;
+		managerConfig.decodedChannels = CHANNELS;
+		managerConfig.decodedSampleRate = SAMPLERATE;
+
+		bool success = ma_resource_manager_init(&managerConfig, &Internal::System->ResourceManager) == MA_SUCCESS;
+		RC_ASSERT(success, "Failed to initialize Audio System. Could not initialize resource manager.\n");
+
+		success = ma_context_init(nullptr, 0, nullptr, &Internal::System->Context) == MA_SUCCESS;
+		RC_ASSERT(success, "Failed to initialize Audio System. Could not initialize context.\n");
+
+		success = Audio::InitDevice(nullptr, data_callback, notification_callback);
+		RC_ASSERT(success, "Failed to intitialize Audio System");
+
+		success = Audio::InitEngine();
+		RC_ASSERT(success, "Failed to intitialize Audio System");
+	}
+
 	void Audio::Shutdown() {
 		RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
-        ShutdownEngine();
-        
-        ShutdownDevice();
+		ShutdownEngine();
+
+		ShutdownDevice();
 		ma_context_uninit(&Internal::System->Context);
 
-        ma_resource_manager_uninit(&Internal::System->ResourceManager);
+		ma_resource_manager_uninit(&Internal::System->ResourceManager);
 
 		Internal::System.reset();
-    }
+	}
 
-	void Audio::Play(const char* filePath) {
+	void Audio::PlayInlineSound(std::string_view filePath) {
+		std::filesystem::path path = filePath;
+		if (path.is_relative()) {
+			path = std::filesystem::current_path() / "Source" / "Audio" / path;
+		}
+
+		PlayInlineSound(path);
+	}
+
+	void Audio::PlayInlineSound(std::filesystem::path& path) {
 		RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
-		ma_result result = ma_engine_play_sound(&Internal::System->Engine, filePath, NULL);
+		std::string pathString = path.string();
+
+		ma_result result = ma_engine_play_sound(&Internal::System->Engine, pathString.c_str(), NULL);
+		if (result != MA_SUCCESS) {
+			RC_WARN("Playing inline sound, {}, failed with error code {}", pathString, (int32_t)result);
+		}
 	}
-    
-    std::vector<std::string_view> Audio::GetDevices() {
-        RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
-        Internal::System->AvailableDevices.clear();
+	void Audio::Play(SoundManager::Index index) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
-        uint32_t playbackDeviceCount = 0;
-        auto enumerationCallback = [](ma_context* pContext, ma_device_type deviceType, const ma_device_info* pInfo, void* pUserData) -> ma_bool32 {
-            if (deviceType != ma_device_type_playback) {
-                return false;
-            }
+		Sound* sound = Internal::System->SoundManager.GetSound(index);
 
-            Internal::System->AvailableDevices.emplace_back(pInfo->id);
+		if (!sound) {
+			return;
+		}
 
-            for (size_t i = 0; pInfo->name[i]; i++) {
-                Internal::System->AvailableDevices.back().name[i] = pInfo->name[i];
-            }
-            
-            uint32_t* count = (uint32_t*)pUserData;
-            (*count)++;
+		sound->Start();
+	}
 
-            return true;
-        };
-        
-        ma_result result = ma_context_enumerate_devices(&Internal::System->Context, enumerationCallback, &playbackDeviceCount);
-        if (result != MA_SUCCESS) {
-            RC_WARN("Retreiving device information failed with error code {}", (int32_t)result);
-        }
+	void Audio::Play(SoundManager::Index& index, std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
-        std::vector<std::string_view> names;
-        names.reserve(playbackDeviceCount);
+		index = Internal::System->SoundManager.ValidateIndex(index, name);
+		Play(index);
+	}
 
-        for (size_t i = 0; i < playbackDeviceCount; i++) {
-            names.emplace_back(Internal::System->AvailableDevices[i].name);
-        }
+	void Audio::Play(std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
-        return names;
-    }
+		Sound* sound = Internal::System->SoundManager.GetSound(name);
 
-    void Audio::SetDevice(size_t deviceIndex) {
-        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+		if (!sound) {
+			return;
+		}
 
-        if (deviceIndex >= Internal::System->Context.playbackDeviceInfoCount) {
-            RC_WARN("Audio System SetDevice() called with invalid device index/name");
-            return;
-        }
+		sound->Start();
+	}
 
-        //Shutdown old engine and device
+	void Audio::Pause(SoundManager::Index index) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		Sound* sound = Internal::System->SoundManager.GetSound(index);
+
+		if (!sound) {
+			return;
+		}
+
+		sound->Stop();
+	}
+
+	void Audio::Pause(SoundManager::Index& index, std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		index = Internal::System->SoundManager.ValidateIndex(index, name);
+		Pause(index);
+	}
+
+	void Audio::Pause(std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		Sound* sound = Internal::System->SoundManager.GetSound(name);
+
+		if (!sound) {
+			return;
+		}
+
+		sound->Stop();
+	}
+
+	void Audio::Stop(SoundManager::Index index) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		Sound* sound = Internal::System->SoundManager.GetSound(index);
+
+		if (!sound) {
+			return;
+		}
+
+		sound->Stop();
+		sound->SkipTo(std::chrono::milliseconds::zero());
+	}
+
+	void Audio::Stop(SoundManager::Index& index, std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		index = Internal::System->SoundManager.ValidateIndex(index, name);
+		Stop(index);
+	}
+
+	void Audio::Stop(std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		Sound* sound = Internal::System->SoundManager.GetSound(name);
+
+		if (!sound) {
+			return;
+		}
+
+		sound->Stop();
+		sound->SkipTo(std::chrono::milliseconds::zero());
+	}
+
+	Audio::SoundManager& Audio::GetSoundManager() {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		return Internal::System->SoundManager;
+	}
+
+	bool Audio::ValidateSoundIndex(SoundManager::Index& index, std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		index = Internal::System->SoundManager.ValidateIndex(index, name);
+		return index;
+	}
+
+	Audio::SoundManager::Index Audio::GetSoundIndex(std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		return Internal::System->SoundManager.GetSoundIndex(name);
+	}
+
+	Audio::Sound* Audio::GetSound(SoundManager::Index index) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		return Internal::System->SoundManager.GetSound(index);
+	}
+
+	Audio::Sound* Audio::GetSound(std::string_view name) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		return Internal::System->SoundManager.GetSound(name);
+	}
+
+	std::vector<std::string_view> Audio::GetDevices() {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		Internal::System->AvailableDevices.clear();
+
+		uint32_t playbackDeviceCount = 0;
+		auto enumerationCallback = [](ma_context* pContext, ma_device_type deviceType, const ma_device_info* pInfo, void* pUserData) -> ma_bool32 {
+			if (deviceType != ma_device_type_playback) {
+				return false;
+			}
+
+			Internal::System->AvailableDevices.emplace_back(pInfo->id);
+
+			for (size_t i = 0; pInfo->name[i]; i++) {
+				Internal::System->AvailableDevices.back().name[i] = pInfo->name[i];
+			}
+
+			uint32_t* count = (uint32_t*)pUserData;
+			(*count)++;
+
+			return true;
+			};
+
+		ma_result result = ma_context_enumerate_devices(&Internal::System->Context, enumerationCallback, &playbackDeviceCount);
+		if (result != MA_SUCCESS) {
+			RC_WARN("Retreiving device information failed with error code {}", (int32_t)result);
+		}
+
+		std::vector<std::string_view> names;
+		names.reserve(playbackDeviceCount);
+
+		for (size_t i = 0; i < playbackDeviceCount; i++) {
+			names.emplace_back(Internal::System->AvailableDevices[i].name);
+		}
+
+		return names;
+	}
+
+	void Audio::SetDevice(size_t deviceIndex) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+		if (deviceIndex >= Internal::System->Context.playbackDeviceInfoCount) {
+			RC_WARN("Audio System SetDevice() called with invalid device index/name");
+			return;
+		}
+
+		//Shutdown old engine and device
         ShutdownEngine();
         ShutdownDevice();
 
-        //Create new engine and device
-        RC_ASSERT(InitDevice(&Internal::System->Context.pDeviceInfos[deviceIndex].id, data_callback, notification_callback), "Audio System SetDevice failed");
-        RC_ASSERT(InitEngine(), "Audio System SetDevice failed");
-    }
+		//Create new engine and device
+		RC_ASSERT(InitDevice(&Internal::System->Context.pDeviceInfos[deviceIndex].id, data_callback, notification_callback), "Audio System SetDevice failed");
+		RC_ASSERT(InitEngine(), "Audio System SetDevice failed");
+	}
 
-    void Audio::SetDevice(std::string_view deviceName) {
-        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+	void Audio::SetDevice(std::string_view deviceName) {
+		RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
-        size_t deviceIndex = -1;
-        for (size_t i = 0; i < Internal::System->AvailableDevices.size(); i++) {
-            if (Internal::System->AvailableDevices[i].name == deviceName) {
-                deviceIndex = i;
-                break;
-            }
-        }
+		size_t deviceIndex = -1;
+		for (size_t i = 0; i < Internal::System->AvailableDevices.size(); i++) {
+			if (Internal::System->AvailableDevices[i].name == deviceName) {
+				deviceIndex = i;
+				break;
+			}
+		}
 
-        SetDevice(deviceIndex);
-    }
+		SetDevice(deviceIndex);
+	}
 
-    bool Audio::InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback) {
-        if (ma_device__is_initialized(&Internal::System->Device)) {
-            RC_ERROR("Tried to intialize already initialized device");
-            return false;
-        }
-        
-        ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
+	bool Audio::InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback) {
+		if (ma_device__is_initialized(&Internal::System->Device)) {
+			RC_ERROR("Tried to intialize already initialized device");
+			return false;
+		}
 
-        deviceConfig.playback.format = FORMAT;
-        deviceConfig.playback.channels = CHANNELS;
-        deviceConfig.sampleRate = SAMPLERATE;
+		ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
 
-        deviceConfig.dataCallback = dataCallback;
-        deviceConfig.notificationCallback = notificationCallback;
-        deviceConfig.playback.pDeviceID = playbackId;
+		deviceConfig.playback.format = FORMAT;
+		deviceConfig.playback.channels = CHANNELS;
+		deviceConfig.sampleRate = SAMPLERATE;
 
-        ma_result result = ma_device_init(&Internal::System->Context, &deviceConfig, &Internal::System->Device);
-        if (result != MA_SUCCESS) {
-            RC_ERROR("Failed to initialize device with error {}", (int32_t)result);
-            return false;
-        }
+		deviceConfig.dataCallback = dataCallback;
+		deviceConfig.notificationCallback = notificationCallback;
+		deviceConfig.playback.pDeviceID = playbackId;
 
-        return true;
-    }
+		ma_result result = ma_device_init(&Internal::System->Context, &deviceConfig, &Internal::System->Device);
+		if (result != MA_SUCCESS) {
+			RC_ERROR("Failed to initialize device with error {}", (int32_t)result);
+			return false;
+		}
 
-    bool Audio::InitEngine() {
-        ma_engine_config engineConfig = ma_engine_config_init();
-        engineConfig.channels = CHANNELS;
-        engineConfig.sampleRate = SAMPLERATE;
-        engineConfig.listenerCount = LISTNERS;
+		return true;
+	}
 
-        engineConfig.pContext = &Internal::System->Context;
-        engineConfig.pDevice = &Internal::System->Device;
-        engineConfig.pResourceManager = &Internal::System->ResourceManager;
-        
-        ma_result result = ma_engine_init(&engineConfig, &Internal::System->Engine);
-        if (result != MA_SUCCESS) {
-            RC_ERROR("Failed to initialize engine with error {}", (int32_t)result);
-            return false;
-        }
-        
-        return true;
-    }
+	bool Audio::InitEngine() {
+		ma_engine_config engineConfig = ma_engine_config_init();
+		engineConfig.channels = CHANNELS;
+		engineConfig.sampleRate = SAMPLERATE;
+		engineConfig.listenerCount = LISTNERS;
+
+		engineConfig.pContext = &Internal::System->Context;
+		engineConfig.pDevice = &Internal::System->Device;
+		engineConfig.pResourceManager = &Internal::System->ResourceManager;
+
+		ma_result result = ma_engine_init(&engineConfig, &Internal::System->Engine);
+		if (result != MA_SUCCESS) {
+			RC_ERROR("Failed to initialize engine with error {}", (int32_t)result);
+			return false;
+		}
+
+		return true;
+	}
 }

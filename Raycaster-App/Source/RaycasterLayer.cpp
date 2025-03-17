@@ -2,7 +2,6 @@
 
 #include "Core/UI/UI.h"
 #include "Core/Audio/Audio.h"
-#include "Core/Audio/Sound.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -22,6 +21,8 @@ void RaycasterLayer::OnAttach() {
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
 
     Core::Audio::Init();
+    Core::Audio::Sound::Flags flags(Core::Audio::Sound::DisablePitch, Core::Audio::Sound::DisableSpatialization);
+    Core::Audio::GetSoundManager().RegisterSound("sound", "sound.wav", flags);
 }
 
 void RaycasterLayer::OnDetach() {
@@ -106,8 +107,10 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
             Core::Audio::SetDevice(0);
         }
         
-        static Core::Audio::Sound::Flags flags(Core::Audio::Sound::DisablePitch, Core::Audio::Sound::DisableSpatialization);
-        static Core::Audio::Sound sound("sound.wav", flags);
+        static Core::Audio::SoundManager::Index soundIndex = Core::Audio::GetSoundIndex("sound");
+        //Core::Audio::ValidateSoundIndex(soundIndex, "sound");
+        Core::Audio::Sound& sound = *Core::Audio::GetSound(soundIndex);
+        
         if (Core::UI::Button("Play", { 0.5f, 0.125f })) {
             sound.Start();
         }
