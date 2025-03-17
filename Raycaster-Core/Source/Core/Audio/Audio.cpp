@@ -47,6 +47,8 @@ namespace Core::Audio {
         delete device; 
     }
 
+    void SetInternalDevice(const ma_device_id* playbackId);
+
     bool InitEngine();
     
     static inline void ShutdownEngine() { 
@@ -281,27 +283,33 @@ namespace Core {
         return names;
     }
 
-    void Audio::SetDevice(size_t deviceIndex) {
+    void Audio::SetInternalDevice(const ma_device_id* playbackId) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
-
-        if (deviceIndex >= Internal::System->Context.playbackDeviceInfoCount) {
-            RC_WARN("Audio System SetDevice() called with invalid device index/name");
-            return;
-        }
 
         // Copy internal device and engine pointers and set them to nullptr
         ma_device* oldDevice = std::exchange(Internal::System->Device, nullptr);
         ma_engine* oldEngine = std::exchange(Internal::System->Engine, nullptr);
 
         //Create new engine and device
-        bool result = InitDevice(&Internal::System->Context.pDeviceInfos[deviceIndex].id, data_callback, notification_callback) && InitEngine();
+        bool result = InitDevice(playbackId, data_callback, notification_callback) && InitEngine();
         RC_ASSERT(result, "Audio System SetDevice failed");
-        
+
         Internal::System->SoundManager.ReinitSounds();
 
         //Shutdown old engine and device
         ShutdownEngine(oldEngine);
         ShutdownDevice(oldDevice);
+    }
+
+    void Audio::SetDevice(size_t deviceIndex) {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        if (deviceIndex >= Internal::System->Context.playbackDeviceInfoCount) {
+            RC_WARN("Audio System SetDevice() called with invalid device index");
+            return;
+        }
+
+        SetInternalDevice(&Internal::System->Context.pDeviceInfos[deviceIndex].id);
     }
 
     void Audio::SetDevice(std::string_view deviceName) {
@@ -315,7 +323,17 @@ namespace Core {
             }
         }
 
-        SetDevice(deviceIndex);
+        if (deviceIndex >= Internal::System->Context.playbackDeviceInfoCount) {
+            RC_WARN("Audio System SetDevice() called with invalid device name");
+            return;
+        }
+
+        SetInternalDevice(&Internal::System->Context.pDeviceInfos[deviceIndex].id);
+    }
+
+    // Switch to default device
+    void Audio::SetDevice() {
+        SetInternalDevice(nullptr);
     }
 
     bool Audio::InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback) {
