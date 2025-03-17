@@ -43,12 +43,17 @@ namespace Core {
         managerConfig.decodedChannels = CHANNELS;
         managerConfig.decodedSampleRate = SAMPLERATE;
         
-        RC_ASSERT(ma_resource_manager_init(&managerConfig, &Internal::System->ResourceManager) == MA_SUCCESS, "Failed to initialize Audio System. Could not initialize resource manager.\n");
+        bool success = ma_resource_manager_init(&managerConfig, &Internal::System->ResourceManager) == MA_SUCCESS;
+        RC_ASSERT(success, "Failed to initialize Audio System. Could not initialize resource manager.\n");
 	
-        RC_ASSERT(ma_context_init(nullptr, 0, nullptr, &Internal::System->Context) == MA_SUCCESS, "Failed to initialize Audio System. Could not initialize context.\n");
-        RC_ASSERT(Audio::InitDevice(nullptr, data_callback, notification_callback), "Failed to intitialize Audio System");
+        success = ma_context_init(nullptr, 0, nullptr, &Internal::System->Context) == MA_SUCCESS;
+        RC_ASSERT(success, "Failed to initialize Audio System. Could not initialize context.\n");
         
-        RC_ASSERT(Audio::InitEngine(), "Failed to intitialize Audio System");
+        success = Audio::InitDevice(nullptr, data_callback, notification_callback);
+        RC_ASSERT(success, "Failed to intitialize Audio System");
+        
+        success = Audio::InitEngine();
+        RC_ASSERT(success, "Failed to intitialize Audio System");   
     }
 	
 	void Audio::Shutdown() {
