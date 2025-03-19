@@ -9,6 +9,10 @@ namespace Core::Audio {
     void Init();
     void Shutdown();
 
+    void SetMasterVolume(float volume);
+    // Convert dB to linear volume and set it
+    void SetMasterGain(float gaindB);
+
     // Load, play and clean up a sound without registering in the SoundManager
     void PlayInlineSound(std::string_view filePath);
     // Load, play and clean up a sound without registering in the SoundManager

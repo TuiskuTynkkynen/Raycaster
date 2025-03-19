@@ -99,6 +99,14 @@ namespace Core {
         Internal::System.reset();
     }
 
+    void Audio::SetMasterVolume(float volume) {
+        ma_engine_set_volume(Internal::System->Engine, volume);
+    }
+
+    void Audio::SetMasterGain(float gaindB) {
+        ma_engine_set_volume(Internal::System->Engine, ma_volume_db_to_linear(gaindB));
+    }
+
     void Audio::PlayInlineSound(std::string_view filePath) {
         std::filesystem::path path = filePath;
         if (path.is_relative()) {
