@@ -11,7 +11,7 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
     if (!Core::Audio::Internal::System->Engine) {
         return;
     }
-    
+
     ma_engine_read_pcm_frames(Core::Audio::Internal::System->Engine, pOutput, frameCount, NULL);
 }
 
@@ -19,7 +19,7 @@ void notification_callback(const ma_device_notification* pNotification) {
     if (!Core::Audio::Internal::System->Engine) {
         return;
     }
-    
+
     RC_INFO("Notification type = {}", (uint32_t)pNotification->type);
 
     ma_device_info* devices;
@@ -35,29 +35,29 @@ void notification_callback(const ma_device_notification* pNotification) {
 
 namespace Core::Audio {
     bool InitDevice(const ma_device_id* playbackId, const ma_device_data_proc dataCallback, const ma_device_notification_proc notificationCallback);
-    
-    static inline void ShutdownDevice() { 
+
+    static inline void ShutdownDevice() {
         ma_device_uninit(Internal::System->Device);
         delete Internal::System->Device;
         Internal::System->Device = nullptr;
     }
 
-    static inline void ShutdownDevice(ma_device* device) { 
+    static inline void ShutdownDevice(ma_device* device) {
         ma_device_uninit(device);
-        delete device; 
+        delete device;
     }
 
     void SetInternalDevice(const ma_device_id* playbackId);
 
     bool InitEngine();
-    
-    static inline void ShutdownEngine() { 
+
+    static inline void ShutdownEngine() {
         ma_engine_uninit(Internal::System->Engine);
         delete Internal::System->Engine;
         Internal::System->Engine = nullptr;
     }
 
-    static inline void ShutdownEngine(ma_engine* engine) { 
+    static inline void ShutdownEngine(ma_engine* engine) {
         ma_engine_uninit(engine);
         delete engine;
     }
@@ -105,6 +105,43 @@ namespace Core {
 
     void Audio::SetMasterGain(float gaindB) {
         ma_engine_set_volume(Internal::System->Engine, ma_volume_db_to_linear(gaindB));
+    }
+
+    void Audio::SetWorldUp(glm::vec3 up) {
+        static_assert(LISTNERS == 1, "Audio System listner related functions assume single listner");
+        ma_engine_listener_set_world_up(Internal::System->Engine, 0, up.x, up.y, up.z);
+    }
+
+    void Audio::SetListnerCone(float innerAngle, float outerAngle, float outerGaindB) {
+        static_assert(LISTNERS == 1, "Audio System listner related functions assume single listner");
+        ma_engine_listener_set_cone(Internal::System->Engine, 0, innerAngle, outerAngle, outerGaindB);
+    }
+
+    void Audio::SetListnerConeDegrees(float innerAngleDegrees, float outerAngleDegrees, float outerGaindB) {
+        static_assert(LISTNERS == 1, "Audio System listner related functions assume single listner");
+        ma_engine_listener_set_cone(Internal::System->Engine, 0, glm::radians(innerAngleDegrees), glm::radians(outerAngleDegrees), outerGaindB);
+    }
+
+    void Audio::SetListnerSpatialData(glm::vec3 position, glm::vec3 direction, glm::vec3 velocity) {
+        static_assert(LISTNERS == 1, "Audio System listner related functions assume single listner");
+        ma_engine_listener_set_position(Internal::System->Engine, 0, position.x, position.y, position.z);
+        ma_engine_listener_set_direction(Internal::System->Engine, 0, direction.x, direction.y, direction.z);
+        ma_engine_listener_set_velocity(Internal::System->Engine, 0, velocity.x, velocity.y, velocity.z);
+    }
+
+    void Audio::SetListnerPosition(glm::vec3 position) {
+        static_assert(LISTNERS == 1, "Audio System listner related functions assume single listner");
+        ma_engine_listener_set_position(Internal::System->Engine, 0, position.x, position.y, position.z);
+    }
+
+    void Audio::SetListnerDirection(glm::vec3 direction) {
+        static_assert(LISTNERS == 1, "Audio System listner related functions assume single listner");
+        ma_engine_listener_set_direction(Internal::System->Engine, 0, direction.x, direction.y, direction.z);
+    }
+
+    void Audio::SetListnerVelocity(glm::vec3 velocity) {
+        static_assert(LISTNERS == 1, "Audio System listner related functions assume single listner");
+        ma_engine_listener_set_velocity(Internal::System->Engine, 0, velocity.x, velocity.y, velocity.z);
     }
 
     void Audio::PlayInlineSound(std::string_view filePath) {
@@ -379,7 +416,7 @@ namespace Core {
 
         RC_ASSERT(Internal::System->Device, "Tried to initialize engine before device")
 
-        Internal::System->Engine = new ma_engine;
+            Internal::System->Engine = new ma_engine;
 
         ma_engine_config engineConfig = ma_engine_config_init();
         engineConfig.channels = CHANNELS;
