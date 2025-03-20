@@ -1,0 +1,57 @@
+#pragma once
+
+#include <chrono>
+#include <variant>
+#include <memory>
+
+struct InternalBusObject;
+
+namespace Core::Audio {
+    class Bus {
+    public:
+        Bus();
+        Bus(const Bus& parent);
+
+        ~Bus();
+
+        Bus(Bus&& other) noexcept;
+
+        Bus& operator = (const Bus& other) = delete;
+        Bus& operator = (const Bus&& other) = delete;
+
+        bool IsEnabled();
+        // Enables/Disables processing on all sounds attached to this bus and its children
+        void SetEnabled(bool enabled);
+        // Enables/Disables processing on all sounds attached to this bus and its children after delay milliseconds
+        void SetEnabled(bool enabled, std::chrono::milliseconds delay);
+
+        float GetVolume();
+        void SetVolume(float volume);
+        float GetGaindB();
+        void SetGain(float gaindB);
+
+        float GetPitch();
+        void SetPitch(float pitch);
+
+        struct Balance {
+            float Value;
+        };
+        struct Pan {
+            float Value;
+        };
+        std::variant<Balance, Pan> GetBalanceOrPan();
+
+        void SetBalance(float balance);
+        void SetPan(float pan);
+
+        float GetFadeVolume();
+        void SetFadeIn(std::chrono::milliseconds length);
+        void SetFadeOut(std::chrono::milliseconds length);
+        void SetFade(std::chrono::milliseconds length, float startVolume, float endVolume);
+
+        // Detach old parent and attach new parent
+        void AttachParentBus(const Bus& parent);
+    private:
+        std::unique_ptr<InternalBusObject> m_InternalBus;
+    };
+}
