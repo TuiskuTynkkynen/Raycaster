@@ -44,7 +44,7 @@ namespace Core::Audio {
         ~Sound();
 
         Sound(const Sound& other) = delete;
-        Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(std::exchange(other.m_Flags, None)) {}
+        Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(std::exchange(other.m_Flags, None)), m_ScheduledFade(other.m_ScheduledFade) {}
 
         Sound& operator = (const Sound& other) = delete;
         Sound& operator = (const Sound&& other) = delete;
