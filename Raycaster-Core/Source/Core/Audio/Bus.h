@@ -3,6 +3,7 @@
 #include <chrono>
 #include <variant>
 #include <memory>
+#include <vector>
 
 struct InternalBusObject;
 
@@ -10,14 +11,17 @@ namespace Core::Audio {
     class Bus {
     public:
         Bus();
-        Bus(const Bus& parent);
+        Bus(Bus& parent);
 
         ~Bus();
 
+        Bus(const Bus& parent) = delete;
         Bus(Bus&& other) noexcept;
 
         Bus& operator = (const Bus& other) = delete;
         Bus& operator = (const Bus&& other) = delete;
+
+        void Reinit();
 
         bool IsEnabled();
         // Enables/Disables processing on all sounds attached to this bus and its children
@@ -50,8 +54,16 @@ namespace Core::Audio {
         void SetFade(std::chrono::milliseconds length, float startVolume, float endVolume);
 
         // Detach old parent and attach new parent
-        void AttachParentBus(const Bus& parent);
+        void AttachParentBus(Bus& parent);
     private:
         std::unique_ptr<InternalBusObject> m_InternalBus;
+
+        void SwitchParent(Bus* parent);
+        
+        void AttachChild(Bus* child);
+        void DetachChild(Bus* child);
+
+        Bus* m_Parent;
+        std::vector<Bus*> m_Children;
     };
 }
