@@ -1,6 +1,7 @@
 #include "Sound.h"
 
 #include "Internal.h"
+#include "Bus.h"
 #include "Core/Debug/Debug.h"
 
 #include "miniaudio/miniaudio.h"
@@ -18,9 +19,9 @@ namespace Core::Audio {
         return result;
     }
 
-    static Internal::SoundObject* CreateShallowCopy(const Internal::SoundObject* original, Sound::Flags flags) {
+    static Internal::SoundObject* CreateShallowCopy(const Internal::SoundObject* original, Sound::Flags flags, ma_sound_group* group) {
         Internal::SoundObject* copy = new Internal::SoundObject;
-        ma_result result = ma_sound_init_copy(Internal::System->Engine, original, flags, 0, copy);
+        ma_result result = ma_sound_init_copy(Internal::System->Engine, original, flags, group, copy);
 
         if (result != MA_SUCCESS) {
             RC_WARN("Cypying sound failed with error {}", (int32_t)result);
@@ -74,8 +75,8 @@ namespace Core::Audio {
         }
     }
 
-    static Internal::SoundObject* CreateDeepCopy(const Internal::SoundObject* original, Sound::Flags flags) {
-        Internal::SoundObject* copy = CreateShallowCopy(original, flags);
+    static Internal::SoundObject* CreateDeepCopy(const Internal::SoundObject* original, Sound::Flags flags, ma_sound_group* group) {
+        Internal::SoundObject* copy = CreateShallowCopy(original, flags, group);
 
         if (!copy) {
             return nullptr;
@@ -88,19 +89,22 @@ namespace Core::Audio {
 }
 
 namespace Core::Audio {
-    Sound::Sound(const std::filesystem::path& filePath, Flags flags) : m_Flags(flags) {
+    Sound::Sound(const std::filesystem::path& filePath, Flags flags, Bus* parent) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         m_InternalSound = new Internal::SoundObject;
         
         std::string fileString = filePath.string();
 
-        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
+        ma_sound_group* group = parent ? parent->m_InternalBus.get() : nullptr;
+        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), group, nullptr, m_InternalSound);
         if (result != MA_SUCCESS) {
             RC_WARN("Initializing sound, \"{}\", failed with error {}", filePath.string(), (int32_t)result);
         }
+
+        SwitchParent(parent);
     }
 
-    Sound::Sound(const std::string_view& filePath, Flags flags) : m_Flags(flags) {
+    Sound::Sound(const std::string_view& filePath, Flags flags, Bus* parent) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         m_InternalSound = new Internal::SoundObject;
 
@@ -110,13 +114,16 @@ namespace Core::Audio {
         }
         std::string fileString = directoryPath.string();
         
-        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
+        ma_sound_group* group = parent ? parent->m_InternalBus.get() : nullptr;
+        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), group, nullptr, m_InternalSound);
         if (result != MA_SUCCESS) {
             RC_WARN("Initializing sound, \"{}\", failed with error {}", filePath, (int32_t)result);
         }
+
+        SwitchParent(parent);
     }
 
-    Sound::Sound(const char* filePath, Flags flags) : m_Flags(flags) {
+    Sound::Sound(const char* filePath, Flags flags, Bus* parent) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         m_InternalSound = new Internal::SoundObject;
         
@@ -126,19 +133,30 @@ namespace Core::Audio {
         }
         std::string fileString = directoryPath.string();
 
-        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
+        ma_sound_group* group = parent ? parent->m_InternalBus.get() : nullptr;
+        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), group, nullptr, m_InternalSound);
         if (result != MA_SUCCESS) {
             RC_WARN("Initializing sound, \"{}\", failed with error {}", filePath, (int32_t)result);
         }
+
+        SwitchParent(parent);
     }
 
-    Sound::Sound(Internal::SoundObject* internalSound, Flags flags) : m_Flags(flags), m_InternalSound(internalSound) {
+    Sound::Sound(Internal::SoundObject* internalSound, Flags flags, Bus* parent) : m_Flags(flags), m_InternalSound(internalSound) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
+        SwitchParent(parent);
     }
 
     Sound::~Sound() {
+        SwitchParent(nullptr);
+
         ma_sound_uninit(m_InternalSound);
         delete m_InternalSound;
+    }
+    
+    Sound::Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(other.m_Flags), m_ScheduledFade(other.m_ScheduledFade) {
+        SwitchParent(other.m_Parent);
+        other.SwitchParent(nullptr);
     }
 
     bool Sound::CanReinit() {
@@ -151,7 +169,8 @@ namespace Core::Audio {
             return;
         }
 
-        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags);
+        ma_sound_group* group = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
+        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags, group);
 
         if (!internalSoundCopy) {
             RC_WARN("Reinitializing sound failed. Could not successfully copy internal sound object");
@@ -189,7 +208,9 @@ namespace Core::Audio {
         Internal::SoundObject* internalSoundCopy = new Internal::SoundObject;
 
         std::string fileString = filePath.string();
-        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, internalSoundCopy);
+
+        ma_sound_group* group = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
+        ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), group, nullptr, internalSoundCopy);
         if (result != MA_SUCCESS) {
             RC_WARN("Reinitializing sound from file, \"{}\", failed with error {}", filePath.string(), (int32_t)result);
             
@@ -281,13 +302,13 @@ namespace Core::Audio {
             return std::nullopt;
         }
 
-        Internal::SoundObject* internalSoundCopy = CreateShallowCopy(m_InternalSound, m_Flags);
+        Internal::SoundObject* internalSoundCopy = CreateShallowCopy(m_InternalSound, m_Flags, nullptr);
 
         if (!internalSoundCopy) {
             return std::nullopt;
         }
 
-        return Sound(internalSoundCopy, m_Flags);        
+        return Sound(internalSoundCopy, m_Flags, nullptr);
     }
     
     std::optional<Sound> Sound::CopyDeep() const {
@@ -296,13 +317,14 @@ namespace Core::Audio {
             return std::nullopt;
         }
 
-        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags);
+        ma_sound_group* group = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
+        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags, group);
 
         if (!internalSoundCopy) {
             return std::nullopt;
         }
         
-        return Sound(internalSoundCopy, m_Flags);
+        return Sound(internalSoundCopy, m_Flags, m_Parent);
     }
 
     bool Sound::IsLooping() {
@@ -645,6 +667,33 @@ namespace Core::Audio {
 
         ma_sound_set_fade_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames);
         m_ScheduledFade = false;
+    }
+
+    void Sound::AttachParentBus(Bus& parent) {
+        if (&parent == m_Parent) {
+            return;
+        }
+
+        SwitchParent(&parent);
+
+        // Sounds (ma_sound) have only one output bus and buses (ma_sound_group) have only one input bus, so index is always 0
+        ma_result result = ma_node_attach_output_bus(m_InternalSound, 0, m_Parent->m_InternalBus.get(), 0);
+
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching parent bus to sound failed with error {}", (int32_t)result);
+        }
+    }
+
+    void Sound::SwitchParent(Bus* parent) {
+        if (m_Parent) {
+            m_Parent->DetachChild(this);
+        }
+
+        if (parent) {
+            parent->AttachChild(this);
+        }
+
+        m_Parent = parent;
     }
 
     Sound::Flags::Flags(uint8_t flags) : Data(flags) {

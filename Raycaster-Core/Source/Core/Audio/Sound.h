@@ -11,6 +11,7 @@
 
 namespace Core::Audio {
     class Sound {
+        friend class Bus;
     public:
         enum FlagEnum : uint8_t {
             None					= 0,
@@ -37,14 +38,14 @@ namespace Core::Audio {
             Exponential
         };
     public:
-        Sound(const char* filePath, Flags flags);
-        Sound(const std::string_view& filePath, Flags flags);
-        Sound(const std::filesystem::path& filePath, Flags flags);
+        Sound(const char* filePath, Flags flags, Bus* parent = nullptr);
+        Sound(const std::string_view& filePath, Flags flags, Bus* parent = nullptr);
+        Sound(const std::filesystem::path& filePath, Flags flags, Bus* parent = nullptr);
 
         ~Sound();
 
         Sound(const Sound& other) = delete;
-        Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(std::exchange(other.m_Flags, None)), m_ScheduledFade(other.m_ScheduledFade) {}
+        Sound(Sound&& other) noexcept;
 
         Sound& operator = (const Sound& other) = delete;
         Sound& operator = (const Sound&& other) = delete;
@@ -107,6 +108,8 @@ namespace Core::Audio {
         void SetSpatialFactors(float dopplerFactor, float directionalAttenuationFactor);
         void SetDopplerFactor(float dopplerFactor);
         void SetDirectionalAttenuationFactor(float directionalAttenuationFactor);
+
+        void AttachParentBus(Bus& bus);
     public:
             class Flags {
             public:
@@ -134,7 +137,7 @@ namespace Core::Audio {
                 Flags(uint8_t flags);
             };
     private:
-        Sound(Internal::SoundObject* internalSound, Flags flags);
+        Sound(Internal::SoundObject* internalSound, Flags flags, Bus* parent);
         
         void ReinitInternalSound(Internal::SoundObject* internalSound);
 
@@ -142,5 +145,9 @@ namespace Core::Audio {
         Flags m_Flags;
         
         bool m_ScheduledFade = false;
+
+        void SwitchParent(Bus* parent);
+
+        Bus* m_Parent = nullptr;
     };
 }
