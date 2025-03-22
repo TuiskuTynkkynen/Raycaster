@@ -10,6 +10,7 @@
 
 namespace Core::Audio {
     class Bus {
+        friend class Sound;
     public:
         Bus();
         Bus(Bus& parent);
@@ -60,11 +61,14 @@ namespace Core::Audio {
         std::unique_ptr<Internal::BusObject> m_InternalBus;
 
         void SwitchParent(Bus* parent);
-        
-        void AttachChild(Bus* child);
-        void DetachChild(Bus* child);
 
         Bus* m_Parent;
-        std::vector<Bus*> m_Children;
+
+        using ChildNode = std::variant<Bus*, Sound*>;
+
+        void AttachChild(ChildNode child);
+        void DetachChild(ChildNode child);
+
+        std::vector<ChildNode> m_Children;
     };
 }

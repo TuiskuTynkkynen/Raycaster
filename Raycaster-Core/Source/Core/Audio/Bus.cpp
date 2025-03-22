@@ -1,12 +1,13 @@
 #include "Bus.h"
 
 #include "Internal.h"
+#include "Sound.h"
 #include "Core/Debug/Debug.h"
 
 namespace Core::Audio {
     Bus::Bus() {
         RC_ASSERT(Internal::System, "Tried to create bus before initializing Audio System");
-        
+
         m_InternalBus = std::make_unique<Internal::BusObject>();
         ma_result result = ma_sound_group_init(Internal::System->Engine, 0, nullptr, m_InternalBus.get());
 
@@ -35,7 +36,7 @@ namespace Core::Audio {
     Bus::Bus(Bus&& other) noexcept {
         m_InternalBus.swap(other.m_InternalBus);
         m_Children.swap(other.m_Children);
-
+        
         SwitchParent(other.m_Parent);
         other.SwitchParent(nullptr);
     }
@@ -44,17 +45,17 @@ namespace Core::Audio {
     Bus::~Bus() {
         SwitchParent(nullptr);
 
-        for (auto& child : m_Children) {
-            child->SwitchParent(nullptr);
+        for (auto& variant : m_Children) {
+            std::visit([](auto& child) { child->SwitchParent(nullptr); }, variant);
         }
     }
 
     void Bus::Reinit() {
         Internal::BusObject* copy = new Internal::BusObject;
-        
+
         {
             ma_sound_group* parent = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
-            
+
             ma_result result = ma_sound_group_init(Internal::System->Engine, 0, parent, copy);
             if (result != MA_SUCCESS) {
                 RC_WARN("Reinitializing bus failed with error {}", (int32_t)result);
@@ -83,7 +84,7 @@ namespace Core::Audio {
             // Relative start time should always be < 0 for busses, but check anyways since it could be set by using ma_sound_set_fade_start_in_pcm_frames
             if ((startVolume != 1.0f || endVolume != 1.0f) && relativeStartTime < 0) {
                 // Start from current fade volume
-                
+
                 if (abs(relativeStartTime) <= fadeLength) {
                     // Fade length "decreased" by how long ago fade started
                     fadeLength += relativeStartTime;
@@ -270,19 +271,19 @@ namespace Core::Audio {
         m_Parent = parent;
     }
 
-    
-    void Bus::AttachChild(Bus* child) {
+
+    void Bus::AttachChild(ChildNode child) {
         m_Children.push_back(child);
     }
 
-    void Bus::DetachChild(Bus* child) {
+    void Bus::DetachChild(ChildNode child) {
         auto iter = std::find(m_Children.begin(), m_Children.end(), child);
-        
+
         if (iter == m_Children.end()) {
             return;
         }
 
-        *iter = m_Children.back();
+        iter->swap(m_Children.back());
         m_Children.pop_back();
     }
 }
