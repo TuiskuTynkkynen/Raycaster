@@ -35,6 +35,11 @@ namespace Core::Audio {
     Bus::Bus(Bus&& other) noexcept : m_Parent(std::exchange(other.m_Parent, nullptr)) {
         m_InternalBus.swap(other.m_InternalBus);
         m_Children.swap(other.m_Children);
+
+        if (m_Parent) {
+            m_Parent->DetachChild(&other);
+            m_Parent->AttachChild(this);
+    }
     }
 
     // Needs to be defined in source file so std::unique_ptr<Internal::BusObject> m_InternalBus can call the Internal::BusObject destuctor
