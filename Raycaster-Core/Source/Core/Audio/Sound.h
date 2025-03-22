@@ -1,13 +1,13 @@
 #pragma once
 
+#include "Types.h"
+
 #include <glm/glm.hpp>
 
 #include <string_view>
 #include <filesystem>
 
 #define Bit(x) (1 << x)
-
-struct InternalSoundObject;
 
 namespace Core::Audio {
     class Sound {
@@ -134,11 +134,11 @@ namespace Core::Audio {
                 Flags(uint8_t flags);
             };
     private:
-        Sound(InternalSoundObject* internalSound, Flags flags);
+        Sound(Internal::SoundObject* internalSound, Flags flags);
         
-        void ReinitInternalSound(InternalSoundObject* internalSound);
+        void ReinitInternalSound(Internal::SoundObject* internalSound);
 
-        InternalSoundObject* m_InternalSound;
+        Internal::SoundObject* m_InternalSound;
         Flags m_Flags;
         
         bool m_ScheduledFade = false;

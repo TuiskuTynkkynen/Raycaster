@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "SoundManager.h"
 
 #include "miniaudio/miniaudio.h"
@@ -22,7 +23,6 @@ namespace Core::Audio::Internal {
         std::vector<DeviceInfo> AvailableDevices;
     };
 
-
     inline std::unique_ptr<AudioSystem> System;
 }
 
@@ -31,4 +31,14 @@ namespace Core::Audio {
         constexpr ma_uint32 SAMPLERATE = 48000;
         constexpr ma_uint32 CHANNELS = 0;
         constexpr ma_uint32 LISTNERS = 1;
+}
+
+namespace Core::Audio::Internal {
+    struct SoundObject : ma_sound {};
+
+    struct BusObject : ma_sound_group {
+        ~BusObject() {
+            ma_sound_group_uninit(this);
+        }
+    };
 }

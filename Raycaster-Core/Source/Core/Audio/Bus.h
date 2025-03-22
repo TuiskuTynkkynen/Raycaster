@@ -1,11 +1,12 @@
 #pragma once
 
+#include "Types.h"
+
 #include <chrono>
 #include <variant>
 #include <memory>
 #include <vector>
 
-struct InternalBusObject;
 
 namespace Core::Audio {
     class Bus {
@@ -56,7 +57,7 @@ namespace Core::Audio {
         // Detach old parent and attach new parent
         void AttachParentBus(Bus& parent);
     private:
-        std::unique_ptr<InternalBusObject> m_InternalBus;
+        std::unique_ptr<Internal::BusObject> m_InternalBus;
 
         void SwitchParent(Bus* parent);
         

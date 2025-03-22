@@ -3,17 +3,11 @@
 #include "Internal.h"
 #include "Core/Debug/Debug.h"
 
-struct InternalBusObject : ma_sound_group {
-    ~InternalBusObject() {
-        ma_sound_group_uninit(this);
-    }
-};
-
 namespace Core::Audio {
     Bus::Bus() {
         RC_ASSERT(Internal::System, "Tried to create bus before initializing Audio System");
         
-        m_InternalBus = std::make_unique<InternalBusObject>();
+        m_InternalBus = std::make_unique<Internal::BusObject>();
         ma_result result = ma_sound_group_init(Internal::System->Engine, 0, nullptr, m_InternalBus.get());
 
         if (result != MA_SUCCESS) {
@@ -26,7 +20,7 @@ namespace Core::Audio {
     Bus::Bus(Bus& parent) {
         RC_ASSERT(Internal::System, "Tried to create bus before initializing Audio System");
 
-        m_InternalBus = std::make_unique<InternalBusObject>();
+        m_InternalBus = std::make_unique<Internal::BusObject>();
         ma_result result = ma_sound_group_init(Internal::System->Engine, 0, parent.m_InternalBus.get(), m_InternalBus.get());
 
         if (result != MA_SUCCESS) {
@@ -37,13 +31,13 @@ namespace Core::Audio {
         SwitchParent(&parent);
     }
 
-    // Needs to be defined in source file so std::unique_ptr<InternalBusObject> m_InternalBus can call the InternalBusObject destuctor
+    // Needs to be defined in source file so std::unique_ptr<Internal::BusObject> m_InternalBus can call the Internal::BusObject destuctor
     Bus::Bus(Bus&& other) noexcept : m_Parent(std::exchange(other.m_Parent, nullptr)) {
         m_InternalBus.swap(other.m_InternalBus);
         m_Children.swap(other.m_Children);
     }
 
-    // Needs to be defined in source file so std::unique_ptr<InternalBusObject> m_InternalBus can call the InternalBusObject destuctor
+    // Needs to be defined in source file so std::unique_ptr<Internal::BusObject> m_InternalBus can call the Internal::BusObject destuctor
     Bus::~Bus() {
         if (m_Parent) {
             m_Parent->DetachChild(this);
@@ -55,7 +49,7 @@ namespace Core::Audio {
     }
 
     void Bus::Reinit() {
-        InternalBusObject* copy = new InternalBusObject;
+        Internal::BusObject* copy = new Internal::BusObject;
         
         {
             ma_sound_group* parent = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
@@ -71,7 +65,7 @@ namespace Core::Audio {
         ma_sound_set_volume(copy, GetVolume());
         ma_sound_set_pitch(copy, GetPitch());
 
-        InternalBusObject* original = m_InternalBus.get();
+        Internal::BusObject* original = m_InternalBus.get();
 
         ma_sound_set_pan_mode(copy, ma_sound_get_pan_mode(original));
         ma_sound_set_pan(copy, ma_sound_get_pan(original));

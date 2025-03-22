@@ -5,8 +5,6 @@
 
 #include "miniaudio/miniaudio.h"
 
-struct InternalSoundObject : ma_sound {};
-
 namespace Core::Audio {
     static ma_uint32 ParseFlags(Sound::Flags flags) {
         ma_uint32 result = 0;
@@ -20,8 +18,8 @@ namespace Core::Audio {
         return result;
     }
 
-    static InternalSoundObject* CreateShallowCopy(const InternalSoundObject* original, Sound::Flags flags) {
-        InternalSoundObject* copy = new InternalSoundObject;
+    static Internal::SoundObject* CreateShallowCopy(const Internal::SoundObject* original, Sound::Flags flags) {
+        Internal::SoundObject* copy = new Internal::SoundObject;
         ma_result result = ma_sound_init_copy(Internal::System->Engine, original, flags, 0, copy);
 
         if (result != MA_SUCCESS) {
@@ -33,7 +31,7 @@ namespace Core::Audio {
         return copy;
     }
     
-    static void CopyInternalAttributes(InternalSoundObject* copy, const InternalSoundObject* original, Sound::Flags flags){
+    static void CopyInternalAttributes(Internal::SoundObject* copy, const Internal::SoundObject* original, Sound::Flags flags){
         ma_sound_set_looping(copy, ma_sound_is_looping(original));
         ma_sound_set_volume(copy, ma_sound_get_volume(original));
 
@@ -76,8 +74,8 @@ namespace Core::Audio {
         }
     }
 
-    static InternalSoundObject* CreateDeepCopy(const InternalSoundObject* original, Sound::Flags flags) {
-        InternalSoundObject* copy = CreateShallowCopy(original, flags);
+    static Internal::SoundObject* CreateDeepCopy(const Internal::SoundObject* original, Sound::Flags flags) {
+        Internal::SoundObject* copy = CreateShallowCopy(original, flags);
 
         if (!copy) {
             return nullptr;
@@ -92,7 +90,7 @@ namespace Core::Audio {
 namespace Core::Audio {
     Sound::Sound(const std::filesystem::path& filePath, Flags flags) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
-        m_InternalSound = new InternalSoundObject;
+        m_InternalSound = new Internal::SoundObject;
         
         std::string fileString = filePath.string();
 
@@ -104,14 +102,14 @@ namespace Core::Audio {
 
     Sound::Sound(const std::string_view& filePath, Flags flags) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
-        m_InternalSound = new InternalSoundObject;
+        m_InternalSound = new Internal::SoundObject;
 
         std::filesystem::path directoryPath = filePath;
         if (directoryPath.is_relative()) {
             directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
         }
         std::string fileString = directoryPath.string();
-
+        
         ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, m_InternalSound);
         if (result != MA_SUCCESS) {
             RC_WARN("Initializing sound, \"{}\", failed with error {}", filePath, (int32_t)result);
@@ -120,7 +118,7 @@ namespace Core::Audio {
 
     Sound::Sound(const char* filePath, Flags flags) : m_Flags(flags) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
-        m_InternalSound = new InternalSoundObject;
+        m_InternalSound = new Internal::SoundObject;
         
         std::filesystem::path directoryPath = filePath;
         if (directoryPath.is_relative()) {
@@ -134,7 +132,7 @@ namespace Core::Audio {
         }
     }
 
-    Sound::Sound(InternalSoundObject* internalSound, Flags flags) : m_Flags(flags), m_InternalSound(internalSound) {
+    Sound::Sound(Internal::SoundObject* internalSound, Flags flags) : m_Flags(flags), m_InternalSound(internalSound) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
     }
 
@@ -153,7 +151,7 @@ namespace Core::Audio {
             return;
         }
 
-        InternalSoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags);
+        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags);
 
         if (!internalSoundCopy) {
             RC_WARN("Reinitializing sound failed. Could not successfully copy internal sound object");
@@ -188,7 +186,7 @@ namespace Core::Audio {
     }
 
     void Sound::ReinitFromFile(const std::filesystem::path& filePath) {
-        InternalSoundObject* internalSoundCopy = new InternalSoundObject;
+        Internal::SoundObject* internalSoundCopy = new Internal::SoundObject;
 
         std::string fileString = filePath.string();
         ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), 0, nullptr, internalSoundCopy);
@@ -209,7 +207,7 @@ namespace Core::Audio {
         m_InternalSound = internalSoundCopy;
     }
 
-    void Sound::ReinitInternalSound(InternalSoundObject* internalSound) {
+    void Sound::ReinitInternalSound(Internal::SoundObject* internalSound) {
         {
             auto length = GetLength();
             std::chrono::milliseconds time = GetTime();
@@ -283,7 +281,7 @@ namespace Core::Audio {
             return std::nullopt;
         }
 
-        InternalSoundObject* internalSoundCopy = CreateShallowCopy(m_InternalSound, m_Flags);
+        Internal::SoundObject* internalSoundCopy = CreateShallowCopy(m_InternalSound, m_Flags);
 
         if (!internalSoundCopy) {
             return std::nullopt;
@@ -298,7 +296,7 @@ namespace Core::Audio {
             return std::nullopt;
         }
 
-        InternalSoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags);
+        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags);
 
         if (!internalSoundCopy) {
             return std::nullopt;
