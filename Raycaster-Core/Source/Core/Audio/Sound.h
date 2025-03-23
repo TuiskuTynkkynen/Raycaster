@@ -143,8 +143,14 @@ namespace Core::Audio {
 
         Internal::SoundObject* m_InternalSound;
         Flags m_Flags;
-        
-        uint64_t m_ScheduledFadeStart = 0;
+
+        bool m_ScheduledFade;
+        struct FadeSettings {
+            uint64_t StartTime = 0;
+            uint64_t Length = 0;
+            float StartVolume = 1.0f;
+            float EndVolume = 1.0f;
+        } m_FadeSettings;
 
         void SwitchParent(Bus* parent);
 
