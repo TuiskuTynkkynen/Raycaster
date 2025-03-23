@@ -10,87 +10,17 @@ namespace Core::Audio {
     }
 
     void SoundManager::RegisterSound(std::string_view filePath, Sound::Flags flags) {
-        if (m_SoundIndices.contains(filePath)) {
-            return;
+        RegisterSound(filePath, flags, ConvertFilePath(filePath));
         }
-
-        
-        if (m_IsDense) {
-            uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(StoreName(filePath), Index{ .Epoch = m_Epoch, .Value = index });
-            
-            StoreFilePath(filePath, index, flags);
-
-            m_Sounds.emplace_back(Sound(filePath, flags));
-            return;
-        }
-
-        auto iter = std::find_if(m_Sounds.begin(), m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; });
-        if (iter == m_Sounds.end()) {
-            m_IsDense = true;
-
-            uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(StoreName(filePath), Index{ .Epoch = m_Epoch, .Value = index });
-            
-            StoreFilePath(filePath, index, flags);
-
-            m_Sounds.emplace_back(Sound(filePath, flags));
-            return;
-        }
-
-        iter->emplace(filePath, flags);
-
-        uint32_t index = iter - m_Sounds.begin();
-        m_SoundIndices.emplace(StoreName(filePath, index), Index{ .Epoch = m_Epoch, .Value = index });
-        
-        StoreFilePath(filePath, index, flags);
-
-        m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
-    }
 
     void SoundManager::RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags) {
-        if (m_SoundIndices.contains(name)) {
-            return;
+        RegisterSound(name, flags, ConvertFilePath(filePath));
         }
-
-        if (m_IsDense) {
-            uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
-        
-            StoreFilePath(filePath, index, flags);
-
-           m_Sounds.emplace_back(Sound(filePath, flags));
-            return;
-        }
-
-        auto iter = std::find_if(m_Sounds.begin(), m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; });
-        if (iter == m_Sounds.end()) {
-            m_IsDense = true;
-
-            uint32_t index = m_Sounds.size();
-            m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
-           
-            StoreFilePath(filePath, index, flags);
-
-            m_Sounds.emplace_back(Sound(filePath, flags));
-            return;
-        }
-
-        iter->emplace(filePath, flags);
-
-        uint32_t index = iter - m_Sounds.begin();
-        m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
-        
-        StoreFilePath(filePath, index, flags);
-
-        m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
-    }
 
     void SoundManager::RegisterSound(std::string_view name, Sound::Flags flags, std::filesystem::path filePath) {
         if (m_SoundIndices.contains(name)) {
             return;
         }
-
 
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
@@ -360,17 +290,14 @@ namespace Core::Audio {
         return std::string_view(cString, name.size());
     }
 
-    void SoundManager::StoreFilePath(const std::string_view& filePath, uint32_t soundIndex, Sound::Flags flags) {
-        if (flags ^ Sound::StreamData) {
-            return;
-        }
-
+    std::filesystem::path SoundManager::ConvertFilePath(std::string_view filePath) {
         std::filesystem::path directoryPath = filePath;
+
         if (directoryPath.is_relative()) {
             directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
         }
 
-        m_StreamedFiles.emplace(soundIndex, directoryPath);
+        return directoryPath;
     }
 
     void SoundManager::StoreFilePath(const std::filesystem::path& filePath, uint32_t soundIndex, Sound::Flags flags) {

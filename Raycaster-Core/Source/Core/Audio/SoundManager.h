@@ -59,7 +59,7 @@ namespace Core::Audio {
         std::string_view StoreName(std::string_view name);
         std::string_view StoreName(std::string_view name, uint32_t index);
 
-        void StoreFilePath(const std::string_view& filePath, uint32_t soundIndex, Sound::Flags flags);
+        std::filesystem::path ConvertFilePath(std::string_view filePath);
         void StoreFilePath(const std::filesystem::path& filePath, uint32_t soundIndex, Sound::Flags flags);
     };
 }
