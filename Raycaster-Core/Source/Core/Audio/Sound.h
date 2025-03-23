@@ -144,7 +144,7 @@ namespace Core::Audio {
         Internal::SoundObject* m_InternalSound;
         Flags m_Flags;
         
-        bool m_ScheduledFade = false;
+        uint64_t m_ScheduledFadeStart = 0;
 
         void SwitchParent(Bus* parent);
 

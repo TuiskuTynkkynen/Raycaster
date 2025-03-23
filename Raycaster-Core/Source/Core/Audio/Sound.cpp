@@ -154,7 +154,7 @@ namespace Core::Audio {
         delete m_InternalSound;
     }
     
-    Sound::Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(other.m_Flags), m_ScheduledFade(other.m_ScheduledFade) {
+    Sound::Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(other.m_Flags), m_ScheduledFadeStart(other.m_ScheduledFadeStart) {
         SwitchParent(other.m_Parent);
         other.SwitchParent(nullptr);
     }
@@ -258,7 +258,7 @@ namespace Core::Audio {
                 int64_t relativeStartTime = -m_InternalSound->engineNode.fader.cursorInFrames;
                 
                 if (relativeStartTime < 0 && glm::abs(relativeStartTime) < fadeLength) {
-                    if (m_ScheduledFade) {
+                    if (m_ScheduledFadeStart) {
                         ma_uint64 absoluteStartTime = relativeStartTime + currentTime;
 
                         // If fade should have started before current engine got initialized -> causes uint underflow in absoluteStartTime
@@ -275,6 +275,7 @@ namespace Core::Audio {
                         }
 
                         ma_sound_set_fade_start_in_pcm_frames(internalSound, startVolume, endVolume, fadeLength, absoluteStartTime);
+                        m_ScheduledFadeStart = absoluteStartTime;
                     } else {
                         float fadeProgress = 1.0f;
                         if (fadeLength != 0) {
@@ -362,7 +363,7 @@ namespace Core::Audio {
     void Sound::Start(std::chrono::milliseconds fadeLength, float volumeMin, float volumeMax) {
         using namespace std::chrono_literals;
         
-        if (GetFadeVolume() == 0.0f && m_InternalSound->engineNode.fader.cursorInFrames < m_InternalSound->engineNode.fader.lengthInFrames) {
+        if (GetFadeVolume() == 0.0f && m_ScheduledFadeStart <= ma_engine_get_time_in_pcm_frames(Internal::System->Engine) ) {
             SkipTo(0ms);
             if (fadeLength == 0ms) {
                 SetFade(0ms, 1.0f, 1.0f);
@@ -661,12 +662,12 @@ namespace Core::Audio {
             ma_uint64 startTime = ma_engine_get_time_in_pcm_frames(Internal::System->Engine) + SAMPLERATE * startAfter / 1s;
 
             ma_sound_set_fade_start_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames, startTime);
-            m_ScheduledFade = true;
+            m_ScheduledFadeStart = startTime;
             return;
         }
 
         ma_sound_set_fade_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames);
-        m_ScheduledFade = false;
+        m_ScheduledFadeStart = 0;
     }
 
     void Sound::AttachParentBus(Bus& parent) {
