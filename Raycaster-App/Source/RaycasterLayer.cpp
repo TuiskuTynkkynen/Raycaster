@@ -2,6 +2,7 @@
 
 #include "Core/UI/UI.h"
 #include "Core/Audio/Audio.h"
+#include "Core/Audio/Bus.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -22,7 +23,9 @@ void RaycasterLayer::OnAttach() {
 
     Core::Audio::Init();
     Core::Audio::Sound::Flags flags(Core::Audio::Sound::DisablePitch, Core::Audio::Sound::DisableSpatialization);
-    Core::Audio::GetSoundManager().RegisterSound("sound", "sound.wav", flags);
+    static Core::Audio::Bus main;
+    main.SetPitch(0.5f);
+    Core::Audio::GetSoundManager().RegisterSound("sound", "sound.wav", flags, &main);
 }
 
 void RaycasterLayer::OnDetach() {

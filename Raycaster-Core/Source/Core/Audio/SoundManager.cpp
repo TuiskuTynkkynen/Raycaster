@@ -9,15 +9,15 @@ namespace Core::Audio {
         }
     }
 
-    void SoundManager::RegisterSound(std::string_view filePath, Sound::Flags flags) {
-        RegisterSound(filePath, flags, ConvertFilePath(filePath));
-        }
+    void SoundManager::RegisterSound(std::string_view filePath, Sound::Flags flags, Bus* parent) {
+        RegisterSound(filePath, flags, ConvertFilePath(filePath), parent);
+    }
 
-    void SoundManager::RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags) {
-        RegisterSound(name, flags, ConvertFilePath(filePath));
-        }
+    void SoundManager::RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags, Bus* parent) {
+        RegisterSound(name, flags, ConvertFilePath(filePath), parent);
+    }
 
-    void SoundManager::RegisterSound(std::string_view name, Sound::Flags flags, std::filesystem::path filePath) {
+    void SoundManager::RegisterSound(std::string_view name, Sound::Flags flags, std::filesystem::path filePath, Bus* parent) {
         if (m_SoundIndices.contains(name)) {
             return;
         }
@@ -25,10 +25,10 @@ namespace Core::Audio {
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
-           
+
             StoreFilePath(filePath, index, flags);
 
-           m_Sounds.emplace_back(Sound(filePath, flags));
+            m_Sounds.emplace_back().emplace(filePath, flags, parent);
             return;
         }
 
@@ -38,14 +38,14 @@ namespace Core::Audio {
 
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
-            
+
             StoreFilePath(filePath, index, flags);
 
-           m_Sounds.emplace_back(Sound(filePath, flags));
+            m_Sounds.emplace_back().emplace(filePath, flags, parent);
             return;
         }
 
-        iter->emplace(filePath, flags);
+        iter->emplace(filePath, flags, parent);
 
         uint32_t index = iter - m_Sounds.begin();
         m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
@@ -69,7 +69,7 @@ namespace Core::Audio {
         if (m_IsDense) {
             uint32_t index = m_Sounds.size();
             m_Sounds.emplace_back(original->Copy());
-            
+
             // Check if copy succeeded
             if (!m_Sounds.back()) {
                 m_Sounds.pop_back();
@@ -92,12 +92,12 @@ namespace Core::Audio {
 
             uint32_t index = m_Sounds.size();
             m_SoundIndices.emplace(StoreName(copyName), Index{ .Epoch = m_Epoch, .Value = index });
-            
+
             return;
         }
 
         iter->emplace(std::move(original->Copy().value()));
-        
+
         // Check if copy succeeded
         if (!iter->has_value()) {
             return;
@@ -108,7 +108,7 @@ namespace Core::Audio {
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
     }
-    
+
     void SoundManager::CopySound(std::string_view copyName, std::string_view originalName) {
         auto index = GetSoundIndex(originalName);
         if (!index) {
@@ -120,7 +120,7 @@ namespace Core::Audio {
 
     void SoundManager::UnregisterSound(std::string_view name) {
         std::optional<Index> index = GetSoundIndex(name);
-        
+
         m_SoundIndices.erase(name);
 
         if (index && IndexIsValid(index.value())) {
@@ -137,19 +137,19 @@ namespace Core::Audio {
             }
         }
     }
-    
+
     void SoundManager::Compact() {
         if (m_IsDense) {
             return;
         }
-        
+
         RC_ASSERT(m_Sounds.size() == m_SoundNames.size(), "Size of sound and sound names vectors should always be equal");
         struct Moved {
             uint32_t From;
             uint32_t To;
         };
         std::vector<Moved> moved;
-        
+
         // First pass move all nullopts to back
         for (size_t i = 0; i < m_Sounds.size(); i++) {
             if (!m_Sounds[i]) {
@@ -171,7 +171,7 @@ namespace Core::Audio {
                 }
             }
         }
-        
+
         // Second pass remove all nullopts from back
         for (size_t i = m_Sounds.size(); i > 0;) {
             if (m_Sounds[--i]) {
@@ -183,7 +183,7 @@ namespace Core::Audio {
         }
 
         m_IsDense = true;
-        
+
         if (moved.empty()) {
             return;
         }
@@ -242,7 +242,7 @@ namespace Core::Audio {
 
     SoundManager::Index SoundManager::GetSoundIndex(std::string_view name) {
         auto iter = m_SoundIndices.find(name);
-        
+
         if (iter == m_SoundIndices.end()) {
             return  Index{}; // Return invalidated index
         }
@@ -260,11 +260,11 @@ namespace Core::Audio {
 
     Sound* SoundManager::GetSound(std::string_view name) {
         auto index = GetSoundIndex(name);
-        
+
         if (!index) {
             return nullptr;
         }
-        
+
         return GetSound(index);
     }
 
@@ -292,11 +292,11 @@ namespace Core::Audio {
 
     std::filesystem::path SoundManager::ConvertFilePath(std::string_view filePath) {
         std::filesystem::path directoryPath = filePath;
-
+        
         if (directoryPath.is_relative()) {
             directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
         }
-
+        
         return directoryPath;
     }
 

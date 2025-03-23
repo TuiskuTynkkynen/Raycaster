@@ -25,10 +25,10 @@ namespace Core::Audio {
         SoundManager& operator = (const SoundManager& other) = delete;
         SoundManager& operator = (const SoundManager&& other) = delete;
 
-        void RegisterSound(std::string_view filePath, Sound::Flags flags);
-        void RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags);
+        void RegisterSound(std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
+        void RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
         // Different argument order to prevent unwanted implicit conversions
-        void RegisterSound(std::string_view name, Sound::Flags  flags, std::filesystem::path filePath);
+        void RegisterSound(std::string_view name, Sound::Flags  flags, std::filesystem::path filePath, Bus* parent = nullptr);
         
         void CopySound(std::string_view copyName, Index originalIndex);
         void CopySound(std::string_view copyName, std::string_view originalName);
