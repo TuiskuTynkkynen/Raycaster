@@ -134,8 +134,8 @@ namespace Core::Audio {
 
         m_SoundIndices.erase(name);
 
-        if (index && IndexIsValid(index)) {
-            m_IsDense = false;
+        if (IndexIsValid(index)) {
+            m_IsDense = index.Value == (m_Sounds.size() - 1); // If last element, m_Sounds is still dense
 
             m_Sounds[index.Value].reset();
 
