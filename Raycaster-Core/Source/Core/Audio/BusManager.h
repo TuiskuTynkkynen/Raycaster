@@ -8,7 +8,8 @@
 namespace Core::Audio {
 	class BusManager {
 	public:
-        BusManager(uint32_t initialCapacity) { m_Buses.reserve(initialCapacity); m_BusIndices.reserve(initialCapacity); m_BusNames.reserve(initialCapacity); }
+        BusManager();
+        BusManager(uint32_t initialCapacity);
 
         ~BusManager();
 
@@ -31,10 +32,14 @@ namespace Core::Audio {
         bool IndexIsValid(Index index);
         Index ValidateIndex(Index index, std::string_view name);
         Index GetBusIndex(std::string_view name);
+
+        Bus& GetMasterBus();
+        Index GetMasterBusIndex();
+        std::string_view GetMasterBusName();
         
         Bus* GetBus(Index index);
         Bus* GetBus(std::string_view name);
-
+        
         size_t BusCount();
 	private:
         uint32_t m_Epoch = 0;
