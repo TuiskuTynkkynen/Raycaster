@@ -110,7 +110,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
             Core::Audio::SetDevice(0);
         }
         
-        static Core::Audio::SoundManager::Index soundIndex = Core::Audio::GetSoundIndex("sound");
+        static Core::Audio::Index soundIndex = Core::Audio::GetSoundIndex("sound");
         //Core::Audio::ValidateSoundIndex(soundIndex, "sound");
         Core::Audio::Sound& sound = *Core::Audio::GetSound(soundIndex);
         

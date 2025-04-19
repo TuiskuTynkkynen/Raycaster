@@ -239,7 +239,7 @@ namespace Core::Audio {
         return index.Epoch == m_Epoch && index.Value < m_Sounds.size();
     }
 
-    SoundManager::Index SoundManager::ValidateIndex(Index index, std::string_view name) {
+    Index SoundManager::ValidateIndex(Index index, std::string_view name) {
         // Valid or already invalidated index
         if (index || IndexIsValid(index)) {
             return index;
@@ -253,7 +253,7 @@ namespace Core::Audio {
         return Index{};
     }
 
-    SoundManager::Index SoundManager::GetSoundIndex(std::string_view name) {
+    Index SoundManager::GetSoundIndex(std::string_view name) {
         auto iter = m_SoundIndices.find(name);
 
         if (iter == m_SoundIndices.end()) {
@@ -263,7 +263,7 @@ namespace Core::Audio {
         return iter->second;
     }
 
-    Sound* SoundManager::GetSound(SoundManager::Index index) {
+    Sound* SoundManager::GetSound(Index index) {
         if (IndexIsValid(index) && m_Sounds[index.Value]) {
             return &m_Sounds[index.Value].value();
         }

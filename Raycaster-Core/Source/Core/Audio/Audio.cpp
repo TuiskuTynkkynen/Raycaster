@@ -164,7 +164,7 @@ namespace Core {
         }
     }
 
-    void Audio::Play(SoundManager::Index index) {
+    void Audio::Play(Index index) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         Sound* sound = Internal::System->SoundManager.GetSound(index);
@@ -176,7 +176,7 @@ namespace Core {
         sound->Start();
     }
 
-    void Audio::Play(SoundManager::Index& index, std::string_view name) {
+    void Audio::Play(Index& index, std::string_view name) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         index = Internal::System->SoundManager.ValidateIndex(index, name);
@@ -195,7 +195,7 @@ namespace Core {
         sound->Start();
     }
 
-    void Audio::Pause(SoundManager::Index index) {
+    void Audio::Pause(Index index) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         Sound* sound = Internal::System->SoundManager.GetSound(index);
@@ -207,7 +207,7 @@ namespace Core {
         sound->Stop();
     }
 
-    void Audio::Pause(SoundManager::Index& index, std::string_view name) {
+    void Audio::Pause(Index& index, std::string_view name) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         index = Internal::System->SoundManager.ValidateIndex(index, name);
@@ -226,7 +226,7 @@ namespace Core {
         sound->Stop();
     }
 
-    void Audio::Stop(SoundManager::Index index) {
+    void Audio::Stop(Index index) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         Sound* sound = Internal::System->SoundManager.GetSound(index);
@@ -239,7 +239,7 @@ namespace Core {
         sound->SkipTo(std::chrono::milliseconds::zero());
     }
 
-    void Audio::Stop(SoundManager::Index& index, std::string_view name) {
+    void Audio::Stop(Index& index, std::string_view name) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         index = Internal::System->SoundManager.ValidateIndex(index, name);
@@ -265,20 +265,20 @@ namespace Core {
         return Internal::System->SoundManager;
     }
 
-    bool Audio::ValidateSoundIndex(SoundManager::Index& index, std::string_view name) {
+    bool Audio::ValidateSoundIndex(Index& index, std::string_view name) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         index = Internal::System->SoundManager.ValidateIndex(index, name);
         return index;
     }
 
-    Audio::SoundManager::Index Audio::GetSoundIndex(std::string_view name) {
+    Audio::Index Audio::GetSoundIndex(std::string_view name) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         return Internal::System->SoundManager.GetSoundIndex(name);
     }
 
-    Audio::Sound* Audio::GetSound(SoundManager::Index index) {
+    Audio::Sound* Audio::GetSound(Index index) {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         return Internal::System->SoundManager.GetSound(index);

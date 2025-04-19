@@ -8,14 +8,6 @@
 namespace Core::Audio {
     class SoundManager {
     public:
-        struct Index {
-            uint32_t Epoch = UINT32_MAX;
-            uint32_t Value = UINT32_MAX;
-
-            operator bool() {
-                return (Epoch != UINT32_MAX || Value != UINT32_MAX);
-            }
-        };
         SoundManager(uint32_t initialCapacity = 0) { m_Sounds.reserve(initialCapacity); m_SoundIndices.reserve(initialCapacity); m_SoundNames.reserve(initialCapacity); }
 
         ~SoundManager();
