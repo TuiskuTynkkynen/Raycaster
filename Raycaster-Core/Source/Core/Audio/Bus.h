@@ -11,6 +11,7 @@
 namespace Core::Audio {
     class Bus {
         friend class Sound;
+        friend class BusManager;
     public:
         Bus();
         Bus(Bus& parent);

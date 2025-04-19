@@ -12,6 +12,7 @@
 namespace Core::Audio {
     class Sound {
         friend class Bus;
+        friend class BusManager;
     public:
         enum FlagEnum : uint8_t {
             None					= 0,
