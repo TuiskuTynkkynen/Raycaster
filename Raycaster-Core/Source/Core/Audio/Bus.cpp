@@ -36,7 +36,8 @@ namespace Core::Audio {
     Bus::Bus(Bus&& other) noexcept {
         m_InternalBus.swap(other.m_InternalBus);
         m_Children.swap(other.m_Children);
-        
+        m_FadeSettings = other.m_FadeSettings;
+
         SwitchParent(other.m_Parent);
         other.SwitchParent(nullptr);
     }
@@ -72,26 +73,21 @@ namespace Core::Audio {
         ma_sound_set_pan_mode(copy, ma_sound_get_pan_mode(original));
         ma_sound_set_pan(copy, ma_sound_get_pan(original));
 
-        {
-            copy->engineNode.fadeSettings = m_InternalBus->engineNode.fadeSettings; // Probably unsafe, but keeping track of this state is difficult without accessing atomics anyways
+        if (m_FadeSettings.StartVolume != 1.0f || m_FadeSettings.EndVolume != 1.0f) {
+            RC_ASSERT(Internal::System->Engine);
 
-            float startVolume = m_InternalBus->engineNode.fader.volumeBeg;
-            float endVolume = m_InternalBus->engineNode.fader.volumeEnd;
+            ma_uint64 currentTime = ma_engine_get_time_in_pcm_frames(Internal::System->Engine);
+            ma_uint64 oldEngineTime = ma_engine_get_time_in_pcm_frames(m_InternalBus->engineNode.pEngine);
+            ma_int64 relativeStartTime = m_FadeSettings.StartTime - oldEngineTime;
 
-            ma_uint64 fadeLength = m_InternalBus->engineNode.fader.lengthInFrames;
-            int64_t relativeStartTime = -m_InternalBus->engineNode.fader.cursorInFrames;
+            m_FadeSettings.StartTime = currentTime;
 
-            // Relative start time should always be < 0 for busses, but check anyways since it could be set by using ma_sound_set_fade_start_in_pcm_frames
-            if ((startVolume != 1.0f || endVolume != 1.0f) && relativeStartTime < 0) {
-                // Start from current fade volume
-                
-                if (std::cmp_less_equal(abs(relativeStartTime), fadeLength)) {
-                    // Fade length "decreased" by how long ago fade started
-                    fadeLength += relativeStartTime;
-                }
-
-                ma_sound_group_set_fade_in_pcm_frames(copy, GetFadeVolume(), endVolume, fadeLength);
+            if (relativeStartTime < 0) { // Fade has started, so use update values
+                m_FadeSettings.Length = currentTime + relativeStartTime;
+                m_FadeSettings.StartVolume = GetFadeVolume();
             }
+
+            ma_sound_group_set_fade_in_pcm_frames(original, m_FadeSettings.StartVolume, m_FadeSettings.EndVolume, m_FadeSettings.Length);
         }
 
         // ma_sound_group is enabled/started by default
@@ -242,6 +238,9 @@ namespace Core::Audio {
         }
 
         ma_sound_group_set_fade_in_pcm_frames(m_InternalBus.get(), startVolume, endVolume, fadeInFrames);
+
+        RC_ASSERT(Internal::System->Engine);
+        m_FadeSettings = { ma_engine_get_time_in_pcm_frames(Internal::System->Engine), fadeInFrames, startVolume, endVolume };
     }
 
     void Bus::AttachParentBus(Bus& parent) {

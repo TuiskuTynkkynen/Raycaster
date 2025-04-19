@@ -70,5 +70,12 @@ namespace Core::Audio {
         void DetachChild(ChildNode child);
 
         std::vector<ChildNode> m_Children;
+
+        struct FadeSettings {
+            uint64_t StartTime = 0;
+            uint64_t Length = 0;
+            float StartVolume = 1.0f;
+            float EndVolume = 1.0f;
+        } m_FadeSettings;
     };
 }
