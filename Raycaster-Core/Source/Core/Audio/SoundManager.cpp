@@ -130,19 +130,19 @@ namespace Core::Audio {
     }
 
     void SoundManager::UnregisterSound(std::string_view name) {
-        std::optional<Index> index = GetSoundIndex(name);
+        Index index = GetSoundIndex(name);
 
         m_SoundIndices.erase(name);
 
-        if (index && IndexIsValid(index.value())) {
+        if (index && IndexIsValid(index)) {
             m_IsDense = false;
 
-            m_Sounds[index.value().Value].reset();
+            m_Sounds[index.Value].reset();
 
-            delete[] m_SoundNames[index.value().Value];
-            m_SoundNames[index.value().Value] = nullptr;
+            delete[] m_SoundNames[index.Value];
+            m_SoundNames[index.Value] = nullptr;
 
-            auto iter = m_StreamedFiles.find(index.value().Value);
+            auto iter = m_StreamedFiles.find(index.Value);
             if (iter != m_StreamedFiles.end()) {
                 m_StreamedFiles.erase(iter);
             }
