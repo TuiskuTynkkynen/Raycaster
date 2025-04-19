@@ -240,8 +240,8 @@ namespace Core::Audio {
     }
 
     Index SoundManager::ValidateIndex(Index index, std::string_view name) {
-        // Valid or already invalidated index
-        if (index || IndexIsValid(index)) {
+        // Already invalidated or valid index
+        if (!index || IndexIsValid(index)) {
             return index;
         }
 
