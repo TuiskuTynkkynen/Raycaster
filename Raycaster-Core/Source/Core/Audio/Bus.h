@@ -65,8 +65,6 @@ namespace Core::Audio {
 
         Bus* m_Parent;
 
-        using ChildNode = std::variant<Bus*, Sound*>;
-
         void AttachChild(ChildNode child);
         void DetachChild(ChildNode child);
 

@@ -6,8 +6,8 @@
 #include <unordered_map>
 
 namespace Core::Audio {
-	class BusManager {
-	public:
+    class BusManager {
+    public:
         BusManager();
         BusManager(uint32_t initialCapacity);
 
@@ -22,7 +22,7 @@ namespace Core::Audio {
         void RegisterBus(std::string_view name, Bus& parentBus);
         void RegisterBus(std::string_view name, Index parentBusIndex);
         void RegisterBus(std::string_view name, std::string_view parentBusName);
-        
+
         void UnregisterBus(std::string_view Name);
 
         void Compact(); // Calling compact invalidates stored indices
@@ -36,20 +36,31 @@ namespace Core::Audio {
         Bus& GetMasterBus();
         Index GetMasterBusIndex();
         std::string_view GetMasterBusName();
-        
+
         Bus* GetBus(Index index);
         Bus* GetBus(std::string_view name);
-        
+
+        Bus* GetParent(ChildNode node);
+        const std::vector<ChildNode>& GetChildren(Bus& bus);
+
+        bool IsParent(const Bus* parent, ChildNode child);
+        bool IsParent(Index parentIndex, ChildNode child);
+        bool IsParent(std::string_view parentName, ChildNode child);
+
+        bool IsAncestor(const Bus* ancestor, ChildNode child); // Checks if Bus is parent, grandparent, etc. of child
+        bool IsAncestor(Index ancestorIndex, ChildNode child); // Checks if Bus is parent, grandparent, etc. of child
+        bool IsAncestor(std::string_view ancestorName, ChildNode child); // Checks if Bus is parent, grandparent, etc. of child
+
         size_t BusCount();
-	private:
+    private:
         uint32_t m_Epoch = 0;
         bool m_IsDense = true;
 
         std::vector<std::optional<Bus>> m_Buses;
         std::vector<const char*> m_BusNames;
         std::unordered_map<std::string_view, Index> m_BusIndices;
-        
+
         std::string_view StoreName(std::string_view name);
         std::string_view StoreName(std::string_view name, uint32_t index);
-	};
+    };
 }

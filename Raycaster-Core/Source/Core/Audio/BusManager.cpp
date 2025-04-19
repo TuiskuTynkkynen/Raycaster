@@ -232,6 +232,80 @@ namespace Core::Audio {
         return GetBus(GetBusIndex(name));
     }
 
+    Bus* BusManager::GetParent(ChildNode node) {
+        return std::visit([](auto& child) { if (!child) { return (Bus*)nullptr; } return child->m_Parent; }, node);
+    }
+
+    const std::vector<ChildNode>& BusManager::GetChildren(Bus& bus) {
+        return bus.m_Children;
+    }
+
+    bool BusManager::IsParent(const Bus* parent, ChildNode child) {
+        return std::visit([parent](auto& node) { return node && node->m_Parent == parent; }, child);
+    }
+
+    bool BusManager::IsParent(Index parentIndex, ChildNode child) {
+        Bus* bus = GetBus(parentIndex);
+
+        if (!bus) {
+            RC_WARN("Could not find bus, with index = {}, and epoch = {}", parentIndex.Value, parentIndex.Epoch);
+            return false;
+        }
+
+        return IsParent(bus, child);
+    }
+
+    bool BusManager::IsParent(std::string_view parentName, ChildNode child) {
+        Bus* bus = GetBus(parentName);
+
+        if (!bus) {
+            RC_WARN("Could not find bus \"{}\"", parentName);
+            return false;
+        }
+
+        return IsParent(bus, child);
+    }
+
+    bool BusManager::IsAncestor(const Bus* ancestor, ChildNode child) {
+        if (ancestor == nullptr) {
+            return false;
+        }
+
+        Bus* current = std::visit([ancestor](auto& node) { if (!node) { return (Bus*)nullptr; } return node->m_Parent; }, child);
+
+        while (current) {
+            if (current == ancestor) {
+                return true;
+            }
+
+            current = current->m_Parent;
+        }
+
+        return false;
+    }
+
+    bool BusManager::IsAncestor(Index ancestorIndex, ChildNode child) {
+        Bus* bus = GetBus(ancestorIndex);
+
+        if (!bus) {
+            RC_WARN("Could not find bus, with index = {}, and epoch = {}", ancestorIndex.Value, ancestorIndex.Epoch);
+            return false;
+        }
+
+        return IsAncestor(bus, child);
+    }
+
+    bool BusManager::IsAncestor(std::string_view ancestorName, ChildNode child) {
+        Bus* bus = GetBus(ancestorName);
+
+        if (!bus) {
+            RC_WARN("Could not find bus \"{}\"", ancestorName);
+            return false;
+        }
+
+        return IsAncestor(bus, child);
+    }
+
     size_t BusManager::BusCount() {
         return m_BusIndices.size();
     }

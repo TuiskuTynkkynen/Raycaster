@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <variant>
 
 namespace Core::Audio::Internal {
     struct BusObject;
@@ -17,4 +18,9 @@ namespace Core::Audio {
             return (Epoch != std::numeric_limits<uint32_t>::max() || Value != std::numeric_limits<uint32_t>::max());
         }
     };
+
+    class Bus;
+    class Sound;
+
+    using ChildNode = std::variant<Bus*, Sound*>;
 }
