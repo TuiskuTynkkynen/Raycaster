@@ -17,7 +17,7 @@ namespace Core::Audio {
 
         ~Bus();
 
-        Bus(const Bus& parent) = delete;
+        Bus(const Bus&) = delete;
         Bus(Bus&& other) noexcept;
 
         Bus& operator = (const Bus& other) = delete;

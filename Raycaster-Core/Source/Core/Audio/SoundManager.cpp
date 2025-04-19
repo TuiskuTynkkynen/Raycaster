@@ -23,7 +23,9 @@ namespace Core::Audio {
         }
 
         if (m_IsDense) {
-            uint32_t index = m_Sounds.size();
+            RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
+            uint32_t index = static_cast<uint32_t>(m_Sounds.size());
+
             m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
 
             StoreFilePath(filePath, index, flags);
@@ -36,7 +38,9 @@ namespace Core::Audio {
         if (iter == m_Sounds.end()) {
             m_IsDense = true;
 
-            uint32_t index = m_Sounds.size();
+            RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
+            uint32_t index = static_cast<uint32_t>(m_Sounds.size());
+
             m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
 
             StoreFilePath(filePath, index, flags);
@@ -47,7 +51,9 @@ namespace Core::Audio {
 
         iter->emplace(filePath, flags, parent);
 
-        uint32_t index = iter - m_Sounds.begin();
+        RC_ASSERT(iter - m_Sounds.begin() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
+        uint32_t index = static_cast<int32_t>(iter - m_Sounds.begin());
+
         m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
 
         StoreFilePath(filePath, index, flags);
@@ -67,7 +73,9 @@ namespace Core::Audio {
         }
 
         if (m_IsDense) {
-            uint32_t index = m_Sounds.size();
+            RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
+            uint32_t index = static_cast<uint32_t>(m_Sounds.size());
+
             m_Sounds.emplace_back(original->Copy());
 
             // Check if copy succeeded
@@ -90,7 +98,9 @@ namespace Core::Audio {
                 return;
             }
 
-            uint32_t index = m_Sounds.size();
+            RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
+            uint32_t index = static_cast<uint32_t>(m_Sounds.size());
+
             m_SoundIndices.emplace(StoreName(copyName), Index{ .Epoch = m_Epoch, .Value = index });
 
             return;
@@ -103,7 +113,8 @@ namespace Core::Audio {
             return;
         }
 
-        uint32_t index = iter - m_Sounds.begin();
+        RC_ASSERT(iter - m_Sounds.begin() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
+        uint32_t index = static_cast<int32_t>(iter - m_Sounds.begin());
         m_SoundIndices.emplace(StoreName(copyName, index), Index{ .Epoch = m_Epoch, .Value = index });
 
         m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
@@ -153,8 +164,10 @@ namespace Core::Audio {
         // First pass move all nullopts to back
         for (size_t i = 0; i < m_Sounds.size(); i++) {
             if (!m_Sounds[i]) {
-                uint32_t oldIndex = m_Sounds.size() - 1;
-                moved.emplace_back(oldIndex, i);
+                RC_ASSERT(m_Sounds.size() - 1 <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
+                uint32_t oldIndex = static_cast<uint32_t>(m_Sounds.size() - 1);
+
+                moved.emplace_back(static_cast<uint32_t>(oldIndex), static_cast<uint32_t>(i)); // oldIndex and i can never be larger than UINT32_MAX
 
                 auto& back = m_Sounds.back();
                 if (back) {
@@ -167,7 +180,7 @@ namespace Core::Audio {
 
                 auto iter = m_StreamedFiles.find(oldIndex);
                 if (iter != m_StreamedFiles.end()) {
-                    m_StreamedFiles.emplace(i, iter->second);
+                    m_StreamedFiles.emplace(static_cast<uint32_t>(i), iter->second); // i can never be larger than UINT32_MAX
                 }
             }
         }

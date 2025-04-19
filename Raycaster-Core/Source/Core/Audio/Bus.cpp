@@ -84,8 +84,8 @@ namespace Core::Audio {
             // Relative start time should always be < 0 for busses, but check anyways since it could be set by using ma_sound_set_fade_start_in_pcm_frames
             if ((startVolume != 1.0f || endVolume != 1.0f) && relativeStartTime < 0) {
                 // Start from current fade volume
-
-                if (abs(relativeStartTime) <= fadeLength) {
+                
+                if (std::cmp_less_equal(abs(relativeStartTime), fadeLength)) {
                     // Fade length "decreased" by how long ago fade started
                     fadeLength += relativeStartTime;
                 }

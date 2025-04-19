@@ -252,7 +252,7 @@ namespace Core::Audio {
             ma_int64 relativeStartTime = m_FadeSettings.StartTime - oldEngineTime;
 
             if (m_ScheduledFade) {
-                if (relativeStartTime < 0 && (ma_uint64)glm::abs(relativeStartTime) > currentTime) { // StartTime would underflow, so update Length and StartVolume instead
+                if (relativeStartTime < 0 && std::cmp_greater(glm::abs(relativeStartTime), currentTime)) { // StartTime would underflow, so update Length and StartVolume instead
                     m_FadeSettings.StartTime = currentTime;
                     m_FadeSettings.Length = currentTime + relativeStartTime;
                     m_FadeSettings.StartVolume = GetFadeVolume();

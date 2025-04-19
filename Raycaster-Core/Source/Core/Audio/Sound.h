@@ -144,7 +144,7 @@ namespace Core::Audio {
         Internal::SoundObject* m_InternalSound;
         Flags m_Flags;
 
-        bool m_ScheduledFade;
+        bool m_ScheduledFade = false;
         struct FadeSettings {
             uint64_t StartTime = 0;
             uint64_t Length = 0;
