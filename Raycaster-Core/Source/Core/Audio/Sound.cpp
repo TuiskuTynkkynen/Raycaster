@@ -285,13 +285,14 @@ namespace Core::Audio {
             return std::nullopt;
         }
 
-        Internal::SoundObject* internalSoundCopy = CreateShallowCopy(m_InternalSound, m_Flags, nullptr);
+        ma_sound_group* group = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
+        Internal::SoundObject* internalSoundCopy = CreateShallowCopy(m_InternalSound, m_Flags, group);
 
         if (!internalSoundCopy) {
             return std::nullopt;
         }
 
-        return Sound(internalSoundCopy, m_Flags, nullptr);
+        return Sound(internalSoundCopy, m_Flags, m_Parent);
     }
     
     std::optional<Sound> Sound::CopyDeep() const {
