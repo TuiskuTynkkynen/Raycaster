@@ -8,14 +8,16 @@
 namespace Core::Audio {
     class SoundManager {
     public:
-        SoundManager(uint32_t initialCapacity = 0) { m_Sounds.reserve(initialCapacity); m_SoundIndices.reserve(initialCapacity); m_SoundNames.reserve(initialCapacity); }
-
+        SoundManager() = default;
         ~SoundManager();
         
         SoundManager(const SoundManager& other) = delete;
         SoundManager(SoundManager&& other) noexcept = delete;
         SoundManager& operator = (const SoundManager& other) = delete;
         SoundManager& operator = (const SoundManager&& other) = delete;
+
+        void Init(uint32_t initialCapacity = 0);
+        void Shutdown();
 
         void RegisterSound(std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
         void RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);

@@ -84,11 +84,13 @@ namespace Core {
 
         success = Audio::InitEngine();
         RC_ASSERT(success, "Failed to intitialize Audio System");
+        Internal::System->SoundManager.Init(16);
     }
 
     void Audio::Shutdown() {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
+        Internal::System->SoundManager.Shutdown();
         ShutdownEngine();
 
         ShutdownDevice();

@@ -9,6 +9,38 @@ namespace Core::Audio {
         }
     }
 
+    void SoundManager::Init(uint32_t initialCapacity) { 
+        RC_ASSERT(m_Sounds.empty() && m_SoundIndices.empty() && m_SoundNames.empty() && m_StreamedFiles.empty(), "SoundManager has already been initialized");
+
+        m_Sounds.reserve(initialCapacity); 
+        m_SoundIndices.reserve(initialCapacity); 
+        m_SoundNames.reserve(initialCapacity);
+
+        m_Epoch = 0;
+        m_IsDense = true;
+    }
+
+    void SoundManager::Shutdown() {
+        for (size_t i = 0; i < m_SoundNames.size(); i++) {
+            delete[] m_SoundNames[i];
+        }
+
+        m_Sounds.clear();
+        m_Sounds.shrink_to_fit();
+
+        m_SoundNames.clear();
+        m_SoundNames.shrink_to_fit();
+        
+        m_StreamedFiles.clear();
+        m_StreamedFiles.rehash(0);
+        
+        m_SoundIndices.clear();
+        m_SoundIndices.rehash(0);
+        
+        m_Epoch = 0;
+        m_IsDense = true;
+    }
+
     void SoundManager::RegisterSound(std::string_view filePath, Sound::Flags flags, Bus* parent) {
         RegisterSound(filePath, flags, ConvertFilePath(filePath), parent);
     }

@@ -14,7 +14,7 @@ namespace Core::Audio::Internal {
         ma_device* Device = nullptr;
         ma_engine* Engine = nullptr;
         
-        SoundManager SoundManager{ 16 };
+        SoundManager SoundManager;
 
         struct DeviceInfo {
             ma_device_id id;
