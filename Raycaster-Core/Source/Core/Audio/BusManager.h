@@ -8,15 +8,16 @@
 namespace Core::Audio {
     class BusManager {
     public:
-        BusManager();
-        BusManager(uint32_t initialCapacity);
-
+        BusManager() = default;
         ~BusManager();
 
         BusManager(const BusManager& other) = delete;
         BusManager(BusManager&& other) noexcept = delete;
         BusManager& operator = (const BusManager& other) = delete;
         BusManager& operator = (const BusManager&& other) = delete;
+
+        void Init(uint32_t initialCapacity = 1);
+        void Shutdown();
 
         void RegisterBus(std::string_view name); // Automatically attaches the master bus as the parent
         void RegisterBus(std::string_view name, Bus& parentBus);

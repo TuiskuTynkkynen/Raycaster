@@ -4,24 +4,34 @@
 #include "Core/Debug/Debug.h"
 
 namespace Core::Audio {
-    BusManager::BusManager() {
-        m_BusIndices.emplace(StoreName("Master"), Index{ .Epoch = m_Epoch, .Value = 0 });
-        m_Buses.emplace_back().emplace();
+    BusManager::~BusManager() {
+        for (size_t i = 0; i < m_BusNames.size(); i++) {
+            delete[] m_BusNames[i];
+    }
     }
 
-    BusManager::BusManager(uint32_t initialCapacity) {
-        m_BusIndices.emplace(StoreName("Master"), Index{ .Epoch = m_Epoch, .Value = 0 });
-        m_Buses.emplace_back().emplace();
+    void BusManager::Init(uint32_t initialCapacity) {
+        RC_ASSERT(m_Buses.empty() || !m_Buses.front(), "BusManager has already been initialized");
 
         m_Buses.reserve(initialCapacity);
         m_BusIndices.reserve(initialCapacity);
         m_BusNames.reserve(initialCapacity);
+
+        m_BusIndices.emplace(StoreName("Master"), Index{ .Epoch = m_Epoch, .Value = 0 });
+        m_Buses.emplace_back().emplace();
     }
 
-    BusManager::~BusManager() {
+    void BusManager::Shutdown() {
         for (size_t i = 0; i < m_BusNames.size(); i++) {
             delete[] m_BusNames[i];
         }
+
+        m_Buses.clear();
+        m_BusIndices.clear();
+        m_BusNames.clear();
+
+        m_Epoch = 0;
+        m_IsDense = true;
     }
 
     void BusManager::RegisterBus(std::string_view name) {
@@ -29,6 +39,8 @@ namespace Core::Audio {
     }
 
     void BusManager::RegisterBus(std::string_view name, Bus& parentBus) {
+        RC_ASSERT(!m_Buses.empty() && m_Buses.front(), "BusManager has not been initialized");
+
         if (m_BusIndices.contains(name)) {
             RC_WARN("Tried to register multiple buses with the same name");
             return;
