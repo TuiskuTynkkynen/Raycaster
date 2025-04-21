@@ -17,6 +17,9 @@ namespace Core::Audio {
         m_BusIndices.reserve(initialCapacity);
         m_BusNames.reserve(initialCapacity);
 
+        m_Epoch = 0;
+        m_IsDense = true;
+
         m_BusIndices.emplace(StoreName("Master"), Index{ .Epoch = m_Epoch, .Value = 0 });
         m_Buses.emplace_back().emplace();
     }
@@ -27,8 +30,13 @@ namespace Core::Audio {
         }
 
         m_Buses.clear();
+        m_Buses.shrink_to_fit();
+
         m_BusIndices.clear();
+        m_BusIndices.rehash(0);
+
         m_BusNames.clear();
+        m_BusNames.shrink_to_fit();
 
         m_Epoch = 0;
         m_IsDense = true;
