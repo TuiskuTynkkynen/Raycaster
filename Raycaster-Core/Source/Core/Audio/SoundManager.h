@@ -16,7 +16,7 @@ namespace Core::Audio {
         SoundManager& operator = (const SoundManager& other) = delete;
         SoundManager& operator = (const SoundManager&& other) = delete;
 
-        void Init(uint32_t initialCapacity = 0);
+        void Init(Bus* dafaultBus = nullptr, uint32_t initialCapacity = 0);
         void Shutdown();
 
         void RegisterSound(std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
@@ -40,6 +40,8 @@ namespace Core::Audio {
         Sound* GetSound(Index index);
         Sound* GetSound(std::string_view name);
 
+        void SetDafaultBus(Bus* bus);
+
         size_t SoundCount();
     private:
         uint32_t m_Epoch = 0;
@@ -49,6 +51,8 @@ namespace Core::Audio {
         std::vector<const char*> m_SoundNames;
         std::unordered_map<uint32_t, std::filesystem::path> m_StreamedFiles;
         std::unordered_map<std::string_view, Index> m_SoundIndices;
+
+        Bus* m_DefaultBus = nullptr;
 
         std::string_view StoreName(std::string_view name);
         std::string_view StoreName(std::string_view name, uint32_t index);

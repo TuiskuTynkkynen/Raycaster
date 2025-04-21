@@ -9,15 +9,16 @@ namespace Core::Audio {
         }
     }
 
-    void SoundManager::Init(uint32_t initialCapacity) { 
+    void SoundManager::Init(Bus* dafaultBus, uint32_t initialCapacity) { 
         RC_ASSERT(m_Sounds.empty() && m_SoundIndices.empty() && m_SoundNames.empty() && m_StreamedFiles.empty(), "SoundManager has already been initialized");
-
+               
         m_Sounds.reserve(initialCapacity); 
         m_SoundIndices.reserve(initialCapacity); 
         m_SoundNames.reserve(initialCapacity);
-
+        
         m_Epoch = 0;
         m_IsDense = true;
+        m_DefaultBus = dafaultBus;
     }
 
     void SoundManager::Shutdown() {
@@ -39,6 +40,7 @@ namespace Core::Audio {
         
         m_Epoch = 0;
         m_IsDense = true;
+        m_DefaultBus = nullptr;
     }
 
     void SoundManager::RegisterSound(std::string_view filePath, Sound::Flags flags, Bus* parent) {
@@ -53,6 +55,8 @@ namespace Core::Audio {
         if (m_SoundIndices.contains(name)) {
             return;
         }
+
+        parent = parent ? parent : m_DefaultBus;
 
         if (m_IsDense) {
             RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
@@ -311,6 +315,10 @@ namespace Core::Audio {
         }
 
         return GetSound(index);
+    }
+
+    void SoundManager::SetDafaultBus(Bus* bus) {
+        m_DefaultBus = bus;
     }
 
     size_t SoundManager::SoundCount() {

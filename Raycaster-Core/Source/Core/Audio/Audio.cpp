@@ -85,6 +85,7 @@ namespace Core {
         success = Audio::InitEngine();
         RC_ASSERT(success, "Failed to intitialize Audio System");
         Internal::System->SoundManager.Init(16);
+        Internal::System->SoundManager.Init(nullptr, 16);
     }
 
     void Audio::Shutdown() {
