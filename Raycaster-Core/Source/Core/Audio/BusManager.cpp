@@ -7,7 +7,7 @@ namespace Core::Audio {
     BusManager::~BusManager() {
         for (size_t i = 0; i < m_BusNames.size(); i++) {
             delete[] m_BusNames[i];
-    }
+        }
     }
 
     void BusManager::Init(uint32_t initialCapacity) {
@@ -42,7 +42,7 @@ namespace Core::Audio {
         RC_ASSERT(!m_Buses.empty() && m_Buses.front(), "BusManager has not been initialized");
 
         if (m_BusIndices.contains(name)) {
-            RC_WARN("Tried to register multiple buses with the same name");
+            RC_WARN("Tried to register multiple buses with the same name, \"{}\"", name);
             return;
         }
 
@@ -71,7 +71,7 @@ namespace Core::Audio {
 
     void BusManager::RegisterBus(std::string_view name, Index parentBusIndex) {
         if (!IndexIsValid(parentBusIndex) || !m_Buses[parentBusIndex.Value].has_value()) {
-            RC_WARN("Tried to register bus with invalid parent bus index");
+            RC_WARN("Tried to register bus, \"{}\", with invalid parent bus index  = {}, and epoch = {}", name, parentBusIndex.Value, parentBusIndex.Epoch);
             return;
         }
 
@@ -81,13 +81,12 @@ namespace Core::Audio {
     void BusManager::RegisterBus(std::string_view name, std::string_view parentBusName) {
         Bus* parent = GetBus(parentBusName);
         if (!parent) {
-            RC_WARN("Tried to register bus with invalid parent bus name");
+            RC_WARN("Tried to register bus, \"{}\", with invalid parent bus name, \"{}\"", name, parentBusName);
             return;
         }
 
         RegisterBus(name, *parent);
     }
-
 
     void BusManager::UnregisterBus(std::string_view name) {
         Index index = GetBusIndex(name);
@@ -216,18 +215,19 @@ namespace Core::Audio {
     }
 
     Bus& BusManager::GetMasterBus() {
-        RC_ASSERT(!m_Buses.empty() && m_Buses.front(), "m_Buses should always have the master bus as it's 1st element");
+        RC_ASSERT(!m_Buses.empty() && m_Buses.front(), "BusManager has not been initialized");
+
         return m_Buses.front().value();
     }
 
     Index BusManager::GetMasterBusIndex() {
-        RC_ASSERT(!m_Buses.empty() && m_Buses.front(), "m_Buses should always have the master bus as it's 1st element");
+        RC_ASSERT(!m_Buses.empty() && m_Buses.front(), "BusManager has not been initialized");
 
         return { .Epoch = m_Epoch, .Value = 0 };
     }
 
     std::string_view BusManager::GetMasterBusName() {
-        RC_ASSERT(!m_Buses.empty() && m_Buses.front(), "m_Buses should always have the master bus as it's 1st element");
+        RC_ASSERT(!m_Buses.empty() && m_Buses.front(), "BusManager has not been initialized");
 
         return "Master";
     }
@@ -260,7 +260,7 @@ namespace Core::Audio {
         Bus* bus = GetBus(parentIndex);
 
         if (!bus) {
-            RC_WARN("Could not find bus, with index = {}, and epoch = {}", parentIndex.Value, parentIndex.Epoch);
+            RC_WARN("Could not find parent bus, with index = {}, and epoch = {}", parentIndex.Value, parentIndex.Epoch);
             return false;
         }
 
@@ -271,7 +271,7 @@ namespace Core::Audio {
         Bus* bus = GetBus(parentName);
 
         if (!bus) {
-            RC_WARN("Could not find bus \"{}\"", parentName);
+            RC_WARN("Could not find parent bus, \"{}\"", parentName);
             return false;
         }
 
@@ -300,7 +300,7 @@ namespace Core::Audio {
         Bus* bus = GetBus(ancestorIndex);
 
         if (!bus) {
-            RC_WARN("Could not find bus, with index = {}, and epoch = {}", ancestorIndex.Value, ancestorIndex.Epoch);
+            RC_WARN("Could not find ancestor bus, with index = {}, and epoch = {}", ancestorIndex.Value, ancestorIndex.Epoch);
             return false;
         }
 
@@ -311,7 +311,7 @@ namespace Core::Audio {
         Bus* bus = GetBus(ancestorName);
 
         if (!bus) {
-            RC_WARN("Could not find bus \"{}\"", ancestorName);
+            RC_WARN("Could not find ancestor bus \"{}\"", ancestorName);
             return false;
         }
 
