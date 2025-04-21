@@ -22,10 +22,12 @@ void RaycasterLayer::OnAttach() {
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
 
     Core::Audio::Init();
+
+    Core::Audio::SetMasterPitch(0.5f);
+    Core::Audio::SetMasterBalance(0.5f);
+
     Core::Audio::Sound::Flags flags(Core::Audio::Sound::DisablePitch, Core::Audio::Sound::DisableSpatialization);
-    static Core::Audio::Bus main;
-    main.SetPitch(0.5f);
-    Core::Audio::GetSoundManager().RegisterSound("sound", "sound.wav", flags, &main);
+    Core::Audio::GetSoundManager().RegisterSound("sound", "sound.wav", flags);
 }
 
 void RaycasterLayer::OnDetach() {

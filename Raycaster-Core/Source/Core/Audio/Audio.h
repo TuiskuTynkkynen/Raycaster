@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SoundManager.h"
+#include "BusManager.h"
 
 #include <vector>
 #include <string_view>
@@ -12,6 +13,11 @@ namespace Core::Audio {
     void SetMasterVolume(float volume);
     // Convert dB to linear volume and set it
     void SetMasterGain(float gaindB);
+
+    void SetMasterPitch(float pitch);
+    void SetMasterBalance(float balance);
+    void SetMasterPan(float pan);
+    void SetMasterFade(std::chrono::milliseconds length, float startVolume, float endVolume);
 
     void SetWorldUp(glm::vec3 up);
     void SetListnerCone(float innerAngle, float outerAngle, float outerGaindB);
@@ -49,6 +55,16 @@ namespace Core::Audio {
 
     Sound* GetSound(Index index);
     Sound* GetSound(std::string_view name);
+    
+    BusManager& GetBusManager();
+
+    bool ValidateBusIndex(Index& index, std::string_view name);
+    Index GetBusIndex(std::string_view name);
+
+    Bus& GetMasterBus();
+
+    Bus* GetBus(Index index);
+    Bus* GetBus(std::string_view name);
 
     std::vector<std::string_view> GetDevices();
 

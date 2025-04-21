@@ -84,14 +84,17 @@ namespace Core {
 
         success = Audio::InitEngine();
         RC_ASSERT(success, "Failed to intitialize Audio System");
-        Internal::System->SoundManager.Init(16);
-        Internal::System->SoundManager.Init(nullptr, 16);
+
+        Internal::System->BusManager.Init(4);
+        Internal::System->SoundManager.Init(&GetMasterBus(), 16);
     }
 
     void Audio::Shutdown() {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         Internal::System->SoundManager.Shutdown();
+        Internal::System->BusManager.Shutdown();
+
         ShutdownEngine();
 
         ShutdownDevice();
@@ -103,12 +106,29 @@ namespace Core {
     }
 
     void Audio::SetMasterVolume(float volume) {
-        ma_engine_set_volume(Internal::System->Engine, volume);
+        GetMasterBus().SetVolume(volume);
     }
 
     void Audio::SetMasterGain(float gaindB) {
-        ma_engine_set_volume(Internal::System->Engine, ma_volume_db_to_linear(gaindB));
+        GetMasterBus().SetGain(gaindB);
     }
+
+    void Audio::SetMasterPitch(float pitch) {
+        GetMasterBus().SetPitch(pitch);
+    }
+
+    void Audio::SetMasterBalance(float balance) {
+        GetMasterBus().SetBalance(balance);
+    }
+
+    void Audio::SetMasterPan(float pan) {
+        GetMasterBus().SetPan(pan);
+    }
+
+    void Audio::SetMasterFade(std::chrono::milliseconds length, float startVolume, float endVolume) {
+        GetMasterBus().SetFade(length, startVolume, endVolume);
+    }
+
 
     void Audio::SetWorldUp(glm::vec3 up) {
         static_assert(LISTNERS == 1, "Audio System listner related functions assume single listner");
@@ -160,7 +180,7 @@ namespace Core {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
         std::string pathString = path.string();
-
+        
         ma_result result = ma_engine_play_sound(Internal::System->Engine, pathString.c_str(), NULL);
         if (result != MA_SUCCESS) {
             RC_WARN("Playing inline sound, {}, failed with error code {}", pathString, (int32_t)result);
@@ -293,6 +313,43 @@ namespace Core {
         return Internal::System->SoundManager.GetSound(name);
     }
 
+    Audio::BusManager& Audio::GetBusManager() {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        return Internal::System->BusManager;
+    }
+
+    bool Audio::ValidateBusIndex(Index& index, std::string_view name) {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        index = Internal::System->BusManager.ValidateIndex(index, name);
+        return index;
+    }
+
+    Audio::Index Audio::GetBusIndex(std::string_view name) {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        return Internal::System->BusManager.GetBusIndex(name);
+    }
+
+    Audio::Bus& Audio::GetMasterBus() {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        return Internal::System->BusManager.GetMasterBus();
+    }
+
+    Audio::Bus* Audio::GetBus(Index index) {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        return Internal::System->BusManager.GetBus(index);
+    }
+
+    Audio::Bus* Audio::GetBus(std::string_view name) {
+        RC_ASSERT(Internal::System, "Audio System has not been initialized");
+
+        return Internal::System->BusManager.GetBus(name);
+    }
+
     std::vector<std::string_view> Audio::GetDevices() {
         RC_ASSERT(Internal::System, "Audio System has not been initialized");
 
@@ -342,6 +399,7 @@ namespace Core {
         bool result = InitDevice(playbackId, data_callback, notification_callback) && InitEngine();
         RC_ASSERT(result, "Audio System SetDevice failed");
 
+        Internal::System->BusManager.ReinitBuses();
         Internal::System->SoundManager.ReinitSounds();
 
         //Shutdown old engine and device

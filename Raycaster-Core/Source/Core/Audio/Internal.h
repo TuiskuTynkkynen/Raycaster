@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "SoundManager.h"
+#include "BusManager.h"
 
 #include "miniaudio/miniaudio.h"
 
@@ -15,6 +16,7 @@ namespace Core::Audio::Internal {
         ma_engine* Engine = nullptr;
         
         SoundManager SoundManager;
+        BusManager BusManager;
 
         struct DeviceInfo {
             ma_device_id id;
