@@ -22,6 +22,24 @@ namespace Core::Audio::Effects {
         std::array<float, 3> B{}; // Numerator coefficients 
     };
 
+    struct LowPassSettings {
+        double CutoffFrequency;
+
+        uint8_t Order = 2; // Max 8. If 0 no filtering will be applied
+    };
+
+    struct HighPassSettings {
+        double CutoffFrequency;
+
+        uint8_t Order = 2; // Max 8. If 0 no filtering will be applied
+    };
+
+    struct BandPassSettings {
+        double CutoffFrequency;
+
+        uint8_t Order = 2; // Must be even, Max 8. If 0 no filtering will be applied
+    };
+
     class Filter {
         friend class Bus;
     public:

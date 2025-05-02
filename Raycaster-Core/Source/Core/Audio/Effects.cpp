@@ -151,6 +151,199 @@ namespace Core::Audio::Effects {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Low Pass Filter Node                                                                                                              //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    static Internal::FilterNode CreateFilterNode(Effects::LowPassSettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        ma_lpf_node_config config = ma_lpf_node_config_init(channels, SAMPLERATE, settings.CutoffFrequency, settings.Order);
+
+        Internal::LowPass* node = new Internal::LowPass;
+        node->CutoffFrequency = settings.CutoffFrequency;
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_lpf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating low pass filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching low pass filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    static bool ReinitFilterNode(Internal::LowPass* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        
+        ma_uint32 order = node->lpf.lpf1Count + 2 * node->lpf.lpf2Count;
+        double cutoff = node->CutoffFrequency;
+        
+        ma_lpf_node_config config = ma_lpf_node_config_init(node->lpf.channels, node->lpf.sampleRate, cutoff, order);
+
+        ma_lpf_node_uninit(node, nullptr);
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_lpf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing low pass filter node failed with error code {}", (int32_t)result);
+        
+            delete node;
+            node = nullptr;
+            return false;
+        }
+
+        if (!parent) {
+            return true;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching low pass filter node to parent failed with error code {}", (int32_t)result);
+        }
+        
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // High Pass Filter Node                                                                                                             //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    static Internal::FilterNode CreateFilterNode(Effects::HighPassSettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        ma_hpf_node_config config = ma_hpf_node_config_init(channels, SAMPLERATE, settings.CutoffFrequency, settings.Order);
+
+        Internal::HighPass* node = new Internal::HighPass;
+        node->CutoffFrequency = settings.CutoffFrequency;
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_hpf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating high pass filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching high pass filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    static bool ReinitFilterNode(Internal::HighPass* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        
+        ma_uint32 order = node->hpf.hpf1Count + 2 * node->hpf.hpf2Count;
+        double cutoff = node->CutoffFrequency;
+        
+        ma_hpf_node_config config = ma_hpf_node_config_init(node->hpf.channels, node->hpf.sampleRate, cutoff, order);
+
+        ma_hpf_node_uninit(node, nullptr);
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_hpf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing high pass filter node failed with error code {}", (int32_t)result);
+        
+            delete node;
+            node = nullptr;
+            return false;
+        }
+
+        if (!parent) {
+            return true;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching high pass filter node to parent failed with error code {}", (int32_t)result);
+        }
+        
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Band Pass Filter Node                                                                                                             //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    static Internal::FilterNode CreateFilterNode(Effects::BandPassSettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        if (settings.Order % 2 != 0) {
+            settings.Order--;
+        }
+
+        ma_bpf_node_config config = ma_bpf_node_config_init(channels, SAMPLERATE, settings.CutoffFrequency, settings.Order);
+
+        Internal::BandPass* node = new Internal::BandPass;
+        node->CutoffFrequency = settings.CutoffFrequency;
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_bpf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating band pass filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching band pass filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    static bool ReinitFilterNode(Internal::BandPass* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        
+        ma_uint32 order = 2 * node->bpf.bpf2Count;
+        double cutoff = node->CutoffFrequency;
+        
+        ma_bpf_node_config config = ma_bpf_node_config_init(node->bpf.channels, SAMPLERATE, cutoff, order);
+
+        ma_bpf_node_uninit(node, nullptr);
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_bpf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing band pass filter node failed with error code {}", (int32_t)result);
+        
+            delete node;
+            node = nullptr;
+            return false;
+        }
+
+        if (!parent) {
+            return true;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching band pass filter node to parent failed with error code {}", (int32_t)result);
+        }
+        
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter                                                                                                                            //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -161,6 +354,9 @@ namespace Core::Audio::Effects {
 
     template Filter::Filter(DelaySettings, Bus&);
     template Filter::Filter(BiquadSettings, Bus&);
+    template Filter::Filter(LowPassSettings, Bus&);
+    template Filter::Filter(HighPassSettings, Bus&);
+    template Filter::Filter(BandPassSettings, Bus&);
 
     template <typename T>
     Filter::Filter(T settings, Filter& parent) : m_Child(nullptr), m_Parent(&parent) {
@@ -170,6 +366,9 @@ namespace Core::Audio::Effects {
 
     template Filter::Filter(DelaySettings, Filter&);
     template Filter::Filter(BiquadSettings, Filter&);
+    template Filter::Filter(LowPassSettings, Filter&);
+    template Filter::Filter(HighPassSettings, Filter&);
+    template Filter::Filter(BandPassSettings, Filter&);
 
     Filter::Filter(Filter&& other) noexcept {
         m_InternalFilter.swap(other.m_InternalFilter);

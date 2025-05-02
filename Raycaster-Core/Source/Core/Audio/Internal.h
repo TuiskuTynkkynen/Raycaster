@@ -46,4 +46,7 @@ namespace Core::Audio::Internal {
 
     struct Delay : ma_delay_node {};
     struct Biquad : ma_biquad_node {};
+    struct LowPass : ma_lpf_node { double CutoffFrequency; };
+    struct HighPass : ma_hpf_node { double CutoffFrequency; };
+    struct BandPass : ma_bpf_node { double CutoffFrequency; };
 }
