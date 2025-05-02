@@ -45,4 +45,5 @@ namespace Core::Audio::Internal {
     };
 
     struct Delay : ma_delay_node {};
+    struct Biquad : ma_biquad_node {};
 }

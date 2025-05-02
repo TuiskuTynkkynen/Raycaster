@@ -3,6 +3,7 @@
 #include "Types.h"
 
 #include <chrono>
+#include <array>
 
 namespace Core::Audio::Effects {
     struct DelaySettings {
@@ -14,6 +15,11 @@ namespace Core::Audio::Effects {
         float Wet = 1.0f;
 
         bool DelaySoundStart = false; // If true, starting of sounds will be delayed by Length. Automatically set, if decay = 0
+    };
+
+    struct BiquadSettings {
+        std::array<float, 3> A{}; // Denominator coefficients 
+        std::array<float, 3> B{}; // Numerator coefficients 
     };
 
     class Filter {

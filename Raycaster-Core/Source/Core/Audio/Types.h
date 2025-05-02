@@ -9,7 +9,9 @@ namespace Core::Audio::Internal {
     struct SoundObject;
 
     struct Delay;
-    using FilterNode = std::variant<Delay*>;
+    struct Biquad;
+
+    using FilterNode = std::variant<Delay*, Biquad*>;
 }
 
 namespace Core::Audio {

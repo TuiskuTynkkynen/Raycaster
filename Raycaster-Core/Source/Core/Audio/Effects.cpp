@@ -25,7 +25,7 @@ namespace Core::Audio::Effects {
         ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
 
         RC_ASSERT(settings.Length > std::chrono::milliseconds::zero(), "Delay must be > 0");
-        
+
         ma_uint32 delayInFrames = 0;
         {
             using namespace std::chrono_literals;
@@ -95,6 +95,62 @@ namespace Core::Audio::Effects {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Biquad Filter Node                                                                                                                 //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    static Internal::FilterNode CreateFilterNode(Effects::BiquadSettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        ma_biquad_node_config config = ma_biquad_node_config_init(channels, settings.B[0], settings.B[1], settings.B[2], settings.A[0], settings.A[1], settings.A[2]);
+
+        Internal::Biquad* node = new Internal::Biquad;
+
+        ma_biquad_node_uninit(node, nullptr);
+        
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_biquad_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating biquad filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching biquad filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    static bool ReinitFilterNode(Internal::Biquad* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        
+        RC_ASSERT(node->biquad.format == ma_format_f32, "Only float32 format is supported");
+        ma_biquad_node_config config = ma_biquad_node_config_init(node->biquad.channels, node->biquad.b0.f32, node->biquad.b1.f32, node->biquad.b2.f32, 1.0f, node->biquad.a1.f32, node->biquad.a2.f32);
+        
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_biquad_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing biquad filter node failed with error code {}", (int32_t)result);
+        
+            delete node;
+            node = nullptr;
+            return node;
+        }
+        
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching biquad filter node to parent failed with error code {}", (int32_t)result);
+        }
+        
+        return node;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter                                                                                                                            //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -104,6 +160,7 @@ namespace Core::Audio::Effects {
     }
 
     template Filter::Filter(DelaySettings, Bus&);
+    template Filter::Filter(BiquadSettings, Bus&);
 
     template <typename T>
     Filter::Filter(T settings, Filter& parent) : m_Child(nullptr), m_Parent(&parent) {
@@ -112,6 +169,7 @@ namespace Core::Audio::Effects {
     }
 
     template Filter::Filter(DelaySettings, Filter&);
+    template Filter::Filter(BiquadSettings, Filter&);
 
     Filter::Filter(Filter&& other) noexcept {
         m_InternalFilter.swap(other.m_InternalFilter);
