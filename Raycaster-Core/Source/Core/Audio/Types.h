@@ -7,6 +7,8 @@
 namespace Core::Audio::Internal {
     struct BusObject;
     struct SoundObject;
+
+    using FilterNode = std::variant<std::nullptr_t>;
 }
 
 namespace Core::Audio {
@@ -23,4 +25,8 @@ namespace Core::Audio {
     class Sound;
 
     using ChildNode = std::variant<Bus*, Sound*>;
+    
+    namespace Effects {
+        class Filter;
+    }
 }
