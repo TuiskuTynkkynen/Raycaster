@@ -406,6 +406,69 @@ namespace Core::Audio::Effects {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // PeakingEQ Filter Node                                                                                                             //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    static Internal::FilterNode CreateFilterNode(Effects::PeakingEQSettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        ma_peak_node_config config = ma_peak_node_config_init(channels, SAMPLERATE, settings.GainDB, settings.Q, settings.Frequency);
+
+        Internal::PeakingEQ* node = new Internal::PeakingEQ;
+        node->GainDB = settings.GainDB;
+        node->Frequency = settings.Frequency;
+        node->Q = settings.Q;
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_peak_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating peaking EQ filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching peaking EQ filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    static bool ReinitFilterNode(Internal::PeakingEQ* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+        
+        ma_peak_node_config config = ma_peak_node_config_init(channels, SAMPLERATE, node->GainDB, node->Q, node->Frequency);
+        
+        ma_peak_node_uninit(node, nullptr);
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_peak_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing peaking EQ filter node failed with error code {}", (int32_t)result);
+        
+            delete node;
+            node = nullptr;
+            return true;
+        }
+
+        if (!parent) {
+            return true;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching peaking EQ filter node to parent failed with error code {}", (int32_t)result);
+        }
+        
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter                                                                                                                            //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -46,6 +46,13 @@ namespace Core::Audio::Effects {
         double Q = 0.0;
     };
 
+    struct PeakingEQSettings {
+        double GainDB;
+        double Frequency;
+
+        double Q = 0.0;
+    };
+
     class Filter {
         friend class Bus;
     public:
