@@ -43,4 +43,6 @@ namespace Core::Audio::Internal {
             ma_sound_group_uninit(this);
         }
     };
+
+    struct Delay : ma_delay_node {};
 }

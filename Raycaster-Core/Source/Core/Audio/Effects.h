@@ -2,7 +2,20 @@
 
 #include "Types.h"
 
+#include <chrono>
+
 namespace Core::Audio::Effects {
+    struct DelaySettings {
+        std::chrono::milliseconds Length;
+
+        float Decay = 0.0f; // Echo
+
+        float Dry = 1.0f;
+        float Wet = 1.0f;
+
+        bool DelaySoundStart = false; // If true, starting of sounds will be delayed by Length. Automatically set, if decay = 0
+    };
+
     class Filter {
         friend class Bus;
     public:

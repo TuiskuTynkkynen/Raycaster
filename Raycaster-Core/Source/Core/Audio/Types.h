@@ -8,7 +8,8 @@ namespace Core::Audio::Internal {
     struct BusObject;
     struct SoundObject;
 
-    using FilterNode = std::variant<std::nullptr_t>;
+    struct Delay;
+    using FilterNode = std::variant<Delay*>;
 }
 
 namespace Core::Audio {

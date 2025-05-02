@@ -17,6 +17,84 @@ namespace Core::Audio::Effects {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delay Filter Node                                                                                                                 //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    static Internal::FilterNode CreateFilterNode(Effects::DelaySettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        RC_ASSERT(settings.Length > std::chrono::milliseconds::zero(), "Delay must be > 0");
+        
+        ma_uint32 delayInFrames = 0;
+        {
+            using namespace std::chrono_literals;
+            if (settings.Length != 0ms) {
+                delayInFrames = static_cast<ma_uint32>(SAMPLERATE * settings.Length / 1s);
+            }
+        }
+
+        ma_delay_node_config config = ma_delay_node_config_init(channels, SAMPLERATE, delayInFrames, settings.Decay);
+
+        config.delay.dry = settings.Dry;
+        config.delay.wet = settings.Wet;
+        config.delay.delayStart = (!settings.Decay) ? true : settings.DelaySoundStart;
+
+        Internal::Delay* node = new Internal::Delay;
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_delay_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating delay filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching delay filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    template<>
+    static bool ReinitFilterNode(Internal::Delay* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+
+        ma_delay_node_config config = ma_delay_node_config_init(node->delay.config.channels, node->delay.config.sampleRate, node->delay.config.delayInFrames, node->delay.config.decay);
+
+        config.delay.dry = node->delay.config.dry;
+        config.delay.wet = node->delay.config.wet;
+        config.delay.delayStart = node->delay.config.delayStart;
+
+        ma_delay_node_uninit(node, nullptr);
+        
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_delay_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing delay filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return false;
+        }
+
+        if (!parent) {
+            return true;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching delay filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter                                                                                                                            //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,11 +103,15 @@ namespace Core::Audio::Effects {
         m_InternalFilter = CreateFilterNode(settings, parent.m_InternalBus.get());
     }
 
+    template Filter::Filter(DelaySettings, Bus&);
+
     template <typename T>
     Filter::Filter(T settings, Filter& parent) : m_Child(nullptr), m_Parent(&parent) {
         ma_node* parentNode = std::visit([](auto parent) { return (ma_node*)parent; }, parent.m_InternalFilter);
         m_InternalFilter = CreateFilterNode(settings, parentNode);
     }
+
+    template Filter::Filter(DelaySettings, Filter&);
 
     Filter::Filter(Filter&& other) noexcept {
         m_InternalFilter.swap(other.m_InternalFilter);
