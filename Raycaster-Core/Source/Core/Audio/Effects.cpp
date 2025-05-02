@@ -131,7 +131,9 @@ namespace Core::Audio::Effects {
         
         RC_ASSERT(node->biquad.format == ma_format_f32, "Only float32 format is supported");
         ma_biquad_node_config config = ma_biquad_node_config_init(node->biquad.channels, node->biquad.b0.f32, node->biquad.b1.f32, node->biquad.b2.f32, 1.0f, node->biquad.a1.f32, node->biquad.a2.f32);
-        
+
+        ma_biquad_node_uninit(node, nullptr);
+
         ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
         ma_result result = ma_biquad_node_init(graph, &config, nullptr, node);
         if (result != MA_SUCCESS) {
@@ -139,15 +141,19 @@ namespace Core::Audio::Effects {
         
             delete node;
             node = nullptr;
-            return node;
+            return false;
         }
-        
+
+        if (!parent) {
+            return true;
+        }
+
         result = ma_node_attach_output_bus(node, 0, parent, 0);
         if (result != MA_SUCCESS) {
             RC_WARN("Attaching biquad filter node to parent failed with error code {}", (int32_t)result);
         }
         
-        return node;
+        return true;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
