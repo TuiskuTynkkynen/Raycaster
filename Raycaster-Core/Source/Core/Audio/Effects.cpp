@@ -344,6 +344,68 @@ namespace Core::Audio::Effects {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Notch Filter Node                                                                                                                 //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    static Internal::FilterNode CreateFilterNode(Effects::NotchSettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        ma_notch_node_config config = ma_notch_node_config_init(channels, SAMPLERATE, settings.Q, settings.Frequency);
+
+        Internal::Notch* node = new Internal::Notch;
+        node->Frequency = settings.Frequency;
+        node->Q = settings.Q;
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_notch_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating notch filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching notch filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    static bool ReinitFilterNode(Internal::Notch* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+        
+        ma_notch_node_config config = ma_notch_node_config_init(channels, SAMPLERATE, node->Q, node->Frequency);
+        
+        ma_notch_node_uninit(node, nullptr);
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_notch_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing notch filter node failed with error code {}", (int32_t)result);
+        
+            delete node;
+            node = nullptr;
+            return false;
+        }
+
+        if (!parent) {
+            return true;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching notch filter node to parent failed with error code {}", (int32_t)result);
+        }
+        
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter                                                                                                                            //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -357,6 +419,8 @@ namespace Core::Audio::Effects {
     template Filter::Filter(LowPassSettings, Bus&);
     template Filter::Filter(HighPassSettings, Bus&);
     template Filter::Filter(BandPassSettings, Bus&);
+    template Filter::Filter(NotchSettings, Bus&);
+    template Filter::Filter(PeakingEQSettings, Bus&);
 
     template <typename T>
     Filter::Filter(T settings, Filter& parent) : m_Child(nullptr), m_Parent(&parent) {
@@ -369,6 +433,8 @@ namespace Core::Audio::Effects {
     template Filter::Filter(LowPassSettings, Filter&);
     template Filter::Filter(HighPassSettings, Filter&);
     template Filter::Filter(BandPassSettings, Filter&);
+    template Filter::Filter(NotchSettings, Filter&);
+    template Filter::Filter(PeakingEQSettings, Filter&);
 
     Filter::Filter(Filter&& other) noexcept {
         m_InternalFilter.swap(other.m_InternalFilter);

@@ -40,6 +40,12 @@ namespace Core::Audio::Effects {
         uint8_t Order = 2; // Must be even, Max 8. If 0 no filtering will be applied
     };
 
+    struct NotchSettings {
+        double Frequency;
+
+        double Q = 0.0;
+    };
+
     class Filter {
         friend class Bus;
     public:
