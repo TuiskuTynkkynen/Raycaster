@@ -15,8 +15,10 @@ namespace Core::Audio::Internal {
     struct BandPass;
     struct Notch;
     struct PeakingEQ;
+    struct LowShelf;
+    struct HighShelf;
 
-    using FilterNode = std::variant<Delay*, Biquad*, LowPass*, HighPass*, BandPass*, Notch*, PeakingEQ*>;
+    using FilterNode = std::variant<Delay*, Biquad*, LowPass*, HighPass*, BandPass*, Notch*, PeakingEQ*, LowShelf*, HighShelf*>;
 }
 
 namespace Core::Audio {

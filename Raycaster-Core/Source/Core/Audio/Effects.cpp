@@ -469,6 +469,132 @@ namespace Core::Audio::Effects {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Low Shelf Filter Node                                                                                                             //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    static Internal::FilterNode CreateFilterNode(Effects::LowShelfSettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        ma_loshelf_node_config config = ma_loshelf_node_config_init(channels, SAMPLERATE, settings.GainDB, settings.Slope, settings.Frequency);
+
+        Internal::LowShelf* node = new Internal::LowShelf;
+        node->GainDB = settings.GainDB;
+        node->Slope = settings.Slope;
+        node->Frequency = settings.Frequency;
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_loshelf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating low shelf filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching low shelf filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    static bool ReinitFilterNode(Internal::LowShelf* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+        
+        ma_loshelf_node_config config = ma_loshelf_node_config_init(channels, SAMPLERATE, node->GainDB, node->Slope, node->Frequency);
+
+        ma_loshelf_node_uninit(node, nullptr);
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_loshelf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing low shelf filter node failed with error code {}", (int32_t)result);
+        
+            delete node;
+            node = nullptr;
+            return false;
+        }
+
+        if (!parent) {
+            return true;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching low shelf filter node to parent failed with error code {}", (int32_t)result);
+        }
+        
+        return true;
+    }
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // High Shelf Filter Node                                                                                                            //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    static Internal::FilterNode CreateFilterNode(Effects::HighShelfSettings settings, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+
+        ma_hishelf_node_config config = ma_hishelf_node_config_init(channels, SAMPLERATE, settings.GainDB, settings.Slope, settings.Frequency);
+
+        Internal::HighShelf* node = new Internal::HighShelf;
+        node->GainDB = settings.GainDB;
+        node->Slope = settings.Slope;
+        node->Frequency = settings.Frequency;
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_hishelf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Creating high shelf filter node failed with error code {}", (int32_t)result);
+
+            delete node;
+            node = nullptr;
+            return node;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching high shelf filter node to parent failed with error code {}", (int32_t)result);
+        }
+
+        return node;
+    }
+
+    static bool ReinitFilterNode(Internal::HighShelf* node, ma_node* parent) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
+        
+        ma_hishelf_node_config config = ma_hishelf_node_config_init(channels, SAMPLERATE, node->GainDB, node->Slope, node->Frequency);
+
+        ma_hishelf_node_uninit(node, nullptr);
+
+        ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
+        ma_result result = ma_hishelf_node_init(graph, &config, nullptr, node);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Reinitializing high shelf filter node failed with error code {}", (int32_t)result);
+        
+            delete node;
+            node = nullptr;
+            return false;
+        }
+
+        if (!parent) {
+            return true;
+        }
+
+        result = ma_node_attach_output_bus(node, 0, parent, 0);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching high shelf filter node to parent failed with error code {}", (int32_t)result);
+        }
+        
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter                                                                                                                            //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -484,6 +610,8 @@ namespace Core::Audio::Effects {
     template Filter::Filter(BandPassSettings, Bus&);
     template Filter::Filter(NotchSettings, Bus&);
     template Filter::Filter(PeakingEQSettings, Bus&);
+    template Filter::Filter(HighShelfSettings, Bus&);
+    template Filter::Filter(LowShelfSettings, Bus&);
 
     template <typename T>
     Filter::Filter(T settings, Filter& parent) : m_Child(nullptr), m_Parent(&parent) {
@@ -498,6 +626,8 @@ namespace Core::Audio::Effects {
     template Filter::Filter(BandPassSettings, Filter&);
     template Filter::Filter(NotchSettings, Filter&);
     template Filter::Filter(PeakingEQSettings, Filter&);
+    template Filter::Filter(LowShelfSettings, Filter&);
+    template Filter::Filter(HighShelfSettings, Filter&);
 
     Filter::Filter(Filter&& other) noexcept {
         m_InternalFilter.swap(other.m_InternalFilter);

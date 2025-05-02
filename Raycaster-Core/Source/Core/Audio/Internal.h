@@ -51,4 +51,6 @@ namespace Core::Audio::Internal {
     struct BandPass : ma_bpf_node { double CutoffFrequency; };
     struct Notch : ma_notch_node { double Frequency; double Q; };
     struct PeakingEQ : ma_peak_node { double GainDB; double Frequency; double Q; };
+    struct LowShelf : ma_loshelf_node { double GainDB; double Slope; double Frequency; };
+    struct HighShelf : ma_hishelf_node { double GainDB; double Slope; double Frequency; };
 }

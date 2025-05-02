@@ -53,6 +53,18 @@ namespace Core::Audio::Effects {
         double Q = 0.0;
     };
 
+    struct LowShelfSettings {
+        double GainDB;
+        double Slope;
+        double Frequency;
+    };
+
+    struct HighShelfSettings {
+        double GainDB;
+        double Slope;
+        double Frequency;
+    };
+
     class Filter {
         friend class Bus;
     public:
