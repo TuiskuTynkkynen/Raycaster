@@ -747,7 +747,7 @@ namespace Core::Audio::Effects {
 
         SwitchParent(other.m_Parent);
         other.m_Parent = nullptr;
-        
+
         // Only cases where child is another filter need to be considered
         if (std::holds_alternative<Filter*>(m_Child)) {
             std::get<Filter*>(m_Child)->SwitchParent(this);
@@ -856,14 +856,25 @@ namespace Core::Audio::Effects {
         }
 
         // Only cases where parent is another filter need to be considered
-        if (std::holds_alternative<Filter*>(m_Parent)) {
-            std::get<Filter*>(m_Parent)->AttachChild(this);
+        if (std::holds_alternative<Filter*>(parent)) {
+            Filter* newParent = std::get<Filter*>(parent);
+          
+            if (newParent == this) {
+                m_Parent = nullptr;
+                return;
+            }
+            
+            newParent->AttachChild(this);
         }
 
         m_Parent = parent;
     }
 
     void Filter::AttachChild(RelativeNode child) {
+        if (std::holds_alternative<Filter*>(child) && std::get<Filter*>(child) == this) {
+            return;
+        }
+
         m_Child = child;
     }
 
