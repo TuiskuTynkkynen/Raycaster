@@ -33,13 +33,17 @@ namespace Core::Audio {
     }
 
     // Needs to be defined in source file so std::unique_ptr<Internal::BusObject> m_InternalBus can call the Internal::BusObject destuctor
-    Bus::Bus(Bus&& other) noexcept {
+    Bus::Bus(Bus&& other) noexcept : m_Parent(nullptr) {
         m_InternalBus.swap(other.m_InternalBus);
         m_Children.swap(other.m_Children);
         m_FadeSettings = other.m_FadeSettings;
 
         SwitchParent(other.m_Parent);
         other.SwitchParent(nullptr);
+
+        for (auto& variant : m_Children) {
+            std::visit([this](auto& child) { child->SwitchParent(this); }, variant);
+    }
     }
 
     // Needs to be defined in source file so std::unique_ptr<Internal::BusObject> m_InternalBus can call the Internal::BusObject destuctor
