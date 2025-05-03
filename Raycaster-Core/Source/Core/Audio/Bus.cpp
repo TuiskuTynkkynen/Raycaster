@@ -36,6 +36,7 @@ namespace Core::Audio {
     Bus::Bus(Bus&& other) noexcept : m_Parent(nullptr) {
         m_InternalBus.swap(other.m_InternalBus);
         m_Children.swap(other.m_Children);
+        m_Filters.swap(other.m_Filters);
         m_FadeSettings = other.m_FadeSettings;
 
         SwitchParent(other.m_Parent);
@@ -43,7 +44,7 @@ namespace Core::Audio {
 
         for (auto& variant : m_Children) {
             std::visit([this](auto& child) { child->SwitchParent(this); }, variant);
-    }
+        }
     }
 
     // Needs to be defined in source file so std::unique_ptr<Internal::BusObject> m_InternalBus can call the Internal::BusObject destuctor
@@ -60,7 +61,7 @@ namespace Core::Audio {
 
         {
             ma_sound_group* parent = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
-
+            
             ma_result result = ma_sound_group_init(Internal::System->Engine, 0, parent, copy);
             if (result != MA_SUCCESS) {
                 RC_WARN("Reinitializing bus failed with error {}", (int32_t)result);
@@ -119,6 +120,15 @@ namespace Core::Audio {
         }
 
         m_InternalBus.reset(copy);
+
+        if (!m_Filters.empty()) {
+            for (auto& filter : m_Filters) {
+                filter.Reinit();
+            }
+        
+            // Currently implemented filter nodes and buses (ma_sound_group) have only one input and output bus, so index is always 0
+            std::visit([this](auto& node) { ma_node_attach_output_bus(m_InternalBus.get(), 0, node, 0); }, m_Filters.back().m_InternalFilter);
+        }
     }
 
     bool Bus::IsEnabled() {
@@ -247,6 +257,92 @@ namespace Core::Audio {
         m_FadeSettings = { ma_engine_get_time_in_pcm_frames(Internal::System->Engine), fadeInFrames, startVolume, endVolume };
     }
 
+    std::vector<Effects::FilterType> Bus::GetFilters() {
+        std::vector<Effects::FilterType> result;
+        result.reserve(m_Filters.size());
+
+        for (auto& filter : m_Filters) {
+            result.emplace_back(filter.GetType());
+        }
+
+        return result;
+    }
+
+    void Bus::AddFilter(auto settings) {
+        if (m_Filters.empty()) {
+            if (m_Parent) {
+                m_Filters.emplace_back(settings, *m_Parent);
+            } else {
+                m_Filters.push_back(Effects::Filter(settings));
+            }
+        } else {
+            m_Filters.emplace_back(Effects::Filter(settings, m_Filters.back()));
+        }
+
+        // Currently implemented filter nodes and buses (ma_sound_group) have only one input and output bus, so index is always 0
+        std::visit([this](auto& node) { ma_node_attach_output_bus(m_InternalBus.get(), 0, node, 0); }, m_Filters.back().m_InternalFilter);
+    }
+
+    template void Bus::AddFilter(Effects::DelaySettings);
+    template void Bus::AddFilter(Effects::BiquadSettings);
+    template void Bus::AddFilter(Effects::LowPassSettings);
+    template void Bus::AddFilter(Effects::HighPassSettings);
+    template void Bus::AddFilter(Effects::BandPassSettings);
+    template void Bus::AddFilter(Effects::NotchSettings);
+    template void Bus::AddFilter(Effects::PeakingEQSettings);
+    template void Bus::AddFilter(Effects::LowShelfSettings);
+    template void Bus::AddFilter(Effects::HighShelfSettings);
+
+    void Bus::RemoveFilter(Effects::FilterType type) {
+        auto iter = std::find_if(m_Filters.rbegin(), m_Filters.rend(), [type](auto& filter) { return filter.GetType() == type; });
+        
+        if (iter == m_Filters.rend()) {
+            return;
+        }
+
+        RemoveFilter(iter.base() - 1);
+    }
+
+    void Bus::RemoveFilter(size_t index) {
+        if (index >= m_Filters.size()) {
+            return;
+        }
+
+        RemoveFilter(m_Filters.begin() + index);
+    }
+
+    void Bus::RemoveFilter(std::vector<Effects::Filter>::iterator iter) {
+        if (iter == m_Filters.end()) {
+            return;
+        }
+
+        iter = m_Filters.erase(iter);
+
+        if (m_Filters.empty()) {
+            ma_node_attach_output_bus(m_InternalBus.get(), 0, m_Parent->m_InternalBus.get(), 0);
+            return;
+        }
+
+        // Removed filter was previous tail
+        if (iter == m_Filters.end()) {
+            std::visit([this](auto& node) { ma_node_attach_output_bus(m_InternalBus.get(), 0, node, 0); }, m_Filters.back().m_InternalFilter);
+            return;
+        }
+
+        // Removed filter was previous head
+        if (iter == m_Filters.begin()) {
+            if (m_Parent) {
+                iter->AttachParent(*m_Parent);
+            } else {
+                iter->DetachParent();
+            }
+            return;
+        }
+
+        // Removed filter was middle node
+        iter->AttachParent(*(--iter));
+    }
+
     void Bus::AttachParentBus(Bus& parent) {
         if (&parent == m_Parent) {
             return;
@@ -254,8 +350,14 @@ namespace Core::Audio {
 
         SwitchParent(&parent);
 
+        ma_node* parentNode = m_Parent->m_InternalBus.get();
+        if (!m_Filters.empty()) {
+            m_Filters.front().AttachParent(parent);
+            parentNode = std::visit([](auto node) { return (ma_node*)node; }, m_Filters.back().m_InternalFilter);
+        }
+
         // Buses (ma_sound_group) have only one input and output bus, so index is always 0
-        ma_result result = ma_node_attach_output_bus(m_InternalBus.get(), 0, m_Parent->m_InternalBus.get(), 0);
+        ma_result result = ma_node_attach_output_bus(m_InternalBus.get(), 0, parentNode, 0);
 
         if (result != MA_SUCCESS) {
             RC_WARN("Attaching parent bus to bus failed with error {}", (int32_t)result);

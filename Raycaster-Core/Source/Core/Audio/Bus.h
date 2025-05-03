@@ -1,17 +1,18 @@
 #pragma once
 
 #include "Types.h"
+#include "Effects.h"
 
 #include <chrono>
 #include <variant>
 #include <memory>
 #include <vector>
 
-
 namespace Core::Audio {
     class Bus {
         friend class Sound;
         friend class BusManager;
+        friend class Effects::Filter;
     public:
         Bus();
         Bus(Bus& parent);
@@ -56,6 +57,11 @@ namespace Core::Audio {
         void SetFadeOut(std::chrono::milliseconds length);
         void SetFade(std::chrono::milliseconds length, float startVolume, float endVolume);
 
+        std::vector<Effects::FilterType> GetFilters();
+        void AddFilter(auto settings);
+        void RemoveFilter(Effects::FilterType type); // Remove last filter of specified type
+        void RemoveFilter(size_t index); // Remove filter at specified index
+
         // Detach old parent and attach new parent
         void AttachParentBus(Bus& parent);
     private:
@@ -69,6 +75,10 @@ namespace Core::Audio {
         void DetachChild(ChildNode child);
 
         std::vector<ChildNode> m_Children;
+
+        void RemoveFilter(std::vector<Effects::Filter>::iterator iterator);
+
+        std::vector<Effects::Filter> m_Filters;
 
         struct FadeSettings {
             uint64_t StartTime = 0;

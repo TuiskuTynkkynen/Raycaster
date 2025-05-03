@@ -27,7 +27,11 @@ void RaycasterLayer::OnAttach() {
     Core::Audio::SetMasterBalance(0.5f);
 
     Core::Audio::Sound::Flags flags(Core::Audio::Sound::DisablePitch, Core::Audio::Sound::DisableSpatialization);
-    Core::Audio::GetSoundManager().RegisterSound("sound", "sound.wav", flags);
+    Core::Audio::GetSoundManager().RegisterSound("sound", "test.wav", flags);
+
+    auto& master = Core::Audio::GetMasterBus();
+    master.AddFilter(Core::Audio::Effects::DelaySettings(std::chrono::milliseconds(100), 0.5f));
+    master.AddFilter(Core::Audio::Effects::LowPassSettings(1000.0));
 }
 
 void RaycasterLayer::OnDetach() {
