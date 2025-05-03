@@ -128,8 +128,6 @@ namespace Core::Audio::Effects {
 
         Internal::Biquad* node = new Internal::Biquad;
 
-        ma_biquad_node_uninit(node, nullptr);
-        
         ma_node_graph* graph = ma_engine_get_node_graph(Internal::System->Engine);
         ma_result result = ma_biquad_node_init(graph, &config, nullptr, node);
         if (result != MA_SUCCESS) {
