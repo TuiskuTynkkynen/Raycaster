@@ -705,6 +705,24 @@ namespace Core::Audio::Effects {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     template <typename T>
+    Filter::Filter(T settings) : m_Child(nullptr), m_Parent(nullptr) {
+        RC_ASSERT(Internal::System->Engine);
+        ma_node* endPoint = ma_engine_get_endpoint(Internal::System->Engine);
+
+        m_InternalFilter = CreateFilterNode(settings, endPoint);
+    }
+
+    template Filter::Filter(DelaySettings);
+    template Filter::Filter(BiquadSettings);
+    template Filter::Filter(LowPassSettings);
+    template Filter::Filter(HighPassSettings);
+    template Filter::Filter(BandPassSettings);
+    template Filter::Filter(NotchSettings);
+    template Filter::Filter(PeakingEQSettings);
+    template Filter::Filter(HighShelfSettings);
+    template Filter::Filter(LowShelfSettings);
+    
+    template <typename T>
     Filter::Filter(T settings, Bus& parent) : m_Child(nullptr), m_Parent(nullptr) {
         m_InternalFilter = CreateFilterNode(settings, parent.m_InternalBus.get());
 
@@ -804,7 +822,7 @@ namespace Core::Audio::Effects {
         }
 
         if (!parentNode) {
-            RC_INFO("Reinitializing filter with no parent");
+            parentNode = ma_engine_get_endpoint(Internal::System->Engine);
         }
 
         return std::visit([parentNode, this](auto node) { return ReinitFilterNode(node, parentNode);}, m_InternalFilter);
@@ -846,6 +864,20 @@ namespace Core::Audio::Effects {
 
         if (result != MA_SUCCESS) {
             RC_WARN("Attaching parent filter to filter failed with error {}", (int32_t)result);
+        }
+    }
+
+    void Filter::DetachParent() {
+        SwitchParent(nullptr);
+
+        ma_node* currentNode = std::visit([](auto node) { return (ma_node*)node; }, m_InternalFilter);
+        ma_node* endPoint = ma_engine_get_endpoint(Internal::System->Engine);
+
+        // Currently implemented filter nodes have only one input and output bus, so index is always 0
+        ma_result result = ma_node_attach_output_bus(currentNode, 0, endPoint, 0);
+
+        if (result != MA_SUCCESS) {
+            RC_WARN("Attaching engine as filter parent failed with error {}", (int32_t)result);
         }
     }
 

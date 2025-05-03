@@ -101,6 +101,11 @@ namespace Core::Audio::Effects {
         void AttachParent(Bus& parent); // Detach old parent and attach new parent
         void AttachParent(Filter& parent); // Detach old parent and attach new parent
     private:
+        template <typename T>
+        Filter(T settings);
+
+        void DetachParent(); // Detach old parent and attach to engine
+
         Internal::FilterNode m_InternalFilter;
 
         using RelativeNode = std::variant<Bus*, Filter*, std::nullptr_t>;
