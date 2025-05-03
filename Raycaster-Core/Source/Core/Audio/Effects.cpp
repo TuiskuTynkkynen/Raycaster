@@ -741,12 +741,12 @@ namespace Core::Audio::Effects {
     template Filter::Filter(LowShelfSettings, Filter&);
     template Filter::Filter(HighShelfSettings, Filter&);
 
-    Filter::Filter(Filter&& other) noexcept : m_Parent(nullptr) {
+    Filter::Filter(Filter&& other) noexcept : m_Parent(nullptr), m_Child(nullptr) {
         m_InternalFilter.swap(other.m_InternalFilter);
         m_Child.swap(other.m_Child);
 
         SwitchParent(other.m_Parent);
-        other.SwitchParent(nullptr);
+        other.m_Parent = nullptr;
         
         // Only cases where child is another filter need to be considered
         if (std::holds_alternative<Filter*>(m_Child)) {
@@ -775,13 +775,13 @@ namespace Core::Audio::Effects {
         m_InternalFilter.swap(other.m_InternalFilter);
         m_Child.swap(other.m_Child);
 
-        SwitchParent(other.m_Parent);
-        other.SwitchParent(nullptr);
-
         // Only cases where child is another filter need to be considered
         if (std::holds_alternative<Filter*>(m_Child)) {
             std::get<Filter*>(m_Child)->SwitchParent(this);
         }
+
+        SwitchParent(other.m_Parent);
+        other.m_Parent = nullptr;
 
         return *this;
     }
