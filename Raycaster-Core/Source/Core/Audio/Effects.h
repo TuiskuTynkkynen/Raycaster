@@ -6,6 +6,18 @@
 #include <array>
 
 namespace Core::Audio::Effects {
+    enum class FilterType : uint8_t {
+        Delay = 0,
+        Biquad,
+        LowPass,
+        HighPass,
+        BandPass,
+        Notch,
+        PeakingEQ,
+        LowShelf,
+        HighShelf,
+    };
+    
     struct DelaySettings {
         std::chrono::milliseconds Length;
 
@@ -83,6 +95,8 @@ namespace Core::Audio::Effects {
         Filter& operator = (Filter&& other) noexcept;
 
         bool Reinit();
+
+        FilterType GetType();
 
         void AttachParent(Bus& parent); // Detach old parent and attach new parent
         void AttachParent(Filter& parent); // Detach old parent and attach new parent

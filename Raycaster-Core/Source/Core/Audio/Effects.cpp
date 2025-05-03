@@ -22,6 +22,12 @@ namespace Core::Audio::Effects {
         static_assert(false, "Pointer to unsupported type passed as node");
     }
 
+    static constexpr FilterType FilterNodeToType(auto* node);
+
+    static constexpr FilterType FilterNodeToType(auto* node) {
+        static_assert(false, "Pointer to unsupported type passed as node");
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delay Filter Node                                                                                                                 //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,6 +112,10 @@ namespace Core::Audio::Effects {
         delete node;
     }
 
+    static constexpr FilterType FilterNodeToType(Internal::Delay* node) {
+        return FilterType::Delay;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Biquad Filter Node                                                                                                                 //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,6 +182,10 @@ namespace Core::Audio::Effects {
     static void UninitFilterNode(Internal::Biquad* node) {
         ma_biquad_node_uninit(node, nullptr);
         delete node;
+    }
+
+    static constexpr FilterType FilterNodeToType(Internal::Biquad* node) {
+        return FilterType::Biquad;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -243,6 +257,10 @@ namespace Core::Audio::Effects {
         delete node;
     }
 
+    static constexpr FilterType FilterNodeToType(Internal::LowPass* node) {
+        return FilterType::LowPass;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // High Pass Filter Node                                                                                                             //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -310,6 +328,10 @@ namespace Core::Audio::Effects {
     static void UninitFilterNode(Internal::HighPass* node) {
         ma_hpf_node_uninit(node, nullptr);
         delete node;
+    }
+
+    static constexpr FilterType FilterNodeToType(Internal::HighPass* node) {
+        return FilterType::HighPass;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -385,6 +407,10 @@ namespace Core::Audio::Effects {
         delete node;
     }
 
+    static constexpr FilterType FilterNodeToType(Internal::BandPass* node) {
+        return FilterType::BandPass;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Notch Filter Node                                                                                                                 //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -451,6 +477,10 @@ namespace Core::Audio::Effects {
     static void UninitFilterNode(Internal::Notch* node) {
         ma_notch_node_uninit(node, nullptr);
         delete node;
+    }
+
+    static constexpr FilterType FilterNodeToType(Internal::Notch* node) {
+        return FilterType::Notch;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -522,6 +552,10 @@ namespace Core::Audio::Effects {
         delete node;
     }
 
+    static constexpr FilterType FilterNodeToType(Internal::PeakingEQ* node) {
+        return FilterType::PeakingEQ;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Low Shelf Filter Node                                                                                                             //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -589,6 +623,10 @@ namespace Core::Audio::Effects {
     static void UninitFilterNode(Internal::LowShelf* node) {
         ma_loshelf_node_uninit(node, nullptr);
         delete node;
+    }
+
+    static constexpr FilterType FilterNodeToType(Internal::LowShelf* node) {
+        return  FilterType::LowShelf;
     }
     
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -658,6 +696,10 @@ namespace Core::Audio::Effects {
     static void UninitFilterNode(Internal::HighShelf* node) {
         ma_hishelf_node_uninit(node, nullptr);
         delete node;
+    }
+
+    static constexpr FilterType FilterNodeToType(Internal::HighShelf* node) {
+        return FilterType::HighShelf;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -762,6 +804,10 @@ namespace Core::Audio::Effects {
         }
 
         return std::visit([parentNode, this](auto node) { return ReinitFilterNode(node, parentNode);}, m_InternalFilter);
+    }
+    
+    FilterType Filter::GetType() {
+        return std::visit([](auto node) { return FilterNodeToType(node); }, m_InternalFilter);
     }
 
     void Filter::AttachParent(Bus& parent) {
