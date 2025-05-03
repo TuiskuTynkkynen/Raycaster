@@ -705,8 +705,11 @@ namespace Core::Audio::Effects {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     template <typename T>
-    Filter::Filter(T settings, Bus& parent) : m_Child(nullptr), m_Parent(&parent) {
+    Filter::Filter(T settings, Bus& parent) : m_Child(nullptr), m_Parent(nullptr) {
         m_InternalFilter = CreateFilterNode(settings, parent.m_InternalBus.get());
+
+        Bus* parentPtr = &parent;
+        SwitchParent(parentPtr);
     }
 
     template Filter::Filter(DelaySettings, Bus&);
@@ -720,9 +723,12 @@ namespace Core::Audio::Effects {
     template Filter::Filter(LowShelfSettings, Bus&);
 
     template <typename T>
-    Filter::Filter(T settings, Filter& parent) : m_Child(nullptr), m_Parent(&parent) {
+    Filter::Filter(T settings, Filter& parent) : m_Child(nullptr), m_Parent(nullptr) {
         ma_node* parentNode = std::visit([](auto parent) { return (ma_node*)parent; }, parent.m_InternalFilter);
         m_InternalFilter = CreateFilterNode(settings, parentNode);
+
+        Filter* parentPtr = &parent;
+        SwitchParent(parentPtr);
     }
 
     template Filter::Filter(DelaySettings, Filter&);
