@@ -80,7 +80,7 @@ namespace Core::Audio::Effects {
         Filter(Filter&& other) noexcept;
 
         Filter& operator = (const Filter& other) = delete;
-        Filter& operator = (const Filter&& other) = delete;
+        Filter& operator = (Filter&& other) noexcept;
 
         bool Reinit();
 

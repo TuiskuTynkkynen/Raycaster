@@ -719,6 +719,27 @@ namespace Core::Audio::Effects {
         std::visit([](auto node) { UninitFilterNode(node); }, m_InternalFilter);
     }
 
+    Filter& Filter::operator=(Filter&& other) noexcept {
+        if (this != & other) {
+            return *this;
+        }
+
+        std::visit([](auto node) { UninitFilterNode(node); }, m_InternalFilter);
+
+        m_InternalFilter.swap(other.m_InternalFilter);
+        m_Child.swap(other.m_Child);
+
+        SwitchParent(other.m_Parent);
+        other.SwitchParent(nullptr);
+
+        // Only cases where child is another filter need to be considered
+        if (std::holds_alternative<Filter*>(m_Child)) {
+            std::get<Filter*>(m_Child)->SwitchParent(this);
+        }
+
+        return *this;
+    }
+
     bool Filter::Reinit() {
         ma_node* parentNode = nullptr;
 
