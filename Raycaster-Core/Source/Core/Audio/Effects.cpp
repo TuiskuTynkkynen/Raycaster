@@ -766,11 +766,11 @@ namespace Core::Audio::Effects {
     }
 
     Filter& Filter::operator=(Filter&& other) noexcept {
-        if (this != & other) {
+        if (this == &other) {
             return *this;
         }
 
-        std::visit([](auto node) { UninitFilterNode(node); }, m_InternalFilter);
+        std::visit([](auto& node) { UninitFilterNode(node); node = nullptr; }, m_InternalFilter);
 
         m_InternalFilter.swap(other.m_InternalFilter);
         m_Child.swap(other.m_Child);
