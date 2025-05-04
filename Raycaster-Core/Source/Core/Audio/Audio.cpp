@@ -20,17 +20,12 @@ void notification_callback(const ma_device_notification* pNotification) {
         return;
     }
 
-    RC_INFO("Notification type = {}", (uint32_t)pNotification->type);
-
     ma_device_info* devices;
     ma_uint32 count;
     ma_context_get_devices(&Core::Audio::Internal::System->Context, &devices, &count, nullptr, nullptr);
 
     size_t defaultDeviceIndex = 0;
     for (; defaultDeviceIndex < count && !devices[defaultDeviceIndex].isDefault; defaultDeviceIndex++) { }
-
-    RC_INFO("default = {}, {}", defaultDeviceIndex, devices[defaultDeviceIndex].name);
-    RC_INFO("current = {}", Core::Audio::Internal::System->Engine->pDevice->playback.name);
 }
 
 namespace Core::Audio {
