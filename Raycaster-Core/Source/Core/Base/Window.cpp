@@ -1,10 +1,12 @@
 #include "Window.h"
+
 #include "Core/Events/KeyEvent.h"
 #include "Core/Events/MouseEvent.h"
 #include "Core/Events/TextEvent.h"
 #include "Core/Events/WindowEvent.h"
 #include "Core/Debug/Debug.h"
 
+#include <GLFW/glfw3.h>
 
 namespace Core {
 	static bool s_GLFWInitialized = false;
@@ -34,13 +36,14 @@ namespace Core {
 			s_GLFWInitialized = true;
 		}
 
-		m_Window = glfwCreateWindow(properties.Width, properties.Height, properties.Tittle.c_str(), nullptr, nullptr);
-		m_context = new GraphicsContext(m_Window);
+		GLFWwindow* internalWindow = glfwCreateWindow(properties.Width, properties.Height, properties.Tittle.c_str(), nullptr, nullptr);
+		m_Window = internalWindow;
+		m_context = new GraphicsContext(internalWindow);
 
-		glfwSetWindowUserPointer(m_Window, &m_Data);
+		glfwSetWindowUserPointer(internalWindow, &m_Data);
 		SetVSync(true);
 
-		glfwSetFramebufferSizeCallback(m_Window, [](GLFWwindow* window, int width, int height) {
+		glfwSetFramebufferSizeCallback(internalWindow, [](GLFWwindow* window, int width, int height) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 			WindowResize event(width, height);
 			
@@ -50,14 +53,14 @@ namespace Core {
 			data.EventCallback(event);
 		});
 
-		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window) {
+		glfwSetWindowCloseCallback(internalWindow, [](GLFWwindow* window) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			WindowClose event;
 			data.EventCallback(event);
 		});
 
-		glfwSetWindowFocusCallback(m_Window, [](GLFWwindow* window, int32_t focused) {
+		glfwSetWindowFocusCallback(internalWindow, [](GLFWwindow* window, int32_t focused) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 			if (focused == GLFW_TRUE) {
 				WindowFocus event;
@@ -68,7 +71,7 @@ namespace Core {
 			}
 		});
 
-		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int modifiers){
+		glfwSetKeyCallback(internalWindow, [](GLFWwindow* window, int key, int scancode, int action, int modifiers){
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			switch (action) {
@@ -90,7 +93,7 @@ namespace Core {
 			}
 		});
 
-		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods) {
+		glfwSetMouseButtonCallback(internalWindow, [](GLFWwindow* window, int button, int action, int mods) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			if (action == GLFW_PRESS) {
@@ -102,21 +105,21 @@ namespace Core {
 			}
 		});
 
-		glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double posX, double posY) {
+		glfwSetCursorPosCallback(internalWindow, [](GLFWwindow* window, double posX, double posY) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			MouseMoved event(posX, posY);
 			data.EventCallback(event);
 		});
 
-		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double offsetX, double offsetY) {
+		glfwSetScrollCallback(internalWindow, [](GLFWwindow* window, double offsetX, double offsetY) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			MouseScrolled event(offsetX, offsetY);
 			data.EventCallback(event);
 		});
 
-		glfwSetCharCallback(m_Window, [](GLFWwindow* window, uint32_t codePoint) {
+		glfwSetCharCallback(internalWindow, [](GLFWwindow* window, uint32_t codePoint) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			TextInput event(codePoint);
@@ -125,7 +128,7 @@ namespace Core {
 	}
 
 	Window::~Window() {
-		glfwDestroyWindow(m_Window);
+		glfwDestroyWindow(static_cast<GLFWwindow*>(m_Window));
 	}
 
 	Window* Window::Create(const WindowProperties& properties) {

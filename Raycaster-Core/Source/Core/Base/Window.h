@@ -3,8 +3,6 @@
 #include "Core/Events/Event.h"
 #include "Core/Renderer/GraphicsContext.h"
 
-#include <GLFW/glfw3.h>
-
 #include <string>
 #include <functional>
 
@@ -20,9 +18,8 @@ namespace Core {
 
 	class Window {
 		using EventCallbackFunction = std::function<void(Event&)>;
-
 	private:
-		GLFWwindow* m_Window;
+		void* m_Window;
 		GraphicsContext* m_context;
 
 		struct WindowData {
@@ -47,7 +44,7 @@ namespace Core {
 		inline void SetEventCallback(const EventCallbackFunction& callback) { m_Data.EventCallback = callback; }
 		void SetVSync(bool enbled);
 
-		inline GLFWwindow* GetWindowPointer() { return m_Window;  }
+		inline void* GetWindowPointer() { return m_Window;  }
 
 		static Window* Create(const WindowProperties& properties = WindowProperties());
 	};
