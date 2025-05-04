@@ -22,6 +22,13 @@ namespace Core {
 	}
 	
 	Application::~Application() {
+		for (auto iterator = m_LayerStack.end(); iterator != m_LayerStack.begin();) {
+			(*--iterator)->OnDetach();
+		}
+		m_ActiveScene->Shutdown();
+		
+		m_Window.reset();
+
 		glfwTerminate();
 	}
 
