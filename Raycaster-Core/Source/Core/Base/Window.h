@@ -6,44 +6,44 @@
 #include <functional>
 
 namespace Core {
-	struct WindowProperties {
-		std::string Tittle;
-		uint32_t Width;
-		uint32_t Height;
+    struct WindowProperties {
+        std::string Tittle;
+        uint32_t Width;
+        uint32_t Height;
 
-		WindowProperties(const std::string& tittle = "core", uint32_t width = 1200, uint32_t height = 600)
-			: Tittle(tittle), Width(width), Height(height) {}
-	};
+        WindowProperties(const std::string& tittle = "Application", uint32_t width = 1200, uint32_t height = 600)
+            : Tittle(tittle), Width(width), Height(height) {}
+    };
 
-	class Window {
-		using EventCallbackFunction = std::function<void(Event&)>;
-	private:
-		void* m_Window;
+    class Window {
+        using EventCallbackFunction = std::function<void(Event&)>;
+    public:
+        Window(const WindowProperties& properties);
+        ~Window();
 
-		struct WindowData {
-			std::string Tittle;
-			uint32_t Width;
-			uint32_t Height;
+        void OnUpdate();
 
-			bool VSyncEnabled;
-			EventCallbackFunction EventCallback;
-		};
+        uint32_t GetHeight() const { return m_Data.Height;  }
+        uint32_t GetWidth() const { return m_Data.Width; }
+        
+        inline void SetEventCallback(const EventCallbackFunction& callback) { m_Data.EventCallback = callback; }
+        void SetVSync(bool enbled);
 
-		WindowData m_Data;
-	public:
-		Window(const WindowProperties& properties);
-		~Window();
+        inline void* GetWindowPointer() { return m_Window;  }
 
-		void OnUpdate();
+        static Window* Create(const WindowProperties& properties = WindowProperties());
+    private:
+        void* m_Window;
 
-		int GetHeight() { return m_Data.Height;  }
-		int GetWidth() { return m_Data.Width; }
-		
-		inline void SetEventCallback(const EventCallbackFunction& callback) { m_Data.EventCallback = callback; }
-		void SetVSync(bool enbled);
+        struct WindowData {
+            std::string Tittle;
+            uint32_t Width = 0;
+            uint32_t Height = 0;
 
-		inline void* GetWindowPointer() { return m_Window;  }
+            bool VSyncEnabled = false;
+            EventCallbackFunction EventCallback;
+        };
 
-		static Window* Create(const WindowProperties& properties = WindowProperties());
-	};
+        WindowData m_Data;
+    };
 }
