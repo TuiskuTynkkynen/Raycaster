@@ -10,7 +10,7 @@ namespace Core {
 	class Layer {
 	protected:
 		std::shared_ptr<Core::Scene> m_Scene;
-		bool m_Enabled;
+		bool m_Enabled = true;
 	public: 
 		virtual void OnAttach() = 0;
 		virtual void OnDetach() = 0;
