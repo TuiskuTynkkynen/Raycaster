@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Core/Events/Event.h"
-#include "Core/Renderer/GraphicsContext.h"
 
 #include <string>
 #include <functional>
@@ -20,7 +19,6 @@ namespace Core {
 		using EventCallbackFunction = std::function<void(Event&)>;
 	private:
 		void* m_Window;
-		GraphicsContext* m_context;
 
 		struct WindowData {
 			std::string Tittle;

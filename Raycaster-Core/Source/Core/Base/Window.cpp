@@ -38,8 +38,8 @@ namespace Core {
 
 		GLFWwindow* internalWindow = glfwCreateWindow(properties.Width, properties.Height, properties.Tittle.c_str(), nullptr, nullptr);
 		m_Window = internalWindow;
-		m_context = new GraphicsContext(internalWindow);
-
+		glfwMakeContextCurrent(internalWindow);
+		
 		glfwSetWindowUserPointer(internalWindow, &m_Data);
 		SetVSync(true);
 
@@ -136,7 +136,7 @@ namespace Core {
 	}
 
 	void Window::OnUpdate() {
-		m_context->SwapBuffers();
+		glfwSwapBuffers(static_cast<GLFWwindow*>(m_Window));
 
 		glfwPollEvents();
 	}

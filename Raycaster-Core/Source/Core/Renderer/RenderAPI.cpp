@@ -1,7 +1,15 @@
 #include "RenderAPI.h"
 
+#include "Core/Debug/Assert.h"
+
+#include <GLFW/glfw3.h>
+#include <glad/glad.h>
+
 namespace Core {
     void RenderAPI::Init() {
+        int32_t success = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        RC_ASSERT(success, "Failed to initialize GLAD");
+
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
