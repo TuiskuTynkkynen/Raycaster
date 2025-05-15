@@ -30,8 +30,6 @@ namespace Core {
         void SetVSync(bool enbled);
 
         inline void* GetWindowPointer() { return m_Window;  }
-
-        static Window* Create(const WindowProperties& properties = WindowProperties());
     private:
         void* m_Window;
 

@@ -131,10 +131,6 @@ namespace Core {
         glfwDestroyWindow(static_cast<GLFWwindow*>(m_Window));
     }
 
-    Window* Window::Create(const WindowProperties& properties) {
-        return new Window(properties);
-    }
-
     void Window::OnUpdate() {
         glfwSwapBuffers(static_cast<GLFWwindow*>(m_Window));
 
