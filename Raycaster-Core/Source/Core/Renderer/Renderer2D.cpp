@@ -152,8 +152,8 @@ namespace Core {
         s_Data.TextureShader = std::make_unique<Shader>("2DShader.glsl");
         s_Data.TextureShader->Bind();
         
-        s_Data.TextureAtlas = std::make_unique<Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
-        s_Data.WhiteTexture = std::make_unique<Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
+        s_Data.TextureAtlas = std::make_unique<Texture2D>(Texture2D::WrapMode::Repeat, Texture2D::WrapMode::Repeat, Texture2D::Filter::Nearest, Texture2D::Filter::Nearest);
+        s_Data.WhiteTexture = std::make_unique<Texture2D>(Texture2D::WrapMode::Repeat, Texture2D::WrapMode::Repeat, Texture2D::Filter::Nearest, Texture2D::Filter::Nearest);
         {
             unsigned char missingTextureData[] = {
                 0, 0, 0, 255,

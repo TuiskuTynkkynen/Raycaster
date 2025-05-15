@@ -7,19 +7,59 @@
 #include <filesystem> 
 #include <string>
 
-namespace Core{
-    Texture2D::Texture2D(GLint wrapS, GLint WrapT, GLint filterMin, GLint filterMax)
-        : m_RendererID(0)
-    {
+namespace Core {
+    static constexpr GLint ToGLint(Texture2D::WrapMode mode) {
+        switch (mode) {
+        case Texture2D::WrapMode::Repeat:
+            return GL_REPEAT;
+        case Texture2D::WrapMode::MirroredRepeat:
+            return GL_MIRRORED_REPEAT;
+        case Texture2D::WrapMode::ClampToEdge:
+            return GL_CLAMP_TO_EDGE;
+        }
+
+        RC_ASSERT("This should not be reached");
+        return 0;
+    }
+
+    static constexpr GLint ToGLint(Texture2D::Filter filter) {
+        switch (filter) {
+        case Texture2D::Filter::Nearest:
+            return GL_NEAREST;
+        case Texture2D::Filter::Linear:
+            return GL_LINEAR;
+        }
+
+        RC_ASSERT("This should not be reached");
+        return 0;
+    }
+
+    static constexpr GLint ToGLint(Texture2D::MipmapFilter mipmap, Texture2D::Filter texture) {
+        switch (mipmap) {
+        case Texture2D::MipmapFilter::Disabled:
+            return ToGLint(texture);
+        case Texture2D::MipmapFilter::Nearest:
+            return (texture == Texture2D::Filter::Linear) ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST;
+        case Texture2D::MipmapFilter::Linear:
+            return (texture == Texture2D::Filter::Linear) ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR;
+        }
+
+        RC_ASSERT("This should not be reached");
+        return 0;
+    }
+
+    Texture2D::Texture2D(WrapMode S, WrapMode T, Filter minification, Filter magnification, MipmapFilter mipmap)
+        : m_RendererID(0) {
+        GL_TEXTURE_WRAP_S;
         glGenTextures(1, &m_RendererID);
         glBindTexture(GL_TEXTURE_2D, m_RendererID);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, WrapT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMin);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMax);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ToGLint(S));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ToGLint(T));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, ToGLint(mipmap, minification));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, ToGLint(magnification));
 
-        m_UsesMipMap = (filterMin == GL_NEAREST_MIPMAP_NEAREST || filterMin == GL_LINEAR_MIPMAP_NEAREST || filterMin == GL_NEAREST_MIPMAP_LINEAR || filterMin == GL_LINEAR_MIPMAP_LINEAR);
-	}
+        m_UsesMipMap = (mipmap != MipmapFilter::Disabled);
+    }
 
     Texture2D::~Texture2D() {
         glDeleteTextures(1, &m_RendererID);
@@ -69,7 +109,7 @@ namespace Core{
     void Texture2D::BindData(const unsigned char* data, uint32_t height, uint32_t width, uint32_t channelCount) {
         GLenum colourSpace;
 
-        switch (channelCount){
+        switch (channelCount) {
         case 1:
             colourSpace = GL_RED;
             break;

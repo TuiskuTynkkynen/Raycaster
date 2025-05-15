@@ -12,8 +12,8 @@
 
 namespace Core {
     Font::Font(bool interpolation) {
-        uint32_t filter = interpolation ? GL_LINEAR : GL_NEAREST;
-        m_TextureAtlas = std::make_unique<Texture2D>(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, filter, filter);
+        Texture2D::Filter filter = interpolation ? Texture2D::Filter::Linear : Texture2D::Filter::Nearest;
+        m_TextureAtlas = std::make_unique<Texture2D>(Texture2D::WrapMode::ClampToEdge, Texture2D::WrapMode::ClampToEdge, filter, filter);
     }
 
     void Font::AddCharacterRange(uint32_t start, uint32_t end) {

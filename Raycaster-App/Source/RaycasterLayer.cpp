@@ -17,7 +17,7 @@ void RaycasterLayer::OnAttach() {
     
     Core::UI::Init();
     Core::UI::SetFont(font);
-    std::shared_ptr<Core::Texture2D> buttonTexture = std::make_unique<Core::Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
+    std::shared_ptr<Core::Texture2D> buttonTexture = std::make_unique<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
     buttonTexture->BindImage("Button.png");
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
 

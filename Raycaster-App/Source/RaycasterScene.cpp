@@ -734,7 +734,7 @@ void RaycasterScene::InitModels() {
         shader->setVec3(lightName.c_str(), pos);
     }
     
-    auto textureAtlas = std::make_shared<Core::Texture2D>(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);
+    auto textureAtlas = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
     textureAtlas->BindImage("wolfenstein_texture_atlas.png");
 
     //Create meshes from wall, floor and ceiling vertices and attach them to map model
