@@ -29,7 +29,7 @@ void RaycasterScene::Init(){
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, s_MapData.mapScalingFactor, s_MapData.width, s_MapData.height);
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
     
-    Core::Tile tile;
+    Tile tile;
     tile.Scale = glm::vec3(0.95f * s_MapData.mapScale.x, 0.95f * s_MapData.mapScale.y, 1.0f);
     tile.Posistion.z = 0.0f;
 
@@ -321,7 +321,7 @@ void RaycasterScene::RenderSprites() {
             }
 
             if (rayIndex >= space) {
-                Core::Ray r;
+                Ray r;
                 m_Rays.push_back(r);
             }
 
@@ -470,7 +470,7 @@ void RaycasterScene::InitWalls() {
     };
     const float centreY = (s_MapData.height - 1.0f) / 2, centreX = (s_MapData.width - 1.0f) / 2;
 
-    Core::Tile tile;
+    Tile tile;
     tile.Scale = glm::vec3(0.95f * s_MapData.mapScale.x, 0.95f * s_MapData.mapScale.y, 1.0f);
     tile.Colour = glm::vec3(1.0f);
     tile.IsTriangle = true;

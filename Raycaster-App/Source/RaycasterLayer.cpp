@@ -44,8 +44,8 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(identity);
     
-    const std::vector<Core::Ray>& rays = m_Scene->GetRays();
-    uint32_t rayCount = m_Scene->GetRayCount();
+    const std::vector<Ray>& rays = static_cast<RaycasterScene&>(*m_Scene).GetRays();
+    uint32_t rayCount = static_cast<RaycasterScene&>(*m_Scene).GetRayCount();
     uint32_t rayArraySize = rays.size();
     glm::vec4 colour;
     
@@ -173,9 +173,9 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     static glm::mat4 identity(1.0f);
     
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
-    Core::Renderer2D::BeginScene(m_Scene->GetCamera());
+    Core::Renderer2D::BeginScene(static_cast<RaycasterScene&>(*m_Scene).GetCamera());
 
-    const std::vector<Core::Tile>& tiles = m_Scene->GetTiles();
+    const std::vector<Tile>& tiles = static_cast<RaycasterScene&>(*m_Scene).GetTiles();
     uint32_t mapSize = tiles.size();
 
     for (int i = 0; i < mapSize; i++) {
@@ -191,11 +191,11 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::BeginScene(identity);
 
     glm::vec4 colour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    const Core::Player& player = m_Scene->GetPlayer();
+    const Player& player = static_cast<RaycasterScene&>(*m_Scene).GetPlayer();
     Core::Renderer2D::DrawRotatedFlatQuad(zero, player.Rotation, AxisZ, player.Scale, colour);
 
     colour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-    std::vector <Core::Line> lines = m_Scene->GetLines();
+    std::vector <Line> lines = static_cast<RaycasterScene&>(*m_Scene).GetLines();
     uint32_t lineCount = lines.size();
     for (int i = 0; i < lineCount; i++) {
         Core::Renderer2D::DrawLine(lines[i].Posistion, lines[i].Scale, colour);
@@ -217,12 +217,12 @@ bool Layer2D::OnWindowResizeEvent(Core::WindowResize& event) {
 }
 
 void Layer3D::OnUpdate(Core::Timestep deltaTime) {
-    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 500.0f) * m_Scene->GetCamera3D().GetViewMatrix();
+    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 500.0f) * static_cast<RaycasterScene&>(*m_Scene).GetCamera3D().GetViewMatrix();
     
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer::BeginScene(viewPerspective);
 
-    const std::vector<Core::Model>& models = m_Scene->GetModels();
+    const std::vector<Core::Model>& models = static_cast<RaycasterScene&>(*m_Scene).GetModels();
 
     for (const Core::Model& model : models) {
         Core::Renderer::DrawModel(model);

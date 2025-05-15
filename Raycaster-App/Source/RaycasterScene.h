@@ -2,6 +2,7 @@
 
 #include "Core.h"
 #include "Algorithms.h"
+#include "Entities.h"
 
 #include <memory>
 
@@ -45,10 +46,9 @@ private:
     const uint32_t m_RayCount = 500;
     const float m_RayWidth = 1.0f / m_RayCount;
 
-    std::vector<Core::Ray> m_Rays;
-    std::vector<Core::Line> m_Lines;
-    std::vector<Core::Tile> m_Tiles;
-    std::vector<Core::Sprite> m_Sprites;
+    std::vector<Ray> m_Rays;
+    std::vector<Line> m_Lines;
+    std::vector<Tile> m_Tiles;
     std::vector<Core::Model> m_Models;
     std::vector<glm::vec3> m_Lights;
     float* m_ZBuffer = new float[m_RayCount];
@@ -78,7 +78,7 @@ private:
 
     
     float max = 0.0f;
-    Core::Player m_Player;
+    Player m_Player;
     std::unique_ptr<Core::RaycasterCamera> m_Camera;
     std::unique_ptr<Core::FlyCamera> m_Camera3D;
 
@@ -97,15 +97,14 @@ public:
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override {}
 
-    inline const std::vector<Core::Ray>& GetRays() const override { return m_Rays; }
-    inline const std::vector<Core::Line>& GetLines() const override { return m_Lines; }
-    inline const std::vector<Core::Tile>& GetTiles() const override { return m_Tiles; }
-    inline const std::vector<Core::Sprite>& GetSprites() const override { return m_Sprites; }
-    inline const std::vector<Core::Model>& GetModels() const override { return m_Models; }
+    inline const std::vector<Ray>& GetRays() const { return m_Rays; }
+    inline const std::vector<Line>& GetLines() const { return m_Lines; }
+    inline const std::vector<Tile>& GetTiles() const { return m_Tiles; }
+    inline const std::vector<Core::Model>& GetModels() const { return m_Models; }
 
-    inline const Core::Player& GetPlayer() const override { return m_Player; }
-    inline const Core::RaycasterCamera& GetCamera() const override { return *m_Camera; }
-    inline const Core::FlyCamera& GetCamera3D() const override { return *m_Camera3D;  }
+    inline const Player& GetPlayer() const { return m_Player; }
+    inline const Core::RaycasterCamera& GetCamera() const { return *m_Camera; }
+    inline const Core::FlyCamera& GetCamera3D() const { return *m_Camera3D;  }
 
     inline uint32_t GetRayCount() { return m_RayCount; }
 };
