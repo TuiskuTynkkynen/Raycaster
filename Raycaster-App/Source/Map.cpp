@@ -10,9 +10,7 @@ std::vector<LineCollider> Map::CreateWalls() {
             continue;
         }
 
-        point1.x = point2.x = startIndex % s_MapData.Width;
-        point1.y = point2.y = startIndex / s_MapData.Width;
-
+        point1 = point2 = glm::vec2(startIndex % s_MapData.Width, startIndex / s_MapData.Width);
 
         Neighbours adjacent = GetNeighbours(startIndex);
         if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
@@ -33,7 +31,7 @@ std::vector<LineCollider> Map::CreateWalls() {
     }
 
     const int32_t directions[] = {
-        1, -1, s_MapData.Width, -s_MapData.Width, 0 //R, L, D, U 
+        1, -1, s_MapData.Width, -static_cast<int32_t>(s_MapData.Width) //R, L, D, U 
     };
 
     std::vector<glm::vec2> points;
@@ -47,14 +45,12 @@ std::vector<LineCollider> Map::CreateWalls() {
             int32_t offset = i % 2 == 0 ? directions[i] : 0;
             current = startIndex + offset;
 
-            point1.x = current % s_MapData.Width;
-            point1.y = current / s_MapData.Width;
+            point1 = glm::vec2(current % s_MapData.Width, current / s_MapData.Width);
 
             current += abs(directions[(i + 2) % 4]); // rotate 2nd point 90 deg ahead
 
-            point2.x = current % s_MapData.Width;
-            point2.y = current / s_MapData.Width;
-
+            point2 = glm::vec2(current % s_MapData.Width, current / s_MapData.Width);
+            
             if (directions[(i + 2) % 4] < 0) {
                 auto temp = point1;
                 point1 = point2;
@@ -131,9 +127,9 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
 
     {
         for (auto& wall : walls) {
-            uint32_t midX = wall.Position.x + 0.5f * wall.Vector.x - 1e-6f * wall.Normal.x;
-            uint32_t midY = wall.Position.y + 0.5f * wall.Vector.y + 1e-6f * wall.Normal.y;
-            uint32_t index = abs(s_MapData.Map[midY * s_MapData.Width + midX]);
+            uint32_t midX = static_cast<uint32_t>(wall.Position.x + 0.5f * wall.Vector.x - 1e-6f * wall.Normal.x);
+            uint32_t midY = static_cast<uint32_t>(wall.Position.y + 0.5f * wall.Vector.y + 1e-6f * wall.Normal.y);
+            uint32_t index = static_cast<uint32_t>(glm::abs(s_MapData.Map[midY * s_MapData.Width + midX]));
 
             wallIndices.emplace_back(glm::vec4{ wall.Position.x, wall.Position.y, wall.Position.x + wall.Vector.x, wall.Position.y + wall.Vector.y }, index);
         }
@@ -154,7 +150,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
         //Create vertices and indices from walls
         uint32_t prevIndex = wallIndices[0].second;
         uint32_t vertexCount = 0;
-        uint32_t wallCount = wallIndices.size();
+        uint32_t wallCount = static_cast<uint32_t>(wallIndices.size());
         for (uint32_t i = 0; i < wallCount; i++) {
             auto& [wall, index] = wallIndices[i];
 
@@ -219,7 +215,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
                 float z = floor[(1 + offset) % 4];
                 //position
                 vertices.push_back(x);
-                vertices.push_back(i);
+                vertices.push_back(static_cast<float>(i));
                 vertices.push_back(z);
 
                 //normal
@@ -259,7 +255,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
 
             auto mesh = std::make_shared<Core::Mesh>();
             mesh->VAO = std::make_unique<Core::VertexArray>();
-            mesh->VBO = std::make_unique<Core::VertexBuffer>(vertexData.data(), sizeof(float) * vertexData.size());
+            mesh->VBO = std::make_unique<Core::VertexBuffer>(vertexData.data(), static_cast<uint32_t>(sizeof(float) * vertexData.size()));
             Core::VertexBufferLayout wallLayout;
 
             wallLayout.Push<float>(3);
@@ -268,7 +264,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
             mesh->VAO->AddBuffer(*mesh->VBO, wallLayout);
 
             if (indexData.size()) {
-                mesh->EBO = std::make_unique<Core::ElementBuffer>(indexData.data(), indexData.size());
+                mesh->EBO = std::make_unique<Core::ElementBuffer>(indexData.data(), static_cast<uint32_t>(indexData.size()));
             }
 
             mapModel.Meshes.emplace_back(mesh, meshCount);
@@ -292,8 +288,8 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
 Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
     glm::vec3 deltaDistance = glm::abs((float)1 / direction);
 
-    uint32_t mapX = origin.x;
-    uint32_t mapY = origin.y;
+    uint32_t mapX = static_cast<uint32_t>(origin.x);
+    uint32_t mapY = static_cast<uint32_t>(origin.y);
 
     int32_t stepX = (direction.x > 0) ? 1 : -1;
     int32_t stepY = (direction.y < 0) ? 1 : -1;
@@ -364,15 +360,13 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
 
         float offset = origin.y - wallDistance * direction.y;
         offset -= floor(offset);
-        worldPosition.x = mapX - stepX;
-        worldPosition.y = mapY + offset;
+        worldPosition = glm::vec2(mapX - stepX, mapY + offset);
     } else if (side == 1) {
         wallDistance = sideDistance.y - deltaDistance.y;
 
         float offset = origin.x + wallDistance * direction.x;
         offset -= floor(offset);
-        worldPosition.x = mapX + offset;
-        worldPosition.y = mapY - stepY;
+        worldPosition = glm::vec2(mapX + offset, mapY - stepY);
     }
 
     return { 
