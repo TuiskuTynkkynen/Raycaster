@@ -75,11 +75,19 @@ private:
     };
     inline static MapData s_MapData;
 
-    struct Neighbours {
-        bool Left   : 1;
-        bool Down   : 1;
-        bool Up     : 1;
-        bool Right  : 1;
+    union Neighbours {
+        struct {
+            bool Left   : 1;
+            bool Down   : 1;
+            bool Up     : 1;
+            bool Right  : 1;
+        };
+        uint8_t Data;
+        
+        bool operator[](size_t index) {
+            RC_ASSERT(index < 4, "Neighbour contains only 4 elements");
+            return (Data >> index) & 1;
+        }
     };
     constexpr Neighbours GetNeighbours(size_t index);
 };

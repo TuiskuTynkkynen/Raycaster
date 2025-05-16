@@ -3,75 +3,61 @@
 std::vector<LineCollider> Map::CreateWalls() {
     std::vector<LineCollider> result;
 
-    glm::vec2 point1(0.0f), point2(0.0f);
-
-    for (uint32_t startIndex = 0; startIndex < s_MapData.Size; startIndex++) {
-        if (s_MapData.Map[startIndex] >= 0) {
+    std::array<std::vector<glm::vec2>, 4> points;
+    for (size_t startIndex = 0; startIndex < s_MapData.Size; startIndex++) {
+        if (s_MapData.Map[startIndex] == 0) {
             continue;
         }
 
-        point1 = point2 = glm::vec2(startIndex % s_MapData.Width, startIndex / s_MapData.Width);
-
+        glm::vec2 start(startIndex % s_MapData.Width, startIndex / s_MapData.Width);
         Neighbours adjacent = GetNeighbours(startIndex);
+
+        // Horizontal or vertical wall checks
+        if (s_MapData.Map[startIndex] > 0) {
+            for (size_t i = 0; i < 4; i++) {
+                if (adjacent[i]) {
+                    continue;
+                }
+                
+                glm::vec2 point(start.x + (i % 2 == 1), start.y + (i < 2));
+                auto iterator = std::find(points[i].begin(), points[i].end(), point);
+
+                if (iterator != points[i].end()) { //if 1st point already exist, line end point can be updated
+                    iterator->x = start.x + (i > 1);
+                    iterator->y = start.y + (i % 2 == 1);
+                } else {
+                    points[i].emplace_back(point);
+                    points[i].emplace_back(start.x + (i > 1), start.y + (i % 2 == 1));
+                }
+            }
+
+            continue;
+        }
+
+        glm::vec2 end = start;
+
+        // Diagonal wall checks
         if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
-            point1.x++;
-            point2.y++;
+            start.x++;
+            end.y++;
         } else {
-            point1.x++;
-            point1.y++;
+            start.x++;
+            start.y++;
         }
 
-        if (adjacent.Right) {
-            glm::vec2 temp = point1;
-            point1 = point2;
-            point2 = temp;
+        // Fixes normals
+        if (adjacent.Down) {
+            result.emplace_back(end, start);
+            continue;
         }
 
-        result.emplace_back(point1, point2);
+        result.emplace_back(start, end);
     }
 
-    const int32_t directions[] = {
-        1, -1, s_MapData.Width, -static_cast<int32_t>(s_MapData.Width) //R, L, D, U 
-    };
-
-    std::vector<glm::vec2> points;
-    for (uint32_t i = 0; i < 4; i++) {
-        for (uint32_t startIndex = 0; startIndex < s_MapData.Size; startIndex++) {
-            uint32_t current = startIndex + directions[i];
-            if (s_MapData.Map[startIndex] <= 0 || current >= s_MapData.Size || s_MapData.Map[current] != 0) {
-                continue;
-            }
-
-            int32_t offset = i % 2 == 0 ? directions[i] : 0;
-            current = startIndex + offset;
-
-            point1 = glm::vec2(current % s_MapData.Width, current / s_MapData.Width);
-
-            current += abs(directions[(i + 2) % 4]); // rotate 2nd point 90 deg ahead
-
-            point2 = glm::vec2(current % s_MapData.Width, current / s_MapData.Width);
-            
-            if (directions[(i + 2) % 4] < 0) {
-                auto temp = point1;
-                point1 = point2;
-                point2 = temp;
-            }
-
-            auto iterator = std::find(points.begin(), points.end(), point1);
-            if (iterator != points.end()) {
-                *iterator = point2;         //if 1st point already exist, line end point can be updated
-            }
-            else {
-                points.push_back(point1);
-                points.push_back(point2);
-            }
+    for (size_t i = 0; i < points.size(); i++) {
+        for (size_t j = 0; j < points[i].size(); j += 2) {
+            result.emplace_back(points[i][j], points[i][j + 1]);
         }
-
-        for (int j = 0; j < points.size(); j += 2) {
-            result.emplace_back(points[j], points[j + 1]);
-        }
-
-        points.clear();
     }
 
     return result;
