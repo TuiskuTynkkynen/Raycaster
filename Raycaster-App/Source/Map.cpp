@@ -1,0 +1,392 @@
+#include "Map.h"
+
+std::vector<LineCollider> Map::CreateWalls() {
+    std::vector<LineCollider> result;
+
+    glm::vec2 point1(0.0f), point2(0.0f);
+
+    for (uint32_t startIndex = 0; startIndex < s_MapData.Size; startIndex++) {
+        if (s_MapData.Map[startIndex] >= 0) {
+            continue;
+        }
+
+        point1.x = point2.x = startIndex % s_MapData.Width;
+        point1.y = point2.y = startIndex / s_MapData.Width;
+
+        bool down = startIndex + s_MapData.Width >= s_MapData.Size || s_MapData.Map[startIndex + s_MapData.Width];
+        bool right = startIndex + 1 >= s_MapData.Size || s_MapData.Map[startIndex + 1];
+
+        bool up = startIndex - s_MapData.Width >= s_MapData.Size || s_MapData.Map[startIndex - s_MapData.Width];
+        bool left = startIndex - 1 >= s_MapData.Size || s_MapData.Map[startIndex - 1];
+
+        if (down && right || up && left) {
+            point1.x++;
+            point2.y++;
+        } else {
+            point1.x++;
+            point1.y++;
+        }
+
+        if (right) {
+            glm::vec2 temp = point1;
+            point1 = point2;
+            point2 = temp;
+        }
+
+        result.emplace_back(point1, point2);
+    }
+
+    const int32_t directions[] = {
+        1, -1, s_MapData.Width, -s_MapData.Width, 0 //R, L, D, U 
+    };
+
+    std::vector<glm::vec2> points;
+    for (uint32_t i = 0; i < 4; i++) {
+        for (uint32_t startIndex = 0; startIndex < s_MapData.Size; startIndex++) {
+            uint32_t current = startIndex + directions[i];
+            if (s_MapData.Map[startIndex] <= 0 || current >= s_MapData.Size || s_MapData.Map[current] != 0) {
+                continue;
+            }
+
+            int32_t offset = i % 2 == 0 ? directions[i] : 0;
+            current = startIndex + offset;
+
+            point1.x = current % s_MapData.Width;
+            point1.y = current / s_MapData.Width;
+
+            current += abs(directions[(i + 2) % 4]); // rotate 2nd point 90 deg ahead
+
+            point2.x = current % s_MapData.Width;
+            point2.y = current / s_MapData.Width;
+
+            if (directions[(i + 2) % 4] < 0) {
+                auto temp = point1;
+                point1 = point2;
+                point2 = temp;
+            }
+
+            auto iterator = std::find(points.begin(), points.end(), point1);
+            if (iterator != points.end()) {
+                *iterator = point2;         //if 1st point already exist, line end point can be updated
+            }
+            else {
+                points.push_back(point1);
+                points.push_back(point2);
+            }
+        }
+
+        for (int j = 0; j < points.size(); j += 2) {
+            result.emplace_back(points[j], points[j + 1]);
+        }
+
+        points.clear();
+    }
+
+    return result;
+}
+
+std::vector<Tile> Map::CreateTiles() {
+    std::vector<Tile> result;
+    result.reserve(s_MapData.Size);
+
+    Tile tile;
+    tile.Scale = glm::vec3(0.95f * s_MapData.Scale.x, 0.95f * s_MapData.Scale.y, 1.0f);
+    tile.Posistion.z = 0.0f;
+
+    float centreY = (float)(s_MapData.Height - 1) / 2, centreX = (float)(s_MapData.Width - 1) / 2;
+    for (uint32_t i = 0; i < s_MapData.Size; i++) {
+        uint32_t mapX = i % s_MapData.Width;
+        uint32_t mapY = i / s_MapData.Width;
+
+        tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
+        tile.Posistion.y = (centreY - mapY) * s_MapData.Scale.y;
+
+        float brightness = (s_MapData.Map[mapY * s_MapData.Width + mapX] > 0) ? 1.0f : 0.5f;
+
+        tile.Colour = glm::vec3(brightness);
+        result.push_back(tile);
+
+        if (s_MapData.Map[mapY * s_MapData.Width + mapX] < 0) {
+            bool down = mapY + 1 >= s_MapData.Height || s_MapData.Map[(mapY + 1) * s_MapData.Width + mapX];
+            bool right = mapX + 1 >= s_MapData.Width|| s_MapData.Map[mapY * s_MapData.Width + mapX + 1];
+
+            bool up = mapY - 1 >= s_MapData.Height || s_MapData.Map[(mapY - 1) * s_MapData.Width + mapX];
+            bool left = mapX - 1 >= s_MapData.Height || s_MapData.Map[mapY * s_MapData.Width + mapX - 1];
+
+            if (down && right || up && left) {
+                tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
+                tile.Rotation = down && !(up && left) ? 270.0f : 90.0f;
+            } else {
+                tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
+                tile.Rotation = up ? 0.0f : 180.0f;
+            }
+
+            tile.Posistion.y = (centreY - mapY) * s_MapData.Scale.y;
+            tile.Colour = glm::vec3(1.0f);
+            tile.IsTriangle = true;
+            
+            result.push_back(tile);
+
+            tile.IsTriangle = false;
+        }
+    }
+
+    return result;
+}
+
+Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_ptr<Core::Texture2D> atlas, std::shared_ptr<Core::Shader> shader) {
+    std::vector<std::pair<glm::vec4, uint32_t>> wallIndices;
+
+    {
+        for (auto& wall : walls) {
+            uint32_t midX = wall.Position.x + 0.5f * wall.Vector.x - 1e-6f * wall.Normal.x;
+            uint32_t midY = wall.Position.y + 0.5f * wall.Vector.y + 1e-6f * wall.Normal.y;
+            uint32_t index = abs(s_MapData.Map[midY * s_MapData.Width + midX]);
+
+            wallIndices.emplace_back(glm::vec4{ wall.Position.x, wall.Position.y, wall.Position.x + wall.Vector.x, wall.Position.y + wall.Vector.y }, index);
+        }
+
+        //sort walls vector by atlas texture index
+        std::sort(wallIndices.begin(), wallIndices.end(), [](auto& a, auto& b) {
+            return a.second < b.second;
+            });
+    }
+
+    std::vector<float> vertices;
+    std::vector<uint32_t> indices;
+    std::vector<std::pair<uint32_t, glm::uvec4>> subranges;
+
+    {
+        subranges.emplace_back();
+
+        //Create vertices and indices from walls
+        uint32_t prevIndex = wallIndices[0].second;
+        uint32_t vertexCount = 0;
+        uint32_t wallCount = wallIndices.size();
+        for (uint32_t i = 0; i < wallCount; i++) {
+            auto& [wall, index] = wallIndices[i];
+
+            if (index != prevIndex) {
+                glm::uvec4& previous = subranges.back().second;
+                glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
+                subranges.emplace_back(prevIndex, ranges);
+
+                prevIndex = index;
+                vertexCount = 0;
+            }
+
+            float dx = wall.x - wall.z;
+            float dy = wall.y - wall.w;
+            glm::vec3 normal = glm::normalize(glm::vec3(-dy, 0.0f, dx));
+
+            float uvLength = std::max(abs(dx), abs(dy)) * 0.5f;
+
+            for (uint32_t i = 0; i < 4; i++) {
+                float y = (i % 2 == 0) ? 0.0f : 1.0f;
+                uint32_t offset = i >= 2 ? 2 : 0;
+
+                //position
+                vertices.push_back(wall[0 + offset]);
+                vertices.push_back(y);
+                vertices.push_back(wall[1 + offset]);
+
+                //normal
+                vertices.push_back(normal.x);
+                vertices.push_back(normal.y);
+                vertices.push_back(normal.z);
+
+                //uv
+                vertices.push_back(offset * uvLength);
+                vertices.push_back(y);
+            }
+
+            indices.push_back(vertexCount);
+            indices.push_back(vertexCount + 1);
+            indices.push_back(vertexCount + 2);
+            indices.push_back(vertexCount + 2);
+            indices.push_back(vertexCount + 3);
+            indices.push_back(vertexCount + 1);
+
+            vertexCount += 4;
+        }
+
+        //add last mesh
+        glm::uvec4& previous = subranges.back().second;
+        glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
+        subranges.emplace_back(prevIndex, ranges);
+
+        //Create vertices and indices for floor and ceiling
+        const glm::vec4 floor(0.0f, 0.0f, s_MapData.Width, s_MapData.Height);
+        const glm::vec3 normal(0.0f, 1.0f, 0.0f);
+        for (uint32_t i = 0; i < 2; i++) {
+            uint32_t index = (i % 2 == 0) ? 7 : 6;
+
+            for (uint32_t j = 0; j < 4; j++) {
+                uint32_t offset = j <= 1 ? j : 5 - j;
+                float x = floor[(0 + offset) % 4];
+                float z = floor[(1 + offset) % 4];
+                //position
+                vertices.push_back(x);
+                vertices.push_back(i);
+                vertices.push_back(z);
+
+                //normal
+                vertices.push_back(normal.x);
+                vertices.push_back(normal.y);
+                vertices.push_back(normal.z);
+
+                //uv
+                vertices.push_back(x);
+                vertices.push_back(z);
+            }
+
+            indices.push_back(0);
+            indices.push_back(1);
+            indices.push_back(2);
+            indices.push_back(2);
+            indices.push_back(3);
+            indices.push_back(1);
+
+            glm::uvec4& previous = subranges.back().second;
+            glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
+            subranges.emplace_back(index, ranges);
+        }
+    }
+
+    Core::Model mapModel;
+    //Create meshes from wall, floor and ceiling vertices and attach them to map model
+    {
+        uint32_t meshCount = 0;
+        for (auto& [index, ranges] : subranges) {
+            std::ranges::subrange vertexData(vertices.begin() + ranges.x, vertices.begin() + ranges.y);
+            std::ranges::subrange indexData(indices.begin() + ranges.z, indices.begin() + ranges.w);
+
+            if (!vertexData.size()) {
+                continue;
+            }
+
+            auto mesh = std::make_shared<Core::Mesh>();
+            mesh->VAO = std::make_unique<Core::VertexArray>();
+            mesh->VBO = std::make_unique<Core::VertexBuffer>(vertexData.data(), sizeof(float) * vertexData.size());
+            Core::VertexBufferLayout wallLayout;
+
+            wallLayout.Push<float>(3);
+            wallLayout.Push<float>(3);
+            wallLayout.Push<float>(2);
+            mesh->VAO->AddBuffer(*mesh->VBO, wallLayout);
+
+            if (indexData.size()) {
+                mesh->EBO = std::make_unique<Core::ElementBuffer>(indexData.data(), indexData.size());
+            }
+
+            mapModel.Meshes.emplace_back(mesh, meshCount);
+
+            auto mat = std::make_shared<Core::Material>();
+            mat->Shader = shader;
+            mat->MaterialMaps.emplace_back();
+            mat->MaterialMaps.back().Texture = atlas;
+            mat->MaterialMaps.back().TextureIndex = 0;
+            mat->Parameters.emplace_back(glm::vec2(index, 0), "AtlasOffset");
+            mat->Parameters.emplace_back(glm::vec2(0.0f, 0.0f), "FlipTexture");
+            mapModel.Materials.push_back(mat);
+
+            meshCount++;
+        }
+    }
+
+    return mapModel;
+}
+
+Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
+    glm::vec3 deltaDistance = glm::abs((float)1 / direction);
+
+    uint32_t mapX = origin.x;
+    uint32_t mapY = origin.y;
+
+    int32_t stepX = (direction.x > 0) ? 1 : -1;
+    int32_t stepY = (direction.y < 0) ? 1 : -1;
+
+    glm::vec3 sideDistance = deltaDistance;
+    sideDistance.x *= (direction.x < 0) ? (origin.x - mapX) : (mapX + 1.0f - origin.x);
+    sideDistance.y *= (direction.y > 0) ? (origin.y - mapY) : (mapY + 1.0f - origin.y);
+
+    bool hit = false;
+    uint8_t side = 0;
+    glm::vec2 worldPosition;
+    while (!hit) {
+        //if diagonal, needs to be handled first, because origin may be inside diagonal
+        if (s_MapData.Map[mapY * s_MapData.Width + mapX] < 0) {
+            glm::vec2 point3(origin.x, origin.y);
+            glm::vec2 point4 = point3;
+            point3.x += direction.x;
+            point3.y -= direction.y;
+
+            glm::vec2 point1(mapX, mapY);
+            glm::vec2 point2(point1);
+
+            if (((mapY + 1 >= s_MapData.Height || s_MapData.Map[(mapY + 1) * s_MapData.Width + mapX]) && s_MapData.Map[mapY * s_MapData.Width + mapX + 1]) ||
+                ((mapY - 1 >= s_MapData.Height || s_MapData.Map[(mapY - 1) * s_MapData.Width + mapX]) && s_MapData.Map[mapY * s_MapData.Width + mapX - 1])) {
+                point1.x++;
+                point2.y++;
+            } else {
+                point2.x++;
+                point2.y++;
+            }
+
+            if (std::optional<glm::vec2> intersection = Algorithms::LineIntersection(point1, point2, point3, point4, true)) {
+                worldPosition = intersection.value();
+                sideDistance.x = intersection.value().x;
+                sideDistance.y = intersection.value().y;
+                sideDistance.z = 0.0f;
+
+                side = 2;
+                hit = true;
+
+                break;
+            }
+        }
+
+        if (sideDistance.x < sideDistance.y) {
+            sideDistance.x += deltaDistance.x;
+            mapX += stepX;
+            side = 0;
+        } else {
+            sideDistance.y += deltaDistance.y;
+            mapY += stepY;
+            side = 1;
+        }
+
+        if (mapY >= s_MapData.Height || mapX >= s_MapData.Width) {
+            RC_FATAL("INDEX OUT OF BOUNDS");
+            break;
+        }
+
+        if (s_MapData.Map[mapY * s_MapData.Width + mapX] > 0) {
+            hit = true;
+        }
+    }
+
+    float wallDistance = -0.0f;
+    if (side == 0) {
+        wallDistance = sideDistance.x - deltaDistance.x;
+
+        float offset = origin.y - wallDistance * direction.y;
+        offset -= floor(offset);
+        worldPosition.x = mapX - stepX;
+        worldPosition.y = mapY + offset;
+    } else if (side == 1) {
+        wallDistance = sideDistance.y - deltaDistance.y;
+
+        float offset = origin.x + wallDistance * direction.x;
+        offset -= floor(offset);
+        worldPosition.x = mapX + offset;
+        worldPosition.y = mapY - stepY;
+    }
+
+    return { 
+        .Distance = wallDistance, 
+        .Side = side, 
+        .Material = static_cast<uint8_t>(glm::abs(s_MapData.Map[mapY * s_MapData.Width + mapX])),
+        .WorlPosition = worldPosition
+    };
+}

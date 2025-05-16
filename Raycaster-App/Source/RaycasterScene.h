@@ -3,46 +3,14 @@
 #include "Core.h"
 #include "Algorithms.h"
 #include "Entities.h"
+#include "Map.h"
 
 #include <memory>
 
 class RaycasterScene : public Core::Scene {
 private:
-    struct MapData {
-        static const uint32_t height = 24, width = 24;
-        static const uint32_t size = height * width;
-        const int32_t map[size]{ 
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,-2,2,2,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
-            1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1,
-            1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,-2,2,0,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-5,-5,0,0,0,0,0,1,
-            1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,-5,-5,0,0,0,0,0,1,
-            1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,4,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,1,
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-        };
+    Map m_Map{};
 
-        const float mapScalingFactor = sqrt((float)size) / 1.4f;
-        const glm::vec3 mapScale = glm::vec3(1.0f / mapScalingFactor, 1.0f / mapScalingFactor, 0.0f);
-    };
-    static MapData s_MapData;
-    
     const uint32_t m_RayCount = 500;
     const float m_RayWidth = 1.0f / m_RayCount;
 
@@ -62,6 +30,7 @@ private:
     };
     std::vector<SpriteObject> m_SpriteObjects;
     std::vector<SpriteObject> m_StaticObjects;
+    
     struct Enemy {
         glm::vec3 Position{};
         glm::vec3 Scale{};
@@ -71,12 +40,11 @@ private:
         float Tick = 0.0f;
         float Speed = 0.0f;
     };
-    bool m_EnemyMap[s_MapData.size];
+    bool m_EnemyMap[Map::GetSize()];
     std::vector<Enemy> m_Enemies;
-    std::vector<glm::vec4> m_Diagonals;
+
     std::vector<LineCollider> m_Walls;
 
-    
     float max = 0.0f;
     Player m_Player;
     std::unique_ptr<Core::RaycasterCamera> m_Camera;
@@ -88,7 +56,6 @@ private:
     void CastRays();
     void RenderSprites();
     void UpdateEnemies(Core::Timestep deltaTime);
-    void InitWalls();
     void InitModels();
 public: 
     void Init() override;

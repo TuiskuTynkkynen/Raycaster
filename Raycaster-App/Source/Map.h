@@ -1,0 +1,77 @@
+#pragma once
+#include "Core.h"
+
+#include "Entities.h"
+#include "Algorithms.h"
+
+#include <glm/glm.hpp>
+
+#include <vector>
+#include <array>
+#include <span>
+
+class  Map {
+public:
+    std::vector<LineCollider> CreateWalls();
+    std::vector<Tile> CreateTiles();
+    Core::Model CreateModel(const std::span<LineCollider> walls, std::shared_ptr<Core::Texture2D> atlas, std::shared_ptr<Core::Shader> shader);
+ 
+    struct HitInfo {
+        float Distance = 0.0f;
+        uint8_t Side = 0; // 0 -> x, 1 -> y, 2 -> diagonal
+        uint8_t Material = 0;
+        glm::vec2 WorlPosition{};
+    };
+    HitInfo CastRay(glm::vec3 origin, glm::vec3 direction);
+
+    static constexpr uint32_t GetHeight() { return s_MapData.Height; }
+    static constexpr uint32_t GetWidth() { return s_MapData.Width; }
+    static constexpr uint32_t GetSize() { return s_MapData.Size; }
+
+    static constexpr float GetScalingFactor() { return s_MapData.ScalingFactor; }
+    static constexpr glm::vec3 GetScale() { return s_MapData.Scale; }
+
+    uint8_t operator [](size_t index){
+        if (index < s_MapData.Size) {
+            return s_MapData.Map[index];
+        }
+
+        return 0;
+    }
+private:
+    struct MapData {
+        static constexpr uint32_t Height = 24, Width = 24;
+        static constexpr uint32_t Size = Height * Width;
+
+        static constexpr std::array<int8_t, Size> Map {
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,-2,2,2,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
+            1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1,
+            1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,-2,2,0,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-5,-5,0,0,0,0,0,1,
+            1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,-5,-5,0,0,0,0,0,1,
+            1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,4,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+            1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+        };
+
+        const float ScalingFactor = glm::sqrt((float)Size) / 1.4f;
+        const glm::vec3 Scale = glm::vec3(1.0f / ScalingFactor, 1.0f / ScalingFactor, 0.0f);
+    };
+    inline static MapData s_MapData;
+};
