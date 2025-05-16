@@ -71,7 +71,7 @@ std::vector<Tile> Map::CreateTiles() {
     tile.Scale = glm::vec3(0.95f * s_MapData.Scale.x, 0.95f * s_MapData.Scale.y, 1.0f);
     tile.Posistion.z = 0.0f;
 
-    float centreY = (float)(s_MapData.Height - 1) / 2, centreX = (float)(s_MapData.Width - 1) / 2;
+    float centreY = (s_MapData.Height - 1) / 2.0f, centreX = (s_MapData.Width - 1) / 2.0f;
     for (uint32_t i = 0; i < s_MapData.Size; i++) {
         uint32_t mapX = i % s_MapData.Width;
         uint32_t mapY = i / s_MapData.Width;
@@ -85,17 +85,14 @@ std::vector<Tile> Map::CreateTiles() {
         result.push_back(tile);
 
         if (s_MapData.Map[mapY * s_MapData.Width + mapX] < 0) {
-
             Neighbours adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
+            
             if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
-                tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
                 tile.Rotation = adjacent.Down && !(adjacent.Up && adjacent.Left) ? 270.0f : 90.0f;
             } else {
-                tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
                 tile.Rotation = adjacent.Up ? 0.0f : 180.0f;
             }
 
-            tile.Posistion.y = (centreY - mapY) * s_MapData.Scale.y;
             tile.Colour = glm::vec3(1.0f);
             tile.IsTriangle = true;
             
@@ -115,8 +112,16 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
         for (auto& wall : walls) {
             uint32_t midX = static_cast<uint32_t>(wall.Position.x + 0.5f * wall.Vector.x - 1e-6f * wall.Normal.x);
             uint32_t midY = static_cast<uint32_t>(wall.Position.y + 0.5f * wall.Vector.y + 1e-6f * wall.Normal.y);
-            uint32_t index = static_cast<uint32_t>(glm::abs(s_MapData.Map[midY * s_MapData.Width + midX]));
+            //uint32_t index = static_cast<uint32_t>(glm::abs(s_MapData.Map[midY * s_MapData.Width + midX]));
 
+            uint32_t index = 0;
+            if (wall.Normal.x != 0) {
+                index = wall.Normal.x > 0 ? 2 : 1;
+            }
+            if (wall.Normal.y != 0) {
+            index += wall.Normal.y > 0 ? 6 : 3;
+            }
+        
             wallIndices.emplace_back(glm::vec4{ wall.Position.x, wall.Position.y, wall.Position.x + wall.Vector.x, wall.Position.y + wall.Vector.y }, index);
         }
 
