@@ -74,4 +74,12 @@ private:
         const glm::vec3 Scale = glm::vec3(1.0f / ScalingFactor, 1.0f / ScalingFactor, 0.0f);
     };
     inline static MapData s_MapData;
+
+    struct Neighbours {
+        bool Left   : 1;
+        bool Down   : 1;
+        bool Up     : 1;
+        bool Right  : 1;
+    };
+    constexpr Neighbours GetNeighbours(size_t index);
 };

@@ -13,13 +13,9 @@ std::vector<LineCollider> Map::CreateWalls() {
         point1.x = point2.x = startIndex % s_MapData.Width;
         point1.y = point2.y = startIndex / s_MapData.Width;
 
-        bool down = startIndex + s_MapData.Width >= s_MapData.Size || s_MapData.Map[startIndex + s_MapData.Width];
-        bool right = startIndex + 1 >= s_MapData.Size || s_MapData.Map[startIndex + 1];
 
-        bool up = startIndex - s_MapData.Width >= s_MapData.Size || s_MapData.Map[startIndex - s_MapData.Width];
-        bool left = startIndex - 1 >= s_MapData.Size || s_MapData.Map[startIndex - 1];
-
-        if (down && right || up && left) {
+        Neighbours adjacent = GetNeighbours(startIndex);
+        if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
             point1.x++;
             point2.y++;
         } else {
@@ -27,7 +23,7 @@ std::vector<LineCollider> Map::CreateWalls() {
             point1.y++;
         }
 
-        if (right) {
+        if (adjacent.Right) {
             glm::vec2 temp = point1;
             point1 = point2;
             point2 = temp;
@@ -107,18 +103,14 @@ std::vector<Tile> Map::CreateTiles() {
         result.push_back(tile);
 
         if (s_MapData.Map[mapY * s_MapData.Width + mapX] < 0) {
-            bool down = mapY + 1 >= s_MapData.Height || s_MapData.Map[(mapY + 1) * s_MapData.Width + mapX];
-            bool right = mapX + 1 >= s_MapData.Width|| s_MapData.Map[mapY * s_MapData.Width + mapX + 1];
 
-            bool up = mapY - 1 >= s_MapData.Height || s_MapData.Map[(mapY - 1) * s_MapData.Width + mapX];
-            bool left = mapX - 1 >= s_MapData.Height || s_MapData.Map[mapY * s_MapData.Width + mapX - 1];
-
-            if (down && right || up && left) {
+            Neighbours adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
+            if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
                 tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
-                tile.Rotation = down && !(up && left) ? 270.0f : 90.0f;
+                tile.Rotation = adjacent.Down && !(adjacent.Up && adjacent.Left) ? 270.0f : 90.0f;
             } else {
                 tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
-                tile.Rotation = up ? 0.0f : 180.0f;
+                tile.Rotation = adjacent.Up ? 0.0f : 180.0f;
             }
 
             tile.Posistion.y = (centreY - mapY) * s_MapData.Scale.y;
@@ -324,8 +316,8 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
             glm::vec2 point1(mapX, mapY);
             glm::vec2 point2(point1);
 
-            if (((mapY + 1 >= s_MapData.Height || s_MapData.Map[(mapY + 1) * s_MapData.Width + mapX]) && s_MapData.Map[mapY * s_MapData.Width + mapX + 1]) ||
-                ((mapY - 1 >= s_MapData.Height || s_MapData.Map[(mapY - 1) * s_MapData.Width + mapX]) && s_MapData.Map[mapY * s_MapData.Width + mapX - 1])) {
+            Neighbours adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
+            if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
                 point1.x++;
                 point2.y++;
             } else {
@@ -389,4 +381,13 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
         .Material = static_cast<uint8_t>(glm::abs(s_MapData.Map[mapY * s_MapData.Width + mapX])),
         .WorlPosition = worldPosition
     };
+}
+
+constexpr Map::Neighbours Map::GetNeighbours(size_t index) {
+    bool left = index - 1 >= s_MapData.Size || s_MapData.Map[index - 1];
+    bool down = index + s_MapData.Width >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width];
+    bool up = index - s_MapData.Width >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width];
+    bool right = index + 1 >= s_MapData.Size || s_MapData.Map[index + 1];
+
+    return { left, down, up, right };
 }
