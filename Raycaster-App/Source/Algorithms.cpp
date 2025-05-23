@@ -109,7 +109,7 @@ glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, bool* map, 
     return result;
 }
 
-std::optional<glm::vec2> Algorithms::LineIntersection(glm::vec2& point1, glm::vec2& point2, glm::vec2& point3, glm::vec2& point4, bool isHalfLine) {
+std::optional<glm::vec2> Algorithms::LineIntersection(glm::vec2 point1, glm::vec2 point2, glm::vec2 point3, glm::vec2 point4, bool isHalfLine) {
     glm::vec2 line1 = point2 - point1;
     glm::vec2 line2 = point4 - point3;
 
@@ -134,7 +134,7 @@ std::optional<glm::vec2> Algorithms::LineIntersection(glm::vec2& point1, glm::ve
     return glm::vec2(point1.x + (t * line1.x), point1.y + (t * line1.y));
 }
 
-glm::vec2 Algorithms::LineCollisions(glm::vec2& point, std::vector<LineCollider> lines, float thickness) {
+glm::vec2 Algorithms::LineCollisions(glm::vec2 point, std::vector<LineCollider> lines, float thickness) {
     uint32_t lineCount = lines.size();
     glm::vec2 movement(0.0f);
 
