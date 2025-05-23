@@ -134,7 +134,7 @@ std::optional<glm::vec2> Algorithms::LineIntersection(glm::vec2 point1, glm::vec
     return glm::vec2(point1.x + (t * line1.x), point1.y + (t * line1.y));
 }
 
-glm::vec2 Algorithms::LineCollisions(glm::vec2 point, std::vector<LineCollider> lines, float thickness) {
+glm::vec2 Algorithms::LineCollisions(glm::vec2 point, const std::vector<LineCollider>& lines, float thickness) {
     uint32_t lineCount = lines.size();
     glm::vec2 movement(0.0f);
 
