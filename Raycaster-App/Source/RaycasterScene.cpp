@@ -91,7 +91,8 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
 }
 
 void RaycasterScene::CastRays() {
-    glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
+    float planeAngle = glm::radians(m_Player.Rotation + 90.0f);
+    glm::vec2 rotation{ glm::sin(planeAngle), glm::cos(planeAngle) };
 
     //Wall casting
     for (uint32_t i = 0; i < m_RayCount; i++) {
@@ -110,8 +111,13 @@ void RaycasterScene::CastRays() {
 
             m_Rays[i].TexPosition.x = hit.WorlPosition.x - glm::floor(hit.WorlPosition.x);
         } else {
-            wallDistance = (matrix * (glm::vec3(hit.WorlPosition, 0.0f) - m_Player.Position)).y; //Calculates perpendicular distance;
             m_Rays[i].TexPosition.x = hit.WorlPosition.x;
+            
+            // Get the distance perpendicular to the camera plane
+            glm::vec2 perpendicular{ hit.WorlPosition.x - m_Player.Position.x, hit.WorlPosition.y - m_Player.Position.y };
+            perpendicular *= rotation;
+
+            wallDistance = perpendicular.x + perpendicular.y;
         }
 
         m_Rays[i].Scale = 1.0f / wallDistance;
