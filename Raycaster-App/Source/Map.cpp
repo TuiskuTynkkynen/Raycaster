@@ -368,7 +368,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
     };
 }
 
-Map::HitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction) {
+Map::HitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDistance) {
     glm::vec3 deltaDistance = glm::abs(1.0f / direction);
 
     uint32_t mapX = static_cast<uint32_t>(origin.x);
@@ -388,10 +388,18 @@ Map::HitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction) {
     glm::vec2 worldPosition;
     while (!hit) {
         if (sideDistance.x < sideDistance.y) {
+            if (sideDistance.x > maxDistance) {
+                hit = true;
+            }
+
             sideDistance.x += deltaDistance.x;
             mapX += stepX;
             side = 0;
         } else {
+            if (sideDistance.y > maxDistance) {
+                hit = true;
+            }
+
             sideDistance.y += deltaDistance.y;
             mapY += stepY;
             side = 1;

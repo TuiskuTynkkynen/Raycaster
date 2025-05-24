@@ -195,7 +195,9 @@ void RaycasterScene::CastFloors() {
         glm::vec2 activeRange{ minPos, visibleRanges[--index] };
         
         while (prevPos <= maxPos) {
-            auto hit = m_Map.CastFloors(worldPosition, m_Camera->GetPlane());
+            float maxDistance = (2.0f - prevPos) * scale * 0.5f;
+            auto hit = m_Map.CastFloors(worldPosition, m_Camera->GetPlane(), maxDistance);
+
             // NDC
             float rayLength = 2.0f * hit.Distance * currentHeight;
             float maxX = glm::min(rayLength + prevPos, maxPos);
