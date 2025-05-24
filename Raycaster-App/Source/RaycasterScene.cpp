@@ -86,6 +86,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         ProcessInput(deltaTime);
         UpdateEnemies(deltaTime);
         CastRays();
+        CastFloors();
         RenderSprites();
     }
 }
@@ -134,8 +135,9 @@ void RaycasterScene::CastRays() {
         m_ZBuffer[i] = wallDistance;
         m_Lines[i].Scale = rayDirection * wallDistance * m_Map.GetScale();
     }
+}
 
-    //Floor and ceiling "casting"
+void RaycasterScene::CastFloors() {
     for (uint32_t i = 0; i < m_RayCount; i++) {
         glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
         float scale = abs(m_RayCount / (2 * (float)i - m_RayCount)); // = 1.0f / abs(2 * i / m_RayCount - 1)

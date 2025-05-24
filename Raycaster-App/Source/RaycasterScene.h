@@ -54,6 +54,7 @@ private:
     
     void ProcessInput(Core::Timestep deltaTime);
     void CastRays();
+    void CastFloors();
     void RenderSprites();
     void UpdateEnemies(Core::Timestep deltaTime);
     void InitModels();
