@@ -50,47 +50,58 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     glm::vec4 colour;
     
     glm::vec3 rayPos(0.0f);
-    glm::vec3 rayScale(2.0f, 2.0f / rayCount, 0.0f);
-    glm::vec2 texScale(0.0f, 0.0f);
+    glm::vec3 rayScale(2.0f / rayCount, 2.0f, 0.0f);
+    glm::vec2 texScale(0.0f, 1.0f);
 
-    for (int i = rayCount; i < rayCount * 2; i++) {
-        rayPos.y = rays[i].Position.y;
-        texScale.x = rays[i].Scale;
-
-        colour = glm::vec4(1.0f) * rays[i].Brightness;
-        colour.a = 1.0f;
-
-        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex, rays[i].TexRotation);
-    }
-
-    rayPos.y = 0.0f;
-    rayScale.x = 2.0f / rayCount;
-    texScale = glm::vec2(0.0f, 1.0f);
-
-    for (int i = 0; i < rayCount; i++) {
+    for (size_t i = 0; i < rayCount; i++) {
         rayPos.x = rays[i].Position.x;
         rayScale.y = rays[i].Scale;
         
-        colour = glm::vec4(1.0f) * rays[i].Brightness;
+        colour = glm::vec4(rays[i].Brightness);
         colour.a = 1.0f;
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
 
-    for (int i = 2 * rayCount; i < rayArraySize; i++) {
+    const auto& floors = static_cast<RaycasterScene&>(*m_Scene).GetFloors();
+    float rot = -static_cast<RaycasterScene&>(*m_Scene).GetPlayer().Rotation + 90.0f;
+
+    rayScale.y = 2.0f / rayCount;
+    texScale.y = 0.0f;
+    for (const auto& ray : floors) {
+        rayPos.x = ray.Position.x;
+        rayPos.y = ray.Position.y;
+
+        rayScale.x = ray.Length;
+        texScale.x = ray.Length * (0.5f / ray.Position.y);
+
+        colour = glm::vec4(ray.Brightness);
+        colour.a = 1.0f;
+
+        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexturePosition, texScale, ray.AtlasIndex, rot);
+
+        rayPos.y *= -1.0f;
+        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexturePosition, texScale, ray.AtlasIndex, rot);
+    }
+
+    rayScale.x = 2.0f / rayCount;
+    texScale = glm::vec2(0.0f, 1.0f);
+
+    for (size_t i = rayCount; i < rayArraySize; i++) {
         rayPos.x = rays[i].Position.x;
         rayPos.y = rays[i].Position.y;
         rayScale.y = rays[i].Scale;
 
-        colour = glm::vec4(1.0f) * rays[i].Brightness;
+        colour = glm::vec4(rays[i].Brightness);
         colour.a = 1.0f;
 
         Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
     }
 
     Core::Renderer2D::EndScene();
-
-    Core::UI::Begin({ 0,0 }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Vertical, glm::vec4(0.0f));
+    
+    Core::UI::Begin({ 0.0f, 0.0f }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Horizontal, glm::vec4(0.0f));
+    
     static float timeDelta = 0;
     static uint32_t frameCount = 0;
     static float frameTime = 0;
@@ -106,50 +117,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
 
-    Core::UI::Begin({ 0.0f, 0.0f }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Horizontal, glm::vec4(0.0f));
-    
     Core::UI::Text(frameStats, 0.5f, Core::UI::PositioningType::Relative, {-0.495f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
-
-    Core::UI::BeginContainer({ 0.5, 1.0f }, glm::vec4(0.0f));
-        if (Core::UI::Button("Swtich device", { 0.5f, 0.125f })) {
-            Core::Audio::GetDevices();
-            Core::Audio::SetDevice(0);
-        }
-        
-        static Core::Audio::Index soundIndex = Core::Audio::GetSoundIndex("sound");
-        //Core::Audio::ValidateSoundIndex(soundIndex, "sound");
-        Core::Audio::Sound& sound = *Core::Audio::GetSound(soundIndex);
-        
-        if (Core::UI::Button("Play", { 0.5f, 0.125f })) {
-            sound.Start();
-        }
-
-        if (Core::UI::Button("Play fade in", { 0.5f, 0.125f })) {
-            sound.Start(std::chrono::milliseconds(1000));
-        }
-        
-        if (Core::UI::Button("Fade out", { 0.5f, 0.125f })) {
-            sound.SetFadeOut(std::chrono::milliseconds(5000));
-        }
-
-        if (Core::UI::Button("Re", { 0.5f, 0.125f })) {
-            sound.Reinit();
-        }
-    Core::UI::EndContainer();
-
-    Core::UI::BeginContainer({ 0.5f, 0.25f }, glm::vec4(0.0f));
-    static auto foo = Core::Audio::GetDevices();
-    for (size_t i = 0; i < foo.size(); i++) {
-        Core::UI::Text(foo[i], Core::UI::PositioningType::Offset, { -0.25f, 0.0f }, { 1.0f, 0.25f });
-    }
-    
-    float time = sound.GetTime().count() / 1000.0f;
-    float fade = sound.GetFadeVolume();
-    std::wstring timeText = std::to_wstring(time) + L"s\n" + std::to_wstring(fade) + L" volume";
-    Core::UI::Text(timeText, Core::UI::PositioningType::Offset, {-0.25f, 0.0f}, {1.0f, 0.5f});
-
-    Core::UI::EndContainer();
-
     Core::UI::End(deltaTime);
 }
 

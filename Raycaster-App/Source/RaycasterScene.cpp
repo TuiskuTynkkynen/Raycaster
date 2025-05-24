@@ -8,17 +8,9 @@
 #include <ranges>
 
 void RaycasterScene::Init(){
-    m_Rays.resize(2 * m_RayCount); //should be initialized to default values
+    m_Rays.resize(m_RayCount); //should be initialized to default values
     m_Lines.resize(m_RayCount); //should be initialized to default vec3s
     m_SpriteObjects.resize(6);
-
-    uint32_t Index = 7; 
-    for (uint32_t i = 0; i < m_RayCount; i++) {
-        float cameraY = 2 * i / float(m_RayCount) - 1;
-        m_Rays[m_RayCount + i].Position.y = cameraY;
-        m_Rays[m_RayCount + i].Atlasindex = Index;
-        if (i == m_RayCount * 0.5f) { Index = 6; }
-    }
 
     m_Player.Position = glm::vec3((float)m_Map.GetWidth() / 2, (float)m_Map.GetHeight() / 2, 0.5f);
     m_Player.Scale = m_Map.GetScale() * 0.4f;
