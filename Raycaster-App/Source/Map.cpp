@@ -368,6 +368,78 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
     };
 }
 
+Map::HitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction) {
+    glm::vec3 deltaDistance = glm::abs(1.0f / direction);
+
+    uint32_t mapX = static_cast<uint32_t>(origin.x);
+    uint32_t mapY = static_cast<uint32_t>(origin.y);
+
+    int8_t index = s_MapData.FloorMap[mapY * s_MapData.Width + mapX];
+
+    int32_t stepX = (direction.x > 0) ? 1 : -1;
+    int32_t stepY = (direction.y < 0) ? 1 : -1;
+
+    glm::vec3 sideDistance = deltaDistance;
+    sideDistance.x *= (direction.x < 0) ? (origin.x - mapX) : (mapX + 1.0f - origin.x);
+    sideDistance.y *= (direction.y > 0) ? (origin.y - mapY) : (mapY + 1.0f - origin.y);
+
+    bool hit = false;
+    uint8_t side = 0;
+    glm::vec2 worldPosition;
+    while (!hit) {
+        if (sideDistance.x < sideDistance.y) {
+            sideDistance.x += deltaDistance.x;
+            mapX += stepX;
+            side = 0;
+        } else {
+            sideDistance.y += deltaDistance.y;
+            mapY += stepY;
+            side = 1;
+        }
+
+        if (mapY >= s_MapData.Height || mapX >= s_MapData.Width) {
+            side += 2;
+            break;
+        }
+
+        if (s_MapData.FloorMap[mapY * s_MapData.Width + mapX] != index) {
+            hit = true;
+        }
+    }
+
+    float wallDistance = -0.0f;
+    if (side % 2 == 0) {
+        wallDistance = sideDistance.x -deltaDistance.x;
+        
+        float offsetX = 0.0f;
+        if (direction.x < 0.0f) {
+            offsetX = 1.0f - 1e-5f; // Corrects for tile origin being left side
+        }
+
+        float offsetY = origin.y - wallDistance * direction.y;
+        offsetY -= floor(offsetY);
+        worldPosition = glm::vec2(mapX + offsetX, mapY + offsetY);
+    } else {
+        wallDistance = sideDistance.y - deltaDistance.y;
+        
+        float offsetY = 0.0f;
+        if (direction.y > 0.0f) {
+            offsetY += 1.0f - 1e-5f; // Corrects for tile origin being top side
+        }
+
+        float offsetX = origin.x + wallDistance * direction.x;
+        offsetX -= floor(offsetX);
+        worldPosition = glm::vec2(mapX + offsetX, mapY + offsetY);
+    }
+
+    return {
+        .Distance = wallDistance,
+        .Side = side,
+        .Material = static_cast<uint8_t>(glm::abs(index)),
+        .WorlPosition = worldPosition
+    };
+}
+
 constexpr Map::Neighbours Map::GetNeighbours(size_t index) {
     bool left = index - 1 >= s_MapData.Size || s_MapData.Map[index - 1];
     bool down = index + s_MapData.Width >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width];
