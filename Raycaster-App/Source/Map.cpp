@@ -368,13 +368,14 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
     };
 }
 
-Map::HitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDistance) {
+Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDistance) {
     glm::vec3 deltaDistance = glm::abs(1.0f / direction);
 
     uint32_t mapX = static_cast<uint32_t>(origin.x);
     uint32_t mapY = static_cast<uint32_t>(origin.y);
 
-    int8_t index = s_MapData.FloorMap[mapY * s_MapData.Width + mapX];
+    int8_t floorIndex = s_MapData.FloorMap[mapY * s_MapData.Width + mapX];
+    int8_t ceilingIndex = s_MapData.CeilingMap[mapY * s_MapData.Width + mapX];
 
     int32_t stepX = (direction.x > 0) ? 1 : -1;
     int32_t stepY = (direction.y < 0) ? 1 : -1;
@@ -410,7 +411,7 @@ Map::HitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDis
             break;
         }
 
-        if (s_MapData.FloorMap[mapY * s_MapData.Width + mapX] != index) {
+        if (s_MapData.FloorMap[mapY * s_MapData.Width + mapX] != floorIndex || s_MapData.CeilingMap[mapY * s_MapData.Width + mapX] != ceilingIndex) {
             hit = true;
         }
     }
@@ -443,7 +444,8 @@ Map::HitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDis
     return {
         .Distance = wallDistance,
         .Side = side,
-        .Material = static_cast<uint8_t>(glm::abs(index)),
+        .BottomMaterial = static_cast<uint8_t>(glm::abs(floorIndex)),
+        .TopMaterial = static_cast<uint8_t>(glm::abs(ceilingIndex)),
         .WorlPosition = worldPosition
     };
 }

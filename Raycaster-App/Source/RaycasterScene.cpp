@@ -242,7 +242,8 @@ void RaycasterScene::CastFloors() {
                 floor.Length = length;
 
                 floor.TexturePosition = worldPosition;
-                floor.AtlasIndex = hit.Material;
+                floor.BottomAtlasIndex = hit.BottomMaterial;
+                floor.TopAtlasIndex = hit.TopMaterial;
 
                 float halfScale = length * 0.25f * scale; // NDC to world coords
                 glm::vec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);

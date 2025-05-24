@@ -78,10 +78,10 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         colour = glm::vec4(ray.Brightness);
         colour.a = 1.0f;
 
-        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexturePosition, texScale, ray.AtlasIndex, rot);
+        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexturePosition, texScale, ray.TopAtlasIndex, rot);
 
         rayPos.y *= -1.0f;
-        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexturePosition, texScale, ray.AtlasIndex, rot);
+        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexturePosition, texScale, ray.BottomAtlasIndex, rot);
     }
 
     rayScale.x = 2.0f / rayCount;
@@ -136,6 +136,7 @@ bool RaycasterLayer::OnWindowResizeEvent(Core::WindowResize& event) {
 }
 
 void Layer2D::OnUpdate(Core::Timestep deltaTime) {
+    return;
     static glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
     static glm::vec3 zero(0.0f);
     static glm::mat4 identity(1.0f);
