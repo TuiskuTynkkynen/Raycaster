@@ -131,78 +131,145 @@ void RaycasterScene::CastRays() {
 
 void RaycasterScene::CastFloors() {
     m_Floors.clear();
-    glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
+    std::vector<float> visibleRanges; // Ranges in NDC
 
-    for (size_t i = 0; i < m_RayCount / 2; i++) {
-        float scale = m_RayCount / (m_RayCount - 2.0f * i);
+    glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
+    for (uint32_t i = 0; i < m_RayCount / 2; i++) {
+        float scale = m_RayCount / (m_RayCount - 2.0f * i); // = 1.0f / abs(2 * i / m_RayCount - 1)
         float currentHeight = 1.0f / scale;
         float prevPos = -1.0f;
 
         glm::vec2 worldPosition(scale * 0.5f * rayDirection.x + m_Player.Position.x, scale * 0.5f * -rayDirection.y + m_Player.Position.y);
-        {
-            if (worldPosition.x < 0.0f || worldPosition.x >= m_Map.GetWidth() || worldPosition.y < 0.0f || worldPosition.y >= m_Map.GetHeight()) {
-                glm::vec2 direction(worldPosition.x + m_Camera->GetPlane().x, worldPosition.y - m_Camera->GetPlane().y);
-                // 2 closest edges
-                glm::vec2 bounds(worldPosition.x < 0.0f ? 0.0f : static_cast<float>(m_Map.GetWidth()) - 1e-5f, worldPosition.y < 0.0f ? 0.0f : static_cast<float>(m_Map.GetHeight()) - 1e-5f);
+        if (worldPosition.x < 0.0f || worldPosition.x >= m_Map.GetWidth() || worldPosition.y < 0.0f || worldPosition.y >= m_Map.GetHeight()) {
+            glm::vec2 direction(worldPosition.x + m_Camera->GetPlane().x, worldPosition.y - m_Camera->GetPlane().y);
+            // 2 closest edges
+            glm::vec2 bounds(worldPosition.x < 0.0f ? 0.0f : static_cast<float>(m_Map.GetWidth()) - 1e-5f, worldPosition.y < 0.0f ? 0.0f : static_cast<float>(m_Map.GetHeight()) - 1e-5f);
 
-                // Intersections to both edges
-                std::array<glm::vec2, 2> inter = {
-                    Algorithms::LineIntersection(glm::vec2(m_Map.GetWidth() - bounds.x, bounds.y), bounds, direction, worldPosition, true).value_or(glm::vec2(INFINITY)),
-                    Algorithms::LineIntersection(bounds, glm::vec2(bounds.x, m_Map.GetHeight() - bounds.y), direction, worldPosition, true).value_or(glm::vec2(INFINITY)),
-                };
+            // Intersections to both edges
+            std::array<glm::vec2, 2> inter = {
+                Algorithms::LineIntersection(glm::vec2(m_Map.GetWidth() - bounds.x, bounds.y), bounds, direction, worldPosition, true).value_or(glm::vec2(INFINITY)),
+                Algorithms::LineIntersection(bounds, glm::vec2(bounds.x, m_Map.GetHeight() - bounds.y), direction, worldPosition, true).value_or(glm::vec2(INFINITY)),
+            };
 
-                glm::vec2 distance(glm::distance(worldPosition, inter[0]), glm::distance(worldPosition, inter[1]));
+            glm::vec2 distance(glm::distance(worldPosition, inter[0]), glm::distance(worldPosition, inter[1]));
 
-                glm::length_t index = distance[0] < distance[1] ? 0 : 1;
+            glm::length_t index = distance[0] < distance[1] ? 0 : 1;
 
-                if (distance[index] == INFINITY) {
-                    continue;
-                }
-
-                worldPosition = inter[index];
-
-                float lenght = distance[index] * currentHeight;
-                prevPos = lenght * 2.0f - 1.0f;
+            if (distance[index] == INFINITY) {
+                continue;
             }
+
+            worldPosition = inter[index];
+
+            float lenght = distance[index] * currentHeight;
+            prevPos = lenght * 2.0f - 1.0f;
         }
 
-        while (prevPos <= 1.0f) {
+        bool occluded = true;
+        for (size_t j = m_RayCount; j > 0; j--) {
+            // compares the current height to the height of a wall
+            // m_zBuffer stores inverse heights so we use the inverse height -> (scale * 0.5f)
+            if (occluded != (scale * 0.5f < m_ZBuffer[j - 1])) {
+                continue;
+            }
+
+            // X position in NDC
+            visibleRanges.emplace_back(2.0f * j / static_cast<float>(m_RayCount) - 1.0f);
+
+            occluded = !occluded;
+        }
+
+        size_t index = visibleRanges.size();
+        if (!index) {
+            break; // Every ceiling after this will be occluded by walls
+        }
+
+        if (index % 2 == 1) {
+            visibleRanges.emplace_back(prevPos);
+            index++;
+        }
+
+        float maxPos = visibleRanges.front();
+
+        float minPos = glm::max(visibleRanges[--index], prevPos);
+        glm::vec2 activeRange{ minPos, visibleRanges[--index] };
+        
+        while (prevPos <= maxPos) {
             auto hit = m_Map.CastFloors(worldPosition, m_Camera->GetPlane());
             // NDC
             float rayLength = 2.0f * hit.Distance * currentHeight;
-            
-            Floor floor;
-            floor.Position.x = 0.5f * rayLength + prevPos;
-            floor.Position.y = currentHeight;
-            floor.Length = rayLength;
+            float maxX = glm::min(rayLength + prevPos, maxPos);
 
-            floor.TexturePosition = worldPosition;
-            floor.AtlasIndex = hit.Material;
+            float position = prevPos;
+            while (maxX > position) {
+                float length = rayLength - (position - prevPos);
+                if (position + length < activeRange[0]) {
+                    break;
+                }
 
-            float middle = hit.Distance * 0.5f;
-            if (prevPos + rayLength >= 2.0f) {
-                float t = (2.0f - prevPos) / rayLength;
-                middle *= t;
+                if (position < activeRange[0]) {
+                    float diffrence = activeRange[0] - position;
+
+                    if (length - diffrence <= 1e-5f) {
+                        break;
+                    }
+
+                    glm::vec2 offset = m_Camera->GetPlane() * (activeRange[0] - prevPos) * scale * 0.5f; // NDC to world coords
+                    worldPosition.x += offset.x;
+                    worldPosition.y -= offset.y;
+
+                    length -= diffrence;
+                    position = activeRange[0];
+                }
+
+                if (position + length >= activeRange[1]) {
+                    length = activeRange[1] - position;
+
+                    if (index > 1) {
+                        activeRange = glm::vec2{ visibleRanges[--index], visibleRanges[--index] };
+                    }
+                }
+
+                if (length <= 1e-5f) {
+                    break;
+                }
+
+                Floor floor;
+                floor.Position.x = 0.5f * length + position;
+                floor.Position.y = currentHeight;
+                floor.Length = length;
+
+                floor.TexturePosition = worldPosition;
+                floor.AtlasIndex = hit.Material;
+
+                float halfScale = length * 0.25f * scale; // NDC to world coords
+                glm::vec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);
+
+                float brightness = 0.0f;
+                for (glm::vec2 lightPos : m_Lights) {
+                    float distance = glm::length(center - lightPos);
+                    brightness += glm::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
+                }
+
+                floor.Brightness = brightness;
+                m_Floors.emplace_back(floor);
+
+                position += length;
             }
-
-            glm::vec2 center(worldPosition.x + middle * m_Camera->GetPlane().x, worldPosition.y - middle * m_Camera->GetPlane().y);
-            
-            float brightness = 0.0f;
-            for (glm::vec2 lightPos : m_Lights) {
-                float distance = glm::length(center - lightPos);
-                brightness += std::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
-            }
-
-            floor.Brightness = brightness;
-            m_Floors.emplace_back(floor);
 
             if (hit.Side > 1) {
                 break;
             }
 
             prevPos += rayLength;
-            worldPosition = hit.WorlPosition;
+            worldPosition = hit.WorlPosition; 
+
+            if (prevPos + 1e-5f >= activeRange[1] && index > 1) {
+                activeRange = glm::vec2{ visibleRanges[--index], visibleRanges[--index] };
+            }
         }
+
+        visibleRanges.clear();
     }
 }
 
