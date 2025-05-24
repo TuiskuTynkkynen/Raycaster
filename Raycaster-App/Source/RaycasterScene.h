@@ -15,6 +15,7 @@ private:
     const float m_RayWidth = 1.0f / m_RayCount;
 
     std::vector<Ray> m_Rays;
+    std::vector<Floor> m_Floors;
     std::vector<Line> m_Lines;
     std::vector<Tile> m_Tiles;
     std::vector<Core::Model> m_Models;
@@ -66,6 +67,7 @@ public:
     void OnEvent(Core::Event& event) override {}
 
     inline const std::vector<Ray>& GetRays() const { return m_Rays; }
+    inline const std::vector<Floor>& GetFloors() const { return m_Floors; }
     inline const std::vector<Line>& GetLines() const { return m_Lines; }
     inline const std::vector<Tile>& GetTiles() const { return m_Tiles; }
     inline const std::vector<Core::Model>& GetModels() const { return m_Models; }
