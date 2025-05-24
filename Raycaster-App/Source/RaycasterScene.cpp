@@ -138,24 +138,79 @@ void RaycasterScene::CastRays() {
 }
 
 void RaycasterScene::CastFloors() {
-    for (uint32_t i = 0; i < m_RayCount; i++) {
-        glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
-        float scale = abs(m_RayCount / (2 * (float)i - m_RayCount)); // = 1.0f / abs(2 * i / m_RayCount - 1)
+    m_Floors.clear();
+    glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
 
-        m_Rays[m_RayCount + i].Scale = scale;
-        m_Rays[m_RayCount + i].TexPosition.x = scale * 0.5f * rayDirection.x + m_Player.Position.x;
-        m_Rays[m_RayCount + i].TexPosition.y = scale * 0.5f * rayDirection.y - m_Player.Position.y;
+    for (size_t i = 0; i < m_RayCount / 2; i++) {
+        float scale = m_RayCount / (m_RayCount - 2.0f * i);
+        float currentHeight = 1.0f / scale;
+        float prevPos = -1.0f;
 
-        glm::vec2 worldPosition(scale * 0.5f * m_Camera->GetDirection().x + m_Player.Position.x, scale * 0.5f * -m_Camera->GetDirection().y + m_Player.Position.y);
+        glm::vec2 worldPosition(scale * 0.5f * rayDirection.x + m_Player.Position.x, scale * 0.5f * -rayDirection.y + m_Player.Position.y);
+        {
+            if (worldPosition.x < 0.0f || worldPosition.x >= m_Map.GetWidth() || worldPosition.y < 0.0f || worldPosition.y >= m_Map.GetHeight()) {
+                glm::vec2 direction(worldPosition.x + m_Camera->GetPlane().x, worldPosition.y - m_Camera->GetPlane().y);
+                // 2 closest edges
+                glm::vec2 bounds(worldPosition.x < 0.0f ? 0.0f : static_cast<float>(m_Map.GetWidth()) - 1e-5f, worldPosition.y < 0.0f ? 0.0f : static_cast<float>(m_Map.GetHeight()) - 1e-5f);
 
-        float brightness = 0.0f;
-        for (glm::vec2 lightPos : m_Lights) {
-            float distance = glm::length(worldPosition - lightPos);
-            brightness += std::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
+                // Intersections to both edges
+                std::array<glm::vec2, 2> inter = {
+                    Algorithms::LineIntersection(glm::vec2(m_Map.GetWidth() - bounds.x, bounds.y), bounds, direction, worldPosition, true).value_or(glm::vec2(INFINITY)),
+                    Algorithms::LineIntersection(bounds, glm::vec2(bounds.x, m_Map.GetHeight() - bounds.y), direction, worldPosition, true).value_or(glm::vec2(INFINITY)),
+                };
+
+                glm::vec2 distance(glm::distance(worldPosition, inter[0]), glm::distance(worldPosition, inter[1]));
+
+                glm::length_t index = distance[0] < distance[1] ? 0 : 1;
+
+                if (distance[index] == INFINITY) {
+                    continue;
+                }
+
+                worldPosition = inter[index];
+
+                float lenght = distance[index] * currentHeight;
+                prevPos = lenght * 2.0f - 1.0f;
+            }
         }
-        m_Rays[m_RayCount + i].Brightness = brightness;
 
-        m_Rays[m_RayCount + i].TexRotation = m_Player.Rotation - 90.0f;
+        while (prevPos <= 1.0f) {
+            auto hit = m_Map.CastFloors(worldPosition, m_Camera->GetPlane());
+            // NDC
+            float rayLength = 2.0f * hit.Distance * currentHeight;
+            
+            Floor floor;
+            floor.Position.x = 0.5f * rayLength + prevPos;
+            floor.Position.y = currentHeight;
+            floor.Length = rayLength;
+
+            floor.TexturePosition = worldPosition;
+            floor.AtlasIndex = hit.Material;
+
+            float middle = hit.Distance * 0.5f;
+            if (prevPos + rayLength >= 2.0f) {
+                float t = (2.0f - prevPos) / rayLength;
+                middle *= t;
+            }
+
+            glm::vec2 center(worldPosition.x + middle * m_Camera->GetPlane().x, worldPosition.y - middle * m_Camera->GetPlane().y);
+            
+            float brightness = 0.0f;
+            for (glm::vec2 lightPos : m_Lights) {
+                float distance = glm::length(center - lightPos);
+                brightness += std::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
+            }
+
+            floor.Brightness = brightness;
+            m_Floors.emplace_back(floor);
+
+            if (hit.Side > 1) {
+                break;
+            }
+
+            prevPos += rayLength;
+            worldPosition = hit.WorlPosition;
+        }
     }
 }
 
