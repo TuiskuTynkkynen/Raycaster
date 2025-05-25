@@ -246,21 +246,21 @@ void RaycasterScene::CastFloors() {
                 floor.TopAtlasIndex = hit.TopMaterial;
 
                 float halfScale = length * 0.25f * scale; // NDC to world coords
-                glm::uvec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);
+                glm::vec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);
 
-                float& brightness = m_LightMap[center.y * m_Map.GetWidth() + center.x];
-                if (!brightness) {
-                    glm::vec2 tileCenter = center;
-                    tileCenter += 0.5f;
+                // Bilinear interpolation of m_LightMap
+                {
+                    glm::uvec2 min = center;
+                    glm::uvec2 max = glm::ceil(center);
                 
-                for (glm::vec2 lightPos : m_Lights) {
-                        float distance = glm::length(tileCenter - lightPos);
-                    brightness += glm::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
+                    glm::vec2 Xmin{ Light(min.x, min.y), Light(min.x, max.y) };
+                    glm::vec2 Xmax{ Light(max.x, min.y), Light(max.x, max.y) };
+                
+                    glm::vec2 y = glm::mix(Xmin, Xmax, (center.x - min.x));
+                
+                    floor.Brightness = glm::mix(y[0], y[1], (center.y - max.y));
                 }
-                }
-                floor.Brightness = brightness;
 
-                floor.Brightness = brightness;
                 m_Floors.emplace_back(floor);
 
                 position += length;
