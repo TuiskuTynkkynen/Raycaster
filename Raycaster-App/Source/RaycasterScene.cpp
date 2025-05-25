@@ -478,6 +478,24 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
     }
 }
 
+float RaycasterScene::Light(size_t x, size_t y) {
+    x = glm::min(x, static_cast<size_t>(m_Map.GetWidth() - 1));
+    y = glm::min(y, static_cast<size_t>(m_Map.GetHeight() - 1));
+
+    float& brightness = m_LightMap[y * m_Map.GetWidth() + x];
+
+    if (brightness == 0.0f) {
+        glm::vec2 tileCenter{ x + 0.5f, y + 0.5f };
+
+        for (glm::vec2 lightPos : m_Lights) {
+            float distance = glm::length(tileCenter - lightPos);
+            brightness += glm::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
+        }
+    }
+
+    return brightness;
+}
+
 void RaycasterScene::InitModels() {
     //setup shader
     auto shader = std::make_shared<Core::Shader>("3DAtlasShader.glsl");
