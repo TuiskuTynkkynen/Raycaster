@@ -246,13 +246,19 @@ void RaycasterScene::CastFloors() {
                 floor.TopAtlasIndex = hit.TopMaterial;
 
                 float halfScale = length * 0.25f * scale; // NDC to world coords
-                glm::vec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);
+                glm::uvec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);
 
-                float brightness = 0.0f;
+                float& brightness = m_LightMap[center.y * m_Map.GetWidth() + center.x];
+                if (!brightness) {
+                    glm::vec2 tileCenter = center;
+                    tileCenter += 0.5f;
+                
                 for (glm::vec2 lightPos : m_Lights) {
-                    float distance = glm::length(center - lightPos);
+                        float distance = glm::length(tileCenter - lightPos);
                     brightness += glm::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
                 }
+                }
+                floor.Brightness = brightness;
 
                 floor.Brightness = brightness;
                 m_Floors.emplace_back(floor);
