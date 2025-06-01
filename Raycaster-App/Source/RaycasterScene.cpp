@@ -284,7 +284,7 @@ void RaycasterScene::CastFloors() {
 
 void RaycasterScene::RenderSprites() {
     uint32_t count = m_SpriteObjects.size();
-    uint32_t rayIndex = 2 * m_RayCount;
+    uint32_t rayIndex = m_RayCount;
     uint32_t space = m_Rays.size();
 
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
