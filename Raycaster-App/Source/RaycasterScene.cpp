@@ -245,9 +245,14 @@ void RaycasterScene::CastFloors() {
                 floor.BottomAtlasIndex = hit.BottomMaterial;
                 floor.TopAtlasIndex = hit.TopMaterial;
 
-                float halfScale = length * 0.25f * scale; // NDC to world coords
-                glm::vec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);
-                floor.Brightness = LightBilinear(center);
+                glm::vec2 lightingPosition = worldPosition;
+
+                floor.BrightnessStart = LightBilinear(lightingPosition);
+
+                float worldScale = length * 0.5f * scale; // NDC to world coords
+                lightingPosition += glm::vec2(worldScale * m_Camera->GetPlane().x, -worldScale * m_Camera->GetPlane().y);
+
+                floor.BrightnessEnd = LightBilinear(lightingPosition);
 
                 m_Floors.emplace_back(floor);
 

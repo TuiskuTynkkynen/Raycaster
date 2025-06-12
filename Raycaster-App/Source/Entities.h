@@ -42,5 +42,6 @@ struct Floor {
     uint16_t BottomAtlasIndex = 0;
     uint16_t TopAtlasIndex = 0;
 
-    float Brightness = 0.0f;
+    float BrightnessStart = 0.0f;
+    float BrightnessEnd = 0.0f;
 };

@@ -48,6 +48,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     uint32_t rayCount = static_cast<RaycasterScene&>(*m_Scene).GetRayCount();
     uint32_t rayArraySize = rays.size();
     glm::vec4 colour;
+    glm::vec4 colour1(1.0f);
     
     glm::vec3 rayPos(0.0f);
     glm::vec3 rayScale(2.0f / rayCount, 2.0f, 0.0f);
@@ -75,13 +76,16 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         rayScale.x = ray.Length;
         texScale.x = ray.Length * (0.5f / ray.Position.y);
 
-        colour = glm::vec4(ray.Brightness);
+        colour = glm::vec4(ray.BrightnessEnd);
         colour.a = 1.0f;
 
-        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexturePosition, texScale, ray.TopAtlasIndex, rot);
+        colour1 = glm::vec4(ray.BrightnessStart);
+        colour1.a = 1.0f;
+
+        Core::Renderer2D::DrawTextureGradientQuad(rayPos, rayScale, colour, colour1, ray.TexturePosition, texScale, ray.TopAtlasIndex, rot);
 
         rayPos.y *= -1.0f;
-        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexturePosition, texScale, ray.BottomAtlasIndex, rot);
+        Core::Renderer2D::DrawTextureGradientQuad(rayPos, rayScale, colour, colour1, ray.TexturePosition, texScale, ray.BottomAtlasIndex, rot);
     }
 
     rayScale.x = 2.0f / rayCount;
