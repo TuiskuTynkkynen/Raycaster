@@ -24,6 +24,7 @@ private:
     
     struct SpriteObject {
         glm::vec3 Position{};
+        glm::vec3 WorldPosition{};
         glm::vec3 Scale{};
 
         uint32_t AtlasIndex = 0;

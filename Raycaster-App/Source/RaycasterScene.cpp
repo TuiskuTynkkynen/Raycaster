@@ -18,7 +18,7 @@ void RaycasterScene::Init(){
 
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, m_Map.GetWidth(), m_Map.GetHeight());
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
-    
+
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));
@@ -26,6 +26,7 @@ void RaycasterScene::Init(){
     
     SpriteObject staticObject;
     staticObject.Position = glm::vec3(3.0f, 2.5f, 0.25f);
+    staticObject.WorldPosition = glm::vec3(3.0f, 2.5f, 0.25f);
     staticObject.Scale = glm::vec3(0.5f, 0.5f, 0.5f);
     staticObject.AtlasIndex = 8;
     staticObject.FlipTexture = false;
@@ -37,6 +38,7 @@ void RaycasterScene::Init(){
     staticObject.AtlasIndex = 10;
     for (const glm::vec3& light : m_Lights) {
         staticObject.Position = light;
+        staticObject.WorldPosition = light;
         m_StaticObjects.push_back(staticObject);
     }
 
@@ -118,7 +120,7 @@ void RaycasterScene::CastRays() {
         m_Rays[i].Scale = 1.0f / wallDistance;
         m_Rays[i].Position.x = cameraX + m_RayWidth;
         m_Rays[i].Atlasindex = hit.Material;
-
+        
         glm::vec2 lightingPosition = hit.WorlPosition;
         lightingPosition -= 0.5f;
         m_Rays[i].Brightness = LightBilinear(lightingPosition);
@@ -243,7 +245,7 @@ void RaycasterScene::CastFloors() {
                 floor.TexturePosition = worldPosition;
                 floor.BottomAtlasIndex = hit.BottomMaterial;
                 floor.TopAtlasIndex = hit.TopMaterial;
-
+                
                 glm::vec2 lightingPosition = worldPosition;
                 lightingPosition -= 0.5f;
 
@@ -258,7 +260,7 @@ void RaycasterScene::CastFloors() {
 
                 position += length;
             }
-
+            
             if (hit.Side > 1) {
                 break;
             }
@@ -289,7 +291,7 @@ void RaycasterScene::RenderSprites() {
         m_Models[index + 1].Transform = glm::rotate(m_Models[index + 1].Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         
         //Transform for 2D
-        m_SpriteObjects[index].Position -= m_Player.Position;
+        m_SpriteObjects[index].Position = m_SpriteObjects[index].Position - m_Player.Position;
         m_SpriteObjects[index].Position = matrix * m_SpriteObjects[index].Position;
     }
 
@@ -308,13 +310,7 @@ void RaycasterScene::RenderSprites() {
         uint32_t atlasIndex = m_SpriteObjects[index].AtlasIndex;
         bool flipTexture = m_SpriteObjects[index].FlipTexture;
 
-        float brightness = 0.0f;
-        for (glm::vec3 lightPos : m_Lights) {
-            lightPos -= m_Player.Position;
-            lightPos = matrix * lightPos;  //TODO test copying light vec instead of calculating multiple times
-            float distance = glm::length(position - lightPos);
-            brightness += std::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
-        }
+        float brightness = LightBilinear({ m_SpriteObjects[index].WorldPosition.x, m_SpriteObjects[index].WorldPosition.y });
 
         float distance = position.y;
         position.x *= -1.0f / distance;
@@ -459,6 +455,7 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
 
         m_EnemyMap[(uint32_t)enemy.Position.y * m_Map.GetWidth() + (uint32_t)enemy.Position.x] = true;
         m_SpriteObjects[4 + i].Position = enemy.Position;
+        m_SpriteObjects[4 + i].WorldPosition = enemy.Position;
         m_SpriteObjects[4 + i].Scale = enemy.Scale;
         m_SpriteObjects[4 + i].AtlasIndex = enemy.AtlasIndex + atlasOffset;
         bool flip = (uint32_t)enemy.Tick % 2 == 0;
