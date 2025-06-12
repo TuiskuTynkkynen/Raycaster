@@ -20,6 +20,8 @@ void RaycasterScene::Init(){
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
     
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
+    m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
+    m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));
     m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.75f));
     
     SpriteObject staticObject;
@@ -246,6 +248,7 @@ void RaycasterScene::CastFloors() {
                 floor.TopAtlasIndex = hit.TopMaterial;
 
                 glm::vec2 lightingPosition = worldPosition;
+                lightingPosition -= 0.5f;
 
                 floor.BrightnessStart = LightBilinear(lightingPosition);
 

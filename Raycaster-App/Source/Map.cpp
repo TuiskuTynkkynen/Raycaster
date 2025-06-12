@@ -79,7 +79,7 @@ std::vector<Tile> Map::CreateTiles() {
         tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
         tile.Posistion.y = (centreY - mapY) * s_MapData.Scale.y;
 
-        float brightness = (s_MapData.Map[mapY * s_MapData.Width + mapX] > 0) ? 1.0f : 0.5f;
+        float brightness = m_LightMap[mapY * s_MapData.Width + mapX];
 
         tile.Colour = glm::vec3(brightness);
         result.push_back(tile);
@@ -96,7 +96,7 @@ std::vector<Tile> Map::CreateTiles() {
             tile.Colour = glm::vec3(1.0f);
             tile.IsTriangle = true;
             
-            result.push_back(tile);
+            //result.push_back(tile);
 
             tile.IsTriangle = false;
         }
@@ -281,12 +281,25 @@ void Map::CalculateLightMap(std::span<glm::vec3> lights) {
         size_t y = i / Map::GetWidth();
         size_t x = i % Map::GetWidth();
 
-        m_LightMap[i] = 0.2f;
+        m_LightMap[i] = 0.1f;
 
+        std::array<glm::vec2, 4> points = {
+            glm::vec2(x, y),
+            glm::vec2(x, y + 1.0f - 1e-5f),
+            glm::vec2(x + 1.0f - 1e-5f, y),
+            glm::vec2(x + 1.0f - 1e-5f, y + 1.0f - 1e-5f),
+        };
         glm::vec2 tileCenter{ x + 0.5f, y + 0.5f };
         for (glm::vec2 lightPos : lights) {
-            float distance = glm::length(tileCenter - lightPos);
-            m_LightMap[i] += glm::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
+            uint32_t count = 0;
+            for (auto point : points) {
+                count += LineOfSight(point, lightPos);
+            }
+
+            if (count) {
+                float distance = glm::length(tileCenter - lightPos);
+                m_LightMap[i] += count * 0.25f * glm::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
+            }
         }
     }
 }
@@ -470,7 +483,7 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
         float diffrence = previousLight - currentLight;
         if (glm::abs(diffrence) > 0.075f) {
             break;
-    }
+        }
         previousLight = currentLight;
     }
 
