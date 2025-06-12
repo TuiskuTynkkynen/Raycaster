@@ -437,6 +437,7 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
     bool hit = false;
     uint8_t side = 0;
     glm::vec2 worldPosition;
+    float previousLight = m_LightMap[mapY * s_MapData.Width + mapX];
     while (!hit) {
         if (sideDistance.x < sideDistance.y) {
             if (sideDistance.x > maxDistance) {
@@ -464,6 +465,13 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
         if (s_MapData.FloorMap[mapY * s_MapData.Width + mapX] != floorIndex || s_MapData.CeilingMap[mapY * s_MapData.Width + mapX] != ceilingIndex) {
             hit = true;
         }
+
+        float currentLight = m_LightMap[mapY * s_MapData.Width + mapX];
+        float diffrence = previousLight - currentLight;
+        if (glm::abs(diffrence) > 0.075f) {
+            break;
+    }
+        previousLight = currentLight;
     }
 
     float wallDistance = -0.0f;
