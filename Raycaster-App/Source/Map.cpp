@@ -276,6 +276,21 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
     return mapModel;
 }
 
+void Map::CalculateLightMap(std::span<glm::vec3> lights) {
+    for (size_t i = 0; i < Map::GetSize(); i++) {
+        size_t y = i / Map::GetWidth();
+        size_t x = i % Map::GetWidth();
+
+        m_LightMap[i] = 0.2f;
+
+        glm::vec2 tileCenter{ x + 0.5f, y + 0.5f };
+        for (glm::vec2 lightPos : lights) {
+            float distance = glm::length(tileCenter - lightPos);
+            m_LightMap[i] += glm::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
+        }
+    }
+}
+
 Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
     glm::vec3 deltaDistance = glm::abs((float)1 / direction);
 
@@ -483,6 +498,13 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
         .TopMaterial = static_cast<uint8_t>(glm::abs(ceilingIndex)),
         .WorlPosition = worldPosition
     };
+}
+
+float Map::GetLight(size_t x, size_t y) {
+    x = glm::min(x, static_cast<size_t>(s_MapData.Width - 1));
+    y = glm::min(y, static_cast<size_t>(s_MapData.Height - 1));
+
+    return m_LightMap[y * s_MapData.Width + x];
 }
 
 constexpr Map::Neighbours Map::GetNeighbours(size_t index) {

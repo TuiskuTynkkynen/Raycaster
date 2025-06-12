@@ -15,6 +15,7 @@ public:
     std::vector<LineCollider> CreateWalls();
     std::vector<Tile> CreateTiles();
     Core::Model CreateModel(const std::span<LineCollider> walls, std::shared_ptr<Core::Texture2D> atlas, std::shared_ptr<Core::Shader> shader);
+    void CalculateLightMap(std::span<glm::vec3> lights);
  
     struct HitInfo {
         float Distance = 0.0f;
@@ -34,6 +35,8 @@ public:
     FloorHitInfo CastFloors(glm::vec2 origin, glm::vec3 reciprocalDirection, float maxDistance);
 
     bool LineOfSight(glm::vec2 start, glm::vec2 end);
+
+    float GetLight(size_t x, size_t y);
 
     static constexpr uint32_t GetHeight() { return s_MapData.Height; }
     static constexpr uint32_t GetWidth() { return s_MapData.Width; }
@@ -139,6 +142,8 @@ private:
         const glm::vec3 Scale = glm::vec3(1.0f / ScalingFactor, 1.0f / ScalingFactor, 0.0f);
     };
     inline static MapData s_MapData;
+
+    std::array<float, s_MapData.Size> m_LightMap;
 
     union Neighbours {
         struct {

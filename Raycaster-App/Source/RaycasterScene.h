@@ -59,9 +59,6 @@ private:
     void RenderSprites();
     void UpdateEnemies(Core::Timestep deltaTime);
     void InitModels();
-
-    float Light(size_t x, size_t y);
-    std::array<float, Map::GetSize()> m_LightMap;
 public: 
     void Init() override;
     void Shutdown() override {}

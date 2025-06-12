@@ -19,8 +19,6 @@ void RaycasterScene::Init(){
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, m_Map.GetWidth(), m_Map.GetHeight());
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
     
-    m_Tiles = m_Map.CreateTiles();
-
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.75f));
     
@@ -54,6 +52,8 @@ void RaycasterScene::Init(){
         m_EnemyMap[i] = m_Map[i];
     }
 
+    m_Map.CalculateLightMap(m_Lights);
+    m_Tiles = m_Map.CreateTiles();
     m_Walls = m_Map.CreateWalls();
     InitModels();
 
@@ -247,17 +247,16 @@ void RaycasterScene::CastFloors() {
 
                 float halfScale = length * 0.25f * scale; // NDC to world coords
                 glm::vec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);
-
                 // Bilinear interpolation of m_LightMap
                 {
                     glm::uvec2 min = center;
                     glm::uvec2 max = glm::ceil(center);
-                
-                    glm::vec2 Xmin{ Light(min.x, min.y), Light(min.x, max.y) };
-                    glm::vec2 Xmax{ Light(max.x, min.y), Light(max.x, max.y) };
-                
+
+                    glm::vec2 Xmin{ m_Map.GetLight(min.x, min.y), m_Map.GetLight(min.x, max.y) };
+                    glm::vec2 Xmax{ m_Map.GetLight(max.x, min.y), m_Map.GetLight(max.x, max.y) };
+
                     glm::vec2 y = glm::mix(Xmin, Xmax, (center.x - min.x));
-                
+
                     floor.Brightness = glm::mix(y[0], y[1], (center.y - max.y));
                 }
 
@@ -482,24 +481,6 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
         m_Models[modelIndex + i].Materials.front()->Parameters.back().Value = glm::vec2(flip ? 0.0f : 1.0f, 0.0f);
         m_Models[modelIndex + i].Materials.front()->Parameters.front().Value = index;
     }
-}
-
-float RaycasterScene::Light(size_t x, size_t y) {
-    x = glm::min(x, static_cast<size_t>(m_Map.GetWidth() - 1));
-    y = glm::min(y, static_cast<size_t>(m_Map.GetHeight() - 1));
-
-    float& brightness = m_LightMap[y * m_Map.GetWidth() + x];
-
-    if (brightness == 0.0f) {
-        glm::vec2 tileCenter{ x + 0.5f, y + 0.5f };
-
-        for (glm::vec2 lightPos : m_Lights) {
-            float distance = glm::length(tileCenter - lightPos);
-            brightness += glm::min(1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance)), 1.0f);
-        }
-    }
-
-    return brightness;
 }
 
 void RaycasterScene::InitModels() {
