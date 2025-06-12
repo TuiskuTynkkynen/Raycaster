@@ -4,7 +4,7 @@
 
 bool Algorithms::LineOfSight(glm::vec2 start, glm::vec2 end, bool* map, uint32_t width, uint32_t height) {
     glm::vec2 rayDirection = end - start;
-    glm::vec2 deltaDistance = glm::abs((float)1 / rayDirection);
+    glm::vec2 deltaDistance = glm::abs((float)1 / glm::normalize(rayDirection));
 
     uint32_t mapX = start.x;
     uint32_t mapY = start.y;
@@ -16,15 +16,11 @@ bool Algorithms::LineOfSight(glm::vec2 start, glm::vec2 end, bool* map, uint32_t
     sideDistance.x *= (rayDirection.x < 0) ? (start.x - mapX) : (mapX + 1.0f - start.x);
     sideDistance.y *= (rayDirection.y < 0) ? (start.y - mapY) : (mapY + 1.0f - start.y);
 
-    uint32_t length = 0;
-
-    while (length < glm::length(rayDirection)) {
-        length++;
+    while (mapX != static_cast<uint32_t>(end.x) || mapY != static_cast<uint32_t>(end.y)) {
         if (sideDistance.x < sideDistance.y) {
             sideDistance.x += deltaDistance.x;
             mapX += stepX;
-        }
-        else {
+        } else {
             sideDistance.y += deltaDistance.y;
             mapY += stepY;
         }
@@ -32,6 +28,7 @@ bool Algorithms::LineOfSight(glm::vec2 start, glm::vec2 end, bool* map, uint32_t
         if (mapY >= height || mapX >= width) {
             break;
         }
+
         if (map[mapY * width + mapX]) {
             return false;
         }
