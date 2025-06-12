@@ -59,6 +59,7 @@ private:
     void RenderSprites();
     void UpdateEnemies(Core::Timestep deltaTime);
     void InitModels();
+    float LightBilinear(glm::vec2 position);
 public: 
     void Init() override;
     void Shutdown() override {}

@@ -45,7 +45,7 @@ public:
     static constexpr float GetScalingFactor() { return s_MapData.ScalingFactor; }
     static constexpr glm::vec3 GetScale() { return s_MapData.Scale; }
 
-    uint8_t operator [](size_t index){
+    int8_t operator [](size_t index){
         if (index < s_MapData.Size) {
             return s_MapData.Map[index];
         }

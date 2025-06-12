@@ -247,18 +247,7 @@ void RaycasterScene::CastFloors() {
 
                 float halfScale = length * 0.25f * scale; // NDC to world coords
                 glm::vec2 center(worldPosition.x + halfScale * m_Camera->GetPlane().x, worldPosition.y - halfScale * m_Camera->GetPlane().y);
-                // Bilinear interpolation of m_LightMap
-                {
-                    glm::uvec2 min = center;
-                    glm::uvec2 max = glm::ceil(center);
-
-                    glm::vec2 Xmin{ m_Map.GetLight(min.x, min.y), m_Map.GetLight(min.x, max.y) };
-                    glm::vec2 Xmax{ m_Map.GetLight(max.x, min.y), m_Map.GetLight(max.x, max.y) };
-
-                    glm::vec2 y = glm::mix(Xmin, Xmax, (center.x - min.x));
-
-                    floor.Brightness = glm::mix(y[0], y[1], (center.y - max.y));
-                }
+                floor.Brightness = LightBilinear(center);
 
                 m_Floors.emplace_back(floor);
 
@@ -577,4 +566,52 @@ void RaycasterScene::InitModels() {
         mat->Parameters.emplace_back(0.0f, "FlipTexture");
         model.Materials.push_back(mat);
     }
+}
+
+float RaycasterScene::LightBilinear(glm::vec2 position) {
+    // Bilinear interpolation of m_LightMap
+    glm::uvec2 min = position;
+    glm::uvec2 max = glm::ceil(position);
+
+    auto wall = [this](size_t x, size_t y) -> bool {
+        size_t index = y * m_Map.GetWidth() + x;
+
+        if (index < m_Map.GetSize()) {
+            return m_Map[index] > 0.0f;
+        }
+
+        return true;
+        };
+
+    // Try to prevent sampling light map inside a wall by shifting min and max
+    {
+        bool down = wall(min.x, max.y) || wall(max.x, max.y);
+        bool up = wall(min.x, min.y) || wall(max.x, min.y);
+        if (!up && down) {
+            max.y--;
+            min.y--;
+        }
+        else if (!down && up) {
+            max.y++;
+            min.y++;
+        }
+
+        bool right = wall(max.x, min.y) || wall(max.x, max.y);
+        bool left = wall(min.x, min.y) || wall(min.x, max.y);
+        if (!wall(min.x, max.y) && right) {
+            max.x--;
+            min.x--;
+        }
+        else if (!wall(max.x, min.y) && left) {
+            max.x++;
+            min.x++;
+        }
+    }
+
+    glm::vec2 Xmin{ m_Map.GetLight(min.x, min.y), m_Map.GetLight(min.x, max.y) };
+    glm::vec2 Xmax{ m_Map.GetLight(max.x, min.y), m_Map.GetLight(max.x, max.y) };
+
+    glm::vec2 y = glm::mix(Xmin, Xmax, glm::fract(position.x - min.x));
+
+    return glm::mix(y[1], y[0], glm::fract(max.y - position.y));
 }
