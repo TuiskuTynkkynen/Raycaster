@@ -119,12 +119,9 @@ void RaycasterScene::CastRays() {
         m_Rays[i].Position.x = cameraX + m_RayWidth;
         m_Rays[i].Atlasindex = hit.Material;
 
-        float brightness = 0.0f;
-        for (glm::vec2 lightPos : m_Lights) {
-            float distance = glm::length(hit.WorlPosition - lightPos);
-            brightness += 1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance));
-        }
-        m_Rays[i].Brightness = brightness;
+        glm::vec2 lightingPosition = hit.WorlPosition;
+        lightingPosition -= 0.5f;
+        m_Rays[i].Brightness = LightBilinear(lightingPosition);
 
         m_ZBuffer[i] = wallDistance;
         m_Lines[i].Scale = rayDirection * wallDistance * m_Map.GetScale();
