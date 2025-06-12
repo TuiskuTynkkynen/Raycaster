@@ -281,6 +281,32 @@ namespace Core {
         s_Data.QuadIndexCount += 6;
     }
 
+    void Renderer2D::DrawGradientQuad(uint32_t textureIndex, const glm::vec4& colour1, const glm::vec4& colour2, const glm::mat4& transform, const glm::mat3& textureTransform, const glm::vec2& atlasOffset) {
+        if (s_Data.QuadIndexCount >= s_Data.MaxIndices) {
+            Flush();
+        }
+
+        for (size_t i = 0; i < 2; i++) {
+            s_Data.QuadBackIter->Position = transform * s_Data.BaseQuadVertexPositions[i];
+            s_Data.QuadBackIter->Colour = colour1;
+            s_Data.QuadBackIter->TextureCoords = textureTransform * s_Data.BaseQuadTextureCoords[i];
+            s_Data.QuadBackIter->AtlasOffset = atlasOffset;
+            s_Data.QuadBackIter->TextureIndex = textureIndex;
+            s_Data.QuadBackIter++;
+        }
+
+        for (size_t i = 2; i < 4; i++) {
+            s_Data.QuadBackIter->Position = transform * s_Data.BaseQuadVertexPositions[i];
+            s_Data.QuadBackIter->Colour = colour2;
+            s_Data.QuadBackIter->TextureCoords = textureTransform * s_Data.BaseQuadTextureCoords[i];
+            s_Data.QuadBackIter->AtlasOffset = atlasOffset;
+            s_Data.QuadBackIter->TextureIndex = textureIndex;
+            s_Data.QuadBackIter++;
+        }
+
+        s_Data.QuadIndexCount += 6;
+    }
+
     void Renderer2D::DrawTextureQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
         transform = glm::scale(transform, scale);
@@ -290,6 +316,17 @@ namespace Core {
         texTransform = glm::scale(texTransform, textureScale);
 
         DrawQuad(1, colour, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
+    }
+
+    void Renderer2D::DrawTextureGradientQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour1, const glm::vec4& colour2, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex, float textureRotate){
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+        transform = glm::scale(transform, scale);
+
+        glm::mat3 texTransform = glm::translate(glm::mat3(1.0f), textureOffset);
+        texTransform = glm::rotate(texTransform, glm::radians(textureRotate));
+        texTransform = glm::scale(texTransform, textureScale);
+
+        DrawGradientQuad(1, colour1, colour2, transform, texTransform, glm::vec2(atlasIndex % s_Data.atlasWidth, atlasIndex / s_Data.atlasWidth));
     }
 
     void Renderer2D::DrawFlatQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour) {
