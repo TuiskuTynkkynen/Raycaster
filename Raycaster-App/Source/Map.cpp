@@ -368,6 +368,41 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
     };
 }
 
+bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) {
+    glm::vec2 rayDirection = end - start;
+    glm::vec2 deltaDistance = glm::abs(1.0f / glm::normalize(rayDirection));
+
+    uint32_t mapX = start.x;
+    uint32_t mapY = start.y;
+
+    int32_t stepX = (rayDirection.x > 0.0f) ? 1 : -1;
+    int32_t stepY = (rayDirection.y > 0.0f) ? 1 : -1;
+
+    glm::vec2 sideDistance = deltaDistance;
+    sideDistance.x *= (rayDirection.x < 0.0f) ? (start.x - mapX) : (mapX + 1.0f - start.x);
+    sideDistance.y *= (rayDirection.y < 0.0f) ? (start.y - mapY) : (mapY + 1.0f - start.y);
+
+    while (mapX != static_cast<uint32_t>(end.x) || mapY != static_cast<uint32_t>(end.y)) {
+        if (sideDistance.x < sideDistance.y) {
+            sideDistance.x += deltaDistance.x;
+            mapX += stepX;
+        } else {
+            sideDistance.y += deltaDistance.y;
+            mapY += stepY;
+        }
+
+        if (mapY >= s_MapData.Height || mapX >= s_MapData.Width) {
+            return false;
+        }
+
+        if (s_MapData.Map[mapY * s_MapData.Width + mapX]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDistance) {
     glm::vec3 deltaDistance = glm::abs(1.0f / direction);
 

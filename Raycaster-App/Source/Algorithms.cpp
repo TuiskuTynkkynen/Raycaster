@@ -2,41 +2,6 @@
 
 #include <queue>
 
-bool Algorithms::LineOfSight(glm::vec2 start, glm::vec2 end, bool* map, uint32_t width, uint32_t height) {
-    glm::vec2 rayDirection = end - start;
-    glm::vec2 deltaDistance = glm::abs((float)1 / glm::normalize(rayDirection));
-
-    uint32_t mapX = start.x;
-    uint32_t mapY = start.y;
-
-    int32_t stepX = (rayDirection.x > 0) ? 1 : -1;
-    int32_t stepY = (rayDirection.y > 0) ? 1 : -1;
-
-    glm::vec2 sideDistance = deltaDistance;
-    sideDistance.x *= (rayDirection.x < 0) ? (start.x - mapX) : (mapX + 1.0f - start.x);
-    sideDistance.y *= (rayDirection.y < 0) ? (start.y - mapY) : (mapY + 1.0f - start.y);
-
-    while (mapX != static_cast<uint32_t>(end.x) || mapY != static_cast<uint32_t>(end.y)) {
-        if (sideDistance.x < sideDistance.y) {
-            sideDistance.x += deltaDistance.x;
-            mapX += stepX;
-        } else {
-            sideDistance.y += deltaDistance.y;
-            mapY += stepY;
-        }
-
-        if (mapY >= height || mapX >= width) {
-            break;
-        }
-
-        if (map[mapY * width + mapX]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, bool* map, uint32_t width, uint32_t height) {
     static const glm::i32vec2 directions[] = {
         glm::i32vec2(1,0),

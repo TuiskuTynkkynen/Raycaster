@@ -33,6 +33,8 @@ public:
     };
     FloorHitInfo CastFloors(glm::vec2 origin, glm::vec3 reciprocalDirection, float maxDistance);
 
+    bool LineOfSight(glm::vec2 start, glm::vec2 end);
+
     static constexpr uint32_t GetHeight() { return s_MapData.Height; }
     static constexpr uint32_t GetWidth() { return s_MapData.Width; }
     static constexpr uint32_t GetSize() { return s_MapData.Size; }

@@ -444,7 +444,7 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
                 enemyPos.x = enemy.Position.x + 0.5f * enemy.Scale.x * directions[j].x;
                 enemyPos.y = enemy.Position.y + 0.5f * enemy.Scale.y * directions[j].y;
 
-                lineOfSight &= Algorithms::LineOfSight(enemyPos, playerPos, m_EnemyMap, m_Map.GetWidth(), m_Map.GetHeight());
+                lineOfSight &= m_Map.LineOfSight(enemyPos, playerPos);
             }
 
             if (!lineOfSight) {
