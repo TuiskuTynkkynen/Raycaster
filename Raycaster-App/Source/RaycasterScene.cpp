@@ -171,7 +171,7 @@ void RaycasterScene::CastFloors() {
             prevPos = lenght * 2.0f - 1.0f;
             if (m_SnappingEnabled) {
                 prevPos = glm::round(prevPos * m_RayCount * 0.5f) * m_RayWidth;
-        }
+            }
         }
 
         bool occluded = true;
@@ -183,10 +183,10 @@ void RaycasterScene::CastFloors() {
             if (occluded != (occlusionScale * 0.5f < m_ZBuffer[j - 1])) {
                 continue;
             }
-
+        
             // X position in NDC
             visibleRanges.emplace_back(2.0f * j / static_cast<float>(m_RayCount) - 1.0f);
-
+        
             occluded = !occluded;
         }
 
@@ -332,20 +332,30 @@ void RaycasterScene::RenderSprites() {
         bool flipTexture = m_SpriteObjects[index].FlipTexture;
 
         float brightness = LightBilinear({ m_SpriteObjects[index].WorldPosition.x, m_SpriteObjects[index].WorldPosition.y });
-
+        
         float distance = position.y;
         position.x *= -1.0f / distance;
         scale /= distance;
         position.y = position.z / distance;
+        
+        if (m_SnappingEnabled) {
+            position.y = glm::round(position.y * m_RayCount * 0.5f) * m_RayWidth;
+            // The center of a sprite is @ an integer multiple of ray width, so scale needs to be even multiple of m_RayWidth
+            // to prevent sprite getting rendered at the middle of a floor ray -> round to 2.0f * m_RayWidth
+            scale.y = glm::round(scale.y * m_RayCount * 0.25f) * m_RayWidth * 2.0f;
+        }
+        
+        if (scale.y < m_RayWidth * 0.25f) {
+            continue;
+        }
 
-        float rScale = 2.0f / m_RayCount;
         float width = scale.x * m_RayCount * 0.5f;
         float startX = 0.5f * (m_RayCount - width + position.x * m_RayCount);
-        float endX = startX + width;
-        scale.x = rScale;
-        float texturePosition;
-
-        for (int32_t i = startX; i < endX; i++) {
+        int32_t endX = startX + width;
+        if (endX < 0) {
+            continue;
+        }
+        for (size_t i = glm::max(startX, 0.0f); i < endX; i++) {
             if (i >= m_RayCount || m_ZBuffer[i] < distance) {
                 continue;
             }
@@ -355,8 +365,8 @@ void RaycasterScene::RenderSprites() {
                 m_Rays.push_back(r);
             }
 
-            position.x = (i + 0.5f) * rScale - 1.0f;
-            texturePosition = std::max((i - startX) / width, 0.0f);
+            position.x = (i + 0.5f) * m_RayWidth - 1.0f;
+            float texturePosition = std::max((i - startX) / width, 0.0f);
 
             m_Rays[rayIndex].Position = position;
             m_Rays[rayIndex].Scale = scale.y;
