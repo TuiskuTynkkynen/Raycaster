@@ -169,11 +169,14 @@ void RaycasterScene::CastFloors() {
 
             float lenght = distance[index] * currentHeight;
             prevPos = lenght * 2.0f - 1.0f;
+            if (m_SnappingEnabled) {
+                prevPos = glm::round(prevPos * m_RayCount * 0.5f) * m_RayWidth;
+        }
         }
 
         bool occluded = true;
         // Fixes incorrect occluded areas when walls aren't aligned to the width of a ray
-        float occlusionScale = m_RayCount / (m_RayCount - (2.0f * i));
+        float occlusionScale = m_SnappingEnabled ? scale : m_RayCount / (m_RayCount - (2.0f * i));
         for (size_t j = m_RayCount; j > 0; j--) {
             // compares the current height to the height of a wall
             // m_zBuffer stores distances (half of the reciprocal height), so we compare with the reciprocal height -> (scale * 0.5f)
@@ -208,6 +211,9 @@ void RaycasterScene::CastFloors() {
 
             // NDC
             float rayLength = 2.0f * hit.Distance * currentHeight;
+            if (m_SnappingEnabled) {
+                rayLength = glm::round(rayLength * m_RayCount * 0.5f) * m_RayWidth;
+            }
             float maxX = glm::min(rayLength + prevPos, maxPos);
 
             float position = prevPos;
@@ -220,7 +226,7 @@ void RaycasterScene::CastFloors() {
                 if (position < activeRange[0]) {
                     float diffrence = activeRange[0] - position;
 
-                    if (length - diffrence <= 1e-5f) {
+                    if (length - diffrence < m_RayWidth * 0.25f) {
                         break;
                     }
 
@@ -240,7 +246,11 @@ void RaycasterScene::CastFloors() {
                     }
                 }
 
-                if (length <= 1e-5f) {
+                if (m_SnappingEnabled) {
+                    length = glm::round(length * m_RayCount * 0.5f) * m_RayWidth;
+                }
+                
+                if (length < m_RayWidth * 0.25f) {
                     break;
                 }
 
