@@ -136,7 +136,7 @@ void RaycasterScene::CastFloors() {
 
     glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
     for (uint32_t i = 0; i < m_RayCount / 2; i++) {
-        float scale = m_RayCount / (m_RayCount - 2.0f * i); // = 1.0f / abs(2 * i / m_RayCount - 1)
+        float scale = m_RayCount / (m_RayCount - (2.0f * i + 1));
         float currentHeight = 1.0f / scale;
         float prevPos = -1.0f;
 
@@ -167,10 +167,12 @@ void RaycasterScene::CastFloors() {
         }
 
         bool occluded = true;
+        // Fixes incorrect occluded areas when walls aren't aligned to the width of a ray
+        float occlusionScale = m_RayCount / (m_RayCount - (2.0f * i));
         for (size_t j = m_RayCount; j > 0; j--) {
             // compares the current height to the height of a wall
-            // m_zBuffer stores inverse heights so we use the inverse height -> (scale * 0.5f)
-            if (occluded != (scale * 0.5f < m_ZBuffer[j - 1])) {
+            // m_zBuffer stores distances (half of the reciprocal height), so we compare with the reciprocal height -> (scale * 0.5f)
+            if (occluded != (occlusionScale * 0.5f < m_ZBuffer[j - 1])) {
                 continue;
             }
 
