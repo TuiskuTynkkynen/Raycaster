@@ -131,7 +131,7 @@ void RaycasterScene::CastRays() {
 }
 
 void RaycasterScene::CastFloors() {
-    m_Floors.clear();
+    size_t floorIndex = 0;
     std::vector<float> visibleRanges; // Ranges in NDC
 
     glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
@@ -239,7 +239,11 @@ void RaycasterScene::CastFloors() {
                     break;
                 }
 
-                Floor floor;
+                if (floorIndex == m_Floors.size()) {
+                    m_Floors.emplace_back();
+                }
+                Floor& floor = m_Floors[floorIndex++];
+
                 floor.Position.x = 0.5f * length + position;
                 floor.Position.y = currentHeight;
                 floor.Length = length;
@@ -258,8 +262,6 @@ void RaycasterScene::CastFloors() {
 
                 floor.BrightnessEnd = LightBilinear(lightingPosition);
 
-                m_Floors.emplace_back(floor);
-
                 position += length;
             }
             
@@ -277,6 +279,8 @@ void RaycasterScene::CastFloors() {
 
         visibleRanges.clear();
     }
+
+    m_Floors.resize(floorIndex);
 }
 
 void RaycasterScene::RenderSprites() {
