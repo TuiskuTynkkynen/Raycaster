@@ -43,32 +43,17 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
 
     Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(identity);
-    
-    const std::vector<Ray>& rays = static_cast<RaycasterScene&>(*m_Scene).GetRays();
+
     uint32_t rayCount = static_cast<RaycasterScene&>(*m_Scene).GetRayCount();
-    uint32_t rayArraySize = rays.size();
-    glm::vec4 colour;
-    glm::vec4 colour1(1.0f);
-    
+
+    glm::vec4 colour, colour1;
     glm::vec3 rayPos(0.0f);
-    glm::vec3 rayScale(2.0f / rayCount, 2.0f, 0.0f);
-    glm::vec2 texScale(0.0f, 1.0f);
-
-    for (size_t i = 0; i < rayCount; i++) {
-        rayPos.x = rays[i].Position.x;
-        rayScale.y = rays[i].Scale;
-        
-        colour = glm::vec4(rays[i].Brightness);
-        colour.a = 1.0f;
-
-        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
-    }
+    glm::vec3 rayScale(0.0f, 2.0f / rayCount, 0.0f);
+    glm::vec2 texScale(0.0f);
 
     const auto& floors = static_cast<RaycasterScene&>(*m_Scene).GetFloors();
     float rot = -static_cast<RaycasterScene&>(*m_Scene).GetPlayer().Rotation + 90.0f;
 
-    rayScale.y = 2.0f / rayCount;
-    texScale.y = 0.0f;
     for (const auto& ray : floors) {
         rayPos.x = ray.Position.x;
         rayPos.y = ray.Position.y;
@@ -91,15 +76,16 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     rayScale.x = 2.0f / rayCount;
     texScale = glm::vec2(0.0f, 1.0f);
 
-    for (size_t i = rayCount; i < rayArraySize; i++) {
-        rayPos.x = rays[i].Position.x;
-        rayPos.y = rays[i].Position.y;
-        rayScale.y = rays[i].Scale;
+    const std::vector<Ray>& rays = static_cast<RaycasterScene&>(*m_Scene).GetRays();
+    for (const auto& ray : rays) {
+        rayPos.x = ray.Position.x;
+        rayPos.y = ray.Position.y;
+        rayScale.y = ray.Scale;
 
-        colour = glm::vec4(rays[i].Brightness);
+        colour = glm::vec4(ray.Brightness);
         colour.a = 1.0f;
 
-        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, rays[i].TexPosition, texScale, rays[i].Atlasindex);
+        Core::Renderer2D::DrawTextureQuad(rayPos, rayScale, colour, ray.TexPosition, texScale, ray.Atlasindex);
     }
 
     Core::Renderer2D::EndScene();
@@ -109,12 +95,12 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     static float timeDelta = 0;
     static uint32_t frameCount = 0;
     static float frameTime = 0;
-
+    
     frameCount++;
     timeDelta += deltaTime;
     if (timeDelta >= 0.1f) {
         frameTime = 1000.0f * timeDelta / frameCount;
-
+        
         frameCount = 0;
         timeDelta = 0.0f;
     }
@@ -166,7 +152,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     glm::vec4 colour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     const Player& player = static_cast<RaycasterScene&>(*m_Scene).GetPlayer();
     Core::Renderer2D::DrawRotatedFlatQuad(zero, player.Rotation, AxisZ, player.Scale, colour);
-
+    
     colour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
     std::vector <Line> lines = static_cast<RaycasterScene&>(*m_Scene).GetLines();
     uint32_t lineCount = lines.size();
