@@ -12,7 +12,7 @@ private:
     Map m_Map{};
 
     const uint32_t m_RayCount = 500;
-    const float m_RayWidth = 1.0f / m_RayCount;
+    const float m_RayWidth = 2.0f / m_RayCount; // Screen is 2.0f wide/tall
 
     std::vector<Ray> m_Rays;
     std::vector<Floor> m_Floors;
@@ -53,7 +53,9 @@ private:
     std::unique_ptr<Core::FlyCamera> m_Camera3D;
 
     bool m_Paused = false;
-    
+
+    const bool m_SnappingEnabled = true;
+
     void ProcessInput(Core::Timestep deltaTime);
     void CastRays();
     void CastFloors();

@@ -118,7 +118,12 @@ void RaycasterScene::CastRays() {
         }
 
         m_Rays[i].Scale = 1.0f / wallDistance;
-        m_Rays[i].Position.x = cameraX + m_RayWidth;
+        if (m_SnappingEnabled) {
+            // The center of a wall is @ y = 0, so scale needs to be even multiple of m_RayWidth -> round to 2.0f * m_RayWidth
+            m_Rays[i].Scale = glm::round(0.25f * m_Rays[i].Scale * m_RayCount) * 2.0f * m_RayWidth;
+        }
+        
+        m_Rays[i].Position.x = cameraX + 0.5f * m_RayWidth;
         m_Rays[i].Atlasindex = hit.Material;
         
         glm::vec2 lightingPosition = hit.WorlPosition;
