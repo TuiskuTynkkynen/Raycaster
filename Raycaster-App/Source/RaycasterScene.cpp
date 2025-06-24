@@ -215,6 +215,7 @@ void RaycasterScene::CastFloors() {
             float maxX = glm::min(rayLength + prevPos, maxPos);
 
             float position = prevPos;
+            float offsetPosition = prevPos;
             while (maxX > position) {
                 float length = rayLength - (position - prevPos);
                 if (position + length < activeRange[0]) {
@@ -228,12 +229,13 @@ void RaycasterScene::CastFloors() {
                         break;
                     }
 
-                    glm::vec2 offset = m_Camera->GetPlane() * (activeRange[0] - prevPos) * scale * 0.5f; // NDC to world coords
+                    glm::vec2 offset = m_Camera->GetPlane() * (activeRange[0] - offsetPosition) * scale * 0.5f; // NDC to world coords
                     worldPosition.x += offset.x;
                     worldPosition.y -= offset.y;
 
                     length -= diffrence;
                     position = activeRange[0];
+                    offsetPosition = position;
                 }
 
                 if (position + length >= activeRange[1]) {
