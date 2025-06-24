@@ -10,24 +10,25 @@ std::vector<LineCollider> Map::CreateWalls() {
         }
 
         glm::vec2 start(startIndex % s_MapData.Width, startIndex / s_MapData.Width);
-        Neighbours adjacent = GetNeighbours(startIndex);
+        Neighbourhood adjacent = GetNeighbours(startIndex);
 
         // Horizontal or vertical wall checks
         if (s_MapData.Map[startIndex] > 0) {
             for (size_t i = 0; i < 4; i++) {
-                if (adjacent[i]) {
+                // Check the cardinal directions
+                if (adjacent[i * 2 + (i < 2)]) {
                     continue;
                 }
                 
-                glm::vec2 point(start.x + (i % 2 == 1), start.y + (i < 2));
+                glm::vec2 point(start.x + (i < 2), start.y + (i % 2 == 0));
                 auto iterator = std::find(points[i].begin(), points[i].end(), point);
 
                 if (iterator != points[i].end()) { //if 1st point already exist, line end point can be updated
-                    iterator->x = start.x + (i > 1);
-                    iterator->y = start.y + (i % 2 == 1);
+                    iterator->x = start.x + (i % 2);
+                    iterator->y = start.y + (i < 2);
                 } else {
                     points[i].emplace_back(point);
-                    points[i].emplace_back(start.x + (i > 1), start.y + (i % 2 == 1));
+                    points[i].emplace_back(start.x + (i % 2), start.y + (i < 2));
                 }
             }
 
@@ -37,7 +38,7 @@ std::vector<LineCollider> Map::CreateWalls() {
         glm::vec2 end = start;
 
         // Diagonal wall checks
-        if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
+        if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
             start.x++;
             end.y++;
         } else {
@@ -46,7 +47,7 @@ std::vector<LineCollider> Map::CreateWalls() {
         }
 
         // Fixes normals
-        if (adjacent.Down) {
+        if (adjacent.South) {
             result.emplace_back(end, start);
             continue;
         }
@@ -85,18 +86,18 @@ std::vector<Tile> Map::CreateTiles() {
         result.push_back(tile);
 
         if (s_MapData.Map[mapY * s_MapData.Width + mapX] < 0) {
-            Neighbours adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
+            Neighbourhood adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
             
-            if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
-                tile.Rotation = adjacent.Down && !(adjacent.Up && adjacent.Left) ? 270.0f : 90.0f;
+            if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
+                tile.Rotation = adjacent.South && !(adjacent.North && adjacent.West) ? 270.0f : 90.0f;
             } else {
-                tile.Rotation = adjacent.Up ? 0.0f : 180.0f;
+                tile.Rotation = adjacent.North ? 0.0f : 180.0f;
             }
 
             tile.Colour = glm::vec3(1.0f);
             tile.IsTriangle = true;
             
-            //result.push_back(tile);
+            result.push_back(tile);
 
             tile.IsTriangle = false;
         }
@@ -331,8 +332,8 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
             glm::vec2 point1(mapX, mapY);
             glm::vec2 point2(point1);
 
-            Neighbours adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
-            if (adjacent.Down && adjacent.Right || adjacent.Up && adjacent.Left) {
+            Neighbourhood adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
+            if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
                 point1.x++;
                 point2.y++;
             } else {
@@ -528,11 +529,17 @@ float Map::GetLight(size_t x, size_t y) {
     return m_LightMap[y * s_MapData.Width + x];
 }
 
-constexpr Map::Neighbours Map::GetNeighbours(size_t index) {
-    bool left = index - 1 >= s_MapData.Size || s_MapData.Map[index - 1];
-    bool down = index + s_MapData.Width >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width];
-    bool up = index - s_MapData.Width >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width];
-    bool right = index + 1 >= s_MapData.Size || s_MapData.Map[index + 1];
+Map::Neighbourhood Map::GetNeighbours(size_t index) {
+    bool NW = index - s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width - 1];
+    bool N = index - s_MapData.Width >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width];
+    bool NE = index - s_MapData.Width + 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width + 1];
+    
+    bool W = index - 1 >= s_MapData.Size || s_MapData.Map[index - 1];
+    bool E = index + 1 >= s_MapData.Size || s_MapData.Map[index + 1];
+    
+    bool SW = index + s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width - 1];
+    bool S = index + s_MapData.Width >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width];
+    bool SE = index + s_MapData.Width + 1 >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width + 1];
 
-    return { left, down, up, right };
+    return { SE, S, SW, E, W, NE, N, NW };
 }

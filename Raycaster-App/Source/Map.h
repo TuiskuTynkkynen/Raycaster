@@ -145,19 +145,24 @@ private:
 
     std::array<float, s_MapData.Size> m_LightMap;
 
-    union Neighbours {
+    union Neighbourhood {
         struct {
-            bool Left   : 1;
-            bool Down   : 1;
-            bool Up     : 1;
-            bool Right  : 1;
+            bool SouthEast : 1;
+            bool South : 1;
+            bool SouthWest : 1;
+            bool East : 1;
+            bool West : 1;
+            bool NorthEast : 1;
+            bool North : 1;
+            bool NorthWest : 1;
         };
-        uint8_t Data;
+        uint8_t Bitboard;
         
         bool operator[](size_t index) {
-            RC_ASSERT(index < 4, "Neighbour contains only 4 elements");
-            return (Data >> index) & 1;
+            RC_ASSERT(index < 8, "Neighbourhood contains only 8 elements");
+            return (Bitboard >> index) & 1;
         }
     };
-    constexpr Neighbours GetNeighbours(size_t index);
+    public:
+    Neighbourhood GetNeighbours(size_t index);
 };
