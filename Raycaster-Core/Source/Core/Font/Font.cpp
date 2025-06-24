@@ -222,9 +222,6 @@ namespace Core {
                                     face->glyph->advance.x >> 6
                 };
                 m_Glyphs[c] = glyphInfo;
-                if (face->glyph->advance.x == 0) {
-                    std::cout << " ";
-                }
                 x += width + 1;
             }
         }
