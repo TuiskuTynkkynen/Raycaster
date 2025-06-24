@@ -7,7 +7,7 @@
 #include <format>
 #include <source_location>
 #include <filesystem>
-#include <iostream>
+#include <cstdio>
 
 #ifndef LOG_PREFIX_LEVEL
     #define LOG_PREFIX_LEVEL 2 //Default prefix -> Full
@@ -40,10 +40,8 @@ namespace Core {
     public:
         template <typename ... Args>
         static void Log(LogLevel logLevel, PrefixLevel prefixLevel, const std::source_location location, const std::format_string<Args...> fmt, Args&&... args) {
-            std::cout << CreatePrefix(logLevel, prefixLevel, location)
-                      << std::vformat(fmt.get(), std::make_format_args(args...))
-                      << RESET
-                      << "\n";
+            std::string temp = std::format("{}{}{}", CreatePrefix(logLevel, prefixLevel, location), std::vformat(fmt.get(), std::make_format_args(args...)), RESET);
+            std::puts(temp.c_str());
         }
     };
     
