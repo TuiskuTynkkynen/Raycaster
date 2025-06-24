@@ -126,9 +126,7 @@ void RaycasterScene::CastRays() {
         m_Rays[i].Position.x = cameraX + 0.5f * m_RayWidth;
         m_Rays[i].Atlasindex = hit.Material;
         
-        glm::vec2 lightingPosition = hit.WorlPosition;
-        lightingPosition -= 0.5f;
-        m_Rays[i].Brightness = LightBilinear(lightingPosition);
+        m_Rays[i].Brightness = LightBilinear(hit.WorlPosition);
 
         m_ZBuffer[i] = wallDistance;
         m_Lines[i].Scale = rayDirection * wallDistance * m_Map.GetScale();
@@ -268,11 +266,9 @@ void RaycasterScene::CastFloors() {
                 floor.TopAtlasIndex = hit.TopMaterial;
                 
                 glm::vec2 lightingPosition = worldPosition;
-                lightingPosition -= 0.5f;
-
                 floor.BrightnessStart = LightBilinear(lightingPosition);
 
-                float worldScale = length * 0.5f * scale; // NDC to world coords
+                float worldScale = length * 0.49f * scale; // NDC to world coords
                 lightingPosition += glm::vec2(worldScale * m_Camera->GetPlane().x, -worldScale * m_Camera->GetPlane().y);
 
                 floor.BrightnessEnd = LightBilinear(lightingPosition);
@@ -601,50 +597,96 @@ void RaycasterScene::InitModels() {
     }
 }
 
+static glm::vec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
+    /*
+    Bitboard        NAND(bitboard, test bitboard)    Result offsets
+    0 = empty                                              x  y
+        empty                                        -- = -1 -1
+    ? = or                                           00 =  0  0
+        filled                                       ++ =  1  1
+
+    00? 00? ???         !(u8 & 110 10 000)           --
+    ?00 ?00 ???         !(u8 & 011 01 000)           +-
+    ??? 00? 00?         !(u8 & 000 10 110)           -+
+    ??? ?00 ?00         !(u8 & 000 01 011)           ++
+
+    ?0? ?0? ???         !(u8 & 010 00 000)           0-
+    ??? 00? ???         !(u8 & 000 10 000)           -0
+    ??? ?00 ???         !(u8 & 000 01 000)           +0
+    ??? ?0? ?0?         !(u8 & 000 00 010)           0+
+    */
+
+    std::array<uint8_t, 8> testBitboards{
+        0b11010000,
+        0b01101000,
+        0b00010110,
+        0b00001011,
+
+        0b01000000,
+        0b00010000,
+        0b00001000,
+        0b00000010,
+    };
+
+    std::array<glm::vec2, 8> offsets{
+        glm::vec2{ -1.0f, -1.0f },
+        glm::vec2{  1.0f, -1.0f },
+        glm::vec2{ -1.0f,  1.0f },
+        glm::vec2{  1.0f,  1.0f },
+
+        glm::vec2{  0.0f, -1.0f },
+        glm::vec2{ -1.0f,  0.0f },
+        glm::vec2{  1.0f,  0.0f },
+        glm::vec2{  0.0f,  1.0f },
+    };
+
+    position = glm::fract(position);
+    bool decreaseY = (position.y < 0.5f);
+    bool decreaseX = (position.x < 0.5f);
+
+    for (size_t i = 0; i < 8; i++) {
+        // First check all 2x2 areas, then 2x1/1x2
+        size_t index = (i >= 4) * 4;
+
+        // Index into arrays in preferred order ->
+        // If possible decrease x/y, when x/y < 0.5f and vice versa
+        index += (decreaseY ^ !(i & 2)) * 2;
+        index += decreaseX ^ !(i % 2);
+
+        if (!(bitboard & testBitboards[index])) {
+            return offsets[index];
+        }
+    }
+
+    return { 0.0f, 0.0f };
+}
+
 float RaycasterScene::LightBilinear(glm::vec2 position) {
     // Bilinear interpolation of m_LightMap
-    glm::uvec2 min = position;
-    glm::uvec2 max = glm::ceil(position);
+    glm::ivec2 min = position;
+    glm::ivec2 max = min;
 
-    auto wall = [this](size_t x, size_t y) -> bool {
-        size_t index = y * m_Map.GetWidth() + x;
-
-        if (index < m_Map.GetSize()) {
-            return m_Map[index] > 0.0f;
-        }
-
-        return true;
-        };
-
-    // Try to prevent sampling light map inside a wall by shifting min and max
+    // Prevent sampling light map inside a wall by shifting min and max 
     {
-        bool down = wall(min.x, max.y) || wall(max.x, max.y);
-        bool up = wall(min.x, min.y) || wall(max.x, min.y);
-        if (!up && down) {
-            max.y--;
-            min.y--;
-        }
-        else if (!down && up) {
-            max.y++;
-            min.y++;
-        }
+        uint8_t mapBitboard = m_Map.GetNeighbours(min.y * m_Map.GetWidth() + min.x).Bitboard;
 
-        bool right = wall(max.x, min.y) || wall(max.x, max.y);
-        bool left = wall(min.x, min.y) || wall(min.x, max.y);
-        if (!wall(min.x, max.y) && right) {
-            max.x--;
-            min.x--;
-        }
-        else if (!wall(max.x, min.y) && left) {
-            max.x++;
-            min.x++;
-        }
+        glm::vec2 offset = GetBilinearOffset(mapBitboard, position);
+
+        min.x += offset.x * (offset.x < 0.0f); // Only decrease min 
+        min.y += offset.y * (offset.y < 0.0f); // Only decrease min 
+
+        max.x += offset.x * (offset.x > 0.0f); // Only increase max
+        max.y += offset.y * (offset.y > 0.0f); // Only increase max
     }
 
     glm::vec2 Xmin{ m_Map.GetLight(min.x, min.y), m_Map.GetLight(min.x, max.y) };
     glm::vec2 Xmax{ m_Map.GetLight(max.x, min.y), m_Map.GetLight(max.x, max.y) };
 
-    glm::vec2 y = glm::mix(Xmin, Xmax, glm::fract(position.x - min.x));
+    // Add 0.5f to min, since light is evaluated at the middle of a tile
+    float mix = glm::clamp(position.x - (min.x + 0.5f), 0.0f, 1.0f);
+    glm::vec2 y = glm::mix(Xmin, Xmax, mix);
 
-    return glm::mix(y[1], y[0], glm::fract(max.y - position.y));
+    // Add 0.5f to min, since light is evaluated at the middle of a tile
+    mix = glm::clamp(position.y - (min.y + 0.5f), 0.0f, 1.0f);
+    return glm::mix(y[0], y[1], mix);
 }
