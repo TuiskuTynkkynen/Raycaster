@@ -10,8 +10,7 @@
 void RaycasterScene::Init(){
     m_Rays.resize(m_RayCount); //should be initialized to default values
     m_Lines.resize(m_RayCount); //should be initialized to default vec3s
-    m_SpriteObjects.resize(6);
-
+    
     m_Player.Position = glm::vec3((float)m_Map.GetWidth() / 2, (float)m_Map.GetHeight() / 2, 0.5f);
     m_Player.Scale = m_Map.GetScale() * 0.4f;
     m_Player.Rotation = 90.0f;
@@ -60,6 +59,8 @@ void RaycasterScene::Init(){
     m_Tiles = m_Map.CreateTiles();
     m_Walls = m_Map.CreateWalls();
     InitModels();
+    
+    m_SpriteObjects.resize(m_StaticObjects.size() + m_Enemies.size());
 
     Tile tile;
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -422,6 +423,7 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
 void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
     uint32_t count = m_Enemies.size();
     uint32_t tileIndex = m_Tiles.size() - 1;
+    size_t spriteIndex = m_SpriteObjects.size() - count;
     uint32_t modelIndex = m_Models.size() - count;
     
     for (uint32_t i = 0; i < count; i++) {
@@ -483,12 +485,12 @@ void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
         }
 
         m_EnemyMap[(uint32_t)enemy.Position.y * m_Map.GetWidth() + (uint32_t)enemy.Position.x] = true;
-        m_SpriteObjects[4 + i].Position = enemy.Position;
-        m_SpriteObjects[4 + i].WorldPosition = enemy.Position;
-        m_SpriteObjects[4 + i].Scale = enemy.Scale;
-        m_SpriteObjects[4 + i].AtlasIndex = enemy.AtlasIndex + atlasOffset;
+        m_SpriteObjects[spriteIndex + i].Position = enemy.Position;
+        m_SpriteObjects[spriteIndex + i].WorldPosition = enemy.Position;
+        m_SpriteObjects[spriteIndex + i].Scale = enemy.Scale;
+        m_SpriteObjects[spriteIndex + i].AtlasIndex = enemy.AtlasIndex + atlasOffset;
         bool flip = (uint32_t)enemy.Tick % 2 == 0;
-        m_SpriteObjects[4 + i].FlipTexture = flip;
+        m_SpriteObjects[spriteIndex + i].FlipTexture = flip;
 
         //Update on 2D-layer
         uint32_t centreY = m_Map.GetHeight() * 0.5f, centreX = m_Map.GetWidth() * 0.5f;
