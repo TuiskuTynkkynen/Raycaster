@@ -549,10 +549,12 @@ void RaycasterScene::InitModels() {
 
         std::vector<float> vertices;
         std::vector<uint32_t> indices;
+        vertices.reserve(totalCount * 4 * 8);
+        indices.reserve(totalCount * 6);
 
         for (uint32_t j = 0; j < 4; j++) {
-            float x = (j >= 2) ? scale.x * 0.5f : -scale.x * 0.5f;
-            float y = (j % 2 == 1) ? scale.y * 0.5f : - scale.y * 0.5f;
+            float x = (j < 2) ? scale.x * 0.5f : -scale.x * 0.5f;
+            float y = (j % 2) ? scale.y * 0.5f : - scale.y * 0.5f;
 
             //position
             vertices.push_back(x);
@@ -572,8 +574,8 @@ void RaycasterScene::InitModels() {
         indices.push_back(0);
         indices.push_back(1);
         indices.push_back(2);
-        indices.push_back(2);
         indices.push_back(3);
+        indices.push_back(2);
         indices.push_back(1);
 
         auto mesh = std::make_shared<Core::Mesh>();
