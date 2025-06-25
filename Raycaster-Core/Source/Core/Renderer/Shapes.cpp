@@ -105,13 +105,13 @@ namespace Core {
         vertices.resize(vertOffset + 4);
 
         vertices[vertOffset + 0].Position = { 0.5f * size.x, 0.5f * size.y, 0.0f };
-        vertices[vertOffset + 1].Position = { 0.5f * size.x, -0.5f * size.y, 0.0f };
-        vertices[vertOffset + 2].Position = { -0.5f * size.x,  0.5f * size.y, 0.0f };
+        vertices[vertOffset + 1].Position = { -0.5f * size.x,  0.5f * size.y, 0.0f };
+        vertices[vertOffset + 2].Position = { 0.5f * size.x, -0.5f * size.y, 0.0f };
         vertices[vertOffset + 3].Position = { -0.5f * size.x, -0.5f * size.y, 0.0f };
 
         vertices[vertOffset + 0].TextureCoords = { 1.0f, 1.0f };
-        vertices[vertOffset + 1].TextureCoords = { 1.0f, 0.0f };
-        vertices[vertOffset + 2].TextureCoords = { 0.0f, 1.0f };
+        vertices[vertOffset + 1].TextureCoords = { 0.0f, 1.0f };
+        vertices[vertOffset + 2].TextureCoords = { 1.0f, 0.0f };
         vertices[vertOffset + 3].TextureCoords = { 0.0f, 0.0f };
 
         size_t indOffset = indices.size();
@@ -120,8 +120,8 @@ namespace Core {
         indices[indOffset + 0] = vertOffset + 0;
         indices[indOffset + 1] = vertOffset + 1;
         indices[indOffset + 2] = vertOffset + 2;
-        indices[indOffset + 3] = vertOffset + 1;
-        indices[indOffset + 4] = vertOffset + 2;
+        indices[indOffset + 3] = vertOffset + 2;
+        indices[indOffset + 4] = vertOffset + 1;
         indices[indOffset + 5] = vertOffset + 3;
 
         return ShapeError::None;
@@ -203,9 +203,9 @@ namespace Core {
             indices[indOffset + i * 6 + 0] = vertOffset + i * 4 + 0;
             indices[indOffset + i * 6 + 1] = vertOffset + i * 4 + 1;
             indices[indOffset + i * 6 + 2] = vertOffset + i * 4 + 2;
-            indices[indOffset + i * 6 + 3] = vertOffset + i * 4 + 1;
+            indices[indOffset + i * 6 + 3] = vertOffset + i * 4 + 3;
             indices[indOffset + i * 6 + 4] = vertOffset + i * 4 + 2;
-            indices[indOffset + i * 6 + 5] = vertOffset + i * 4 + 3;
+            indices[indOffset + i * 6 + 5] = vertOffset + i * 4 + 1;
         }
         indOffset += 12;
 
@@ -223,11 +223,11 @@ namespace Core {
         }
 
         for (uint32_t i = 0; i < 2; i++) {
-            indices[indOffset + i * 6 + 0] = vertOffset + i * 4 + 2;
+            indices[indOffset + i * 6 + 0] = vertOffset + 8 + i * 2 + 0;
             indices[indOffset + i * 6 + 1] = vertOffset + (1 - i) * 4 + 3;
-            indices[indOffset + i * 6 + 3] = vertOffset + (1 - i) * 4 + 3;
+            indices[indOffset + i * 6 + 2] = vertOffset + i * 4 + 2;
 
-            indices[indOffset + i * 6 + 2] = vertOffset + 8 + i * 2 + 0;
+            indices[indOffset + i * 6 + 3] = vertOffset + (1 - i) * 4 + 3;
             indices[indOffset + i * 6 + 4] = vertOffset + 8 + i * 2 + 0;
             indices[indOffset + i * 6 + 5] = vertOffset + 8 + i * 2 + 1;
         }
@@ -362,9 +362,9 @@ namespace Core {
 
         for (size_t k = 0; k < 4; k++) {
             if (segments == 1) {
-                indices.emplace_back(vertOffset + k + 8);
-                indices.emplace_back(vertOffset + k * 2);
                 indices.emplace_back(vertOffset + k * 2 + 1);
+                indices.emplace_back(vertOffset + k * 2);
+                indices.emplace_back(vertOffset + k + 8);
 
                 continue;
             }
@@ -383,7 +383,7 @@ namespace Core {
             indices.emplace_back(vertOffset + k + 8);
             indices.emplace_back(vertOffset + k * 2 + 1);
             indices.emplace_back(vertOffset + points.size() + (segments - 1) * k);
-
+            
             for (uint32_t i = 1; i < segments - 1; i++) {
                 indices.emplace_back(vertOffset + k + 8);
                 indices.emplace_back(vertOffset + points.size() + (segments - 1) * k + i - 1);
@@ -396,22 +396,21 @@ namespace Core {
         }
 
         for (size_t i = 0; i < 3; i += 2) {
+            indices.emplace_back(vertOffset + 8 + i);
+            indices.emplace_back(vertOffset + 2 + i * 2);
             indices.emplace_back(vertOffset + 1 + i * 2);
-            indices.emplace_back(vertOffset + 2 + i * 2);
-            indices.emplace_back(vertOffset + 8 + i);
 
             indices.emplace_back(vertOffset + 2 + i * 2);
             indices.emplace_back(vertOffset + 8 + i);
-
             indices.emplace_back(vertOffset + 9 + i);
         }
 
         indices.emplace_back(vertOffset + 3);
         indices.emplace_back(vertOffset);
         indices.emplace_back(vertOffset + 4);
-        indices.emplace_back(vertOffset);
-        indices.emplace_back(vertOffset + 4);
         indices.emplace_back(vertOffset + 7);
+        indices.emplace_back(vertOffset + 4);
+        indices.emplace_back(vertOffset);
 
         return ShapeError::None;
     }
@@ -478,18 +477,18 @@ namespace Core {
         }
 
         for (size_t k = 0; k < 4; k++) {
-            indices.emplace_back(vertOffset + k * 2);
-            indices.emplace_back(vertOffset + k * 2 + 8);
             indices.emplace_back(vertOffset + (k * 2 - 1) % 8);
+            indices.emplace_back(vertOffset + k * 2 + 8);
+            indices.emplace_back(vertOffset + k * 2);
 
             indices.emplace_back(vertOffset + k * 2 + 8);
             indices.emplace_back(vertOffset + (k * 2 - 1) % 8);
             indices.emplace_back(vertOffset + (k * 2 - 1) % 8 + 8);
 
             if (segments == 1) {
-                indices.emplace_back(vertOffset + k * 2);
-                indices.emplace_back(vertOffset + k * 2 + 1);
                 indices.emplace_back(vertOffset + k * 2 + 8);
+                indices.emplace_back(vertOffset + k * 2 + 1);
+                indices.emplace_back(vertOffset + k * 2);
                 
                 indices.emplace_back(vertOffset + k * 2 + 1);
                 indices.emplace_back(vertOffset + k * 2 + 8);
@@ -512,18 +511,18 @@ namespace Core {
                 vertices[vertOffset + points.size() + (segments - 1) * k * 2 + 2 * i - 1].TextureCoords = textureCenter + offset * (radius - thickness) / size;
             }
             
-            indices.emplace_back(vertOffset + k * 2 + 1);
-            indices.emplace_back(vertOffset + k * 2 + 8 + 1);
             indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2);
+            indices.emplace_back(vertOffset + k * 2 + 8 + 1);
+            indices.emplace_back(vertOffset + k * 2 + 1);
             
             indices.emplace_back(vertOffset + k * 2 + 8 + 1);
             indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2);
             indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + 1);
             
             for (uint32_t i = 1; i < segments - 1; i++) {
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 - 2);
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 - 1);
                 indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2);
+                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 - 1);
+                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 - 2);
 
                 indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 - 1);
                 indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2);
@@ -534,9 +533,9 @@ namespace Core {
             indices.emplace_back(vertOffset + k * 2 + 8);
             indices.emplace_back(vertOffset + points.size() + (segments - 1) * (k + 1) * 2 - 2);
             
-            indices.emplace_back(vertOffset + k * 2 + 8);
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * (k + 1) * 2 - 2);
             indices.emplace_back(vertOffset + points.size() + (segments - 1) * (k + 1) * 2 - 1);
+            indices.emplace_back(vertOffset + points.size() + (segments - 1) * (k + 1) * 2 - 2);
+            indices.emplace_back(vertOffset + k * 2 + 8);
         }
 
         return ShapeError::None;
