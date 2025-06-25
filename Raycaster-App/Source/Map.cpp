@@ -207,6 +207,9 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
         uint32_t prevIndex = wallIndices[0].second;
         uint32_t vertexCount = 0;
         uint32_t wallCount = static_cast<uint32_t>(wallIndices.size());
+        vertices.reserve(wallCount * 4 * 8);
+        indices.reserve(wallCount * 6);
+        
         for (uint32_t i = 0; i < wallCount; i++) {
             auto& [wall, index] = wallIndices[i];
 
@@ -247,8 +250,8 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
             indices.push_back(vertexCount);
             indices.push_back(vertexCount + 1);
             indices.push_back(vertexCount + 2);
-            indices.push_back(vertexCount + 2);
             indices.push_back(vertexCount + 3);
+            indices.push_back(vertexCount + 2);
             indices.push_back(vertexCount + 1);
 
             vertexCount += 4;
