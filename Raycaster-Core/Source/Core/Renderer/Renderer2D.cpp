@@ -87,15 +87,15 @@ namespace Core {
 
         s_Data.BaseQuadVertexPositions = new glm::vec4[]{
             { 0.5f,  0.5f, 0.0f , 1.0f },
-            { 0.5f, -0.5f, 0.0f , 1.0f },
             {-0.5f,  0.5f, 0.0f , 1.0f },
+            { 0.5f, -0.5f, 0.0f , 1.0f },
             { -0.5f, -0.5f, 0.0f , 1.0f },
         };
 
         s_Data.BaseQuadTextureCoords = new glm::vec3[]{
             { 1.0f, 1.0f, 1.0f },
-            { 1.0f, 0.0f, 1.0f },
             { 0.0f, 1.0f, 1.0f },
+            { 1.0f, 0.0f, 1.0f },
             { 0.0f, 0.0f, 1.0f },
         };
 
@@ -129,8 +129,8 @@ namespace Core {
             quadIndices[i + 0] = offset + 0;
             quadIndices[i + 1] = offset + 1;
             quadIndices[i + 2] = offset + 2;
-            quadIndices[i + 3] = offset + 1;
-            quadIndices[i + 4] = offset + 2;
+            quadIndices[i + 3] = offset + 2;
+            quadIndices[i + 4] = offset + 1;
             quadIndices[i + 5] = offset + 3;
 
             offset += 4;
@@ -286,18 +286,9 @@ namespace Core {
             Flush();
         }
 
-        for (size_t i = 0; i < 2; i++) {
+        for (size_t i = 0; i < 4; i++) {
             s_Data.QuadBackIter->Position = transform * s_Data.BaseQuadVertexPositions[i];
-            s_Data.QuadBackIter->Colour = colour1;
-            s_Data.QuadBackIter->TextureCoords = textureTransform * s_Data.BaseQuadTextureCoords[i];
-            s_Data.QuadBackIter->AtlasOffset = atlasOffset;
-            s_Data.QuadBackIter->TextureIndex = textureIndex;
-            s_Data.QuadBackIter++;
-        }
-
-        for (size_t i = 2; i < 4; i++) {
-            s_Data.QuadBackIter->Position = transform * s_Data.BaseQuadVertexPositions[i];
-            s_Data.QuadBackIter->Colour = colour2;
+            s_Data.QuadBackIter->Colour = i % 2 ? colour2 : colour1;
             s_Data.QuadBackIter->TextureCoords = textureTransform * s_Data.BaseQuadTextureCoords[i];
             s_Data.QuadBackIter->AtlasOffset = atlasOffset;
             s_Data.QuadBackIter->TextureIndex = textureIndex;
