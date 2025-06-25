@@ -20,15 +20,18 @@ std::vector<LineCollider> Map::CreateWalls() {
                     continue;
                 }
 
-                glm::vec2 point(start.x + (i < 2), start.y + (i % 2 == 0));
+                // Offsets for start and end points
+                // 0 is start and 1 is end, when x and y are positive, and vice versa
+                std::array<glm::vec2, 2> offsets = { glm::vec2{ i < 2, i % 2 == 0 }, glm::vec2{ i % 2, i < 2 } };
+               
+                glm::vec2 point = start + offsets[i % 2 == 0];
                 auto iterator = std::find(points[i].begin(), points[i].end(), point);
 
                 if (iterator != points[i].end()) { //if 1st point already exist, line end point can be updated
-                    iterator->x = start.x + (i % 2);
-                    iterator->y = start.y + (i < 2);
+                    *iterator = start + offsets[i % 2];
                 } else {
                     points[i].emplace_back(point);
-                    points[i].emplace_back(start.x + (i % 2), start.y + (i < 2));
+                    points[i].emplace_back(start + offsets[i % 2]);
                 }
             }
 
@@ -57,7 +60,8 @@ std::vector<LineCollider> Map::CreateWalls() {
 
     for (size_t i = 0; i < points.size(); i++) {
         for (size_t j = 0; j < points[i].size(); j += 2) {
-            result.emplace_back(points[i][j], points[i][j + 1]);
+            // Change order of points to get correct normals
+            result.emplace_back(points[i][j + (i % 2 == 0)], points[i][j + (i % 2)]);
         }
     }
 
