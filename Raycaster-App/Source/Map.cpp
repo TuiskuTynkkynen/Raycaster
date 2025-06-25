@@ -106,6 +106,78 @@ std::vector<Tile> Map::CreateTiles() {
     return result;
 }
 
+std::vector<Map::Quad> Map::GreedyQuadrangulation(const std::array<uint8_t, s_MapData.Size>& map) {
+    std::vector<Map::Quad> result;
+    std::array<bool, s_MapData.Size> visited{};
+
+    size_t index = 0;
+    while (index < s_MapData.Size) {
+        while(index < s_MapData.Size && visited[index]) {
+            index++;
+        }
+
+        if (index >= s_MapData.Size) {
+            break;
+        }
+        visited[index] = true;
+
+        size_t x = index % s_MapData.Width, y = index / s_MapData.Width;
+        size_t width = 1, height = 1;
+        uint8_t material = map[index];
+
+        // Calculate width
+        for (; x + width < s_MapData.Width; width++) {
+            if (visited[index + width]) {
+                break;
+            }
+
+            if (map[index + width] != material) {
+                break;
+            }
+
+            visited[index + width] = true;
+        }
+
+        // Calculate height
+        for (; y + height < s_MapData.Height; height++) {
+            size_t i = 0;
+            
+            // Check if every tile form 0 to width for current height
+            for (; i < width; i++) {
+                if (visited[index + height * s_MapData.Width + i]) {
+                    break;
+                }
+
+                if (map[index + height * s_MapData.Width + i] != material) {
+                    break;
+                }
+
+                visited[index + height * s_MapData.Width + i] = true;
+            }
+
+            // Backtrack if height can't be increased
+            if (i < width) {
+                for (size_t j = 0; j <= i; j++) {
+                    visited[index + height * s_MapData.Width + j] = false;
+                }
+                break;
+            }
+        }
+
+        RC_ASSERT(x <= UINT16_MAX && y <= UINT16_MAX && width <= UINT16_MAX && height <= UINT16_MAX);
+        result.emplace_back(x, y, width, height, material);
+         
+        if(width == s_MapData.Width){
+            index += height * s_MapData.Width;
+            continue;
+        }
+
+        index += width;
+    }
+
+    return result;
+}
+
 Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_ptr<Core::Texture2D> atlas, std::shared_ptr<Core::Shader> shader) {
     std::vector<std::pair<glm::vec4, uint32_t>> wallIndices;
 
@@ -186,42 +258,70 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
         glm::uvec4& previous = subranges.back().second;
         glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
         subranges.emplace_back(prevIndex, ranges);
+    }
 
-        //Create vertices and indices for floor and ceiling
-        const glm::vec4 floor(0.0f, 0.0f, s_MapData.Width, s_MapData.Height);
-        const glm::vec3 normal(0.0f, 1.0f, 0.0f);
-        for (uint32_t i = 0; i < 2; i++) {
-            uint32_t index = (i % 2 == 0) ? 7 : 6;
+    //Create vertices and indices for floor and ceiling
+    {
+        size_t vertexCount = 0;
+        size_t previousMaterial = -1;
+        for (size_t i = 0; i < 2; i++) {
+            std::vector<Quad> quads = i ? GreedyQuadrangulation(s_MapData.CeilingMap) : GreedyQuadrangulation(s_MapData.FloorMap);
+            
+            //sort floor quads by atlas texture index
+            std::sort(quads.begin(), quads.end(), [](auto& a, auto& b) {
+                return a.Material< b.Material;
+                });
 
-            for (uint32_t j = 0; j < 4; j++) {
-                uint32_t offset = j <= 1 ? j : 5 - j;
-                float x = floor[(0 + offset) % 4];
-                float z = floor[(1 + offset) % 4];
-                //position
-                vertices.push_back(x);
-                vertices.push_back(static_cast<float>(i));
-                vertices.push_back(z);
 
-                //normal
-                vertices.push_back(normal.x);
-                vertices.push_back(normal.y);
-                vertices.push_back(normal.z);
+            vertices.reserve(vertices.size() + quads.size() * 4 * 8);
+            indices.reserve(indices.size() + quads.size() * 6);
+            
+            for (const auto& quad : quads) {
+                if (quad.Material != previousMaterial) {
+                    glm::uvec4& previous = subranges.back().second;
+                    glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
+                    subranges.emplace_back(previousMaterial, ranges);
 
-                //uv
-                vertices.push_back(x);
-                vertices.push_back(z);
+                    previousMaterial = quad.Material;
+                    vertexCount = 0;
+                }
+
+                for (uint32_t j = 0; j < 4; j++) {
+                    // Preserve counter clockwise winding order
+                    std::array<bool, 2> offsets{ j >= 2, j % 2};
+
+                    float x = quad.x + quad.Width * offsets[i];
+                    float z = quad.y + quad.Height * offsets[1 - i];
+
+                    //position
+                    vertices.push_back(x);
+                    vertices.push_back(static_cast<float>(i));
+                    vertices.push_back(z);
+
+                    //normal
+                    vertices.push_back(0.0f);
+                    vertices.push_back(1.0f - i * 2.0f); // 1.0f for floor, -1.0f for ceiling
+                    vertices.push_back(0.0f);
+
+                    //uv
+                    vertices.push_back(x);
+                    vertices.push_back(z);
+                }
+
+                indices.push_back(vertexCount + 0);
+                indices.push_back(vertexCount + 1);
+                indices.push_back(vertexCount + 2);
+                indices.push_back(vertexCount + 3);
+                indices.push_back(vertexCount + 2);
+                indices.push_back(vertexCount + 1);
+
+                vertexCount += 4;
             }
 
-            indices.push_back(0);
-            indices.push_back(1);
-            indices.push_back(2);
-            indices.push_back(2);
-            indices.push_back(3);
-            indices.push_back(1);
-
+            //add last subrange
             glm::uvec4& previous = subranges.back().second;
             glm::uvec4 ranges(previous.y, vertices.size(), previous.w, indices.size());
-            subranges.emplace_back(index, ranges);
+            subranges.emplace_back(previousMaterial, ranges);
         }
     }
 

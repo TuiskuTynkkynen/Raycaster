@@ -145,6 +145,13 @@ private:
 
     std::array<float, s_MapData.Size> m_LightMap;
 
+    struct Quad {
+        uint16_t x, y;
+        uint16_t Width, Height;
+        uint8_t Material;
+    };
+    std::vector<Quad> GreedyQuadrangulation(const std::array<uint8_t, s_MapData.Size>& map);
+
     union Neighbourhood {
         struct {
             bool SouthEast : 1;
