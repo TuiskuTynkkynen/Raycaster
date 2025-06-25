@@ -19,7 +19,7 @@ std::vector<LineCollider> Map::CreateWalls() {
                 if (adjacent[i * 2 + (i < 2)]) {
                     continue;
                 }
-                
+
                 glm::vec2 point(start.x + (i < 2), start.y + (i % 2 == 0));
                 auto iterator = std::find(points[i].begin(), points[i].end(), point);
 
@@ -112,17 +112,9 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
     {
         for (auto& wall : walls) {
             uint32_t midX = static_cast<uint32_t>(wall.Position.x + 0.5f * wall.Vector.x - 1e-6f * wall.Normal.x);
-            uint32_t midY = static_cast<uint32_t>(wall.Position.y + 0.5f * wall.Vector.y + 1e-6f * wall.Normal.y);
-            //uint32_t index = static_cast<uint32_t>(glm::abs(s_MapData.Map[midY * s_MapData.Width + midX]));
+            uint32_t midY = static_cast<uint32_t>(wall.Position.y + 0.5f * wall.Vector.y - 1e-6f * wall.Normal.y);
+            uint32_t index = static_cast<uint32_t>(glm::abs(s_MapData.Map[midY * s_MapData.Width + midX]));
 
-            uint32_t index = 0;
-            if (wall.Normal.x != 0) {
-                index = wall.Normal.x > 0 ? 2 : 1;
-            }
-            if (wall.Normal.y != 0) {
-            index += wall.Normal.y > 0 ? 6 : 3;
-            }
-        
             wallIndices.emplace_back(glm::vec4{ wall.Position.x, wall.Position.y, wall.Position.x + wall.Vector.x, wall.Position.y + wall.Vector.y }, index);
         }
 
