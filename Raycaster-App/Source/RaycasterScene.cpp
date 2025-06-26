@@ -41,27 +41,16 @@ void RaycasterScene::Init(){
         m_StaticObjects.push_back(staticObject);
     }
 
-    Enemy e;
-    e.Position = glm::vec3(8.5f, 6.5f, 0.4f);
-    e.Scale = glm::vec3(0.8f);
-    e.AtlasIndex = 11;
-    e.Speed = 1.0f;
-    m_Enemies.push_back(e);
-
-    e.Position = glm::vec3(2.5f, 3.0f, 0.4f);
-    m_Enemies.push_back(e);
-
-    m_EnemyMap.resize(m_Map.GetSize());
-    for (uint32_t i = 0; i < m_Map.GetSize(); i++) {
-        m_EnemyMap[i] = m_Map[i];
-    }
+    m_Enemies.Init(m_Map);
+    m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
+    m_Enemies.Add(EnemyType::Basic, glm::vec2(2.5f, 3.0f));
 
     m_Map.CalculateLightMap(m_Lights);
     m_Tiles = m_Map.CreateTiles();
     m_Walls = m_Map.CreateWalls();
     InitModels();
     
-    m_SpriteObjects.resize(m_StaticObjects.size() + m_Enemies.size());
+    m_SpriteObjects.resize(m_StaticObjects.size() + m_Enemies.Count());
 
     Tile tile;
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -82,7 +71,10 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         }
 
         ProcessInput(deltaTime);
-        UpdateEnemies(deltaTime);
+        
+        m_Enemies.Update(deltaTime, m_Map, m_Player.Position);
+        m_Enemies.UpdateRender({ m_Tiles.end() - m_Enemies.Count(), m_Tiles.end() }, { m_SpriteObjects.end() - m_Enemies.Count(), m_SpriteObjects.end() }, { m_Models.end() - m_Enemies.Count(), m_Models.end() });
+        
         CastRays();
         CastFloors();
         RenderSprites();
@@ -421,91 +413,6 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
     m_Camera3D->UpdateCamera(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), -m_Player.Rotation);
 }
 
-void RaycasterScene::UpdateEnemies(Core::Timestep deltaTime) {
-    uint32_t count = m_Enemies.size();
-    uint32_t tileIndex = m_Tiles.size() - 1;
-    size_t spriteIndex = m_SpriteObjects.size() - count;
-    uint32_t modelIndex = m_Models.size() - count;
-    
-    for (uint32_t i = 0; i < count; i++) {
-        Enemy& enemy = m_Enemies[i];
-        uint32_t atlasOffset = 0;
-
-        uint32_t mapIndex = (uint32_t)enemy.Position.y * m_Map.GetWidth() + (uint32_t)enemy.Position.x;
-        m_EnemyMap[mapIndex] = m_Map[mapIndex];
-        
-        glm::vec3 distance = enemy.Position - m_Player.Position;
-        if (glm::length(distance) < 1.1f) {
-            //"Attack"
-            enemy.Tick += deltaTime;
-            atlasOffset = 1;
-        } else {
-            //Pathfinding
-            enemy.Tick += deltaTime * 2.0f;
-            bool lineOfSight = true;
-
-            glm::vec2 playerPos(0.0f);
-            playerPos.x = m_Player.Position.x;
-            playerPos.y = m_Player.Position.y;
-
-            glm::vec2 movementVector = playerPos;
-
-            glm::vec2 enemyPos(0.0f);
-            static const glm::i32vec2 directions[] = {
-                glm::i32vec2(1,0),
-                glm::i32vec2(-1,0),
-                glm::i32vec2(0,1),
-                glm::i32vec2(0,-1),
-                glm::i32vec2(1,1),
-                glm::i32vec2(-1,1),
-                glm::i32vec2(1,-1),
-                glm::i32vec2(-1,-1),
-            };
-            for (uint32_t j = 0; j < 8 && lineOfSight; j++) {
-                enemyPos.x = enemy.Position.x + 0.5f * enemy.Scale.x * directions[j].x;
-                enemyPos.y = enemy.Position.y + 0.5f * enemy.Scale.y * directions[j].y;
-
-                lineOfSight &= m_Map.LineOfSight(enemyPos, playerPos);
-            }
-
-            if (!lineOfSight) {
-                enemyPos.x = enemy.Position.x;
-                enemyPos.y = enemy.Position.y;
-
-                movementVector = Algorithms::AStar(enemyPos, playerPos, m_EnemyMap, m_Map.GetWidth(), m_Map.GetHeight());
-                movementVector += 0.5f; //Pathfind to tile centre
-            }
-
-            movementVector.x -= enemy.Position.x;
-            movementVector.y -= enemy.Position.y;
-            movementVector = glm::normalize(movementVector);
-            movementVector *= deltaTime * enemy.Speed;
-
-            enemy.Position.x += movementVector.x;
-            enemy.Position.y += movementVector.y;
-        }
-
-        m_EnemyMap[(uint32_t)enemy.Position.y * m_Map.GetWidth() + (uint32_t)enemy.Position.x] = true;
-        m_SpriteObjects[spriteIndex + i].Position = enemy.Position;
-        m_SpriteObjects[spriteIndex + i].WorldPosition = enemy.Position;
-        m_SpriteObjects[spriteIndex + i].Scale = enemy.Scale;
-        m_SpriteObjects[spriteIndex + i].AtlasIndex = enemy.AtlasIndex + atlasOffset;
-        bool flip = (uint32_t)enemy.Tick % 2 == 0;
-        m_SpriteObjects[spriteIndex + i].FlipTexture = flip;
-
-        //Update on 2D-layer
-        uint32_t centreY = m_Map.GetHeight() * 0.5f, centreX = m_Map.GetWidth() * 0.5f;
-        m_Tiles[tileIndex - i].Posistion.x = (enemy.Position.x - centreX) * m_Map.GetScale().x;
-        m_Tiles[tileIndex - i].Posistion.y = (centreY - enemy.Position.y) * m_Map.GetScale().y;
-
-        //Update on 3D-layer
-        uint32_t atlasWidth = 11;
-        glm::vec2 index = glm::vec2((enemy.AtlasIndex + atlasOffset) % atlasWidth, (enemy.AtlasIndex + atlasOffset) / atlasWidth);
-        m_Models[modelIndex + i].Materials.front()->Parameters.back().Value = glm::vec2(flip ? 0.0f : 1.0f, 0.0f);
-        m_Models[modelIndex + i].Materials.front()->Parameters.front().Value = index;
-    }
-}
-
 void RaycasterScene::InitModels() {
     //setup shader
     auto shader = std::make_shared<Core::Shader>("3DAtlasShader.glsl");
@@ -533,7 +440,7 @@ void RaycasterScene::InitModels() {
 
     //Create and set up model for static objects and enemies
     const glm::vec3 normal(0.0f, 0.0f, 1.0f);
-    const uint32_t totalCount = m_StaticObjects.size() + m_Enemies.size();
+    const uint32_t totalCount = m_StaticObjects.size() + m_Enemies.Count();
     glm::vec3 scale;
     glm::vec2 index;
     for (uint32_t i = 0; i < totalCount; i++) {
@@ -541,7 +448,7 @@ void RaycasterScene::InitModels() {
             scale = m_StaticObjects[i].Scale;
             index = glm::vec2(m_StaticObjects[i].AtlasIndex, 0.0f);
         } else {
-            scale = m_Enemies[i - m_StaticObjects.size()].Scale;
+            scale = m_Enemies[i - m_StaticObjects.size()].Scale();
             index.x = m_Enemies[i - m_StaticObjects.size()].AtlasIndex % atlasSize.x;
             index.y = m_Enemies[i - m_StaticObjects.size()].AtlasIndex / atlasSize.x;
         }

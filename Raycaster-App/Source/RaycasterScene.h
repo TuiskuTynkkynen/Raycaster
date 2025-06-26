@@ -4,6 +4,7 @@
 #include "Algorithms.h"
 #include "Entities.h"
 #include "Map.h"
+#include "Enemies.h"
 
 #include <memory>
 
@@ -25,17 +26,7 @@ private:
     std::vector<Sprite> m_SpriteObjects;
     std::vector<Sprite> m_StaticObjects;
     
-    struct Enemy {
-        glm::vec3 Position{};
-        glm::vec3 Scale{};
-
-        uint32_t AtlasIndex = 0;
-
-        float Tick = 0.0f;
-        float Speed = 0.0f;
-    };
-    std::vector<bool> m_EnemyMap;
-    std::vector<Enemy> m_Enemies;
+    Enemies m_Enemies;
 
     std::vector<LineCollider> m_Walls;
 
@@ -52,12 +43,11 @@ private:
     void CastRays();
     void CastFloors();
     void RenderSprites();
-    void UpdateEnemies(Core::Timestep deltaTime);
     void InitModels();
     float LightBilinear(glm::vec2 position);
 public: 
     void Init() override;
-    void Shutdown() override {}
+    void Shutdown() override { m_Enemies.Shutdown(); }
 
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override {}
