@@ -23,7 +23,7 @@ void RaycasterScene::Init(){
     m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));
     m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.75f));
     
-    SpriteObject staticObject;
+    Sprite staticObject;
     staticObject.Position = glm::vec3(3.0f, 2.5f, 0.25f);
     staticObject.WorldPosition = glm::vec3(3.0f, 2.5f, 0.25f);
     staticObject.Scale = glm::vec3(0.5f, 0.5f, 0.5f);
@@ -315,7 +315,7 @@ void RaycasterScene::RenderSprites() {
         m_SpriteObjects[index].Position = matrix * m_SpriteObjects[index].Position;
     }
 
-    std::sort(m_SpriteObjects.begin(), m_SpriteObjects.end(), [this](SpriteObject a, SpriteObject b) {
+    std::sort(m_SpriteObjects.begin(), m_SpriteObjects.end(), [this](Sprite a, Sprite b) {
         return a.Position.y > b.Position.y;
     });
 

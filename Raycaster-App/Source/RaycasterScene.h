@@ -22,16 +22,8 @@ private:
     std::vector<glm::vec3> m_Lights;
     float* m_ZBuffer = new float[m_RayCount];
     
-    struct SpriteObject {
-        glm::vec3 Position{};
-        glm::vec3 WorldPosition{};
-        glm::vec3 Scale{};
-
-        uint32_t AtlasIndex = 0;
-        bool FlipTexture = false;
-    };
-    std::vector<SpriteObject> m_SpriteObjects;
-    std::vector<SpriteObject> m_StaticObjects;
+    std::vector<Sprite> m_SpriteObjects;
+    std::vector<Sprite> m_StaticObjects;
     
     struct Enemy {
         glm::vec3 Position{};

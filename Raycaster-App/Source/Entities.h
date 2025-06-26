@@ -45,3 +45,12 @@ struct Floor {
     float BrightnessStart = 0.0f;
     float BrightnessEnd = 0.0f;
 };
+
+struct Sprite {
+    glm::vec3 Position{};
+    glm::vec3 WorldPosition{};
+    glm::vec3 Scale{};
+
+    uint32_t AtlasIndex = 0;
+    bool FlipTexture = false;
+};
