@@ -51,6 +51,7 @@ void RaycasterScene::Init(){
     e.Position = glm::vec3(2.5f, 3.0f, 0.4f);
     m_Enemies.push_back(e);
 
+    m_EnemyMap.resize(m_Map.GetSize());
     for (uint32_t i = 0; i < m_Map.GetSize(); i++) {
         m_EnemyMap[i] = m_Map[i];
     }

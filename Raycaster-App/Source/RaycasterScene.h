@@ -34,7 +34,7 @@ private:
         float Tick = 0.0f;
         float Speed = 0.0f;
     };
-    bool m_EnemyMap[Map::GetSize()];
+    std::vector<bool> m_EnemyMap;
     std::vector<Enemy> m_Enemies;
 
     std::vector<LineCollider> m_Walls;

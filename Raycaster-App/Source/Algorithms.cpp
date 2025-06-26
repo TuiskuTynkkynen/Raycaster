@@ -2,7 +2,7 @@
 
 #include <queue>
 
-glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, bool* map, uint32_t width, uint32_t height) {
+glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, std::vector<bool> map, uint32_t width, uint32_t height) {
     static const glm::i32vec2 directions[] = {
         glm::i32vec2(1,0),
         glm::i32vec2(-1,0),
