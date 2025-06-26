@@ -404,7 +404,7 @@ void Map::CalculateLightMap(std::span<glm::vec3> lights) {
     }
 }
 
-Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
+Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
     glm::vec3 deltaDistance = glm::abs((float)1 / direction);
 
     uint32_t mapX = static_cast<uint32_t>(origin.x);
@@ -496,7 +496,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) {
     };
 }
 
-bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) {
+bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) const {
     glm::vec2 rayDirection = end - start;
     glm::vec2 deltaDistance = glm::abs(1.0f / glm::normalize(rayDirection));
 
@@ -531,7 +531,7 @@ bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) {
     return true;
 }
 
-Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDistance) {
+Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDistance) const {
     glm::vec3 deltaDistance = glm::abs(1.0f / direction);
 
     uint32_t mapX = static_cast<uint32_t>(origin.x);
@@ -621,14 +621,14 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
     };
 }
 
-float Map::GetLight(size_t x, size_t y) {
+float Map::GetLight(size_t x, size_t y) const {
     x = glm::min(x, static_cast<size_t>(s_MapData.Width - 1));
     y = glm::min(y, static_cast<size_t>(s_MapData.Height - 1));
 
     return m_LightMap[y * s_MapData.Width + x];
 }
 
-Map::Neighbourhood Map::GetNeighbours(size_t index) {
+Map::Neighbourhood Map::GetNeighbours(size_t index) const {
     bool NW = index - s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width - 1];
     bool N = index - s_MapData.Width >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width];
     bool NE = index - s_MapData.Width + 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width + 1];

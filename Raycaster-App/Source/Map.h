@@ -23,7 +23,7 @@ public:
         uint8_t Material = 0;
         glm::vec2 WorlPosition{};
     };
-    HitInfo CastRay(glm::vec3 origin, glm::vec3 direction);
+    HitInfo CastRay(glm::vec3 origin, glm::vec3 direction) const;
 
     struct FloorHitInfo {
         float Distance = 0.0f;
@@ -32,11 +32,11 @@ public:
         uint8_t TopMaterial = 0;
         glm::vec2 WorlPosition{};
     };
-    FloorHitInfo CastFloors(glm::vec2 origin, glm::vec3 reciprocalDirection, float maxDistance);
+    FloorHitInfo CastFloors(glm::vec2 origin, glm::vec3 reciprocalDirection, float maxDistance) const;
 
-    bool LineOfSight(glm::vec2 start, glm::vec2 end);
+    bool LineOfSight(glm::vec2 start, glm::vec2 end) const;
 
-    float GetLight(size_t x, size_t y);
+    float GetLight(size_t x, size_t y) const;
 
     static constexpr uint32_t GetHeight() { return s_MapData.Height; }
     static constexpr uint32_t GetWidth() { return s_MapData.Width; }
@@ -45,7 +45,7 @@ public:
     static constexpr float GetScalingFactor() { return s_MapData.ScalingFactor; }
     static constexpr glm::vec3 GetScale() { return s_MapData.Scale; }
 
-    int8_t operator [](size_t index){
+    int8_t operator [](size_t index) const {
         if (index < s_MapData.Size) {
             return s_MapData.Map[index];
         }
@@ -171,5 +171,5 @@ private:
         }
     };
     public:
-    Neighbourhood GetNeighbours(size_t index);
+    Neighbourhood GetNeighbours(size_t index) const;
 };
