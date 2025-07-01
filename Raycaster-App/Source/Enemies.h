@@ -42,8 +42,14 @@ public:
         return m_Enemies[index];
     }
 private:
+    void UpdateApproachMap(const Map& map, glm::ivec2 playerPosition);
+    
     std::vector<Enemy> m_Enemies;
     std::vector<bool> m_Map;
+
+    glm::ivec2 m_PreviousPlayerPosition{};
+    std::vector<float> m_ApproachMap;
+    std::vector<std::pair<glm::ivec3, float>> m_Frontier;
 
     glm::vec2 m_MapCenter{};
     glm::vec2 m_MapScale{};

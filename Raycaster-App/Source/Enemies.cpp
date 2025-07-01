@@ -22,6 +22,8 @@ static constexpr uint32_t GetAtlasIndex(EnemyType type) {
 }
 
 void Enemies::Init(const Map& map) {
+    m_Frontier.resize(map.GetSize());
+
     m_Map.resize(map.GetSize());
     for (size_t i = 0; i < map.GetSize(); i++) {
         m_Map[i] = map[i];
@@ -125,6 +127,62 @@ void Enemies::UpdateRender(std::span<Tile> tiles, std::span<Sprite> sprites, std
         glm::vec2 index = glm::vec2((enemy.AtlasIndex) % atlasWidth, (enemy.AtlasIndex) / atlasWidth);
         models[i].Materials.front()->Parameters.back().Value = glm::vec2(flip ? 0.0f : 1.0f, 0.0f);
         models[i].Materials.front()->Parameters.front().Value = index;
+    }
+}
+
+void Enemies::UpdateApproachMap(const Map& map, glm::ivec2 playerPosition) {
+    if (m_PreviousPlayerPosition == playerPosition) {
+        return;
+    }
+    m_PreviousPlayerPosition = playerPosition;
+    
+    m_ApproachMap.assign(map.GetSize(), INFINITY);
+
+    constexpr float sqrt2 = 0.4142135624f;
+    constexpr size_t directionCount = 4;
+    constexpr std::array<glm::ivec2, directionCount + 1> directions = {
+        glm::ivec2(-1.0f,  0.0f),
+        glm::ivec2(1.0f,  0.0f),
+        glm::ivec2(0.0f, -1.0f),
+        glm::ivec2(0.0f,  1.0f),
+        glm::ivec2(0.0f,  0.0f),
+    };
+
+    size_t back = 1;
+    m_Frontier[0] = { glm::ivec3{ playerPosition, directionCount }, 0.0f };
+
+    size_t mapSize = map.GetSize();
+    size_t mapWidth = map.GetWidth();
+
+    m_ApproachMap[playerPosition.y * mapWidth + playerPosition.x] = 0;
+
+    while (back) {
+        auto& frontier = m_Frontier[--back];
+
+        glm::ivec2 current = frontier.first;
+        int32_t history = frontier.first.z;
+
+        float value = frontier.second;
+
+        for (size_t i = 0; i < directionCount; i++) {
+            glm::ivec2 next = current + directions[i];
+
+            bool diagonal = (i < 2) ^ (history < 2) && (history != directionCount);
+            float nextValue = value + (diagonal ? sqrt2 : 1.0f);
+
+            size_t index = next.y * mapWidth + next.x;
+            if (index >= mapSize
+                || m_ApproachMap[index] <= nextValue
+                || map[index]) {
+                continue;
+            }
+
+            m_ApproachMap[index] = nextValue;
+
+            auto& frontier = m_Frontier[back++];
+            frontier.first = glm::ivec3{ next, (diagonal ? directionCount : i) };
+            frontier.second = nextValue;
+        }
     }
 }
 
