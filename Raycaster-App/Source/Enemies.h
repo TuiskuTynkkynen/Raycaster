@@ -26,7 +26,7 @@ public:
     Enemies() {};
 
     void Init(const Map& map);
-    void Shutdown() { m_Enemies.clear(); m_Enemies.shrink_to_fit(); m_Map.clear(); m_Map.shrink_to_fit(); }
+    void Shutdown() { m_Enemies.clear(); m_Enemies.shrink_to_fit();  }
 
     void Add(EnemyType type, glm::vec2 position);
 
@@ -45,7 +45,6 @@ private:
     void UpdateApproachMap(const Map& map, glm::ivec2 playerPosition);
     
     std::vector<Enemy> m_Enemies;
-    std::vector<bool> m_Map;
 
     glm::ivec2 m_PreviousPlayerPosition{};
     std::vector<float> m_ApproachMap;
