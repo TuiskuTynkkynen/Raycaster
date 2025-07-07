@@ -73,11 +73,17 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
                 glm::vec2(0,0),
             };
                 
+            glm::vec2 movementVector = glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
+            {
+                glm::vec2 currentPosition = enemy.Position;
+
+                for (size_t i = 0; i < 5; i++) {
             float min = INFINITY;
             size_t dir = directionCount;
-            for (uint32_t j = 0; j < directionCount; j++) {
-                size_t x = enemy.Position.x + directions[j].x;
-                size_t y = enemy.Position.y + directions[j].y;
+
+                    for (size_t j = 0; j < directionCount; j++) {
+                        size_t x = currentPosition.x + directions[j].x;
+                        size_t y = currentPosition.y + directions[j].y;
                 size_t index = y * map.GetWidth() + x;
 
                 float val = m_ApproachMap[index];
@@ -85,9 +91,16 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
                     min = val;
                     dir = j;
             }
-            }   
+                    }
 
-            glm::vec2 movementVector = directions[dir] + glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
+                    currentPosition += directions[dir];
+                    if (!map.LineOfSight(enemy.Position, currentPosition)) {
+                        break;
+                    }
+                    movementVector += directions[dir];
+            }   
+            }
+
             movementVector = glm::normalize(movementVector);
 
             glm::vec2 avoid{};
