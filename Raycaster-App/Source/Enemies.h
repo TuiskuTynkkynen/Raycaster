@@ -26,7 +26,7 @@ public:
     Enemies() {};
 
     void Init(const Map& map);
-    void Shutdown() { m_Enemies.clear(); m_Enemies.shrink_to_fit();  }
+    void Shutdown() { m_Enemies.clear(); m_Enemies.shrink_to_fit(); m_ApproachMap.clear(); m_ApproachMap.shrink_to_fit(); m_Frontier.clear(); m_Frontier.shrink_to_fit();  }
 
     void Add(EnemyType type, glm::vec2 position);
 
