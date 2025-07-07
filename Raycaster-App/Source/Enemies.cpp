@@ -88,7 +88,36 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
             }   
 
             glm::vec2 movementVector = directions[dir] + glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
+            movementVector = glm::normalize(movementVector);
 
+            glm::vec2 avoid{};
+            {
+                size_t index = glm::floor(enemy.Position.y) * map.GetWidth() + enemy.Position.x;
+                auto adjacent = map.GetNeighbours(index);
+
+                if (adjacent.Bitboard) {
+                    glm::vec2 fraction = glm::fract(enemy.Position);
+                    
+                    for (size_t j = 0; j < directionCount; j++) {
+                        if (!adjacent[j]) {
+                            continue;
+            }   
+
+                        glm::vec2 dist(0.0f);
+                        dist.x += (directions[j].x < 0) * 1.0f + directions[j].x * fraction.x;
+                        dist.y += (directions[j].y < 0) * 1.0f + directions[j].y * fraction.y;
+                        
+                        // Check squared distance to save a sqrt
+                        if (glm::dot(dist, dist) > (0.45f * 0.45f)) {
+                            continue;
+                        }
+                        
+                        avoid += directions[j];
+                    }
+                }
+            }
+
+            movementVector += avoid;
             if (movementVector.x != 0.0f || movementVector.y != 0.0f) {
             movementVector = glm::normalize(movementVector);
             }
