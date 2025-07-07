@@ -41,6 +41,8 @@ void Enemies::Add(EnemyType type, glm::vec2 position) {
 }
 
 void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerPosition) {
+    UpdateApproachMap(map, playerPosition);
+
     for (size_t i = 0; i < Count(); i++) {
         Enemy& enemy = m_Enemies[i];
 
@@ -58,45 +60,41 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
             enemy.Tick += deltaTime * 2.0f;
             enemy.AtlasIndex = GetAtlasIndex(enemy.Type);
             
-            bool lineOfSight = true;
-
-            glm::vec2 movementVector = playerPosition;
-
-            glm::vec2 enemyPos(0.0f);
-            glm::vec3 scale = GetScale(enemy.Type);
-            static const glm::i32vec2 directions[] = {
-                glm::i32vec2(1,0),
-                glm::i32vec2(-1,0),
-                glm::i32vec2(0,1),
-                glm::i32vec2(0,-1),
-                glm::i32vec2(1,1),
-                glm::i32vec2(-1,1),
-                glm::i32vec2(1,-1),
-                glm::i32vec2(-1,-1),
+            static constexpr size_t directionCount = 8;
+            static constexpr std::array<glm::vec2, directionCount + 1> directions = {
+                glm::vec2(-1,-1),
+                glm::vec2(0,-1),
+                glm::vec2(1,-1),
+                glm::vec2(-1,0),
+                glm::vec2(1,0),
+                glm::vec2(-1,1),
+                glm::vec2(0,1),
+                glm::vec2(1,1),
+                glm::vec2(0,0),
             };
-            for (uint32_t j = 0; j < 8 && lineOfSight; j++) {
                 
-                enemyPos.x = enemy.Position.x + 0.5f * scale.x * directions[j].x;
-                enemyPos.y = enemy.Position.y + 0.5f * scale.y * directions[j].y;
+            float min = INFINITY;
+            size_t dir = directionCount;
+            for (uint32_t j = 0; j < directionCount; j++) {
+                size_t x = enemy.Position.x + directions[j].x;
+                size_t y = enemy.Position.y + directions[j].y;
+                size_t index = y * map.GetWidth() + x;
 
-                lineOfSight &= map.LineOfSight(enemyPos, playerPosition);
+                float val = m_ApproachMap[index];
+                if (val < min) {
+                    min = val;
+                    dir = j;
             }
+            }   
 
-            if (!lineOfSight) {
-                enemyPos.x = enemy.Position.x;
-                enemyPos.y = enemy.Position.y;
+            glm::vec2 movementVector = directions[dir] + glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
 
-                movementVector = Algorithms::AStar(enemyPos, playerPosition, m_Map, map.GetWidth(), map.GetHeight());
-                movementVector += 0.5f; //Pathfind to tile centre
-            }
-
-            movementVector.x -= enemy.Position.x;
-            movementVector.y -= enemy.Position.y;
+            if (movementVector.x != 0.0f || movementVector.y != 0.0f) {
             movementVector = glm::normalize(movementVector);
-            movementVector *= deltaTime * GetSpeed(enemy.Type);
+            }
 
-            enemy.Position.x += movementVector.x;
-            enemy.Position.y += movementVector.y;
+            movementVector *= glm::min(deltaTime.GetSeconds(), 1.0f) * GetSpeed(enemy.Type);
+            enemy.Position += movementVector;
         }
     }
 }
