@@ -75,8 +75,8 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
             {
                 glm::vec2 currentPosition = enemy.Position;
 
+                float min = INFINITY;
                 for (size_t i = 0; i < 5; i++) {
-            float min = INFINITY;
             size_t dir = directionCount;
 
                     for (size_t j = 0; j < directionCount; j++) {
@@ -91,6 +91,9 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
             }
                     }
 
+                    if (dir == directionCount) {
+                        break;
+                    }
                     currentPosition += directions[dir];
                     if (!map.LineOfSight(enemy.Position, currentPosition)) {
                         break;
