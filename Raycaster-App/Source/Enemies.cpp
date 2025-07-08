@@ -242,6 +242,8 @@ void Enemies::UpdateApproachMap(const Map& map, glm::ivec2 playerPosition) {
             frontier.first = glm::ivec3{ next, (diagonal ? directionCount : i) };
             frontier.second = nextValue;
         }
+    }
+}
 
 void Enemies::UpdateCostMap(const Map& map) {
     m_CostMap.assign(map.GetSize(), 0.0f);
