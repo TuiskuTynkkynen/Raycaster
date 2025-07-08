@@ -1,24 +1,43 @@
 #include "Enemies.h"
 
-static constexpr glm::vec3 GetScale(EnemyType type) {
-    switch (type) {
-    case EnemyType::Basic:
-        return glm::vec3(0.8f);
+struct EnemyParameters {
+    glm::vec3 Scale;
+    float Speed;
+    uint32_t AtlasIndex;
+};
+
+constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_EnemyParameters= []{
+    std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> params;
+    params[EnemyType::Basic] = EnemyParameters{
+        .Scale{0.8f},
+        .Speed{1.0f},
+        .AtlasIndex{11},
+    };
+    return params;
+}();
+
+static constexpr glm::vec3 GetScale(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return glm::vec3(1.0f);
     }
+
+    return s_EnemyParameters[type].Scale;
 }
 
-static constexpr float GetSpeed(EnemyType type) {
-    switch (type) {
-    case EnemyType::Basic:
-        return 1.0f;
+static constexpr float GetSpeed(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return 0.0f;
     }
+
+    return s_EnemyParameters[type].Speed;
 }
 
-static constexpr uint32_t GetAtlasIndex(EnemyType type) {
-    switch (type) {
-    case EnemyType::Basic:
-        return 11;
+static constexpr uint32_t GetAtlasIndex(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return 0;
     }
+
+    return s_EnemyParameters[type].AtlasIndex;
 }
 
 void Enemies::Init(const Map& map) {
@@ -30,7 +49,7 @@ void Enemies::Init(const Map& map) {
     m_MapScale = map.GetScale();
 }
 
-void Enemies::Add(EnemyType type, glm::vec2 position) {
+void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
     RC_ASSERT(m_Frontier.size(), "Enemies must be initialized before calling Add");
     m_Enemies.emplace_back(position, 0.0f, GetAtlasIndex(type), type);
 }

@@ -7,16 +7,19 @@
 #include <vector>
 #include <span>
 
-enum class EnemyType : uint8_t {
+namespace EnemyType {
+    enum Enumeration : uint8_t {
     Basic = 0,
+        ENUMERATION_MAX = Basic,
 };
+}
 
 struct Enemy {
     glm::vec2 Position{};
     float Tick = 0.0f;
 
     uint32_t AtlasIndex = 0;
-    EnemyType Type;
+    EnemyType::Enumeration Type;
 
     glm::vec3 Scale() const;
 };
@@ -28,7 +31,7 @@ public:
     void Init(const Map& map);
     void Shutdown() { m_Enemies.clear(); m_Enemies.shrink_to_fit(); m_ApproachMap.clear(); m_ApproachMap.shrink_to_fit(); m_Frontier.clear(); m_Frontier.shrink_to_fit();  }
 
-    void Add(EnemyType type, glm::vec2 position);
+    void Add(EnemyType::Enumeration type, glm::vec2 position);
 
     void Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerPosition);
 
