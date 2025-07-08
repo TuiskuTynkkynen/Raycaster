@@ -98,7 +98,9 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
                     if (!map.LineOfSight(enemy.Position, currentPosition)) {
                         break;
                     }
-                    movementVector += directions[dir];
+
+                    const float decay = 1.0f / (i * 0.75f + 1.0f);
+                    movementVector += directions[dir] * decay;
             }   
             }
 
@@ -269,7 +271,6 @@ void Enemies::UpdateCostMap(const Map& map) {
         }
         }
         }
-
 
 glm::vec3 Enemy::Scale() const {
     return GetScale(Type);
