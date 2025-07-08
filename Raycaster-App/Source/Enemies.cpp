@@ -264,24 +264,9 @@ void Enemies::UpdateCostMap(const Map& map) {
         
             }
         }
-    }
-}
-
-void Enemies::Print() {
-    for (size_t i = 0; i < Map::GetSize(); i++) {
-        if (i % Map::GetWidth() == 0) {
-            std::cout << "\n";
+        }
         }
 
-        if (m_ApproachMap[i] == INFINITY) {
-            std::cout << " ";
-            continue;
-        }
-
-        char c = '0' + (char)m_ApproachMap[i];
-        std::cout << c;
-    }
-}
 
 glm::vec3 Enemy::Scale() const {
     return GetScale(Type);
