@@ -25,6 +25,35 @@ struct Transition {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+//                                Conditions                                 //
+///////////////////////////////////////////////////////////////////////////////
+template<float distance, bool negate = false>
+bool DistanceCondition(const Context& context, Enemy& enemy) {
+    return (glm::length(enemy.Position - context.PlayerPosition) < distance) ^ negate;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                                  Actions                                  //
+///////////////////////////////////////////////////////////////////////////////
+ActionStatus BasicAttack(Context& context, Enemy& enemy);
+ActionStatus BasicPathfind(Context& context, Enemy& enemy);
+
+///////////////////////////////////////////////////////////////////////////////
+//                        Enemy state machine tables                         //
+///////////////////////////////////////////////////////////////////////////////
+inline constinit std::array<Action, EnemyState::ENUMERATION_MAX + 1> s_BasicActions = [] {
+    std::array<Action, EnemyState::ENUMERATION_MAX + 1> actions;
+    actions[EnemyState::Pathfind] = BasicPathfind;
+    actions[EnemyState::Attack] = BasicAttack;
+    return actions;
+    }();
+
+inline constexpr std::array s_BasicTransitions{
+    Transition { EnemyState::Pathfind,  EnemyState::Attack,     DistanceCondition<1.1f> },
+    Transition { EnemyState::Attack,    EnemyState::Pathfind,   DistanceCondition<1.1f, true> },
+};
+
+///////////////////////////////////////////////////////////////////////////////
 //                     Enemy type parameters and getters                     //
 ///////////////////////////////////////////////////////////////////////////////
 struct EnemyParameters {
@@ -40,8 +69,8 @@ struct EnemyParameters {
 inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_EnemyParameters = [] {
     std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> params;
     params[EnemyType::Basic] = EnemyParameters{
-        .ActionTable{},
-        .TransitionTable{},
+        .ActionTable = s_BasicActions,
+        .TransitionTable = s_BasicTransitions,
 
         .Scale{0.8f},
         .Speed{1.0f},
