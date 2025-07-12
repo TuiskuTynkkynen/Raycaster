@@ -17,138 +17,44 @@ void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
 }
 
 void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerPosition) {
-    bool updated = false;
+    static bool shouldUpdate = false;
 
-    if (m_PreviousPlayerPosition != glm::ivec2(playerPosition)) {
-        updated = true;
+    if (shouldUpdate || m_PreviousPlayerPosition != glm::ivec2(playerPosition)) {
     UpdateApproachMap(map, playerPosition);
+        shouldUpdate = false;
     }
     m_PreviousPlayerPosition = playerPosition;
+
+    Context context{
+        .DeltaTime = deltaTime,
+        .UpdateDjikstraMap = false,
+        .PlayerPosition = playerPosition,
+        .Map = map,
+        .AproachMap = m_ApproachMap,
+        .Enemies = m_Enemies
+    };
 
     for (size_t i = 0; i < Count(); i++) {
         Enemy& enemy = m_Enemies[i];
 
-        glm::vec2 distance = enemy.Position - playerPosition;
-        if (glm::length(distance) < 1.1f) {
-            //"Attack"
-            enemy.Tick += deltaTime;
-            enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + 1;
-            int i = 0;
-        } else {
-            //Pathfinding
-            enemy.Tick += deltaTime * 2.0f;
-            enemy.AtlasIndex = GetAtlasIndex(enemy.Type);
-            
-            static constexpr size_t directionCount = 8;
-            static constexpr std::array<glm::vec2, directionCount + 1> directions = {
-                glm::vec2(-1,-1),
-                glm::vec2(0,-1),
-                glm::vec2(1,-1),
-                glm::vec2(-1,0),
-                glm::vec2(1,0),
-                glm::vec2(-1,1),
-                glm::vec2(0,1),
-                glm::vec2(1,1),
-                glm::vec2(0,0),
-            };
-                
-            glm::vec2 movementVector = glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
-            {
-                glm::vec2 currentPosition = enemy.Position;
-
-                float min = INFINITY;
-                for (size_t i = 0; i < 5; i++) {
-            size_t dir = directionCount;
-
-                    for (size_t j = 0; j < directionCount; j++) {
-                        size_t x = currentPosition.x + directions[j].x;
-                        size_t y = currentPosition.y + directions[j].y;
-                size_t index = y * map.GetWidth() + x;
-
-                float val = m_ApproachMap[index];
-                if (val < min) {
-                    min = val;
-                    dir = j;
-            }
-                    }
-
-                    if (dir == directionCount) {
-                        break;
-                    }
-                    currentPosition += directions[dir];
-                    if (!map.LineOfSight(enemy.Position, currentPosition)) {
-                        break;
-                    }
-
-                    const float decay = 1.0f / (i * 0.75f + 1.0f);
-                    movementVector += directions[dir] * decay;
-            }   
-            }
-
-            movementVector = glm::normalize(movementVector);
-
-            glm::vec2 avoid{};
-            {
-                // TODO fix O(n^2) 
-                for (size_t j = 0; j < Count(); j++) {
-                    if (j == i) {
+        auto action = GetAction(enemy.Type, enemy.State);
+        if (action(context, enemy) == ActionStatus::Running) {
                         continue;
                     }
 
-                    glm::vec2 dir = enemy.Position - m_Enemies[j].Position;
-                    
-                    // Check squared distance to save a sqrt
-                    if (glm::dot(dir, dir) > (0.45f * 0.45f)) {
+        auto transitionTable = GetTransitionTable(enemy.Type);
+        for (auto& Transition : transitionTable) {
+            if (Transition.CurrentState != enemy.State || !Transition.ShouldTransition(context, enemy)) {
                         continue;
                     }
 
-                    avoid += dir;
+            enemy.State = Transition.NextState;
+            break;
+                }
                 }
 
-                if (avoid.x != 0.0f || avoid.y != 0.0f) {
-                    avoid= glm::normalize(avoid);
-                }
-
-                size_t index = glm::floor(enemy.Position.y) * map.GetWidth() + enemy.Position.x;
-                auto adjacent = map.GetNeighbours(index);
-
-                if (adjacent.Bitboard) {
-                    glm::vec2 fraction = glm::fract(enemy.Position);
-                    
-                    for (size_t j = 0; j < directionCount; j++) {
-                        if (!adjacent[j]) {
-                            continue;
+    shouldUpdate |= context.UpdateDjikstraMap;
             }   
-
-                        glm::vec2 dist(0.0f);
-                        dist.x += (directions[j].x < 0) * 1.0f + directions[j].x * fraction.x;
-                        dist.y += (directions[j].y < 0) * 1.0f + directions[j].y * fraction.y;
-                        
-                        // Check squared distance to save a sqrt
-                        if (glm::dot(dist, dist) > (0.45f * 0.45f)) {
-                            continue;
-                        }
-                        
-                        avoid += directions[j];
-                    }
-                }
-            }
-
-            movementVector += avoid;
-            if (movementVector.x != 0.0f || movementVector.y != 0.0f) {
-            movementVector = glm::normalize(movementVector);
-            }
-
-            movementVector *= glm::min(deltaTime.GetSeconds(), 1.0f) * GetSpeed(enemy.Type);
-            
-            if (!updated && glm::floor(enemy.Position) != glm::floor(enemy.Position + movementVector)) {
-                UpdateApproachMap(map, playerPosition);
-            }
-            
-            enemy.Position += movementVector;
-        }
-    }
-}
 
 void Enemies::UpdateRender(std::span<Tile> tiles, std::span<Sprite> sprites, std::span<Core::Model> models) {
     for (size_t i = 0; i < Count(); i++) {
