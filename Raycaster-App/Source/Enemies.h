@@ -14,12 +14,21 @@ namespace EnemyType {
 };
 }
 
+namespace EnemyState {
+    enum Enumeration : uint8_t {
+        Pathfind = 0,
+        Attack,
+        ENUMERATION_MAX = Attack
+    };
+}
+
 struct Enemy {
     glm::vec2 Position{};
     float Tick = 0.0f;
 
     uint32_t AtlasIndex = 0;
     EnemyType::Enumeration Type;
+    EnemyState::Enumeration State;
 
     glm::vec3 Scale() const;
 };
