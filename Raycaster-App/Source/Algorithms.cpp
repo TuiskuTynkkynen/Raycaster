@@ -1,5 +1,7 @@
 #include "Algorithms.h"
 
+#include "Core/Debug/Debug.h"
+
 #include <queue>
 
 glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, std::vector<bool> map, uint32_t width, uint32_t height) {
@@ -129,4 +131,49 @@ glm::vec2 Algorithms::LineCollisions(glm::vec2 point, const std::vector<LineColl
     }
 
     return movement;
+}
+
+template<typename T>
+std::vector<glm::vec<2, T, glm::highp>> MidpointCicleImpl(glm::vec<2, T, glm::highp> centre, T radius) {
+    RC_ASSERT(radius > 0, "Radius of circle must be greater than 0");
+    std::vector<glm::vec<2, T, glm::highp>> result;
+
+    int32_t x = radius;
+    int32_t y = 1;
+    int32_t t = radius / 16 + y;
+
+    result.emplace_back(centre.x + x, centre.y);
+    result.emplace_back(centre.x - x, centre.y);
+    result.emplace_back(centre.x, x + centre.y);
+    result.emplace_back(centre.x, centre.y - x);
+
+    while (x >= y) {
+        result.emplace_back(centre.x + x, centre.y + y);
+        result.emplace_back(centre.x - x, centre.y + y);
+        result.emplace_back(centre.x - x, centre.y - y);
+        result.emplace_back(centre.x + x, centre.y - y);
+
+        if (x != y) {
+            result.emplace_back(centre.x + y, centre.y + x);
+            result.emplace_back(centre.x - y, centre.y - x);
+            result.emplace_back(centre.x - y, centre.y + x);
+            result.emplace_back(centre.x + y, centre.y - x);
+        }
+
+        t += ++y;
+        if (t > x) {
+            t -= x;
+            x--;
+        }
+    }
+
+    return result;
+}
+ 
+std::vector<glm::vec2> Algorithms::MidpointCicle(glm::vec2 centre, float radius) {
+    return MidpointCicleImpl(centre, radius);
+}
+ 
+std::vector<glm::ivec2> Algorithms::MidpointCicle(glm::ivec2 centre, int32_t radius) {
+    return MidpointCicleImpl(centre, radius);
 }
