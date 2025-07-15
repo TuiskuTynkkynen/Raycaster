@@ -16,11 +16,13 @@ static constexpr std::array<glm::vec2, s_DirectionCount + 1> s_Directions = {
 static glm::vec2 Pathfind(const std::vector<float>& djikstraMap, glm::vec2 position, const Map& map) {
     glm::vec2 result(0.0f);
 
-    float min = INFINITY;
     glm::vec2 currentPosition = position;
+    float min = djikstraMap[glm::floor(currentPosition.y) * map.GetWidth() + currentPosition.x];
     for (size_t i = 0; i < 5; i++) {
         size_t dir = s_DirectionCount;
 
+        float minBias = -std::numeric_limits<float>::infinity();
+        glm::vec2 fraction = glm::fract(currentPosition);
         for (size_t j = 0; j < s_DirectionCount; j++) {
             size_t x = currentPosition.x + s_Directions[j].x;
             size_t y = currentPosition.y + s_Directions[j].y;
@@ -30,7 +32,23 @@ static glm::vec2 Pathfind(const std::vector<float>& djikstraMap, glm::vec2 posit
             if (val < min) {
                 min = val;
                 dir = j;
+
+                glm::vec2 distance{ (s_Directions[j].x > 0.0f) - s_Directions[j].x * fraction.x, (s_Directions[j].y > 0.0f) - s_Directions[j].y * fraction.y };
+                float bias = glm::dot(distance, distance); 
+                minBias = bias;
+            } else if (val == min) { 
+                // If multiple tile have the same value,
+                // choose the tile closest to position
+                glm::vec2 distance{ (s_Directions[j].x > 0.0f) - s_Directions[j].x * fraction.x, (s_Directions[j].y > 0.0f) - s_Directions[j].y * fraction.y };
+                float bias = glm::dot(distance, distance); // Compare squared distance to save a sqrt
+                
+                if (bias < minBias) {
+                    min = val;
+                    dir = j;
+
+                    minBias = bias ;
             }
+        }
         }
 
         if (dir == s_DirectionCount) {
