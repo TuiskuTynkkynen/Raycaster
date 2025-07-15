@@ -85,9 +85,8 @@ void Enemies::UpdateRender(std::span<Tile> tiles, std::span<Sprite> sprites, std
     }
 }
 
-void Enemies::UpdateApproachMap(const Map& map, glm::ivec2 playerPosition) {
-    UpdateCostMap(map);
-    m_ApproachMap.assign(map.GetSize(), INFINITY);
+static std::vector<float> CreateDjikstraMap(glm::ivec2 destination, const std::vector<float>& costMap, const Map& map, std::vector<std::pair<glm::ivec3, float>>& frontier) {
+    std::vector<float> result(map.GetSize(), std::numeric_limits<float>::infinity());
 
     constexpr float sqrt2 = 0.4142135624f;
     constexpr size_t directionCount = 4;
@@ -99,21 +98,24 @@ void Enemies::UpdateApproachMap(const Map& map, glm::ivec2 playerPosition) {
         glm::ivec2(0.0f,  0.0f),
     };
 
-    size_t back = 1;
-    m_Frontier[0] = { glm::ivec3{ playerPosition, directionCount }, 0.0f };
-
     size_t mapSize = map.GetSize();
     size_t mapWidth = map.GetWidth();
 
-    m_ApproachMap[playerPosition.y * mapWidth + playerPosition.x] = 0;
+    size_t back = 1;
+    size_t index = destination.y * mapWidth + destination.x;
+
+    if (index < map.GetSize()) {
+        frontier[0] = { glm::ivec3{ destination, directionCount}, costMap[index] };
+        result[index] = 0.0f;
+    }
 
     while (back) {
-        auto& frontier = m_Frontier[--back];
+        auto& front = frontier[--back];
 
-        glm::ivec2 current = frontier.first;
-        int32_t history = frontier.first.z;
+        glm::ivec2 current = front.first;
+        int32_t history = front.first.z;
 
-        float value = frontier.second;
+        float value = front.second;
 
         for (size_t i = 0; i < directionCount; i++) {
             glm::ivec2 next = current + directions[i];
@@ -121,20 +123,27 @@ void Enemies::UpdateApproachMap(const Map& map, glm::ivec2 playerPosition) {
             size_t index = next.y * mapWidth + next.x;
 
             bool diagonal = (i < 2) ^ (history < 2) && (history != directionCount);
-            float nextValue = value + (diagonal ? sqrt2 : 1.0f) + m_CostMap[index];
+            float nextValue = value + (diagonal ? sqrt2 : 1.0f) + costMap[index];
             if (index >= mapSize
-                || m_ApproachMap[index] <= nextValue
+                || result[index] <= nextValue
                 || map[index]) {
                 continue;
             }
 
-            m_ApproachMap[index] = nextValue;
+            result[index] = nextValue;
 
-            auto& frontier = m_Frontier[back++];
-            frontier.first = glm::ivec3{ next, (diagonal ? directionCount : i) };
-            frontier.second = nextValue;
+            auto& front = frontier[back++];
+            front.first = glm::ivec3{ next, (diagonal ? directionCount : i) };
+            front.second = nextValue;
         }
+        }
+
+    return result;
     }
+
+void Enemies::UpdateApproachMap(const Map& map, glm::ivec2 playerPosition) {
+    UpdateCostMap(map);
+    m_ApproachMap = CreateDjikstraMap(playerPosition, m_CostMap, map, m_Frontier);
 }
 
 void Enemies::UpdateCostMap(const Map& map) {
