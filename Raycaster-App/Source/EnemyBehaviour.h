@@ -7,6 +7,7 @@ struct Context {
     glm::vec2 PlayerPosition;
     const Map& Map;
     const std::vector<float>& AproachMap;
+    const std::vector<float>& RangedApproachMap;
     const std::vector<Enemy>& Enemies;
 };
 
@@ -32,11 +33,18 @@ bool DistanceCondition(const Context& context, Enemy& enemy) {
     return (glm::length(enemy.Position - context.PlayerPosition) < distance) ^ negate;
 }
 
+template<float min, float max, bool negate = false>
+bool RangeCondition(const Context& context, Enemy& enemy) {
+    float distance = glm::length(enemy.Position - context.PlayerPosition);
+    return ((min < distance) && (distance < max)) ^ negate;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                  Actions                                  //
 ///////////////////////////////////////////////////////////////////////////////
 ActionStatus BasicAttack(Context& context, Enemy& enemy);
 ActionStatus BasicPathfind(Context& context, Enemy& enemy);
+ActionStatus RangedPathfind(Context& context, Enemy& enemy);
 
 ///////////////////////////////////////////////////////////////////////////////
 //                        Enemy state machine tables                         //

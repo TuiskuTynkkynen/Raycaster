@@ -33,6 +33,7 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
         .PlayerPosition = playerPosition,
         .Map = map,
         .AproachMap = m_ApproachMap,
+        .RangedApproachMap = m_RangedApproachMap,
         .Enemies = m_Enemies
     };
 

@@ -47,8 +47,8 @@ static glm::vec2 Pathfind(const std::vector<float>& djikstraMap, glm::vec2 posit
                     dir = j;
 
                     minBias = bias ;
+                }
             }
-        }
         }
 
         if (dir == s_DirectionCount) {
@@ -128,10 +128,33 @@ ActionStatus BasicPathfind(Context& context, Enemy& enemy) {
     enemy.AtlasIndex = GetAtlasIndex(enemy.Type);
    
     glm::vec2 movementVector = Pathfind(context.AproachMap, enemy.Position, context.Map);
+
     if (movementVector.x != 0.0f || movementVector.y != 0.0f) {
-    movementVector += glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
+        movementVector += glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
         movementVector = glm::normalize(movementVector);
     }
+    
+    glm::vec2 collision = Collision(enemy, context.Map, context.Enemies);
+    if (collision.x != 0.0f || collision.y != 0.0f) {
+        collision = glm::normalize(collision);
+    }
+
+    movementVector += collision;
+    movementVector *= glm::min(context.DeltaTime.GetSeconds(), 1.0f) * GetSpeed(enemy.Type);
+    
+    auto oldPosition = enemy.Position;
+    enemy.Position += movementVector;
+    
+    context.UpdateDjikstraMap |= glm::floor(oldPosition) != glm::floor(enemy.Position);
+
+    return ActionStatus::Done;
+}
+
+ActionStatus RangedPathfind(Context& context, Enemy& enemy) {
+    enemy.Tick += context.DeltaTime * 2.0f;
+    enemy.AtlasIndex = GetAtlasIndex(enemy.Type);
+   
+    glm::vec2 movementVector = Pathfind(context.RangedApproachMap, enemy.Position, context.Map);
 
     if (movementVector.x != 0.0f || movementVector.y != 0.0f) {
         movementVector += glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
