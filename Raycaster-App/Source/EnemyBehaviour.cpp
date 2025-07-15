@@ -56,7 +56,7 @@ static glm::vec2 Pathfind(const std::vector<float>& djikstraMap, glm::vec2 posit
         }
 
         currentPosition += s_Directions[dir];
-        if (!map.LineOfSight(position, currentPosition)) {
+        if (i != 0 && !map.LineOfSight(position, currentPosition)) {
             break;
         }
 
@@ -128,9 +128,13 @@ ActionStatus BasicPathfind(Context& context, Enemy& enemy) {
     enemy.AtlasIndex = GetAtlasIndex(enemy.Type);
    
     glm::vec2 movementVector = Pathfind(context.AproachMap, enemy.Position, context.Map);
+    if (movementVector.x != 0.0f || movementVector.y != 0.0f) {
     movementVector += glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
+        movementVector = glm::normalize(movementVector);
+    }
 
     if (movementVector.x != 0.0f || movementVector.y != 0.0f) {
+        movementVector += glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
         movementVector = glm::normalize(movementVector);
     }
     
