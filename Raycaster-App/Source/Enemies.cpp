@@ -85,7 +85,7 @@ void Enemies::UpdateRender(std::span<Tile> tiles, std::span<Sprite> sprites, std
     }
 }
 
-static std::vector<float> CreateDjikstraMap(glm::ivec2 destination, const std::vector<float>& costMap, const Map& map, std::vector<std::pair<glm::ivec3, float>>& frontier) {
+static std::vector<float> CreateDjikstraMap(std::span<glm::ivec2> destinations, const std::vector<float>& costMap, const Map& map, std::vector<std::pair<glm::ivec3, float>>& frontier) {
     std::vector<float> result(map.GetSize(), std::numeric_limits<float>::infinity());
 
     constexpr float sqrt2 = 0.4142135624f;
@@ -101,12 +101,15 @@ static std::vector<float> CreateDjikstraMap(glm::ivec2 destination, const std::v
     size_t mapSize = map.GetSize();
     size_t mapWidth = map.GetWidth();
 
-    size_t back = 1;
+    size_t back = destinations.size();
+    for (size_t i = 0; i < back; i++) {
+        auto destination = destinations[i];
     size_t index = destination.y * mapWidth + destination.x;
 
     if (index < map.GetSize()) {
-        frontier[0] = { glm::ivec3{ destination, directionCount}, costMap[index] };
+            frontier[i] = { glm::ivec3{ destination, directionCount}, costMap[index] };
         result[index] = 0.0f;
+    }
     }
 
     while (back) {
@@ -143,7 +146,8 @@ static std::vector<float> CreateDjikstraMap(glm::ivec2 destination, const std::v
 
 void Enemies::UpdateApproachMap(const Map& map, glm::ivec2 playerPosition) {
     UpdateCostMap(map);
-    m_ApproachMap = CreateDjikstraMap(playerPosition, m_CostMap, map, m_Frontier);
+    std::array arr = { playerPosition };
+    m_ApproachMap = CreateDjikstraMap(arr, m_CostMap, map, m_Frontier);
 }
 
 void Enemies::UpdateCostMap(const Map& map) {
