@@ -55,12 +55,14 @@ public:
     }
 private:
     void UpdateApproachMap(const Map& map, glm::ivec2 playerPosition);
+    void UpdateRangedApproachMap(const Map& map, glm::vec2 playerPosition);
     void UpdateCostMap(const Map& map);
     
     std::vector<Enemy> m_Enemies;
 
     glm::ivec2 m_PreviousPlayerPosition{};
     std::vector<float> m_ApproachMap;
+    std::vector<float> m_RangedApproachMap;
     std::vector<float> m_CostMap;
 
     std::vector<std::pair<glm::ivec3, float>> m_Frontier;

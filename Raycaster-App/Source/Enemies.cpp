@@ -1,6 +1,7 @@
 #include "Enemies.h"
 
 #include "EnemyBehaviour.h"
+#include "Algorithms.h"
 
 void Enemies::Init(const Map& map) {
     m_Frontier.resize(map.GetSize());
@@ -21,6 +22,7 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
 
     if (shouldUpdate || m_PreviousPlayerPosition != glm::ivec2(playerPosition)) {
     UpdateApproachMap(map, playerPosition);
+        UpdateRangedApproachMap(map, playerPosition);
         shouldUpdate = false;
     }
     m_PreviousPlayerPosition = playerPosition;
@@ -148,6 +150,20 @@ void Enemies::UpdateApproachMap(const Map& map, glm::ivec2 playerPosition) {
     UpdateCostMap(map);
     std::array arr = { playerPosition };
     m_ApproachMap = CreateDjikstraMap(arr, m_CostMap, map, m_Frontier);
+}
+
+
+void Enemies::UpdateRangedApproachMap(const Map& map, glm::vec2 playerPosition) {
+    UpdateCostMap(map);
+    
+    auto destinations = Algorithms::MidpointCicle(glm::ivec2(playerPosition), 4);
+    auto last = std::remove_if(destinations.begin(), destinations.end(), [map, playerPosition](glm::vec2 pos) {
+        size_t index = static_cast<size_t>(pos.y * map.GetWidth() + pos.x);
+        pos += 0.5f;
+        return index >= map.GetSize() || map[index] || !map.LineOfSight(playerPosition, pos);
+        });
+
+    m_RangedApproachMap = CreateDjikstraMap({destinations.begin(), last}, m_CostMap, map, m_Frontier);
 }
 
 void Enemies::UpdateCostMap(const Map& map) {
