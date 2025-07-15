@@ -43,7 +43,7 @@ void RaycasterScene::Init(){
 
     m_Enemies.Init(m_Map);
     m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
-    m_Enemies.Add(EnemyType::Basic, glm::vec2(2.5f, 3.0f));
+    m_Enemies.Add(EnemyType::Ranged, glm::vec2(2.5f, 3.0f));
 
     m_Map.CalculateLightMap(m_Lights);
     m_Tiles = m_Map.CreateTiles();
@@ -73,7 +73,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         ProcessInput(deltaTime);
         
         m_Enemies.Update(deltaTime, m_Map, m_Player.Position);
-        m_Enemies.UpdateRender({ m_Tiles.end() - m_Enemies.Count(), m_Tiles.end() }, { m_SpriteObjects.end() - m_Enemies.Count(), m_SpriteObjects.end() }, { m_Models.end() - m_Enemies.Count(), m_Models.end() });
+        m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, { m_SpriteObjects.end() - m_Enemies.Count(), m_SpriteObjects.end() }, { m_Models.end() - m_Enemies.Count(), m_Models.end() });
         
         CastRays();
         CastFloors();

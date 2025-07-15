@@ -9,9 +9,10 @@
 
 namespace EnemyType {
     enum Enumeration : uint8_t {
-    Basic = 0,
-        ENUMERATION_MAX = Basic,
-};
+        Basic = 0,
+        Ranged,
+        ENUMERATION_MAX = Ranged,
+    };
 }
 
 namespace EnemyState {

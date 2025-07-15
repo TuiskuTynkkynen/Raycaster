@@ -61,6 +61,18 @@ inline constexpr std::array s_BasicTransitions{
     Transition { EnemyState::Attack,    EnemyState::Pathfind,   DistanceCondition<1.1f, true> },
 };
 
+inline constinit std::array<Action, EnemyState::ENUMERATION_MAX + 1> s_RangedActions = [] {
+    std::array<Action, EnemyState::ENUMERATION_MAX + 1> actions;
+    actions[EnemyState::Pathfind] = RangedPathfind;
+    actions[EnemyState::Attack] = BasicAttack;
+    return actions;
+    }();
+
+inline constexpr std::array s_RangedTransitions{
+    Transition { EnemyState::Pathfind,  EnemyState::Attack,     RangeCondition<3.25f, 4.75f> },
+    Transition { EnemyState::Attack,    EnemyState::Pathfind,   RangeCondition<3.25f, 4.75f, true> },
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 //                     Enemy type parameters and getters                     //
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,6 +91,14 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
     params[EnemyType::Basic] = EnemyParameters{
         .ActionTable = s_BasicActions,
         .TransitionTable = s_BasicTransitions,
+
+        .Scale{0.8f},
+        .Speed{1.0f},
+        .AtlasIndex{11},
+    };
+    params[EnemyType::Ranged] = EnemyParameters{
+        .ActionTable = s_RangedActions,
+        .TransitionTable = s_RangedTransitions,
 
         .Scale{0.8f},
         .Speed{1.0f},
