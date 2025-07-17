@@ -564,8 +564,10 @@ static glm::vec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
 
         // Index into arrays in preferred order ->
         // If possible decrease x/y, when x/y < 0.5f and vice versa
-        index += (decreaseY ^ !(i & 2)) * 2;
-        index += decreaseX ^ !(i % 2);
+        bool flip = (i >= 4) && (decreaseX ^ decreaseY);
+        bool condition[] = { !(i & 2), !(i % 2) };
+        index += (decreaseY ^ condition[flip]) * 2;
+        index += (flip ^ decreaseX) ^ condition[1 - flip];
 
         if (!(bitboard & testBitboards[index])) {
             return offsets[index];
