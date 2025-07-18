@@ -15,7 +15,7 @@ void RaycasterScene::Init(){
     m_Player.Scale = m_Map.GetScale() * 0.4f;
     m_Player.Rotation = 90.0f;
 
-    m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, m_Map.GetWidth(), m_Map.GetHeight());
+    m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, static_cast<float>(m_Map.GetWidth()), static_cast<float>(m_Map.GetHeight()));
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
 
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
@@ -291,13 +291,13 @@ void RaycasterScene::CastFloors() {
 }
 
 void RaycasterScene::RenderSprites() {
-    uint32_t count = m_SpriteObjects.size();
+    size_t count = m_SpriteObjects.size();
     uint32_t rayIndex = m_RayCount;
-    uint32_t space = m_Rays.size();
+    size_t space = m_Rays.size();
 
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
 
-    for (uint32_t index = 0; index < count; index++) {
+    for (size_t index = 0; index < count; index++) {
         //3D
         glm::vec3 position3D(m_SpriteObjects[index].Position.x, m_SpriteObjects[index].Position.z, m_SpriteObjects[index].Position.y);
         m_Models[index + 1].Transform = glm::translate(glm::mat4(1.0f), position3D);
@@ -312,7 +312,7 @@ void RaycasterScene::RenderSprites() {
         return a.Position.y > b.Position.y;
     });
 
-    for (uint32_t index = 0; index < count; index++) {
+    for (size_t index = 0; index < count; index++) {
         glm::vec3 position = m_SpriteObjects[index].Position;
         
         if (position.y < 0) {
@@ -343,11 +343,11 @@ void RaycasterScene::RenderSprites() {
 
         float width = scale.x * m_RayCount * 0.5f;
         float startX = 0.5f * (m_RayCount - width + position.x * m_RayCount);
-        int32_t endX = startX + width;
+        int32_t endX = static_cast<int32_t>(startX + width);
         if (endX < 0) {
             continue;
         }
-        for (size_t i = glm::max(startX, 0.0f); i < endX; i++) {
+        for (size_t i = static_cast<size_t>(glm::max(startX, 0.0f)); i < endX; i++) {
             if (i >= m_RayCount || m_ZBuffer[i] < distance) {
                 continue;
             }
@@ -419,7 +419,8 @@ void RaycasterScene::InitModels() {
     shader->Bind();
     shader->setInt("Texture", 0);
 
-    uint32_t lightCount = m_Lights.size();
+    RC_ASSERT(m_Lights.size() < std::numeric_limits<uint32_t>::max());
+    const uint32_t lightCount = glm::min(static_cast<uint32_t>(m_Lights.size()), 10u);
     glm::uvec2 atlasSize(11, 2);
 
     shader->setVec2("AtlasSize", atlasSize);
@@ -440,17 +441,17 @@ void RaycasterScene::InitModels() {
 
     //Create and set up model for static objects and enemies
     const glm::vec3 normal(0.0f, 0.0f, 1.0f);
-    const uint32_t totalCount = m_StaticObjects.size() + m_Enemies.Count();
+    const size_t totalCount = m_StaticObjects.size() + m_Enemies.Count();
     glm::vec3 scale;
     glm::vec2 index;
-    for (uint32_t i = 0; i < totalCount; i++) {
+    for (size_t i = 0; i < totalCount; i++) {
         if (i < m_StaticObjects.size()) {
             scale = m_StaticObjects[i].Scale;
             index = glm::vec2(m_StaticObjects[i].AtlasIndex, 0.0f);
         } else {
             scale = m_Enemies[i - m_StaticObjects.size()].Scale();
-            index.x = m_Enemies[i - m_StaticObjects.size()].AtlasIndex % atlasSize.x;
-            index.y = m_Enemies[i - m_StaticObjects.size()].AtlasIndex / atlasSize.x;
+            index.x = static_cast<float>(m_Enemies[i - m_StaticObjects.size()].AtlasIndex % atlasSize.x);
+            index.y = static_cast<float>(m_Enemies[i - m_StaticObjects.size()].AtlasIndex / atlasSize.x);
         }
         m_Models.emplace_back();
         Core::Model& model = m_Models.back();
@@ -488,7 +489,7 @@ void RaycasterScene::InitModels() {
 
         auto mesh = std::make_shared<Core::Mesh>();
         mesh->VAO = std::make_unique<Core::VertexArray>();
-        mesh->VBO = std::make_unique<Core::VertexBuffer>(vertices.data(), sizeof(float) * vertices.size());
+        mesh->VBO = std::make_unique<Core::VertexBuffer>(vertices.data(), static_cast<uint32_t>(sizeof(float) * vertices.size()));
         Core::VertexBufferLayout wallLayout;
 
         wallLayout.Push<float>(3);
@@ -496,7 +497,7 @@ void RaycasterScene::InitModels() {
         wallLayout.Push<float>(2);
         mesh->VAO->AddBuffer(*mesh->VBO, wallLayout);
 
-        mesh->EBO = std::make_unique<Core::ElementBuffer>(indices.data(), indices.size());
+        mesh->EBO = std::make_unique<Core::ElementBuffer>(indices.data(), static_cast<uint32_t>(indices.size()));
 
         model.Meshes.emplace_back(mesh, 0);
 
@@ -511,7 +512,7 @@ void RaycasterScene::InitModels() {
     }
 }
 
-static glm::vec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
+static glm::ivec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
     /*
     Bitboard        NAND(bitboard, test bitboard)    Result offsets
     0 = empty                                              x  y
@@ -542,16 +543,16 @@ static glm::vec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
         0b00000010,
     };
 
-    std::array<glm::vec2, 8> offsets{
-        glm::vec2{ -1.0f, -1.0f },
-        glm::vec2{  1.0f, -1.0f },
-        glm::vec2{ -1.0f,  1.0f },
-        glm::vec2{  1.0f,  1.0f },
+    std::array<glm::ivec2, 8> offsets{
+        glm::ivec2{ -1.0f, -1.0f },
+        glm::ivec2{  1.0f, -1.0f },
+        glm::ivec2{ -1.0f,  1.0f },
+        glm::ivec2{  1.0f,  1.0f },
 
-        glm::vec2{  0.0f, -1.0f },
-        glm::vec2{ -1.0f,  0.0f },
-        glm::vec2{  1.0f,  0.0f },
-        glm::vec2{  0.0f,  1.0f },
+        glm::ivec2{  0.0f, -1.0f },
+        glm::ivec2{ -1.0f,  0.0f },
+        glm::ivec2{  1.0f,  0.0f },
+        glm::ivec2{  0.0f,  1.0f },
     };
 
     position = glm::fract(position);
@@ -586,7 +587,7 @@ float RaycasterScene::LightBilinear(glm::vec2 position) {
     {
         uint8_t mapBitboard = m_Map.GetNeighbours(m_Map.GetIndex(min.x, min.y)).Bitboard;
 
-        glm::vec2 offset = GetBilinearOffset(mapBitboard, position);
+        glm::ivec2 offset = GetBilinearOffset(mapBitboard, position);
 
         min.x += offset.x * (offset.x < 0.0f); // Only decrease min 
         min.y += offset.y * (offset.y < 0.0f); // Only decrease min 

@@ -62,6 +62,6 @@ public:
     inline const Core::RaycasterCamera& GetCamera() const { return *m_Camera; }
     inline const Core::FlyCamera& GetCamera3D() const { return *m_Camera3D;  }
 
-    inline uint32_t GetRayCount() { return m_RayCount; }
+    inline uint32_t GetRayCount() const { return m_RayCount; }
 };
 

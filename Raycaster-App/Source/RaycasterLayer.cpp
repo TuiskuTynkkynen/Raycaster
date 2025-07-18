@@ -119,14 +119,13 @@ void RaycasterLayer::OnEvent(Core::Event& event) {
 }
 
 bool RaycasterLayer::OnWindowResizeEvent(Core::WindowResize& event) {
-    m_ViewPortWidth = event.GetWidth() * 0.5f;
+    m_ViewPortWidth = event.GetWidth() / 2;
     m_ViewPortHeight = event.GetHeight();
 
     return false;
 }
 
 void Layer2D::OnUpdate(Core::Timestep deltaTime) {
-    return;
     static glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
     static glm::vec3 zero(0.0f);
     static glm::mat4 identity(1.0f);
@@ -135,9 +134,9 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::BeginScene(static_cast<RaycasterScene&>(*m_Scene).GetCamera());
 
     const std::vector<Tile>& tiles = static_cast<RaycasterScene&>(*m_Scene).GetTiles();
-    uint32_t mapSize = tiles.size();
+    size_t mapSize = tiles.size();
 
-    for (int i = 0; i < mapSize; i++) {
+    for (size_t i = 0; i < mapSize; i++) {
         if (tiles[i].IsTriangle) {
             Core::Renderer2D::DrawRotatedFlatTriangle(tiles[i].Posistion, tiles[i].Rotation, AxisZ, tiles[i].Scale, { tiles[i].Colour.x, tiles[i].Colour.y, tiles[i].Colour.z, 1.0f });
         }
@@ -155,8 +154,8 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     
     colour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
     std::vector <Line> lines = static_cast<RaycasterScene&>(*m_Scene).GetLines();
-    uint32_t lineCount = lines.size();
-    for (int i = 0; i < lineCount; i++) {
+    size_t lineCount = lines.size();
+    for (size_t i = 0; i < lineCount; i++) {
         Core::Renderer2D::DrawLine(lines[i].Posistion, lines[i].Scale, colour);
     }
 
@@ -169,7 +168,7 @@ void Layer2D::OnEvent(Core::Event& event) {
 }
 
 bool Layer2D::OnWindowResizeEvent(Core::WindowResize& event) {
-    m_ViewPortWidth = event.GetWidth() * 0.5f;
+    m_ViewPortWidth = event.GetWidth() / 2;
     m_ViewPortHeight = event.GetHeight();
 
     return false;
@@ -194,7 +193,7 @@ void Layer3D::OnEvent(Core::Event& event) {
 }
 
 bool Layer3D::OnWindowResizeEvent(Core::WindowResize& event) {
-    m_ViewPortWidth = event.GetWidth() * 0.5f;
+    m_ViewPortWidth = event.GetWidth() / 2;
     m_ViewPortHeight = event.GetHeight();
 
     return false;
