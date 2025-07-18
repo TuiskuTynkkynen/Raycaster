@@ -101,7 +101,7 @@ static std::vector<float> CreateDjikstraMap(std::span<glm::ivec2> destinations, 
         glm::ivec2(0.0f,  0.0f),
     };
 
-    size_t mapSize = map.GetSize();
+    constexpr size_t mapSize = Map::GetSize();
 
     size_t back = destinations.size();
     for (size_t i = 0; i < back; i++) {

@@ -80,10 +80,10 @@ struct EnemyParameters {
     std::span<const Action> ActionTable;
     std::span<const Transition> TransitionTable;
 
-    glm::vec3 Scale;
+    glm::vec3 Scale{};
 
-    float Speed;
-    uint32_t AtlasIndex;
+    float Speed{};
+    uint32_t AtlasIndex{};
 };
 
 inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_EnemyParameters = [] {
