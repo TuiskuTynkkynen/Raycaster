@@ -84,13 +84,13 @@ std::vector<Tile> Map::CreateTiles() {
         tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
         tile.Posistion.y = (centreY - mapY) * s_MapData.Scale.y;
 
-        float brightness = m_LightMap[mapY * s_MapData.Width + mapX];
+        float brightness = m_LightMap[GetIndex(mapX, mapY)];
 
         tile.Colour = glm::vec3(brightness);
         result.push_back(tile);
 
-        if (s_MapData.Map[mapY * s_MapData.Width + mapX] < 0) {
-            Neighbourhood adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
+        if (s_MapData.Map[GetIndex(mapX, mapY)] < 0) {
+            Neighbourhood adjacent = GetNeighbours(GetIndex(mapX, mapY));
             
             if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
                 tile.Rotation = adjacent.South && !(adjacent.North && adjacent.West) ? 270.0f : 90.0f;
@@ -148,21 +148,21 @@ std::vector<Map::Quad> Map::GreedyQuadrangulation(const std::array<uint8_t, s_Ma
             
             // Check if every tile form 0 to width for current height
             for (; i < width; i++) {
-                if (visited[index + height * s_MapData.Width + i]) {
+                if (visited[index + GetIndex(i, height)]) {
                     break;
                 }
 
-                if (map[index + height * s_MapData.Width + i] != material) {
+                if (map[index + GetIndex(i, height)] != material) {
                     break;
                 }
 
-                visited[index + height * s_MapData.Width + i] = true;
+                visited[index + GetIndex(i, height)] = true;
             }
 
             // Backtrack if height can't be increased
             if (i < width) {
                 for (size_t j = 0; j <= i; j++) {
-                    visited[index + height * s_MapData.Width + j] = false;
+                    visited[index + GetIndex(j, height)] = false;
                 }
                 break;
             }
@@ -189,7 +189,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
         for (auto& wall : walls) {
             uint32_t midX = static_cast<uint32_t>(wall.Position.x + 0.5f * wall.Vector.x - 1e-6f * wall.Normal.x);
             uint32_t midY = static_cast<uint32_t>(wall.Position.y + 0.5f * wall.Vector.y - 1e-6f * wall.Normal.y);
-            uint32_t index = static_cast<uint32_t>(glm::abs(s_MapData.Map[midY * s_MapData.Width + midX]));
+            uint32_t index = static_cast<uint32_t>(glm::abs(s_MapData.Map[GetIndex(midX, midY)]));
 
             wallIndices.emplace_back(glm::vec4{ wall.Position.x, wall.Position.y, wall.Position.x + wall.Vector.x, wall.Position.y + wall.Vector.y }, index);
         }
@@ -422,7 +422,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
     glm::vec2 worldPosition;
     while (!hit) {
         //if diagonal, needs to be handled first, because origin may be inside diagonal
-        if (s_MapData.Map[mapY * s_MapData.Width + mapX] < 0) {
+        if (s_MapData.Map[GetIndex(mapX, mapY)] < 0) {
             glm::vec2 point3(origin.x, origin.y);
             glm::vec2 point4 = point3;
             point3.x += direction.x;
@@ -431,7 +431,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
             glm::vec2 point1(mapX, mapY);
             glm::vec2 point2(point1);
 
-            Neighbourhood adjacent = GetNeighbours(mapY * s_MapData.Width + mapX);
+            Neighbourhood adjacent = GetNeighbours(GetIndex(mapX, mapY));
             if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
                 point1.x++;
                 point2.y++;
@@ -468,7 +468,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
             break;
         }
 
-        if (s_MapData.Map[mapY * s_MapData.Width + mapX] > 0) {
+        if (s_MapData.Map[GetIndex(mapX, mapY)] > 0) {
             hit = true;
         }
     }
@@ -491,7 +491,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
     return { 
         .Distance = wallDistance, 
         .Side = side, 
-        .Material = static_cast<uint8_t>(glm::abs(s_MapData.Map[mapY * s_MapData.Width + mapX])),
+        .Material = static_cast<uint8_t>(glm::abs(s_MapData.Map[GetIndex(mapX, mapY)])),
         .WorlPosition = worldPosition
     };
 }
@@ -523,7 +523,7 @@ bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) const {
             return false;
         }
 
-        if (s_MapData.Map[mapY * s_MapData.Width + mapX]) {
+        if (s_MapData.Map[GetIndex(mapX, mapY)]) {
             return false;
         }
     }
@@ -537,8 +537,8 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
     uint32_t mapX = static_cast<uint32_t>(origin.x);
     uint32_t mapY = static_cast<uint32_t>(origin.y);
 
-    int8_t floorIndex = s_MapData.FloorMap[mapY * s_MapData.Width + mapX];
-    int8_t ceilingIndex = s_MapData.CeilingMap[mapY * s_MapData.Width + mapX];
+    int8_t floorIndex = s_MapData.FloorMap[GetIndex(mapX, mapY)];
+    int8_t ceilingIndex = s_MapData.CeilingMap[GetIndex(mapX, mapY)];
 
     int32_t stepX = (direction.x > 0) ? 1 : -1;
     int32_t stepY = (direction.y < 0) ? 1 : -1;
@@ -550,7 +550,7 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
     bool hit = false;
     uint8_t side = 0;
     glm::vec2 worldPosition;
-    float previousLight = m_LightMap[mapY * s_MapData.Width + mapX];
+    float previousLight = m_LightMap[GetIndex(mapX, mapY)];
     while (!hit) {
         if (sideDistance.x < sideDistance.y) {
             if (sideDistance.x > maxDistance) {
@@ -575,11 +575,11 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
             break;
         }
 
-        if (s_MapData.FloorMap[mapY * s_MapData.Width + mapX] != floorIndex || s_MapData.CeilingMap[mapY * s_MapData.Width + mapX] != ceilingIndex) {
+        if (s_MapData.FloorMap[GetIndex(mapX, mapY)] != floorIndex || s_MapData.CeilingMap[GetIndex(mapX, mapY)] != ceilingIndex) {
             hit = true;
         }
 
-        float currentLight = m_LightMap[mapY * s_MapData.Width + mapX];
+        float currentLight = m_LightMap[GetIndex(mapX, mapY)];
         float diffrence = previousLight - currentLight;
         if (glm::abs(diffrence) > 0.075f) {
             break;

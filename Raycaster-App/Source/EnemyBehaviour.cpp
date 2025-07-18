@@ -17,16 +17,14 @@ static glm::vec2 Pathfind(const std::vector<float>& djikstraMap, glm::vec2 posit
     glm::vec2 result(0.0f);
 
     glm::vec2 currentPosition = position;
-    float min = djikstraMap[glm::floor(currentPosition.y) * map.GetWidth() + currentPosition.x];
+    float min = djikstraMap[map.GetIndex(currentPosition)];
     for (size_t i = 0; i < 5; i++) {
         size_t dir = s_DirectionCount;
 
         float minBias = -std::numeric_limits<float>::infinity();
         glm::vec2 fraction = glm::fract(currentPosition);
         for (size_t j = 0; j < s_DirectionCount; j++) {
-            size_t x = currentPosition.x + s_Directions[j].x;
-            size_t y = currentPosition.y + s_Directions[j].y;
-            size_t index = y * map.GetWidth() + x;
+            size_t index = map.GetIndex(currentPosition + s_Directions[j]);
 
             float val = djikstraMap[index];
             if (val < min) {
@@ -90,7 +88,7 @@ static glm::vec2 Collision(const Enemy& enemy, const Map& map, const std::vector
         result = glm::normalize(result);
     }
 
-    size_t index = glm::floor(enemy.Position.y) * map.GetWidth() + enemy.Position.x;
+    size_t index = map.GetIndex(enemy.Position);
     auto adjacent = map.GetNeighbours(index);
 
     if (adjacent.Bitboard) {

@@ -102,12 +102,11 @@ static std::vector<float> CreateDjikstraMap(std::span<glm::ivec2> destinations, 
     };
 
     size_t mapSize = map.GetSize();
-    size_t mapWidth = map.GetWidth();
 
     size_t back = destinations.size();
     for (size_t i = 0; i < back; i++) {
         auto destination = destinations[i];
-    size_t index = destination.y * mapWidth + destination.x;
+        size_t index = map.GetIndex(destination);
 
     if (index < map.GetSize()) {
             frontier[i] = { glm::ivec3{ destination, directionCount}, costMap[index] };
@@ -126,7 +125,7 @@ static std::vector<float> CreateDjikstraMap(std::span<glm::ivec2> destinations, 
         for (size_t i = 0; i < directionCount; i++) {
             glm::ivec2 next = current + directions[i];
 
-            size_t index = next.y * mapWidth + next.x;
+            size_t index = map.GetIndex(next);
 
             bool diagonal = (i < 2) ^ (history < 2) && (history != directionCount);
             float nextValue = value + (diagonal ? sqrt2 : 1.0f) + costMap[index];
@@ -159,7 +158,7 @@ void Enemies::UpdateRangedApproachMap(const Map& map, glm::vec2 playerPosition) 
     
     auto destinations = Algorithms::MidpointCicle(glm::ivec2(playerPosition), 4);
     auto last = std::remove_if(destinations.begin(), destinations.end(), [map, playerPosition](glm::vec2 pos) {
-        size_t index = static_cast<size_t>(pos.y * map.GetWidth() + pos.x);
+        size_t index = map.GetIndex(pos);
         pos += 0.5f;
         return index >= map.GetSize() || map[index] || !map.LineOfSight(playerPosition, pos);
         });
@@ -171,7 +170,7 @@ void Enemies::UpdateCostMap(const Map& map) {
     m_CostMap.assign(map.GetSize(), 0.0f);
 
     for (const auto& enemy : m_Enemies) {
-        size_t enemyIndex = size_t(enemy.Position.y) * map.GetWidth() + enemy.Position.x;
+        size_t enemyIndex = map.GetIndex(enemy.Position);
 
         for (int32_t y = -2; y <= 2; y++) {
             size_t yindex = enemyIndex + y * (int32_t)map.GetWidth();

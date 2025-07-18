@@ -584,7 +584,7 @@ float RaycasterScene::LightBilinear(glm::vec2 position) {
 
     // Prevent sampling light map inside a wall by shifting min and max 
     {
-        uint8_t mapBitboard = m_Map.GetNeighbours(min.y * m_Map.GetWidth() + min.x).Bitboard;
+        uint8_t mapBitboard = m_Map.GetNeighbours(m_Map.GetIndex(min.x, min.y)).Bitboard;
 
         glm::vec2 offset = GetBilinearOffset(mapBitboard, position);
 
