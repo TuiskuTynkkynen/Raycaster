@@ -1,6 +1,6 @@
 #include "Map.h"
 
-std::vector<LineCollider> Map::CreateWalls() {
+std::vector<LineCollider> Map::CreateWalls() const {
     std::vector<LineCollider> result;
 
     std::array<std::vector<glm::vec2>, 4> points;
@@ -125,8 +125,8 @@ std::vector<Map::Quad> Map::GreedyQuadrangulation(const std::array<uint8_t, s_Ma
         }
         visited[index] = true;
 
-        size_t x = index % s_MapData.Width, y = index / s_MapData.Width;
-        size_t width = 1, height = 1;
+        uint16_t x = static_cast<uint16_t>(index % s_MapData.Width), y = static_cast<uint16_t>(index / s_MapData.Width);
+        uint16_t width = 1, height = 1;
         uint8_t material = map[index];
 
         // Calculate width
@@ -202,7 +202,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
 
     std::vector<float> vertices;
     std::vector<uint32_t> indices;
-    std::vector<std::pair<uint32_t, glm::uvec4>> subranges;
+    std::vector<std::pair<size_t, glm::uvec4>> subranges;
 
     {
         subranges.emplace_back();
@@ -269,7 +269,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
 
     //Create vertices and indices for floor and ceiling
     {
-        size_t vertexCount = 0;
+        uint32_t vertexCount = 0;
         size_t previousMaterial = -1;
         for (size_t i = 0; i < 2; i++) {
             std::vector<Quad> quads = i ? GreedyQuadrangulation(s_MapData.CeilingMap) : GreedyQuadrangulation(s_MapData.FloorMap);
@@ -295,10 +295,10 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
 
                 for (uint32_t j = 0; j < 4; j++) {
                     // Preserve counter clockwise winding order
-                    std::array<bool, 2> offsets{ j >= 2, j % 2};
+                    std::array<bool, 2> offsets{ j >= 2, j % 2 == 1};
 
-                    float x = quad.x + quad.Width * offsets[i];
-                    float z = quad.y + quad.Height * offsets[1 - i];
+                    float x = static_cast<float>(quad.x + quad.Width * offsets[i]);
+                    float z = static_cast<float>(quad.y + quad.Height * offsets[1 - i]);
 
                     //position
                     vertices.push_back(x);
@@ -500,8 +500,8 @@ bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) const {
     glm::vec2 rayDirection = end - start;
     glm::vec2 deltaDistance = glm::abs(1.0f / glm::normalize(rayDirection));
 
-    uint32_t mapX = start.x;
-    uint32_t mapY = start.y;
+    uint32_t mapX = static_cast<uint32_t>(start.x);
+    uint32_t mapY = static_cast<uint32_t>(start.y);
 
     int32_t stepX = (rayDirection.x > 0.0f) ? 1 : -1;
     int32_t stepY = (rayDirection.y > 0.0f) ? 1 : -1;

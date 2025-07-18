@@ -12,7 +12,7 @@
 
 class  Map {
 public:
-    std::vector<LineCollider> CreateWalls();
+    std::vector<LineCollider> CreateWalls() const;
     std::vector<Tile> CreateTiles();
     Core::Model CreateModel(const std::span<LineCollider> walls, std::shared_ptr<Core::Texture2D> atlas, std::shared_ptr<Core::Shader> shader);
     void CalculateLightMap(std::span<glm::vec3> lights);

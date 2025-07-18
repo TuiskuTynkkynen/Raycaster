@@ -29,12 +29,12 @@ glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, std::vector
     previous.assign(width * height, glm::i32vec2(-1, -1));
 
     std::vector<float> distance;
-    distance.assign(width * height, UINT32_MAX);
+    distance.assign(width * height, std::numeric_limits<float>::infinity());
     distance[start.y * width + start.x] = 0;
 
-    typedef std::tuple<uint32_t, uint32_t, uint32_t> distanceYX;
+    typedef std::tuple<float, uint32_t, uint32_t> distanceYX;
     std::priority_queue<distanceYX, std::vector<distanceYX>, std::greater<distanceYX>> heap;
-    heap.emplace(0, start.y, start.x);
+    heap.emplace(0.0f, start.y, start.x);
 
     glm::i32vec2 current;
     while (!heap.empty()) {
@@ -57,14 +57,14 @@ glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, std::vector
             if (tempDistance < distance[edge.y * width + edge.x]) {
                 distance[edge.y * width + edge.x] = tempDistance;
                 previous[edge.y * width + edge.x] = current;
-                int32_t distX = end.x - edge.x;
-                int32_t distY = end.y - edge.y;
-                heap.emplace(tempDistance + sqrt(abs(distX * distX + distY * distY)), edge.y, edge.x);
+
+                glm::vec2 delta(end.x - edge.x, end.y - edge.y);
+                heap.emplace(tempDistance + glm::length(delta), edge.y, edge.x);
             }
         }
     }
 
-    glm::u32vec2 result;
+    glm::u32vec2 result{};
     while (current != start) {
         result = current;
         current = previous[current.y * width + current.x];
@@ -99,10 +99,10 @@ std::optional<glm::vec2> Algorithms::LineIntersection(glm::vec2 point1, glm::vec
 }
 
 glm::vec2 Algorithms::LineCollisions(glm::vec2 point, const std::vector<LineCollider>& lines, float thickness) {
-    uint32_t lineCount = lines.size();
+    size_t lineCount = lines.size();
     glm::vec2 movement(0.0f);
 
-    for (int i = 0; i < lineCount; i++) {
+    for (size_t i = 0; i < lineCount; i++) {
         float pointDX = point.x - lines[i].Position.x;
         float pointDY = point.y - lines[i].Position.y;
         float distance = std::max(lines[i].Vector.x * lines[i].Vector.x + lines[i].Vector.y * lines[i].Vector.y, 0.0001f);
@@ -134,7 +134,7 @@ glm::vec2 Algorithms::LineCollisions(glm::vec2 point, const std::vector<LineColl
 }
 
 template<typename T>
-std::vector<glm::vec<2, T, glm::highp>> MidpointCicleImpl(glm::vec<2, T, glm::highp> centre, T radius) {
+std::vector<glm::vec<2, T, glm::highp>> MidpointCicleImpl(glm::vec<2, T, glm::highp> centre, uint32_t radius) {
     RC_ASSERT(radius > 0, "Radius of circle must be greater than 0");
     std::vector<glm::vec<2, T, glm::highp>> result;
 
@@ -170,10 +170,10 @@ std::vector<glm::vec<2, T, glm::highp>> MidpointCicleImpl(glm::vec<2, T, glm::hi
     return result;
 }
  
-std::vector<glm::vec2> Algorithms::MidpointCicle(glm::vec2 centre, float radius) {
+std::vector<glm::vec2> Algorithms::MidpointCicle(glm::vec2 centre, uint32_t radius) {
     return MidpointCicleImpl(centre, radius);
 }
  
-std::vector<glm::ivec2> Algorithms::MidpointCicle(glm::ivec2 centre, int32_t radius) {
+std::vector<glm::ivec2> Algorithms::MidpointCicle(glm::ivec2 centre, uint32_t radius) {
     return MidpointCicleImpl(centre, radius);
 }
