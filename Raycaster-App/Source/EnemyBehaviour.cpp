@@ -15,6 +15,9 @@ static constexpr std::array<glm::vec2, s_DirectionCount + 1> s_Directions = {
 
 static glm::vec2 Pathfind(const std::vector<float>& djikstraMap, glm::vec2 position, const Map& map) {
     glm::vec2 result(0.0f);
+    
+    glm::ivec2 flooredPosition = position;
+    glm::vec2 fraction = glm::fract(position);
 
     glm::vec2 currentPosition = position;
     float min = djikstraMap[map.GetIndex(currentPosition)];
@@ -22,11 +25,16 @@ static glm::vec2 Pathfind(const std::vector<float>& djikstraMap, glm::vec2 posit
         size_t dir = s_DirectionCount;
 
         float minBias = -std::numeric_limits<float>::infinity();
-        glm::vec2 fraction = glm::fract(currentPosition);
         for (size_t j = 0; j < s_DirectionCount; j++) {
-            size_t index = map.GetIndex(currentPosition + s_Directions[j]);
+            glm::ivec2 delta = currentPosition + s_Directions[j];
+            size_t index = map.GetIndex(delta.x, delta.y);
 
-            float val = djikstraMap[index];
+            // Substract the cost current enemy adds to the dijkstra map
+            // This prevents enemy "jiggling" on tile borders
+            delta = glm::abs(delta - flooredPosition);
+            int cost = 4 - delta.x - delta.y;
+            
+            float val = djikstraMap[index] - cost * (cost > 0);
             if (val < min) {
                 min = val;
                 dir = j;
