@@ -5,6 +5,7 @@
 #include "Entities.h"
 #include "Map.h"
 #include "Enemies.h"
+#include "Interactables.h"
 
 #include <memory>
 
@@ -24,8 +25,8 @@ private:
     float* m_ZBuffer = new float[m_RayCount];
     
     std::vector<Sprite> m_SpriteObjects;
-    std::vector<Sprite> m_StaticObjects;
     
+    Interactables m_Interactables;
     Enemies m_Enemies;
 
     std::vector<LineCollider> m_Walls;

@@ -23,22 +23,12 @@ void RaycasterScene::Init(){
     m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));
     m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.75f));
     
-    Sprite staticObject;
-    staticObject.Position = glm::vec3(3.0f, 2.5f, 0.25f);
-    staticObject.WorldPosition = glm::vec3(3.0f, 2.5f, 0.25f);
-    staticObject.Scale = glm::vec3(0.5f, 0.5f, 0.5f);
-    staticObject.AtlasIndex = 8;
-    staticObject.FlipTexture = false;
-    
-    m_StaticObjects.push_back(staticObject);
-    staticObject.Position.x = 2.5f;
-    m_StaticObjects.push_back(staticObject);
+    m_Interactables.Init();
+    m_Interactables.Add(InteractableType::Barrel, { 3.0f, 2.5f });
+    m_Interactables.Add(InteractableType::Barrel, { 2.5f, 2.5f });
 
-    staticObject.AtlasIndex = 10;
-    for (const glm::vec3& light : m_Lights) {
-        staticObject.Position = light;
-        staticObject.WorldPosition = light;
-        m_StaticObjects.push_back(staticObject);
+    for (glm::vec2 light : m_Lights) {
+        m_Interactables.Add(InteractableType::Light, light);
     }
 
     m_Enemies.Init(m_Map);
@@ -50,7 +40,7 @@ void RaycasterScene::Init(){
     m_Walls = m_Map.CreateWalls();
     InitModels();
     
-    m_SpriteObjects.resize(m_StaticObjects.size() + m_Enemies.Count());
+    m_SpriteObjects.resize(m_Interactables.Count() + m_Enemies.Count());
 
     Tile tile;
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -65,16 +55,13 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     if (!m_Paused) {
         Core::RenderAPI::Clear();
 
-        //Static objects
-        for (uint32_t i = 0; i < m_StaticObjects.size(); i++) {
-            m_SpriteObjects[i] = m_StaticObjects[i];
-        }
-
         ProcessInput(deltaTime);
         
         m_Enemies.Update(deltaTime, m_Map, m_Player.Position);
         m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, { m_SpriteObjects.end() - m_Enemies.Count(), m_SpriteObjects.end() }, { m_Models.end() - m_Enemies.Count(), m_Models.end() });
         
+        m_Interactables.UpdateRender({ m_SpriteObjects.begin(), m_SpriteObjects.end() - m_Enemies.Count() }, { m_Models.begin(), m_Models.end() - m_Enemies.Count() });
+
         CastRays();
         CastFloors();
         RenderSprites();
@@ -398,6 +385,13 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
         m_Player.Rotation -= rotationSpeed;
     }
 
+    if (Core::Input::IsKeyPressed(RC_KEY_SPACE)) {
+        auto result = m_Interactables.Interact(m_Player);
+        if (result.Type == InteractionResult::Type::Debug) {
+            RC_TRACE("{}", result.Data);
+        }
+    }
+
     glm::vec2 col(m_Player.Position.x, m_Player.Position.y);
     col = Algorithms::LineCollisions(col, m_Walls, 0.4f);
 
@@ -441,17 +435,18 @@ void RaycasterScene::InitModels() {
 
     //Create and set up model for static objects and enemies
     const glm::vec3 normal(0.0f, 0.0f, 1.0f);
-    const size_t totalCount = m_StaticObjects.size() + m_Enemies.Count();
+    const size_t totalCount = m_Interactables.Count() + m_Enemies.Count();
     glm::vec3 scale;
     glm::vec2 index;
     for (size_t i = 0; i < totalCount; i++) {
-        if (i < m_StaticObjects.size()) {
-            scale = m_StaticObjects[i].Scale;
-            index = glm::vec2(m_StaticObjects[i].AtlasIndex, 0.0f);
+        if (i < m_Interactables.Count()) {
+            scale = m_Interactables[i].Scale();
+            index.x = static_cast<float>(m_Interactables[i].AtlasIndex % atlasSize.x);
+            index.y = static_cast<float>(m_Interactables[i].AtlasIndex / atlasSize.x);
         } else {
-            scale = m_Enemies[i - m_StaticObjects.size()].Scale();
-            index.x = static_cast<float>(m_Enemies[i - m_StaticObjects.size()].AtlasIndex % atlasSize.x);
-            index.y = static_cast<float>(m_Enemies[i - m_StaticObjects.size()].AtlasIndex / atlasSize.x);
+            scale = m_Enemies[i - m_Interactables.Count()].Scale();
+            index.x = static_cast<float>(m_Enemies[i - m_Interactables.Count()].AtlasIndex % atlasSize.x);
+            index.y = static_cast<float>(m_Enemies[i - m_Interactables.Count()].AtlasIndex / atlasSize.x);
         }
         m_Models.emplace_back();
         Core::Model& model = m_Models.back();
