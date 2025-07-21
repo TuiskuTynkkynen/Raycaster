@@ -284,11 +284,12 @@ void RaycasterScene::RenderSprites() {
 
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
 
+    size_t offset = m_Models.size() - count;
     for (size_t index = 0; index < count; index++) {
         //3D
         glm::vec3 position3D(m_SpriteObjects[index].Position.x, m_SpriteObjects[index].Position.z, m_SpriteObjects[index].Position.y);
-        m_Models[index + 1].Transform = glm::translate(glm::mat4(1.0f), position3D);
-        m_Models[index + 1].Transform = glm::rotate(m_Models[index + 1].Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        m_Models[index + offset].Transform = glm::translate(glm::mat4(1.0f), position3D);
+        m_Models[index + offset].Transform = glm::rotate(m_Models[index + offset].Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         
         //Transform for 2D
         m_SpriteObjects[index].Position = m_SpriteObjects[index].Position - m_Player.Position;
