@@ -44,6 +44,7 @@ private:
     void CastRays();
     void CastFloors();
     void RenderSprites();
+    void RenderInventory();
     void InitModels();
     float LightBilinear(glm::vec2 position);
 public: 

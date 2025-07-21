@@ -14,6 +14,8 @@ void RaycasterScene::Init(){
     m_Player.Position = glm::vec3((float)m_Map.GetWidth() / 2, (float)m_Map.GetHeight() / 2, 0.5f);
     m_Player.Scale = m_Map.GetScale() * 0.4f;
     m_Player.Rotation = 90.0f;
+    m_Player.HeldItem = 0;
+    m_Player.Inventory[m_Player.HeldItem] = { .Scale = 0.5f, .AtlasIndex = 13, .Count = 1 };
 
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, static_cast<float>(m_Map.GetWidth()), static_cast<float>(m_Map.GetHeight()));
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
@@ -60,11 +62,12 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         m_Enemies.Update(deltaTime, m_Map, m_Player.Position);
         m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, { m_SpriteObjects.end() - m_Enemies.Count(), m_SpriteObjects.end() }, { m_Models.end() - m_Enemies.Count(), m_Models.end() });
         
-        m_Interactables.UpdateRender({ m_SpriteObjects.begin(), m_SpriteObjects.end() - m_Enemies.Count() }, { m_Models.begin(), m_Models.end() - m_Enemies.Count() });
+        m_Interactables.UpdateRender({ m_SpriteObjects.begin(), m_SpriteObjects.end() - m_Enemies.Count() }, { m_Models.end() - m_Enemies.Count() - m_Interactables.Count(), m_Models.end() - m_Enemies.Count()});
 
         CastRays();
         CastFloors();
         RenderSprites();
+        RenderInventory();
     }
 }
 
@@ -361,6 +364,69 @@ void RaycasterScene::RenderSprites() {
     m_Rays.resize(rayIndex);
 }
 
+void RaycasterScene::RenderInventory() {
+    RC_ASSERT(!m_Player.Inventory.size() || m_Player.HeldItem < m_Player.Inventory.size());
+    if (!m_Player.Inventory[m_Player.HeldItem].Count) {
+        return;
+    }
+    uint32_t atlasIndex = m_Player.Inventory[0].AtlasIndex;
+
+    // Update on Raycaster-layer
+    glm::vec3 scale(2.0f * m_Player.Inventory[0].Scale);
+    glm::vec3 position(0.0f, -(1.0f - m_Player.Inventory[0].Scale), 0.0f);
+
+    if (m_SnappingEnabled) {
+        position.y = glm::round(position.y * m_RayCount * 0.5f) * m_RayWidth;
+        // The center of a sprite is @ an integer multiple of ray width, so scale needs to be even multiple of m_RayWidth
+        // to prevent sprite getting rendered at the middle of a floor ray -> round to 2.0f * m_RayWidth
+        scale.y = glm::round(scale.y * m_RayCount * 0.25f) * m_RayWidth * 2.0f;
+    }
+
+    if (scale.y < m_RayWidth * 0.25f) {
+        return;
+    }
+
+    float width = scale.x * m_RayCount * 0.5f;
+    float startX = 0.5f * (m_RayCount - width + position.x * m_RayCount);
+    int32_t endX = glm::min(static_cast<int32_t>(startX + width), static_cast<int32_t>(m_RayCount));
+    if (endX < 0) {
+        return;
+    }
+
+    float brightness = LightBilinear(m_Player.Position);
+
+    size_t rayIndex = m_Rays.size();
+    size_t startIndex = static_cast<size_t>(glm::max(startX, 0.0f));
+    m_Rays.resize(rayIndex + endX - startIndex);
+
+    for (size_t i = startIndex; i < endX; i++) {
+        position.x = (i + 0.5f) * m_RayWidth - 1.0f;
+        float texturePosition = glm::max((i - startX) / width, 0.0f);
+
+        m_Rays[rayIndex].Position = position;
+        m_Rays[rayIndex].Scale = scale.y;
+        m_Rays[rayIndex].TexPosition.x = texturePosition;
+        m_Rays[rayIndex].Atlasindex = atlasIndex;
+        m_Rays[rayIndex].Brightness = brightness;
+
+        rayIndex++;
+    }
+
+    //Update on 3D-layer
+    float epsilon = 0.1f + 1e-5f;
+    glm::vec3 position3D(m_Player.Position.x, 0.5f - 0.5f * epsilon, m_Player.Position.y);
+    position3D.x += glm::cos(glm::radians(m_Player.Rotation)) * epsilon;
+    position3D.z += -glm::sin(glm::radians(m_Player.Rotation)) * epsilon;
+
+    m_Models[1].Transform = glm::translate(glm::mat4(1.0f), position3D);
+    m_Models[1].Transform = glm::rotate(m_Models[1].Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m_Models[1].Transform = glm::scale(m_Models[1].Transform, glm::vec3(2.0f * epsilon));
+
+    uint32_t atlasWidth = 11;
+    m_Models[1].Materials.front()->Parameters.back().Value = 0.0f;
+    m_Models[1].Materials.front()->Parameters.front().Value = glm::vec2(atlasIndex % atlasWidth, atlasIndex / atlasWidth);
+}
+
 void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
     float velocity = 2.0f * deltaTime;
     float rotationSpeed = 180.0f * deltaTime;
@@ -436,19 +502,20 @@ void RaycasterScene::InitModels() {
 
     //Create and set up model for static objects and enemies
     const glm::vec3 normal(0.0f, 0.0f, 1.0f);
-    const size_t totalCount = m_Interactables.Count() + m_Enemies.Count();
-    glm::vec3 scale;
-    glm::vec2 index;
+    const size_t totalCount = m_Interactables.Count() + m_Enemies.Count() + 1; // + 1 for held item
+    glm::vec3 scale(m_Player.Inventory[m_Player.HeldItem].Scale);
+    uint32_t atlasIndex = m_Player.Inventory[m_Player.HeldItem].AtlasIndex;
     for (size_t i = 0; i < totalCount; i++) {
-        if (i < m_Interactables.Count()) {
-            scale = m_Interactables[i].Scale();
-            index.x = static_cast<float>(m_Interactables[i].AtlasIndex % atlasSize.x);
-            index.y = static_cast<float>(m_Interactables[i].AtlasIndex / atlasSize.x);
-        } else {
-            scale = m_Enemies[i - m_Interactables.Count()].Scale();
-            index.x = static_cast<float>(m_Enemies[i - m_Interactables.Count()].AtlasIndex % atlasSize.x);
-            index.y = static_cast<float>(m_Enemies[i - m_Interactables.Count()].AtlasIndex / atlasSize.x);
-        }
+        if (i > m_Interactables.Count()) {
+            scale = m_Enemies[i - 1 - m_Interactables.Count()].Scale();
+            atlasIndex = m_Enemies[i - 1 - m_Interactables.Count()].AtlasIndex;
+        } else if (i) {
+            scale = m_Interactables[i - 1].Scale();
+            atlasIndex = m_Interactables[i - 1].AtlasIndex;
+        } 
+
+        glm::vec2 index{ static_cast<float>(atlasIndex % atlasSize.x), static_cast<float>(atlasIndex / atlasSize.x) };
+
         m_Models.emplace_back();
         Core::Model& model = m_Models.back();
 

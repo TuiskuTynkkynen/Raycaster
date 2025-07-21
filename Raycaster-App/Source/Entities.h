@@ -2,6 +2,8 @@
 
 #include "glm/glm.hpp"
 
+#include <array>
+
 struct Tile {
     glm::vec3 Posistion{};
     glm::vec3 Scale{};
@@ -28,10 +30,19 @@ struct Ray {
     float Brightness = 0.0f;
 };
 
+struct Item {
+    float Scale = 0.0f;
+    uint32_t AtlasIndex = 0;
+    uint32_t Count = 0;
+};
+
 struct Player {
     glm::vec3 Position{};
     glm::vec3 Scale{};
     float Rotation = 0.0f;
+
+    size_t HeldItem = 0;
+    std::array<Item, 1> Inventory;
 };
 
 struct Floor {
