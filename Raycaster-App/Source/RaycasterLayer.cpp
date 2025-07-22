@@ -7,7 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 void RaycasterLayer::OnAttach() {
-    Core::Renderer2D::SetTextureAtlas("wolfenstein_texture_atlas.png", 11, 2);
+    Core::Renderer2D::SetTextureAtlas("wolfenstein_texture_atlas.png", ATLASWIDTH, ATLASHEIGHT);
 
     std::shared_ptr<Core::Font> font = std::make_shared<Core::Font>(false);
     font->AddCharacterRange(' ', '~'); //Printable ASCII

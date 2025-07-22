@@ -81,8 +81,7 @@ void Enemies::UpdateRender(std::span<Tile> tiles, std::span<Sprite> sprites, std
         tiles[i].Posistion.y = (m_MapCenter.y - enemy.Position.y) * m_MapScale.y;
 
         //Update on 3D-layer
-        uint32_t atlasWidth = 11;
-        glm::vec2 index = glm::vec2((enemy.AtlasIndex) % atlasWidth, (enemy.AtlasIndex) / atlasWidth);
+        glm::vec2 index = glm::vec2((enemy.AtlasIndex) % ATLASWIDTH, (enemy.AtlasIndex) / ATLASWIDTH);
         models[i].Materials.front()->Parameters.back().Value = glm::vec2(flip ? 0.0f : 1.0f, 0.0f);
         models[i].Materials.front()->Parameters.front().Value = index;
     }

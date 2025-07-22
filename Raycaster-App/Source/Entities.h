@@ -4,6 +4,9 @@
 
 #include <array>
 
+inline constexpr uint32_t ATLASWIDTH = 11;
+inline constexpr uint32_t ATLASHEIGHT = 2;
+
 struct Tile {
     glm::vec3 Posistion{};
     glm::vec3 Scale{};

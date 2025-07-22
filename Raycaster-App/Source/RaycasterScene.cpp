@@ -422,9 +422,8 @@ void RaycasterScene::RenderInventory() {
     m_Models[1].Transform = glm::rotate(m_Models[1].Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m_Models[1].Transform = glm::scale(m_Models[1].Transform, glm::vec3(2.0f * epsilon));
 
-    uint32_t atlasWidth = 11;
     m_Models[1].Materials.front()->Parameters.back().Value = 0.0f;
-    m_Models[1].Materials.front()->Parameters.front().Value = glm::vec2(atlasIndex % atlasWidth, atlasIndex / atlasWidth);
+    m_Models[1].Materials.front()->Parameters.front().Value = glm::vec2(atlasIndex % ATLASWIDTH, atlasIndex / ATLASWIDTH);
 }
 
 void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
