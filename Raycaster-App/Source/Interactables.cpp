@@ -2,11 +2,11 @@
 
 #include <array>
 
-static constexpr InteractionResult DebugInteraction() {
-    return { InteractionResult::Type::Debug, "You interacted with an interactable" };
+static constexpr InteractionResult DebugInteraction(size_t index) {
+    return InteractionResult::Create<InteractionResult::Type::Debug>("You interacted with an interactable", index);
 }
 
-using InteractionPtr = InteractionResult(*)();
+using InteractionPtr = InteractionResult(*)(size_t);
 
 enum class PlacementType {
     Centre = 0,
@@ -144,15 +144,15 @@ InteractionResult Interactables::Interact(const Player& player) {
     auto type = CanInteract(player);
     
     if (!type) {
-        return { InteractionResult::Type::None, ""};
+        return {};
     }
     
     auto interaction = GetInteraction(type.value());
     if (!interaction) {
-        return { InteractionResult::Type::None, "" };
+        return {};
     }
     
-    return interaction();
+    return interaction(m_CachedIndex);
 }
 
 void Interactables::UpdateRender(std::span<Sprite> sprites, std::span<Core::Model> models) {

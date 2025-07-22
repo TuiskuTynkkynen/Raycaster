@@ -25,13 +25,27 @@ struct Interactable {
     glm::vec3 Scale() const;
 };
 
-struct InteractionResult {
+class InteractionResult {
+public:
+    using variant = std::variant<std::nullopt_t, std::string_view, Item>;
     enum class Type {
         None = 0,
         Debug,
     };
-    Type Type;
-    std::string_view Data;
+    Type GetType() const { return static_cast<Type>(Data.index()); };
+    
+    template<Type type, typename T>
+    static constexpr InteractionResult Create(T data, size_t index) {
+        static_assert(std::is_convertible<T, std::variant_alternative_t<static_cast<size_t>(type), variant>>::value);
+        return InteractionResult(data, index);
+    }
+    
+    constexpr InteractionResult() : Data(std::nullopt), Index(-1) {}
+    variant Data;
+    size_t Index;
+private:
+    template<typename T>
+    constexpr InteractionResult(T data, size_t index) : Data(data), Index(index) {}
 };
 
 class Interactables {
