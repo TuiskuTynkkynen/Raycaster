@@ -161,6 +161,12 @@ void Interactables::UpdateRender(std::span<Sprite> sprites, std::span<Core::Mode
         sprites[i].Position.y = interactable.Position.y;
         sprites[i].Position.z = CalculatePositionZ(interactable.Type, sprites[i].Scale.z);
         sprites[i].WorldPosition = sprites[i].Position;
+
+        //Update on 3D-layer
+        uint32_t atlasWidth = 11;
+        glm::vec2 index = glm::vec2((interactable.AtlasIndex) % atlasWidth, (interactable.AtlasIndex) / atlasWidth);
+        models[i].Materials.front()->Parameters.back().Value = 0.0f;
+        models[i].Materials.front()->Parameters.front().Value = index;
     }
 }
 
