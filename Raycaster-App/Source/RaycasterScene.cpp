@@ -15,7 +15,7 @@ void RaycasterScene::Init(){
     m_Player.Scale = m_Map.GetScale() * 0.4f;
     m_Player.Rotation = 90.0f;
     m_Player.HeldItem = 0;
-    m_Player.Inventory[m_Player.HeldItem] = { .Scale = 0.5f, .AtlasIndex = 13, .Count = 1 };
+    m_Player.Inventory[m_Player.HeldItem] = { .Scale = 0.5f, .AtlasIndex = 13, .Count = 0 };
 
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, static_cast<float>(m_Map.GetWidth()), static_cast<float>(m_Map.GetHeight()));
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
@@ -28,6 +28,7 @@ void RaycasterScene::Init(){
     m_Interactables.Init();
     m_Interactables.Add(InteractableType::Barrel, { 3.0f, 2.5f });
     m_Interactables.Add(InteractableType::Barrel, { 2.5f, 2.5f });
+    m_Interactables.Add(InteractableType::Dagger, { 8.5f, 6.5f });
 
     for (glm::vec2 light : m_Lights) {
         m_Interactables.Add(InteractableType::Light, light);
@@ -453,8 +454,21 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
 
     if (Core::Input::IsKeyPressed(RC_KEY_SPACE)) {
         auto result = m_Interactables.Interact(m_Player);
-        if (result.Type == InteractionResult::Type::Debug) {
-            RC_TRACE("{}", result.Data);
+        
+        switch (result.GetType()) {
+            case InteractionResult::Type::Debug:
+                RC_TRACE("{}", std::get<std::string_view>(result.Data));
+                break;
+            case InteractionResult::Type::Pickup:
+                if (!m_Player.Inventory[m_Player.HeldItem].Count) {
+                    m_Player.Inventory[m_Player.HeldItem] = std::get<Item>(result.Data);
+                    m_Interactables.Remove(result.Index);
+                    m_SpriteObjects.pop_back();
+                    m_Models.pop_back();
+                }
+                break;
+            case InteractionResult::Type::None:
+                break;
         }
     }
 

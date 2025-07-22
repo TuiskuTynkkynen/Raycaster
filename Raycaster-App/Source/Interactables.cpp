@@ -6,6 +6,10 @@ static constexpr InteractionResult DebugInteraction(size_t index) {
     return InteractionResult::Create<InteractionResult::Type::Debug>("You interacted with an interactable", index);
 }
 
+static constexpr InteractionResult PickupInteraction(size_t index) {
+    return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 13, 1), index);
+}
+
 using InteractionPtr = InteractionResult(*)(size_t);
 
 enum class PlacementType {
@@ -32,6 +36,12 @@ constinit std::array<InteractableParameters, InteractableType::ENUMERATION_MAX +
         .Interaction = DebugInteraction,
         .Scale = {0.5f, 0.5f, 0.5f},
         .AtlasIndex = 8,
+        .Placement = PlacementType::Floor
+    };
+    parameters[InteractableType::Dagger] = InteractableParameters{
+        .Interaction = PickupInteraction,
+        .Scale = {0.5f, 0.5f, 0.5f},
+        .AtlasIndex = 14,
         .Placement = PlacementType::Floor
     };
     return parameters;

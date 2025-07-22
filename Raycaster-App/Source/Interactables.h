@@ -12,7 +12,8 @@ namespace InteractableType {
     enum Enumeration : uint8_t {
         Light = 0,
         Barrel,
-        ENUMERATION_MAX = Barrel,
+        Dagger,
+        ENUMERATION_MAX = Dagger,
     };
 }
 
@@ -31,6 +32,7 @@ public:
     enum class Type {
         None = 0,
         Debug,
+        Pickup,
     };
     Type GetType() const { return static_cast<Type>(Data.index()); };
     
