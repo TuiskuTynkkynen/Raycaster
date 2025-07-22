@@ -20,7 +20,7 @@ enum class PlacementType {
 
 struct InteractableParameters {
     InteractionPtr Interaction = nullptr;
-    glm::vec3 Scale{};
+    float Scale = 0.0f;
     uint32_t AtlasIndex = 0;
     PlacementType Placement = PlacementType::Floor;
 };
@@ -28,19 +28,19 @@ struct InteractableParameters {
 constinit std::array<InteractableParameters, InteractableType::ENUMERATION_MAX + 1> s_InteractableParameters = []{
     std::array<InteractableParameters, InteractableType::ENUMERATION_MAX + 1> parameters;
     parameters[InteractableType::Light] = InteractableParameters{
-        .Scale = {0.5f, 0.5f, 0.5f},
+        .Scale = 0.5f,
         .AtlasIndex = 10,
         .Placement = PlacementType::Ceiling,
     };
     parameters[InteractableType::Barrel] = InteractableParameters{
         .Interaction = DebugInteraction,
-        .Scale = {0.5f, 0.5f, 0.5f},
+        .Scale = 0.5f,
         .AtlasIndex = 8,
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::Dagger] = InteractableParameters{
         .Interaction = PickupInteraction,
-        .Scale = {0.5f, 0.5f, 0.5f},
+        .Scale = 0.5f,
         .AtlasIndex = 14,
         .Placement = PlacementType::Floor
     };
@@ -63,15 +63,15 @@ static constexpr InteractionPtr GetInteraction(InteractableType::Enumeration typ
     return s_InteractableParameters[type].Interaction;
 }
 
-static constexpr glm::vec3 GetScale(InteractableType::Enumeration type) {
+static constexpr float GetScale(InteractableType::Enumeration type) {
     if (type > InteractableType::ENUMERATION_MAX) {
-        return glm::vec3(1.0f);
+        return 1.0f;
     }
 
     return s_InteractableParameters[type].Scale;
 }
 
-static constexpr float CalculatePositionZ(InteractableType::Enumeration type, float height) {
+static constexpr float CalculatePositionZ(InteractableType::Enumeration type) {
     if (type > InteractableType::ENUMERATION_MAX) {
         return 0.5f;
     }
@@ -80,9 +80,9 @@ static constexpr float CalculatePositionZ(InteractableType::Enumeration type, fl
     case PlacementType::Centre:
         return 0.5f;
     case PlacementType::Floor:
-        return height * 0.5f;
+        return GetScale(type) * 0.5f;
     case PlacementType::Ceiling:
-        return 1.0f - height * 0.5f;
+        return 1.0f - GetScale(type) * 0.5f;
     }
 }
 
@@ -96,7 +96,7 @@ void Interactables::Shutdown() {
 }
 
 void Interactables::Add(InteractableType::Enumeration type, glm::vec2 position) {
-    m_Interactables.emplace_back(position, GetAtlasIndex(type), type);
+    m_Interactables.emplace_back(glm::vec3{ position, CalculatePositionZ(type) }, GetScale(type), GetAtlasIndex(type), type);
 }
 
 void Interactables::Remove(size_t index) {
@@ -127,7 +127,8 @@ std::optional<InteractableType::Enumeration> Interactables::CanInteract(const Pl
         if (!GetInteraction(m_Interactables[i].Type)) {
             continue;
         }
-        auto delta = m_Interactables[i].Position - m_CachedPosition;
+        glm::vec2 delta = m_Interactables[i].Position;
+        delta -= m_CachedPosition;
         float squaredDistance = glm::dot(delta, delta);
         
         // Check squared distance to save sqrt
@@ -170,13 +171,11 @@ void Interactables::UpdateRender(std::span<Sprite> sprites, std::span<Core::Mode
         const Interactable& interactable = m_Interactables[i];
         
         // Update on Raycaster-layer
-        sprites[i].Scale = GetScale(interactable.Type);
+        sprites[i].Scale = glm::vec3(interactable.Scale);
         sprites[i].AtlasIndex = interactable.AtlasIndex;
         sprites[i].FlipTexture = false;
 
-        sprites[i].Position.x = interactable.Position.x;
-        sprites[i].Position.y = interactable.Position.y;
-        sprites[i].Position.z = CalculatePositionZ(interactable.Type, sprites[i].Scale.z);
+        sprites[i].Position = interactable.Position;
         sprites[i].WorldPosition = sprites[i].Position;
 
         //Update on 3D-layer
@@ -184,8 +183,4 @@ void Interactables::UpdateRender(std::span<Sprite> sprites, std::span<Core::Mode
         models[i].Materials.front()->Parameters.back().Value = 0.0f;
         models[i].Materials.front()->Parameters.front().Value = index;
     }
-}
-
-glm::vec3 Interactable::Scale() const {
-    return GetScale(Type);
 }

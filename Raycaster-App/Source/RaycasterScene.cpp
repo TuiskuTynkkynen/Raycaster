@@ -523,7 +523,7 @@ void RaycasterScene::InitModels() {
             scale = m_Enemies[i - 1 - m_Interactables.Count()].Scale();
             atlasIndex = m_Enemies[i - 1 - m_Interactables.Count()].AtlasIndex;
         } else if (i) {
-            scale = m_Interactables[i - 1].Scale();
+            scale = glm::vec3(m_Interactables[i - 1].Scale);
             atlasIndex = m_Interactables[i - 1].AtlasIndex;
         } 
 

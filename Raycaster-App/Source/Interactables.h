@@ -18,12 +18,11 @@ namespace InteractableType {
 }
 
 struct Interactable {
-    glm::vec2 Position{};
+    glm::vec3 Position{};
+    float Scale = 0.0f;
 
     uint32_t AtlasIndex = 0;
     InteractableType::Enumeration Type;
-
-    glm::vec3 Scale() const;
 };
 
 class InteractionResult {
