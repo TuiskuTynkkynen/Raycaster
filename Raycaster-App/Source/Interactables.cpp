@@ -89,6 +89,13 @@ void Interactables::Add(InteractableType::Enumeration type, glm::vec2 position) 
     m_Interactables.emplace_back(position, GetAtlasIndex(type), type);
 }
 
+void Interactables::Remove(size_t index) {
+    if (index < m_Interactables.size()) {
+        m_Interactables[index] = m_Interactables.back();
+        m_Interactables.pop_back();
+    }
+}
+
 std::optional<InteractableType::Enumeration> Interactables::CanInteract(const Player& player) {
     glm::vec2 playerPosition = player.Position;
     if (m_CachedPosition == playerPosition && m_CachedAngle == player.Rotation) {

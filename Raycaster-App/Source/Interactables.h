@@ -40,6 +40,7 @@ public:
     void Shutdown();
 
     void Add(InteractableType::Enumeration type, glm::vec2 position);
+    void Remove(size_t index);
 
     std::optional<InteractableType::Enumeration> CanInteract(const Player& player);
     InteractionResult Interact(const Player& player);
