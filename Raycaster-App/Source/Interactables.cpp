@@ -107,6 +107,9 @@ std::optional<InteractableType::Enumeration> Interactables::CanInteract(const Pl
 
     float maxDot = 0.0f;
     for (size_t i = 0; i < m_Interactables.size(); i++) {
+        if (!GetInteraction(m_Interactables[i].Type)) {
+            continue;
+        }
         auto delta = m_Interactables[i].Position - m_CachedPosition;
         float squaredDistance = glm::dot(delta, delta);
         
