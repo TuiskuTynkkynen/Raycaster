@@ -12,6 +12,7 @@ namespace InteractableType {
     enum Enumeration : uint8_t {
         Light = 0,
         Barrel,
+        Chest,
         Dagger,
         ENUMERATION_MAX = Dagger,
     };
@@ -21,6 +22,7 @@ struct Interactable {
     glm::vec3 Position{};
     float Scale = 0.0f;
 
+    Core::Timestep AnimationProgress = 0.0f;
     uint32_t AtlasIndex = 0;
     InteractableType::Enumeration Type;
 };
@@ -34,13 +36,13 @@ public:
         Pickup,
     };
     Type GetType() const { return static_cast<Type>(Data.index()); };
-    
+
     template<Type type, typename T>
     static constexpr InteractionResult Create(T data, size_t index) {
         static_assert(std::is_convertible<T, std::variant_alternative_t<static_cast<size_t>(type), variant>>::value);
         return InteractionResult(data, index);
     }
-    
+
     constexpr InteractionResult() : Data(std::nullopt), Index(-1) {}
     variant Data;
     size_t Index;
@@ -60,6 +62,7 @@ public:
     std::optional<InteractableType::Enumeration> CanInteract(const Player& player);
     InteractionResult Interact(const Player& player);
 
+    void Update(Core::Timestep deltaTime);
     void UpdateRender(std::span<Sprite> sprites, std::span<Core::Model> models);
 
     inline size_t Count() const { return m_Interactables.size(); }

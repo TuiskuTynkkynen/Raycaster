@@ -28,7 +28,7 @@ void RaycasterScene::Init(){
     m_Interactables.Init();
     m_Interactables.Add(InteractableType::Barrel, { 3.0f, 2.5f });
     m_Interactables.Add(InteractableType::Barrel, { 2.5f, 2.5f });
-    m_Interactables.Add(InteractableType::Dagger, { 8.5f, 6.5f });
+    m_Interactables.Add(InteractableType::Chest, { 8.5f, 6.5f });
 
     for (glm::vec2 light : m_Lights) {
         m_Interactables.Add(InteractableType::Light, light);
@@ -63,6 +63,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         m_Enemies.Update(deltaTime, m_Map, m_Player.Position);
         m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, { m_SpriteObjects.end() - m_Enemies.Count(), m_SpriteObjects.end() }, { m_Models.end() - m_Enemies.Count(), m_Models.end() });
         
+        m_Interactables.Update(deltaTime);
         m_Interactables.UpdateRender({ m_SpriteObjects.begin(), m_SpriteObjects.end() - m_Enemies.Count() }, { m_Models.end() - m_Enemies.Count() - m_Interactables.Count(), m_Models.end() - m_Enemies.Count()});
 
         CastRays();

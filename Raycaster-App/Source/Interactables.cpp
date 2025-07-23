@@ -2,15 +2,17 @@
 
 #include <array>
 
-static constexpr InteractionResult DebugInteraction(size_t index) {
+static constexpr InteractionResult DebugInteraction(Interactable& interactable, size_t index) {
     return InteractionResult::Create<InteractionResult::Type::Debug>("You interacted with an interactable", index);
 }
 
-static constexpr InteractionResult PickupInteraction(size_t index) {
+static constexpr InteractionResult PickupInteraction(Interactable& interactable, size_t index) {
     return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 13, 1), index);
 }
 
-using InteractionPtr = InteractionResult(*)(size_t);
+static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
+
+using InteractionPtr = InteractionResult(*)(Interactable& interactable, size_t);
 
 enum class PlacementType {
     Centre = 0,
@@ -20,39 +22,45 @@ enum class PlacementType {
 
 struct InteractableParameters {
     InteractionPtr Interaction = nullptr;
-    float Scale = 0.0f;
-    uint32_t AtlasIndex = 0;
+    float Scale;
+    AtlasAnimation Animation{};
     PlacementType Placement = PlacementType::Floor;
 };
 
-constinit std::array<InteractableParameters, InteractableType::ENUMERATION_MAX + 1> s_InteractableParameters = []{
+static constinit std::array<InteractableParameters, InteractableType::ENUMERATION_MAX + 1> s_InteractableParameters = []{
     std::array<InteractableParameters, InteractableType::ENUMERATION_MAX + 1> parameters;
     parameters[InteractableType::Light] = InteractableParameters{
         .Scale = 0.5f,
-        .AtlasIndex = 10,
+        .Animation = {10, 1},
         .Placement = PlacementType::Ceiling,
     };
     parameters[InteractableType::Barrel] = InteractableParameters{
         .Interaction = DebugInteraction,
         .Scale = 0.5f,
-        .AtlasIndex = 8,
+        .Animation = {8, 1},
+        .Placement = PlacementType::Floor
+    };
+    parameters[InteractableType::Chest] = InteractableParameters{
+        .Interaction = AnimationInteraction,
+        .Scale = 0.5f,
+        .Animation = {15, 2},
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::Dagger] = InteractableParameters{
         .Interaction = PickupInteraction,
         .Scale = 0.5f,
-        .AtlasIndex = 14,
+        .Animation = {14, 1},
         .Placement = PlacementType::Floor
     };
     return parameters;
     }();
 
-static constexpr uint32_t GetAtlasIndex(InteractableType::Enumeration type) {
+static constexpr uint32_t GetAtlasIndex(InteractableType::Enumeration type, Core::Timestep animationProgress) {
     if (type > InteractableType::ENUMERATION_MAX) {
         return 0;
     }
 
-    return s_InteractableParameters[type].AtlasIndex;
+    return s_InteractableParameters[type].Animation.GetFrame(animationProgress);
 }
 
 static constexpr InteractionPtr GetInteraction(InteractableType::Enumeration type) {
@@ -86,6 +94,14 @@ static constexpr float CalculatePositionZ(InteractableType::Enumeration type) {
     }
 }
 
+static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index) {
+    if (interactable.AnimationProgress <= 0.0f) {
+        interactable.AnimationProgress = 1.0f / s_InteractableParameters[interactable.Type].Animation.FrameCount;
+    }
+
+    return {};
+}
+
 void Interactables::Init() {
     m_CachedPosition = { -1.0f, -1.0f };
     m_CachedIndex = -1;
@@ -96,7 +112,7 @@ void Interactables::Shutdown() {
 }
 
 void Interactables::Add(InteractableType::Enumeration type, glm::vec2 position) {
-    m_Interactables.emplace_back(glm::vec3{ position, CalculatePositionZ(type) }, GetScale(type), GetAtlasIndex(type), type);
+    m_Interactables.emplace_back(glm::vec3{ position, CalculatePositionZ(type) }, GetScale(type), -std::numeric_limits<float>::infinity(), GetAtlasIndex(type, 0.0f), type);
 }
 
 void Interactables::Remove(size_t index) {
@@ -163,7 +179,15 @@ InteractionResult Interactables::Interact(const Player& player) {
         return {};
     }
     
-    return interaction(m_CachedIndex);
+    return interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
+}
+
+void Interactables::Update(Core::Timestep deltaTime){
+    for (size_t i = 0; i < Count(); i++) {
+        Interactable& interactable = m_Interactables[i];
+        interactable.AnimationProgress += deltaTime;
+        interactable.AtlasIndex = GetAtlasIndex(interactable.Type, glm::clamp(interactable.AnimationProgress.GetSeconds(), 0.0f, 1.0f));
+    }
 }
 
 void Interactables::UpdateRender(std::span<Sprite> sprites, std::span<Core::Model> models) {
