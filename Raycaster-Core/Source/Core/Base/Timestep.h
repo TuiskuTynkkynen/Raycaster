@@ -10,6 +10,10 @@ namespace Core {
 		constexpr operator float() const { return m_Time; }
 		constexpr float GetSeconds() const { return m_Time; }
 		constexpr float GetMilliseconds() const { return m_Time * 1000; }
-	};
 
+		constexpr void operator+=(float other) { m_Time += other; }
+		constexpr void operator-=(float other) { m_Time -= other; }
+		constexpr void operator*=(float other) { m_Time *= other; }
+		constexpr void operator/=(float other) { m_Time /= other; }
+	};
 }
