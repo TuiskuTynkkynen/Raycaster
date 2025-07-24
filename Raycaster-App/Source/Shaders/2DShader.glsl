@@ -23,6 +23,7 @@ void main()
 
    TexCoords = aTexPos;
    AtlasOffset = aAtlasOffset;
+   AtlasOffset += 1e-5;
    TextureIndex = int(aTexIndex);
 }
 
