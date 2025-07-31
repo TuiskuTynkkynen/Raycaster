@@ -1,5 +1,7 @@
 #include "Interactables.h"
 
+#include "Easings.h"
+
 #include <array>
 
 static constexpr InteractionResult DebugInteraction(Interactable& interactable, size_t index) {
@@ -17,7 +19,8 @@ using InteractionPtr = InteractionResult(*)(Interactable& interactable, size_t);
 enum class PlacementType {
     Centre = 0,
     Floor,
-    Ceiling
+    Ceiling,
+    Falling,
 };
 
 struct InteractableParameters {
@@ -47,10 +50,10 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::Dagger] = InteractableParameters{
-        .Interaction = PickupInteraction,
+        .Interaction = AnimationInteraction,
         .Scale = 0.5f,
         .Animation = {14, 1},
-        .Placement = PlacementType::Floor
+        .Placement = PlacementType::Falling
     };
     return parameters;
     }();
@@ -85,6 +88,8 @@ static constexpr float CalculatePositionZ(InteractableType::Enumeration type) {
     }
 
     switch (s_InteractableParameters[type].Placement) {
+    case PlacementType::Falling:
+        return GetScale(type) * 0.5f;
     case PlacementType::Centre:
         return 0.5f;
     case PlacementType::Floor:
@@ -112,7 +117,12 @@ void Interactables::Shutdown() {
 }
 
 void Interactables::Add(InteractableType::Enumeration type, glm::vec2 position) {
+    RC_ASSERT(type <= InteractableType::ENUMERATION_MAX);
     m_Interactables.emplace_back(glm::vec3{ position, CalculatePositionZ(type) }, GetScale(type), -std::numeric_limits<float>::infinity(), GetAtlasIndex(type, 0.0f), type);
+    
+    if (s_InteractableParameters[type].Placement == PlacementType::Falling) {
+        m_Interactables.back().AnimationProgress = 0.0f;
+}
 }
 
 void Interactables::Remove(size_t index) {
@@ -186,7 +196,16 @@ void Interactables::Update(Core::Timestep deltaTime){
     for (size_t i = 0; i < Count(); i++) {
         Interactable& interactable = m_Interactables[i];
         interactable.AnimationProgress += deltaTime;
-        interactable.AtlasIndex = GetAtlasIndex(interactable.Type, glm::clamp(interactable.AnimationProgress.GetSeconds(), 0.0f, 1.0f));
+
+        float clampedProgress = glm::clamp(interactable.AnimationProgress.GetSeconds(), 0.0f, 1.0f);
+        interactable.AtlasIndex = GetAtlasIndex(interactable.Type, clampedProgress);
+
+        if (s_InteractableParameters[interactable.Type].Placement == PlacementType::Falling) {
+            interactable.Position.z = glm::mix(0.6f, GetScale(interactable.Type) * 0.5f, Easings::EaseOutBounce(clampedProgress * 1.25f - 0.25f));
+            glm::vec3 direction(2.5f - i % 5, 3.0f - i % 6, 0.0f);
+            direction = glm::normalize(direction);
+            interactable.Position += 0.5f * direction * (1.0f - clampedProgress) * deltaTime.GetSeconds();
+        }
     }
 }
 
