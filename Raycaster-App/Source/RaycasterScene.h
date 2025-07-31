@@ -46,6 +46,7 @@ private:
     void RenderSprites();
     void RenderInventory();
     void InitModels();
+    void InitInteractables(std::span<const Interactable> interactables);
     float LightBilinear(glm::vec2 position);
 public: 
     void Init() override;

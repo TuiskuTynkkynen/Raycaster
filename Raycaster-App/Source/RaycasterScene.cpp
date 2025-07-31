@@ -28,11 +28,11 @@ void RaycasterScene::Init(){
     m_Interactables.Init();
     m_Interactables.Add(InteractableType::Barrel, { 3.0f, 2.5f });
     m_Interactables.Add(InteractableType::Barrel, { 2.5f, 2.5f });
-    m_Interactables.Add(InteractableType::Chest, { 8.5f, 6.5f });
 
     for (glm::vec2 light : m_Lights) {
         m_Interactables.Add(InteractableType::Light, light);
     }
+    m_Interactables.Add(InteractableType::Chest, { 8.5f, 6.5f });
 
     m_Enemies.Init(m_Map);
     m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
@@ -468,6 +468,9 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
                     m_Models.pop_back();
                 }
                 break;
+            case InteractionResult::Type::Add:
+                InitInteractables(std::get<std::span<const Interactable>>(result.Data));
+                break;
             case InteractionResult::Type::None:
                 break;
         }
@@ -486,6 +489,69 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
 
     m_Camera->UpdateCamera(m_Player.Position, m_Player.Rotation);
     m_Camera3D->UpdateCamera(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), -m_Player.Rotation);
+}
+
+static Core::Model CreateBillboard(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Core::Texture2D> texture, glm::vec3 scale, uint32_t atlasIndex) {
+    Core::Model model;
+
+    std::vector<float> vertices;
+    std::vector<uint32_t> indices;
+    vertices.reserve(4 * 8);
+    indices.reserve(6);
+
+    for (uint32_t j = 0; j < 4; j++) {
+        float x = (j < 2) ? scale.x * 0.5f : -scale.x * 0.5f;
+        float y = (j % 2) ? scale.y * 0.5f : -scale.y * 0.5f;
+
+        //position
+        vertices.push_back(x);
+        vertices.push_back(y);
+        vertices.push_back(0.0f);
+
+        //normal
+        const glm::vec3 normal(0.0f, 0.0f, 1.0f);
+        vertices.push_back(normal.x);
+        vertices.push_back(normal.y);
+        vertices.push_back(normal.z);
+
+        //uv
+        vertices.push_back((j >= 2) ? 0.0f : 1.0f);
+        vertices.push_back((j % 2 == 0) ? 0.0f : 1.0f);
+    }
+
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(2);
+    indices.push_back(3);
+    indices.push_back(2);
+    indices.push_back(1);
+
+    auto mesh = std::make_shared<Core::Mesh>();
+    mesh->VAO = std::make_unique<Core::VertexArray>();
+    mesh->VBO = std::make_unique<Core::VertexBuffer>(vertices.data(), static_cast<uint32_t>(sizeof(float) * vertices.size()));
+    Core::VertexBufferLayout wallLayout;
+
+    wallLayout.Push<float>(3);
+    wallLayout.Push<float>(3);
+    wallLayout.Push<float>(2);
+    mesh->VAO->AddBuffer(*mesh->VBO, wallLayout);
+
+    mesh->EBO = std::make_unique<Core::ElementBuffer>(indices.data(), static_cast<uint32_t>(indices.size()));
+
+    model.Meshes.emplace_back(mesh, 0);
+
+    auto mat = std::make_shared<Core::Material>();
+    mat->Shader = shader;
+    mat->MaterialMaps.emplace_back();
+    mat->MaterialMaps.back().Texture = texture;
+    mat->MaterialMaps.back().TextureIndex = 0;
+    glm::vec2 index{ static_cast<float>(atlasIndex % ATLASWIDTH), static_cast<float>(atlasIndex / ATLASWIDTH) };
+
+    mat->Parameters.emplace_back(index, "AtlasOffset");
+    mat->Parameters.emplace_back(0.0f, "FlipTexture");
+    model.Materials.push_back(mat);
+
+    return model;
 }
 
 void RaycasterScene::InitModels() {
@@ -515,7 +581,6 @@ void RaycasterScene::InitModels() {
     m_Models.push_back(m_Map.CreateModel(m_Walls, textureAtlas, shader));
 
     //Create and set up model for static objects and enemies
-    const glm::vec3 normal(0.0f, 0.0f, 1.0f);
     const size_t totalCount = m_Interactables.Count() + m_Enemies.Count() + 1; // + 1 for held item
     glm::vec3 scale(m_Player.Inventory[m_Player.HeldItem].Scale);
     uint32_t atlasIndex = m_Player.Inventory[m_Player.HeldItem].AtlasIndex;
@@ -528,64 +593,14 @@ void RaycasterScene::InitModels() {
             atlasIndex = m_Interactables[i - 1].AtlasIndex;
         } 
 
-        glm::vec2 index{ static_cast<float>(atlasIndex % atlasSize.x), static_cast<float>(atlasIndex / atlasSize.x) };
+        m_Models.emplace_back(CreateBillboard(shader, textureAtlas, scale, atlasIndex));
+    }
+}
 
-        m_Models.emplace_back();
-        Core::Model& model = m_Models.back();
-
-        std::vector<float> vertices;
-        std::vector<uint32_t> indices;
-        vertices.reserve(totalCount * 4 * 8);
-        indices.reserve(totalCount * 6);
-
-        for (uint32_t j = 0; j < 4; j++) {
-            float x = (j < 2) ? scale.x * 0.5f : -scale.x * 0.5f;
-            float y = (j % 2) ? scale.y * 0.5f : - scale.y * 0.5f;
-
-            //position
-            vertices.push_back(x);
-            vertices.push_back(y);
-            vertices.push_back(0.0f);
-
-            //normal
-            vertices.push_back(normal.x);
-            vertices.push_back(normal.y);
-            vertices.push_back(normal.z);
-            
-            //uv
-            vertices.push_back((j >= 2) ? 0.0f : 1.0f);
-            vertices.push_back((j % 2 == 0) ? 0.0f : 1.0f);
-        }
-
-        indices.push_back(0);
-        indices.push_back(1);
-        indices.push_back(2);
-        indices.push_back(3);
-        indices.push_back(2);
-        indices.push_back(1);
-
-        auto mesh = std::make_shared<Core::Mesh>();
-        mesh->VAO = std::make_unique<Core::VertexArray>();
-        mesh->VBO = std::make_unique<Core::VertexBuffer>(vertices.data(), static_cast<uint32_t>(sizeof(float) * vertices.size()));
-        Core::VertexBufferLayout wallLayout;
-
-        wallLayout.Push<float>(3);
-        wallLayout.Push<float>(3);
-        wallLayout.Push<float>(2);
-        mesh->VAO->AddBuffer(*mesh->VBO, wallLayout);
-
-        mesh->EBO = std::make_unique<Core::ElementBuffer>(indices.data(), static_cast<uint32_t>(indices.size()));
-
-        model.Meshes.emplace_back(mesh, 0);
-
-        auto mat = std::make_shared<Core::Material>();
-        mat->Shader = shader;
-        mat->MaterialMaps.emplace_back();
-        mat->MaterialMaps.back().Texture = textureAtlas;
-        mat->MaterialMaps.back().TextureIndex = 0;
-        mat->Parameters.emplace_back(index, "AtlasOffset");
-        mat->Parameters.emplace_back(0.0f, "FlipTexture");
-        model.Materials.push_back(mat);
+void RaycasterScene::InitInteractables(std::span<const Interactable> interactables) {
+    for (const auto& interactable : interactables) {
+        m_SpriteObjects.emplace_back();
+        m_Models.insert(m_Models.end() - m_Enemies.Count(), CreateBillboard(m_Models.back().Materials.back()->Shader, m_Models.back().Materials.back()->MaterialMaps.back().Texture, glm::vec3(interactable.Scale), interactable.AtlasIndex));
     }
 }
 

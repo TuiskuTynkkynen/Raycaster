@@ -50,7 +50,7 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::Dagger] = InteractableParameters{
-        .Interaction = AnimationInteraction,
+        .Interaction = PickupInteraction,
         .Scale = 0.5f,
         .Animation = {14, 1},
         .Placement = PlacementType::Falling
@@ -122,7 +122,7 @@ void Interactables::Add(InteractableType::Enumeration type, glm::vec2 position) 
     
     if (s_InteractableParameters[type].Placement == PlacementType::Falling) {
         m_Interactables.back().AnimationProgress = 0.0f;
-}
+    }
 }
 
 void Interactables::Remove(size_t index) {
@@ -189,6 +189,13 @@ InteractionResult Interactables::Interact(const Player& player) {
         return {};
     }
     
+    if (type == InteractableType::Chest && m_Interactables[m_CachedIndex].AnimationProgress <= 0.0f) {
+        Add(InteractableType::Dagger, m_Interactables[m_CachedIndex].Position);
+        interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
+        
+        return InteractionResult::Create<InteractionResult::Type::Add>(std::span<Interactable>(m_Interactables.end() - 1, m_Interactables.end()), 0);
+    }
+
     return interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
 }
 
