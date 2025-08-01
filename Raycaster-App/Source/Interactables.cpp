@@ -9,7 +9,7 @@ static constexpr InteractionResult DebugInteraction(Interactable& interactable, 
 }
 
 static constexpr InteractionResult PickupInteraction(Interactable& interactable, size_t index) {
-    return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 13, 1), index);
+    return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 1, { 17, 5 }, 0.75f), index);
 }
 
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);

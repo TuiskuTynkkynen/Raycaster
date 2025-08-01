@@ -15,7 +15,7 @@ void RaycasterScene::Init(){
     m_Player.Scale = m_Map.GetScale() * 0.4f;
     m_Player.Rotation = 90.0f;
     m_Player.HeldItem = 0;
-    m_Player.Inventory[m_Player.HeldItem] = { .Scale = 0.5f, .AtlasIndex = 13, .Count = 0 };
+    m_Player.Inventory[m_Player.HeldItem] = { .Scale = 0.5f, .Count = 0 };
 
     m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, static_cast<float>(m_Map.GetWidth()), static_cast<float>(m_Map.GetHeight()));
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
@@ -371,7 +371,7 @@ void RaycasterScene::RenderInventory() {
     if (!m_Player.Inventory[m_Player.HeldItem].Count) {
         return;
     }
-    uint32_t atlasIndex = m_Player.Inventory[0].AtlasIndex;
+    uint32_t atlasIndex = m_Player.Inventory[0].UseAnimation.GetFrame(m_Player.AnimationProgress);
 
     // Update on Raycaster-layer
     glm::vec3 scale(2.0f * m_Player.Inventory[0].Scale);
@@ -489,6 +489,30 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
 
     m_Camera->UpdateCamera(m_Player.Position, m_Player.Rotation);
     m_Camera3D->UpdateCamera(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), -m_Player.Rotation);
+
+    bool HoldingItem = m_Player.HeldItem < m_Player.Inventory.size() && m_Player.Inventory[m_Player.HeldItem].UseDuration;
+    bool UsingItem = HoldingItem && m_Player.AnimationProgress >= 0.0f;
+    if (Core::Input::IsKeyPressed(RC_KEY_Q)) {
+        if (HoldingItem && !UsingItem) {
+            m_Player.AnimationProgress = 0.0f;
+        }
+    }
+
+    if (UsingItem) {
+        UseItem(deltaTime);
+    }
+}
+
+void RaycasterScene::UseItem(Core::Timestep deltaTime) {
+    RC_ASSERT(m_Player.HeldItem < m_Player.Inventory.size());
+    auto& heldItem = m_Player.Inventory[m_Player.HeldItem];
+
+    m_Player.AnimationProgress += deltaTime / heldItem.UseDuration;
+
+
+    if (m_Player.AnimationProgress >= 1.0f) {
+        m_Player.AnimationProgress = -std::numeric_limits<float>::infinity();
+    }
 }
 
 static Core::Model CreateBillboard(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Core::Texture2D> texture, glm::vec3 scale, uint32_t atlasIndex) {
@@ -583,7 +607,7 @@ void RaycasterScene::InitModels() {
     //Create and set up model for static objects and enemies
     const size_t totalCount = m_Interactables.Count() + m_Enemies.Count() + 1; // + 1 for held item
     glm::vec3 scale(m_Player.Inventory[m_Player.HeldItem].Scale);
-    uint32_t atlasIndex = m_Player.Inventory[m_Player.HeldItem].AtlasIndex;
+    uint32_t atlasIndex = m_Player.Inventory[m_Player.HeldItem].UseAnimation.GetFrame(0.0f);
     for (size_t i = 0; i < totalCount; i++) {
         if (i > m_Interactables.Count()) {
             scale = m_Enemies[i - 1 - m_Interactables.Count()].Scale();

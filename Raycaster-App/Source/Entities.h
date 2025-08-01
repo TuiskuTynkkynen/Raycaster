@@ -47,8 +47,10 @@ struct AtlasAnimation {
 
 struct Item {
     float Scale = 0.0f;
-    uint32_t AtlasIndex = 0;
     uint32_t Count = 0;
+    
+    AtlasAnimation UseAnimation{};
+    float UseDuration = 0.0f;
 };
 
 struct Player {
@@ -56,6 +58,7 @@ struct Player {
     glm::vec3 Scale{};
     float Rotation = 0.0f;
 
+    Core::Timestep AnimationProgress = -std::numeric_limits<float>::infinity();
     size_t HeldItem = 0;
     std::array<Item, 1> Inventory;
 };

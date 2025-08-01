@@ -41,6 +41,7 @@ private:
     const bool m_SnappingEnabled = true;
 
     void ProcessInput(Core::Timestep deltaTime);
+    void UseItem(Core::Timestep deltaTime);
     void CastRays();
     void CastFloors();
     void RenderSprites();
