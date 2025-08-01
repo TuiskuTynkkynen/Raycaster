@@ -463,9 +463,9 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
             case InteractionResult::Type::Pickup:
                 if (!m_Player.Inventory[m_Player.HeldItem].Count) {
                     m_Player.Inventory[m_Player.HeldItem] = std::get<Item>(result.Data);
-                    m_Interactables.Remove(result.Index);
                     m_SpriteObjects.pop_back();
-                    m_Models.pop_back();
+                    m_Models.erase(m_Models.end() - m_Enemies.Count() - m_Interactables.Count() + result.Index);
+                    m_Interactables.Remove(result.Index);
                 }
                 break;
             case InteractionResult::Type::Add:
