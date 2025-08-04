@@ -156,6 +156,11 @@ ActionStatus BasicPathfind(Context& context, Enemy& enemy) {
     return ActionStatus::Done;
 }
 
+ActionStatus BasicDead(Context& context, Enemy& enemy) {
+    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + 2;
+    return ActionStatus::Done;
+}
+
 ActionStatus RangedPathfind(Context& context, Enemy& enemy) {
     enemy.Tick += context.DeltaTime * 2.0f;
     enemy.AtlasIndex = GetAtlasIndex(enemy.Type);

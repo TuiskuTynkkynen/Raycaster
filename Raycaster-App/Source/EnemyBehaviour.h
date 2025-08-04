@@ -39,11 +39,17 @@ bool RangeCondition(const Context& context, Enemy& enemy) {
     return ((min < distance) && (distance < max)) ^ negate;
 }
 
+template<float health, bool negate = false>
+bool HealthCondition(const Context& context, Enemy& enemy) {
+    return (enemy.Health <= health) ^ negate;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                  Actions                                  //
 ///////////////////////////////////////////////////////////////////////////////
 ActionStatus BasicAttack(Context& context, Enemy& enemy);
 ActionStatus BasicPathfind(Context& context, Enemy& enemy);
+ActionStatus BasicDead(Context& context, Enemy& enemy);
 ActionStatus RangedPathfind(Context& context, Enemy& enemy);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,24 +59,30 @@ inline constinit std::array<Action, EnemyState::ENUMERATION_MAX + 1> s_BasicActi
     std::array<Action, EnemyState::ENUMERATION_MAX + 1> actions;
     actions[EnemyState::Pathfind] = BasicPathfind;
     actions[EnemyState::Attack] = BasicAttack;
+    actions[EnemyState::Dead] = BasicDead;
     return actions;
     }();
 
 inline constexpr std::array s_BasicTransitions{
     Transition { EnemyState::Pathfind,  EnemyState::Attack,     DistanceCondition<1.1f> },
     Transition { EnemyState::Attack,    EnemyState::Pathfind,   DistanceCondition<1.1f, true> },
+    Transition { EnemyState::Pathfind,  EnemyState::Dead,     HealthCondition<0.0f> },
+    Transition { EnemyState::Attack,    EnemyState::Dead,   HealthCondition<0.0f> },
 };
 
 inline constinit std::array<Action, EnemyState::ENUMERATION_MAX + 1> s_RangedActions = [] {
     std::array<Action, EnemyState::ENUMERATION_MAX + 1> actions;
     actions[EnemyState::Pathfind] = RangedPathfind;
     actions[EnemyState::Attack] = BasicAttack;
+    actions[EnemyState::Dead] = BasicDead;
     return actions;
     }();
 
 inline constexpr std::array s_RangedTransitions{
     Transition { EnemyState::Pathfind,  EnemyState::Attack,     RangeCondition<3.25f, 4.75f> },
     Transition { EnemyState::Attack,    EnemyState::Pathfind,   RangeCondition<3.25f, 4.75f, true> },
+    Transition { EnemyState::Pathfind,  EnemyState::Dead,     HealthCondition<0.0f> },
+    Transition { EnemyState::Attack,    EnemyState::Dead,   HealthCondition<0.0f> },
 };
 
 ///////////////////////////////////////////////////////////////////////////////

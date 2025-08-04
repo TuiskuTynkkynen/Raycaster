@@ -14,14 +14,13 @@ void Enemies::Init(const Map& map) {
 
 void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
     RC_ASSERT(m_Frontier.size(), "Enemies must be initialized before calling Add");
-    m_Enemies.emplace_back(position, 0.0f, GetAtlasIndex(type), type);
+    m_Enemies.emplace_back(position, 5.0f, 0.0f, GetAtlasIndex(type), type);
 }
 
 void Enemies::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
     for (auto& enemy : m_Enemies) {
         bool hit = Algorithms::LineCollisions(enemy.Position, attack, thickness) != glm::vec2(0.0f);
         enemy.Health -= damage * hit;
-        RC_TRACE("Hit an enemy");
     }
 }
 
