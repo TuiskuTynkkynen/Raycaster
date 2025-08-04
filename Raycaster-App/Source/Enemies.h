@@ -25,6 +25,7 @@ namespace EnemyState {
 
 struct Enemy {
     glm::vec2 Position{};
+    float Health = 0.0f;
     float Tick = 0.0f;
 
     uint32_t AtlasIndex = 0;
@@ -42,6 +43,8 @@ public:
     void Shutdown() { m_Enemies.clear(); m_Enemies.shrink_to_fit(); m_ApproachMap.clear(); m_ApproachMap.shrink_to_fit(); m_Frontier.clear(); m_Frontier.shrink_to_fit();  }
 
     void Add(EnemyType::Enumeration type, glm::vec2 position);
+
+    void DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
 
     void Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerPosition);
 

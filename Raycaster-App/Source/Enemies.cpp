@@ -17,6 +17,14 @@ void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
     m_Enemies.emplace_back(position, 0.0f, GetAtlasIndex(type), type);
 }
 
+void Enemies::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
+    for (auto& enemy : m_Enemies) {
+        bool hit = Algorithms::LineCollisions(enemy.Position, attack, thickness) != glm::vec2(0.0f);
+        enemy.Health -= damage * hit;
+        RC_TRACE("Hit an enemy");
+    }
+}
+
 void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerPosition) {
     static bool shouldUpdate = false;
 
