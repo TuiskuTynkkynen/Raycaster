@@ -376,7 +376,7 @@ void RaycasterScene::RenderInventory() {
     // Update on Raycaster-layer
     glm::vec3 scale(2.0f * m_Player.Inventory[0].Scale);
     glm::vec3 position(0.0f, -(1.0f - m_Player.Inventory[0].Scale), 0.0f);
-
+    
     if (m_SnappingEnabled) {
         position.y = glm::round(position.y * m_RayCount * 0.5f) * m_RayWidth;
         // The center of a sprite is @ an integer multiple of ray width, so scale needs to be even multiple of m_RayWidth
@@ -509,6 +509,16 @@ void RaycasterScene::UseItem(Core::Timestep deltaTime) {
 
     m_Player.AnimationProgress += deltaTime / heldItem.UseDuration;
 
+    std::visit([&](auto& data) { 
+        using T = std::decay_t<decltype(data)>;
+        if constexpr (std::is_same_v<T, MeleeWeaponData>) {
+            if (m_Player.AnimationProgress > data.AttackTiming && m_Player.AnimationProgress - deltaTime < data.AttackTiming) {
+                glm::vec3 front(cos(glm::radians(m_Player.Rotation)), -sin(glm::radians(m_Player.Rotation)), 0.0f);
+                std::array area = { LineCollider(m_Player.Position, m_Player.Position + data.AttackLength * front) };
+                m_Enemies.DamageAreas(area, data.AttackThickness, data.Damage);
+            }
+        }
+        }, heldItem.AdditionalData);
 
     if (m_Player.AnimationProgress >= 1.0f) {
         m_Player.AnimationProgress = -std::numeric_limits<float>::infinity();
