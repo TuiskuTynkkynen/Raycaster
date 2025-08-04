@@ -5,6 +5,7 @@
 #include "glm/glm.hpp"
 
 #include <array>
+#include <variant>
 
 inline constexpr uint32_t ATLASWIDTH = 11;
 inline constexpr uint32_t ATLASHEIGHT = 2;
@@ -45,12 +46,20 @@ struct AtlasAnimation {
     }
 };
 
+struct MeleeWeaponData {
+    float AttackLength = 0.0f;
+    float AttackThickness = 0.0f;
+    float Damage = 0.0f;
+    float AttackTiming = 0.0f;
+};
+
 struct Item {
     float Scale = 0.0f;
     uint32_t Count = 0;
     
     AtlasAnimation UseAnimation{};
     float UseDuration = 0.0f;
+    std::variant<MeleeWeaponData> AdditionalData;
 };
 
 struct Player {
