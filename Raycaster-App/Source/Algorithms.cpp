@@ -4,7 +4,7 @@
 
 #include <queue>
 
-glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, std::vector<bool> map, uint32_t width, uint32_t height) {
+glm::u32vec2 Algorithms::AStar(glm::i32vec2 start, glm::i32vec2 end, std::span<const bool> map, uint32_t width, uint32_t height) {
     static const glm::i32vec2 directions[] = {
         glm::i32vec2(1,0),
         glm::i32vec2(-1,0),
@@ -98,7 +98,7 @@ std::optional<glm::vec2> Algorithms::LineIntersection(glm::vec2 point1, glm::vec
     return glm::vec2(point1.x + (t * line1.x), point1.y + (t * line1.y));
 }
 
-glm::vec2 Algorithms::LineCollisions(glm::vec2 point, const std::vector<LineCollider>& lines, float thickness) {
+glm::vec2 Algorithms::LineCollisions(glm::vec2 point, std::span<const LineCollider> lines, float thickness) {
     size_t lineCount = lines.size();
     glm::vec2 movement(0.0f);
 
