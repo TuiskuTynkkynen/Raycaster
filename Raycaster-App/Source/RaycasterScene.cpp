@@ -533,9 +533,6 @@ void RaycasterScene::UseItem(Core::Timestep deltaTime) {
 void RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
     const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness) != glm::vec2(0.0f);
     m_Player.Health -= damage * hit;
-    if (hit) {
-        RC_TRACE("Player got hit");
-    }
 }
 
 static Core::Model CreateBillboard(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Core::Texture2D> texture, glm::vec3 scale, uint32_t atlasIndex) {
