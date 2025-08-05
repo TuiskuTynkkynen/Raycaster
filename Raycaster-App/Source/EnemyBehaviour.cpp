@@ -124,9 +124,27 @@ static glm::vec2 Collision(const Enemy& enemy, const Map& map, const std::vector
 }
 
 ActionStatus BasicAttack(Context& context, Enemy& enemy) {
-    enemy.Tick += context.DeltaTime;
+    Core::Timestep relativeDeltaTime = context.DeltaTime / GetAttackDuration(enemy.Type);
+    enemy.ActionTick += relativeDeltaTime;
     enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + 1;
-    return ActionStatus::Done;
+    
+    if (enemy.ActionTick >= GetAttackTiming(enemy.Type) && enemy.ActionTick - relativeDeltaTime < GetAttackTiming(enemy.Type)) {
+        glm::vec2 direction = glm::normalize(context.PlayerPosition - enemy.Position);
+        context.Areas.emplace_back(enemy.Position, enemy.Position + GetAttackRange(enemy.Type) * direction);
+    
+        const std::span<LineCollider> area = { context.Areas.end() - 1, 1 };
+        const float thickness = 0.25f;
+        context.Attacks.emplace_back(area, thickness, GetAttackDamage(enemy.Type));
+
+        enemy.Tick++;
+    }
+
+    if (enemy.ActionTick >= 1.0f) {
+        enemy.ActionTick = 0.0f;
+        return ActionStatus::Done;
+    }
+    
+    return ActionStatus::Running;
 }
 
 ActionStatus BasicPathfind(Context& context, Enemy& enemy) {

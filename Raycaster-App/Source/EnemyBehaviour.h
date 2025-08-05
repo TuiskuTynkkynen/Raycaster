@@ -6,6 +6,8 @@ struct Context {
     bool UpdateDjikstraMap;
     glm::vec2 PlayerPosition;
     const Map& Map;
+    std::vector<LineCollider>& Areas;
+    std::vector<Enemies::Attack>& Attacks;
     const std::vector<float>& AproachMap;
     const std::vector<float>& RangedApproachMap;
     const std::vector<Enemy>& Enemies;
@@ -95,6 +97,10 @@ struct EnemyParameters {
     glm::vec3 Scale{};
 
     float Speed{};
+    float AttackDamage{};
+    float AttackRange{};
+    float AttackDuration{};
+    float AttackTiming{};
     uint32_t AtlasIndex{};
 };
 
@@ -106,6 +112,10 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
 
         .Scale{0.8f},
         .Speed{1.0f},
+        .AttackDamage{1.0f},
+        .AttackRange{1.25f},
+        .AttackDuration{1.5f},
+        .AttackTiming{1.0f / 1.5f},
         .AtlasIndex{11},
     };
     params[EnemyType::Ranged] = EnemyParameters{
@@ -114,6 +124,10 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
 
         .Scale{0.8f},
         .Speed{1.0f},
+        .AttackDamage{1.0f},
+        .AttackRange{0.0f},
+        .AttackDuration{1.0f},
+        .AttackTiming{1.0f},
         .AtlasIndex{11},
     };
     return params;
@@ -133,6 +147,38 @@ constexpr float GetSpeed(EnemyType::Enumeration type) {
     }
 
     return s_EnemyParameters[type].Speed;
+}
+
+constexpr float GetAttackDamage(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return 0.0f;
+    }
+
+    return s_EnemyParameters[type].AttackDamage;
+}
+
+constexpr float GetAttackRange(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return 0.0f;
+    }
+
+    return s_EnemyParameters[type].AttackRange;
+}
+
+constexpr float GetAttackDuration(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return 0.0f;
+    }
+
+    return s_EnemyParameters[type].AttackDuration;
+}
+
+constexpr float GetAttackTiming(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return 0.0f;
+    }
+
+    return s_EnemyParameters[type].AttackTiming;
 }
 
 constexpr uint32_t GetAtlasIndex(EnemyType::Enumeration type) {

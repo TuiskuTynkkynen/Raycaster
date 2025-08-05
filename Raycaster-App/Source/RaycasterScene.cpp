@@ -61,8 +61,12 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         ProcessInput(deltaTime);
         
         m_Enemies.Update(deltaTime, m_Map, m_Player.Position);
+        auto attacks = m_Enemies.GetAttacks();
+        for (auto& attack : attacks) {
+            DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
+        }
         m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, { m_SpriteObjects.end() - m_Enemies.Count(), m_SpriteObjects.end() }, { m_Models.end() - m_Enemies.Count(), m_Models.end() });
-        
+
         m_Interactables.Update(deltaTime);
         m_Interactables.UpdateRender({ m_SpriteObjects.begin(), m_SpriteObjects.end() - m_Enemies.Count() }, { m_Models.end() - m_Enemies.Count() - m_Interactables.Count(), m_Models.end() - m_Enemies.Count()});
 
@@ -523,6 +527,14 @@ void RaycasterScene::UseItem(Core::Timestep deltaTime) {
 
     if (m_Player.AnimationProgress >= 1.0f) {
         m_Player.AnimationProgress = -std::numeric_limits<float>::infinity();
+    }
+}
+
+void RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
+    const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness) != glm::vec2(0.0f);
+    m_Player.Health -= damage * hit;
+    if (hit) {
+        RC_TRACE("Player got hit");
     }
 }
 

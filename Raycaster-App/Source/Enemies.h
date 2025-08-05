@@ -28,6 +28,7 @@ struct Enemy {
     glm::vec2 Position{};
     float Health = 0.0f;
     float Tick = 0.0f;
+    float ActionTick = 0.0f;
 
     uint32_t AtlasIndex = 0;
     EnemyType::Enumeration Type;
@@ -58,6 +59,12 @@ public:
         RC_ASSERT(index < Count());
         return m_Enemies[index];
     }
+    struct Attack {
+        std::span<LineCollider> Areas;
+        float Thickness;
+        float Damage;
+    };
+    inline const std::span<const Attack> GetAttacks() const { return m_Attacks;  };
 private:
     void UpdateApproachMap(const Map& map, glm::ivec2 playerPosition);
     void UpdateRangedApproachMap(const Map& map, glm::vec2 playerPosition);
@@ -69,6 +76,9 @@ private:
     std::vector<float> m_ApproachMap;
     std::vector<float> m_RangedApproachMap;
     std::vector<float> m_CostMap;
+
+    std::vector<LineCollider> m_Areas;
+    std::vector<Attack> m_Attacks;
 
     std::vector<std::pair<glm::ivec3, float>> m_Frontier;
 

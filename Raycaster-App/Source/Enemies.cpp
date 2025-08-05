@@ -14,7 +14,7 @@ void Enemies::Init(const Map& map) {
 
 void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
     RC_ASSERT(m_Frontier.size(), "Enemies must be initialized before calling Add");
-    m_Enemies.emplace_back(position, 5.0f, 0.0f, GetAtlasIndex(type), type);
+    m_Enemies.emplace_back(position, 5.0f, 0.0f, 0.0f, GetAtlasIndex(type), type);
 }
 
 void Enemies::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
@@ -34,11 +34,16 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
     }
     m_PreviousPlayerPosition = playerPosition;
 
+    m_Areas.clear();
+    m_Attacks.clear();
+
     Context context{
         .DeltaTime = deltaTime,
         .UpdateDjikstraMap = false,
         .PlayerPosition = playerPosition,
         .Map = map,
+        .Areas = m_Areas,
+        .Attacks = m_Attacks,
         .AproachMap = m_ApproachMap,
         .RangedApproachMap = m_RangedApproachMap,
         .Enemies = m_Enemies
@@ -58,6 +63,7 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
                         continue;
                     }
 
+            enemy.ActionTick = 0.0f;
             enemy.State = Transition.NextState;
             break;
                 }

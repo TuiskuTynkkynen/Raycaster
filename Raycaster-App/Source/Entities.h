@@ -66,6 +66,8 @@ struct Player {
     glm::vec3 Position{};
     glm::vec3 Scale{};
     float Rotation = 0.0f;
+    static constexpr float MaxHealth = 10.0f;
+    float Health = MaxHealth;
 
     Core::Timestep AnimationProgress = -std::numeric_limits<float>::infinity();
     size_t HeldItem = 0;
