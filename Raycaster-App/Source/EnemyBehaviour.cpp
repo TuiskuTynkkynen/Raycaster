@@ -126,7 +126,7 @@ static glm::vec2 Collision(const Enemy& enemy, const Map& map, const std::vector
 ActionStatus BasicAttack(Context& context, Enemy& enemy) {
     Core::Timestep relativeDeltaTime = context.DeltaTime / GetAttackDuration(enemy.Type);
     enemy.ActionTick += relativeDeltaTime;
-    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + 1;
+    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Attack;
     
     if (enemy.ActionTick >= GetAttackTiming(enemy.Type) && enemy.ActionTick - relativeDeltaTime < GetAttackTiming(enemy.Type)) {
         glm::vec2 direction = glm::normalize(context.PlayerPosition - enemy.Position);
@@ -149,7 +149,7 @@ ActionStatus BasicAttack(Context& context, Enemy& enemy) {
 
 ActionStatus BasicPathfind(Context& context, Enemy& enemy) {
     enemy.Tick += context.DeltaTime * 2.0f;
-    enemy.AtlasIndex = GetAtlasIndex(enemy.Type);
+    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Walk;
    
     glm::vec2 movementVector = Pathfind(context.AproachMap, enemy.Position, context.Map);
 
@@ -175,13 +175,13 @@ ActionStatus BasicPathfind(Context& context, Enemy& enemy) {
 }
 
 ActionStatus BasicDead(Context& context, Enemy& enemy) {
-    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + 2;
+    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Corpse;
     return ActionStatus::Done;
 }
 
 ActionStatus RangedPathfind(Context& context, Enemy& enemy) {
     enemy.Tick += context.DeltaTime * 2.0f;
-    enemy.AtlasIndex = GetAtlasIndex(enemy.Type);
+    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Walk;
    
     glm::vec2 movementVector = Pathfind(context.RangedApproachMap, enemy.Position, context.Map);
 

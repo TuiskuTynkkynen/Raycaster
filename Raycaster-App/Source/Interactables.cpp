@@ -9,7 +9,7 @@ static constexpr InteractionResult DebugInteraction(Interactable& interactable, 
 }
 
 static constexpr InteractionResult PickupInteraction(Interactable& interactable, size_t index) {
-    return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 1, { 17, 5 }, 0.75f, MeleeWeaponData{ 0.75f, 0.25f, 1.0f, 0.75f }), index);
+    return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 1, Animations::AttackDagger, 0.75f, MeleeWeaponData{ 0.75f, 0.25f, 1.0f, 0.75f }), index);
 }
 
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
@@ -34,25 +34,25 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
     std::array<InteractableParameters, InteractableType::ENUMERATION_MAX + 1> parameters;
     parameters[InteractableType::Light] = InteractableParameters{
         .Scale = 0.5f,
-        .Animation = {10, 1},
+        .Animation = {TextureIndices::Light},
         .Placement = PlacementType::Ceiling,
     };
     parameters[InteractableType::Barrel] = InteractableParameters{
         .Interaction = DebugInteraction,
         .Scale = 0.5f,
-        .Animation = {8, 1},
+        .Animation = {TextureIndices::Barrel},
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::Chest] = InteractableParameters{
         .Interaction = AnimationInteraction,
         .Scale = 0.5f,
-        .Animation = {15, 2},
+        .Animation = Animations::ChestOpen,
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::Dagger] = InteractableParameters{
         .Interaction = PickupInteraction,
         .Scale = 0.5f,
-        .Animation = {14, 1},
+        .Animation = {TextureIndices::Floor_Item_Dagger},
         .Placement = PlacementType::Falling
     };
     return parameters;

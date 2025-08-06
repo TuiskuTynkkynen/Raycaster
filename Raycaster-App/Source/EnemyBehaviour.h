@@ -116,7 +116,7 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
         .AttackRange{1.25f},
         .AttackDuration{1.5f},
         .AttackTiming{1.0f / 1.5f},
-        .AtlasIndex{11},
+        .AtlasIndex{TextureIndices::Enemy_Basic},
     };
     params[EnemyType::Ranged] = EnemyParameters{
         .ActionTable = s_RangedActions,
@@ -128,7 +128,7 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
         .AttackRange{0.0f},
         .AttackDuration{1.0f},
         .AttackTiming{1.0f},
-        .AtlasIndex{11},
+        .AtlasIndex{TextureIndices::Enemy_Basic},
     };
     return params;
     }();

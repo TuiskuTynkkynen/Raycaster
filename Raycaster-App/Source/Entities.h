@@ -1,14 +1,12 @@
 #pragma once
 
+#include "TextureIndices.h"
 #include "Core/Base/Timestep.h"
 
 #include "glm/glm.hpp"
 
 #include <array>
 #include <variant>
-
-inline constexpr uint32_t ATLASWIDTH = 11;
-inline constexpr uint32_t ATLASHEIGHT = 2;
 
 struct Tile {
     glm::vec3 Posistion{};
@@ -34,16 +32,6 @@ struct Ray {
     uint32_t Atlasindex = 0;
 
     float Brightness = 0.0f;
-};
-
-struct AtlasAnimation {
-    uint16_t StartAtlasIndex = 0;
-    uint16_t FrameCount = 0;
-    
-    constexpr uint32_t GetFrame(Core::Timestep progress) const {
-        // Subtract epsilon, since animation should be an exclusive range [StartAtlasIndex, StartAtlasIndex + Framecount)
-        return StartAtlasIndex + static_cast<uint32_t>((FrameCount - std::numeric_limits<float>::epsilon()) * progress);
-    }
 };
 
 struct MeleeWeaponData {
