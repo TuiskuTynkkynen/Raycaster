@@ -12,6 +12,29 @@ void Enemies::Init(const Map& map) {
     m_MapScale = map.GetScale();
 }
 
+void Enemies::Shutdown() {
+    m_Enemies.clear(); 
+    m_Enemies.shrink_to_fit();
+
+    m_ApproachMap.clear(); 
+    m_ApproachMap.shrink_to_fit(); 
+    m_RangedApproachMap.clear(); 
+    m_RangedApproachMap.shrink_to_fit(); 
+    m_CostMap.clear(); 
+    m_CostMap.shrink_to_fit(); 
+    
+    m_Areas.clear();
+    m_Areas.shrink_to_fit();
+    m_Attacks.clear();
+    m_Attacks.shrink_to_fit();
+
+    m_Frontier.clear(); 
+    m_Frontier.shrink_to_fit();
+
+    m_PreviousPlayerPosition = {};
+    m_MapCenter = {};
+    m_MapScale = {};
+}
 void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
     RC_ASSERT(m_Frontier.size(), "Enemies must be initialized before calling Add");
     m_Enemies.emplace_back(position, 5.0f, 0.0f, 0.0f, GetAtlasIndex(type), type);
