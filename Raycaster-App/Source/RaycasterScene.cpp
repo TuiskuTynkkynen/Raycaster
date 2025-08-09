@@ -11,21 +11,42 @@ void RaycasterScene::Init(){
     m_Rays.resize(m_RayCount); //should be initialized to default values
     m_Lines.resize(m_RayCount); //should be initialized to default vec3s
     
+    m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
+    m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
+    m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));
+    m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.75f));
+
+    m_Map.CalculateLightMap(m_Lights);
+    m_Tiles = m_Map.CreateTiles();
+    m_Walls = m_Map.CreateWalls();
+        
+
+    Reinit();
+
+    Tile tile;
+    tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
+    tile.Scale = m_Player.Scale;
+    m_Tiles.push_back(tile);
+    m_Tiles.push_back(tile);
+
+    m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, static_cast<float>(m_Map.GetWidth()), static_cast<float>(m_Map.GetHeight()));
+    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
+
+    Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
+}
+
+void RaycasterScene::Reinit() {
     m_Player.Position = glm::vec3((float)m_Map.GetWidth() / 2, (float)m_Map.GetHeight() / 2, 0.5f);
     m_Player.Scale = m_Map.GetScale() * 0.4f;
     m_Player.Rotation = 90.0f;
     m_Player.HeldItem = 0;
     m_Player.Inventory[m_Player.HeldItem] = { .Scale = 0.5f, .Count = 0 };
+    m_Player.Health = m_Player.MaxHealth;
 
-    m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, static_cast<float>(m_Map.GetWidth()), static_cast<float>(m_Map.GetHeight()));
-    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
-
-    m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
-    m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
-    m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));
-    m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.75f));
-    
+    const size_t interactableCount = m_Interactables.Count();
+    m_Interactables.Shutdown();
     m_Interactables.Init();
+    
     m_Interactables.Add(InteractableType::Barrel, { 3.0f, 2.5f });
     m_Interactables.Add(InteractableType::Barrel, { 2.5f, 2.5f });
 
@@ -34,24 +55,15 @@ void RaycasterScene::Init(){
     }
     m_Interactables.Add(InteractableType::Chest, { 8.5f, 6.5f });
 
+    m_Enemies.Shutdown();
     m_Enemies.Init(m_Map);
     m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
     m_Enemies.Add(EnemyType::Ranged, glm::vec2(2.5f, 3.0f));
 
-    m_Map.CalculateLightMap(m_Lights);
-    m_Tiles = m_Map.CreateTiles();
-    m_Walls = m_Map.CreateWalls();
-    InitModels();
-    
     m_SpriteObjects.resize(m_Interactables.Count() + m_Enemies.Count());
 
-    Tile tile;
-    tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
-    tile.Scale = m_Player.Scale;
-    m_Tiles.push_back(tile);
-    m_Tiles.push_back(tile);
-
-    Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
+    m_Models.clear();
+    InitModels();
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {

@@ -40,6 +40,7 @@ private:
 
     const bool m_SnappingEnabled = true;
 
+    void Reinit();
     void ProcessInput(Core::Timestep deltaTime);
     void UseItem(Core::Timestep deltaTime);
     void DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
