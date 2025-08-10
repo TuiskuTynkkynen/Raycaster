@@ -102,6 +102,10 @@ namespace Core {
         
         Internal::System->Time = Internal::System->Time + deltaTime;
         
+        if(Internal::System->ActiveID >= Internal::System->Elements.size()){
+            Internal::System->ActiveID = 0;
+        }
+
         bool isCaptured = Internal::System->Elements[Internal::System->ActiveID].Type >= SurfaceType::Capture;
 
         Internal::System->HoverID = 0;
