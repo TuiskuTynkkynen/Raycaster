@@ -20,6 +20,8 @@ namespace Core {
         std::shared_ptr<Scene> m_ActiveScene;
         LayerStack m_LayerStack;
 
+        std::vector<Event*> m_EventQueue;
+
         bool m_Running = true;
         float m_LastFrame = 0.0f;
 
@@ -41,7 +43,10 @@ namespace Core {
         void SetActiveScene(Scene* scene);
 
         static inline Window& GetWindow() { return *s_Instance->m_Window; }
-
+        
+        template<typename T, typename... Args> requires std::derived_from<T, Event>
+        static inline void PushEvent(Args... args) { s_Instance->m_EventQueue.emplace_back(new T(args...)); }
+        
         friend int ::main();
     };
 

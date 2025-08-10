@@ -43,6 +43,12 @@ namespace Core {
             Timestep deltaTime = currentFrame - m_LastFrame;
             m_LastFrame = currentFrame;
 
+            for (Event* event : m_EventQueue) {
+                OnEvent(*event);
+                delete event;
+            }
+            m_EventQueue.clear();
+
             m_ActiveScene->OnUpdate(deltaTime);
             
             for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
