@@ -6,6 +6,7 @@
 #include "Map.h"
 #include "Enemies.h"
 #include "Interactables.h"
+#include "RaycasterEvents.h"
 
 #include <memory>
 
@@ -51,12 +52,14 @@ private:
     void InitModels();
     void InitInteractables(std::span<const Interactable> interactables);
     float LightBilinear(glm::vec2 position);
+
+    bool OnRestart(Restart& event);
 public: 
     void Init() override;
     void Shutdown() override { m_Enemies.Shutdown(); }
 
     void OnUpdate(Core::Timestep deltaTime) override;
-    void OnEvent(Core::Event& event) override {}
+    void OnEvent(Core::Event& event) override;
 
     inline const std::vector<Ray>& GetRays() const { return m_Rays; }
     inline const std::vector<Floor>& GetFloors() const { return m_Floors; }

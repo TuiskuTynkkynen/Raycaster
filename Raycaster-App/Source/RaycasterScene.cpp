@@ -755,3 +755,14 @@ float RaycasterScene::LightBilinear(glm::vec2 position) {
     mix = glm::clamp(position.y - (min.y + 0.5f), 0.0f, 1.0f);
     return glm::mix(y[0], y[1], mix);
 }
+
+bool RaycasterScene::OnRestart(Restart& event) {
+    Reinit();
+
+    return true;
+}
+
+void RaycasterScene::OnEvent(Core::Event& event) {
+    Core::EventDispatcher dispatcer(event);
+    dispatcer.Dispatch<Restart>([this](Restart& event) { return OnRestart(event); });
+}
