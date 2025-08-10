@@ -11,6 +11,7 @@ namespace Core {
         KeyPressed, KeyReleased,
         MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
         TextInput,
+        ApplicationClose,
     };
 
     enum EventCategory {
@@ -20,6 +21,7 @@ namespace Core {
         EventCategoryKeyboard    = Bit(2),
         EventCategoryMouse	     = Bit(3),
         EventCategoryText	     = Bit(4),
+        EventCategoryApplication = Bit(5),
     };
 
     class Event {

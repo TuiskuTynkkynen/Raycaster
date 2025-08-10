@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Window.h"
+#include "Core/Events/ApplicationEvent.h"
 #include "Core/Events/WindowEvent.h"
 #include "LayerStack.h"
 #include "Core/Scene/Scene.h"
@@ -22,6 +23,7 @@ namespace Core {
         bool m_Running = true;
         float m_LastFrame = 0.0f;
 
+        bool OnApplicationCloseEvent(ApplicationClose& event);
         bool OnWindowCloseEvent(WindowClose& event);
         bool OnWindowResizeEvent(WindowResize& event);
 

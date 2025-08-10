@@ -54,6 +54,7 @@ namespace Core {
 
     void Application::OnEvent(Event& event) {
         EventDispatcher dispatcer(event);
+        dispatcer.Dispatch<ApplicationClose>(std::bind(&Application::OnApplicationCloseEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowClose>(std::bind(&Application::OnWindowCloseEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowResize>(std::bind(&Application::OnWindowResizeEvent, this, std::placeholders::_1));
 
@@ -93,6 +94,11 @@ namespace Core {
         for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
             (*iterator)->SetScene(m_ActiveScene);
         }
+    }
+
+    bool Application::OnApplicationCloseEvent(ApplicationClose& event) {
+        m_Running = false;
+        return true;
     }
 
     bool Application::OnWindowCloseEvent(WindowClose& event) {
