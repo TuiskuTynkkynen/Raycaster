@@ -139,7 +139,7 @@ ActionStatus BasicAttack(Context& context, Enemy& enemy) {
         enemy.Tick++;
     }
 
-    if (enemy.ActionTick >= 1.0f) {
+    if (enemy.ActionTick >= 1.0f || enemy.Health <= 0.0f) {
         enemy.ActionTick = 0.0f;
         return ActionStatus::Done;
     }
