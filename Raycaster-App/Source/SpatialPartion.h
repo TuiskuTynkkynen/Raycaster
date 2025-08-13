@@ -69,6 +69,68 @@ void SpatialPartition<Value_t, Index_t>::Partition(std::span<const Value_t> valu
 }
 
 template <HasPosition Value_t, std::integral Index_t>
+void SpatialPartition<Value_t, Index_t>::Move(Index_t index, glm::vec2 oldPosition, glm::vec2 newPosition) {
+    RC_ASSERT(index < m_Sorted.size());
+
+    size_t oldIndex = CalculateIndex(oldPosition.x, oldPosition.y);
+    size_t newIndex = CalculateIndex(newPosition.x, newPosition.y);
+    bool shiftDirection = newIndex > oldIndex;
+
+    RC_ASSERT(newIndex < m_Grid.size());
+    if (oldIndex == newIndex) {
+        return;
+    }
+
+    size_t movedIndex = -1;
+    // Remove element from old position
+    {
+        auto& bucket = m_Grid[oldIndex];
+        RC_ASSERT(bucket.Count, "Could not find element in SpatialPartion");
+
+        auto iter = std::find(m_Sorted.begin() + bucket.Start, m_Sorted.begin() + bucket.Start + bucket.Count, index);
+        RC_ASSERT(iter != m_Sorted.begin() + bucket.Start + bucket.Count, "Could not find element in SpatialPartion");
+
+        movedIndex = shiftDirection? bucket.Start + bucket.Count - 1 : bucket.Start;
+        *iter = m_Sorted[movedIndex]; // Swap with first/last element in bucket
+
+        if (--bucket.Count) {
+            bucket.Start += (movedIndex == bucket.Start);
+        }
+    }
+
+    // Move elements between old and new position
+    {
+        int64_t sign = shiftDirection ? 1 : -1;
+
+        for (int64_t i = oldIndex + sign; i * sign < static_cast<int64_t>(newIndex) * sign; i += sign) {
+            auto& bucket = m_Grid[i];
+            if (!bucket.Count) {
+                continue;
+            }
+
+            movedIndex = bucket.Start + shiftDirection* bucket.Count - shiftDirection;
+            size_t to = bucket.Start + !shiftDirection* bucket.Count - shiftDirection;
+            m_Sorted[to] = m_Sorted[movedIndex];
+            bucket.Start -= sign;
+        }
+    }
+
+    // Add element to new position
+    {
+        auto& bucket = m_Grid[newIndex];
+        if (bucket.Count) {
+            bucket.Start -= shiftDirection;
+            movedIndex = bucket.Start + !shiftDirection * bucket.Count;
+        } else {
+            bucket.Start = movedIndex;
+        }
+
+        m_Sorted[movedIndex] = index;
+        bucket.Count++;
+    }
+}
+
+template <HasPosition Value_t, std::integral Index_t>
 void SpatialPartition<Value_t, Index_t>::Clear() {
     m_Sorted.clear();
     m_Grid.assign(m_Grid.size(), {});
