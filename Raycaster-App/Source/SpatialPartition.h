@@ -24,10 +24,10 @@ public:
         Index_t Count = 0;
     };
 
-    std::span<Index_t> Get(glm::uvec2 position);
-    std::span<Index_t> GetRow(glm::uvec2 position, size_t rowLenght);
+    std::span<const Index_t> Get(glm::uvec2 position) const;
+    std::span<const Index_t> GetRow(glm::uvec2 position, size_t rowLenght) const;
 private:
-    inline size_t CalculateIndex(size_t x, size_t y);
+    inline size_t CalculateIndex(size_t x, size_t y) const;
 
     std::vector<Index_t> m_Sorted;
 
@@ -67,12 +67,12 @@ void SpatialPartition<Value_t, Index_t>::Partition(std::span<const Value_t> valu
     
     for (size_t i = 0; i < m_Sorted.size(); i++) {
         size_t valueIndex = m_Sorted[i];
-        size_t spatialIndex = CalculateIndex(values[valueIndex].Position.x, values[valueIndex].Position.y);
+        size_t spatialIndex = CalculateIndex(static_cast<size_t>(values[valueIndex].Position.x), static_cast<size_t>(values[valueIndex].Position.y));
 
         RC_ASSERT(spatialIndex < m_Grid.size());
 
         if (!m_Grid[spatialIndex].Count) {
-            m_Grid[spatialIndex].Start = i;
+            m_Grid[spatialIndex].Start = static_cast<Index_t>(i);
         }
         m_Grid[spatialIndex].Count++;
     }
@@ -147,8 +147,8 @@ void SpatialPartition<Value_t, Index_t>::Clear() {
 }
 
 template <HasPosition Value_t, std::integral Index_t>
-std::span<Index_t> SpatialPartition<Value_t, Index_t>::Get(glm::uvec2 position) {
-    std::span<Index_t> result{};
+std::span<const Index_t> SpatialPartition<Value_t, Index_t>::Get(glm::uvec2 position) const {
+    std::span<const Index_t> result{};
     size_t index = CalculateIndex(position.x, position.y);
     
     if (index >= m_Grid.size()) {
@@ -164,8 +164,8 @@ std::span<Index_t> SpatialPartition<Value_t, Index_t>::Get(glm::uvec2 position) 
 }
 
 template <HasPosition Value_t, std::integral Index_t>
-std::span<Index_t> SpatialPartition<Value_t, Index_t>::GetRow(glm::uvec2 position, size_t rowLength) {
-    std::span<Index_t> result{};
+std::span<const Index_t> SpatialPartition<Value_t, Index_t>::GetRow(glm::uvec2 position, size_t rowLength) const {
+    std::span<const Index_t> result{};
     if (position.y * m_GridWidth >= m_Grid.size()) {
         return result;
     }
@@ -193,6 +193,6 @@ std::span<Index_t> SpatialPartition<Value_t, Index_t>::GetRow(glm::uvec2 positio
 }
 
 template <HasPosition Value_t, std::integral Index_t>
-inline size_t SpatialPartition<Value_t, Index_t>::CalculateIndex(size_t x, size_t y) {
+inline size_t SpatialPartition<Value_t, Index_t>::CalculateIndex(size_t x, size_t y) const {
     return y * m_GridWidth + x;
 }
