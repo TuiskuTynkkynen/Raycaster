@@ -12,7 +12,8 @@ concept HasPosition = std::same_as<decltype(std::declval<T>().Position), glm::ve
 template <HasPosition Value_t, std::integral Index_t = size_t>
 class SpatialPartition {
 public:
-    SpatialPartition(const Map& map);
+    void Init(const Map& map);
+    void Shutdown();
 
     void Partition(std::span<const Value_t> values);
     void Move(Index_t index, glm::vec2 oldPosition, glm::vec2 newPosition);
@@ -36,13 +37,22 @@ private:
 };
 
 template <HasPosition Value_t, std::integral Index_t>
-SpatialPartition<Value_t, Index_t>::SpatialPartition(const Map& map)
-    : m_GridWidth(map.GetWidth()) {
+void SpatialPartition<Value_t, Index_t>::Init(const Map& map) {
+    m_GridWidth = map.GetWidth();
     m_Grid.assign(map.GetSize(), {});
 }
 
 template <HasPosition Value_t, std::integral Index_t>
+void SpatialPartition<Value_t, Index_t>::Shutdown() {
+    m_Grid.clear();
+    m_Grid.shrink_to_fit();
+    m_Sorted.clear();
+    m_Sorted.shrink_to_fit();
+}
+
+template <HasPosition Value_t, std::integral Index_t>
 void SpatialPartition<Value_t, Index_t>::Partition(std::span<const Value_t> values) {
+    Clear();
     RC_ASSERT(values.size() < std::numeric_limits<Index_t>::max());
 
     m_Sorted.resize(values.size());
