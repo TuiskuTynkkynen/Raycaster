@@ -32,6 +32,11 @@ struct Transition {
 ///////////////////////////////////////////////////////////////////////////////
 bool LineOfSight(const Context& context, glm::vec2 start, glm::vec2 end);
 
+template<bool negate = false>
+bool LineOfSightCondtion(const Context& context, Enemy& enemy){
+    return LineOfSight(context, enemy.Position, context.PlayerPosition) ^ negate;
+}
+
 template<float distance, bool negate = false>
 bool DistanceCondition(const Context& context, Enemy& enemy) {
     return (glm::length(enemy.Position - context.PlayerPosition) < distance) ^ negate;
