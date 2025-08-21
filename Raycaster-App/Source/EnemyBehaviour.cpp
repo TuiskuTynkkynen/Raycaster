@@ -13,6 +13,88 @@ static constexpr std::array<glm::vec2, s_DirectionCount + 1> s_Directions = {
     glm::vec2(0,0),
 };
 
+bool LineOfSight(const Context& context, glm::vec2 start, glm::vec2 end) {
+    // NOTE does not check start tile 
+
+    // Brute forcing would be faster for small enemy counts,
+    // but overengineering is way more fun
+
+    if (!context.Map.LineOfSight(start, end)) {
+        return false;
+    }
+
+    const std::array<const LineCollider, 1> collider = { LineCollider(start, end) };
+    auto checkCollision = [context, collider](uint8_t& bitfield, uint16_t mapX, uint16_t mapY, uint16_t width) -> bool {
+        for (uint16_t y = 0; y < 3; y++) {
+            for (uint16_t x = 0; x < 3; x++) {
+                uint16_t bitIndex = y * 3 + x;
+                // Move values to 0-8 range (x == 0 && y == 0 does not need to be checked -> maskBit = 0)
+                bitIndex = (bitIndex == 4) ? 9 : bitIndex - (bitIndex > 4);
+                uint8_t maskBit = 1 << bitIndex;
+
+                if (!maskBit || (bitfield & maskBit) || mapX + x >= width) {
+                    continue;
+                }
+
+                auto span = context.SpatialPartition.Get({ mapX + x - 1, mapY + y - 1 });
+                for (uint16_t index : span) {
+                    auto hit = Algorithms::LineCollisions(context.Enemies[index].Position, collider, context.Enemies[index].Scale().x * 0.5f) != glm::vec2(0.0f);
+                    if (hit) {
+                        return true;
+                    }
+                }
+
+                bitfield |= maskBit;
+            }
+        }
+
+        return false;
+        };
+
+    glm::vec2 rayDirection = end - start;
+    glm::vec2 deltaDistance = glm::abs(1.0f / glm::normalize(rayDirection));
+
+    uint16_t mapX = static_cast<uint16_t>(start.x);
+    uint16_t mapY = static_cast<uint16_t>(start.y);
+
+    int32_t stepX = (rayDirection.x > 0.0f) ? 1 : -1;
+    int32_t stepY = (rayDirection.y > 0.0f) ? 1 : -1;
+
+    glm::vec2 sideDistance = deltaDistance;
+    sideDistance.x *= (rayDirection.x < 0.0f) ? (start.x - mapX) : (mapX + 1.0f - start.x);
+    sideDistance.y *= (rayDirection.y < 0.0f) ? (start.y - mapY) : (mapY + 1.0f - start.y);
+
+    uint8_t bitfield = 0;
+    while (mapX != static_cast<uint32_t>(end.x) || mapY != static_cast<uint32_t>(end.y)) {
+        if (checkCollision(bitfield, mapX, mapY, context.Map.GetWidth())) {
+            return false;
+        }
+
+        if (sideDistance.x < sideDistance.y) {
+            sideDistance.x += deltaDistance.x;
+            mapX += stepX;
+
+            bitfield &= (stepX == 1) ? 0b01101011 : 0b11010110;
+        }
+        else {
+            sideDistance.y += deltaDistance.y;
+            mapY += stepY;
+
+            bitfield >>= stepY * 3;
+        }
+
+        if (mapY >= context.Map.GetHeight() || mapX >= context.Map.GetWidth()) {
+            return false;
+        }
+    }
+
+    if (checkCollision(bitfield, mapX, mapY, context.Map.GetWidth())) {
+        return false;
+    }
+
+    return true;
+}
+
 static glm::vec2 Pathfind(const std::vector<float>& djikstraMap, glm::vec2 position, const Map& map) {
     glm::vec2 result(0.0f);
     
