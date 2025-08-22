@@ -263,20 +263,38 @@ ActionStatus BasicDead(Context& context, Enemy& enemy) {
 
 ActionStatus RangedPathfind(Context& context, Enemy& enemy) {
     enemy.Tick += context.DeltaTime * 2.0f;
+    enemy.ActionTick += context.DeltaTime;
     enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Walk;
    
     glm::vec2 movementVector = Pathfind(context.RangedApproachMap, enemy.Position, context.Map);
+    bool changeDirection = false;
 
-    if (movementVector.x != 0.0f || movementVector.y != 0.0f) {
+    if (glm::dot(movementVector, movementVector) > 1.0f) { // Use squared distance to save a sqrt
+        changeDirection = enemy.ActionTick >= 0.25f;
         movementVector += glm::vec2{ 0.5f, 0.5f } - glm::fract(enemy.Position);
-        movementVector = glm::normalize(movementVector);
+    } else {
+        // Circle around player
+        glm::vec2 delta = enemy.Position - context.PlayerPosition;
+        float direction = 1.0f - (enemy.ActionState == 0) * 2.0f;
+        movementVector = { direction * delta.y, -direction * delta.x };
+        
+        // Move toward optimal range
+        float optimalDistance = (glm::dot(delta, delta) - (4.25f * 4.25f)); // Use squared distance to save a sqrt
+        movementVector -= optimalDistance * 0.1f * delta;
     }
     
     glm::vec2 collision = Collision(enemy, context.Map, context.Enemies);
     if (collision.x != 0.0f || collision.y != 0.0f) {
+        changeDirection = enemy.ActionTick >= 0.25f;
         collision = glm::normalize(collision);
     }
 
+    if (changeDirection) {
+        enemy.ActionTick = 0.0f;
+        enemy.ActionState = (enemy.ActionState == 0);
+    }
+    
+    movementVector = glm::normalize(movementVector);
     movementVector += collision;
     movementVector *= glm::min(context.DeltaTime.GetSeconds(), 1.0f) * GetSpeed(enemy.Type);
     

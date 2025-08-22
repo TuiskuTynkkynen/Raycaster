@@ -109,8 +109,8 @@ inline constinit std::array<Action, EnemyState::ENUMERATION_MAX + 1> s_RangedAct
     }();
 
 inline constexpr std::array s_RangedTransitions{
-    Transition { EnemyState::Pathfind,  EnemyState::Attack,     RangeCondition<3.25f, 4.75f> },
-    Transition { EnemyState::Attack,    EnemyState::Pathfind,   RangeCondition<3.25f, 4.75f, true> },
+    Transition { EnemyState::Pathfind,  EnemyState::Attack,     And<RangeCondition<3.25f, 4.75f>, LineOfSightCondtion> },
+    Transition { EnemyState::Attack,    EnemyState::Pathfind,   Or<RangeCondition<3.25f, 4.75f, true>, LineOfSightCondtion<true>> },
     Transition { EnemyState::Pathfind,  EnemyState::Dead,     HealthCondition<0.0f> },
     Transition { EnemyState::Attack,    EnemyState::Dead,   HealthCondition<0.0f> },
 };

@@ -34,6 +34,7 @@ struct Enemy {
     uint32_t AtlasIndex = 0;
     EnemyType::Enumeration Type;
     EnemyState::Enumeration State;
+    uint8_t ActionState;
 
     glm::vec3 Scale() const;
 };
