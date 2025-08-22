@@ -41,6 +41,16 @@ bool And(const Context& context, Enemy& enemy){
     return true;
 }
 
+template<Condition A, Condition... B>
+bool Or(const Context& context, Enemy& enemy){
+    return (A(context, enemy) || And<B...>(context, enemy));
+}
+
+template<typename=void>
+bool Or(const Context& context, Enemy& enemy){
+    return true;
+}
+
 bool LineOfSight(const Context& context, glm::vec2 start, glm::vec2 end);
 
 template<bool negate = false>
