@@ -80,7 +80,7 @@ bool LineOfSight(const Context& context, glm::vec2 start, glm::vec2 end) {
             sideDistance.y += deltaDistance.y;
             mapY += stepY;
 
-            bitfield >>= stepY * 3;
+            (stepY == 1) ? (bitfield >>= 3) : (bitfield <<= 3);
         }
 
         if (mapY >= context.Map.GetHeight() || mapX >= context.Map.GetWidth()) {
