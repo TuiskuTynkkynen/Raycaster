@@ -4,6 +4,7 @@
 #include "Algorithms.h"
 
 void Enemies::Init(const Map& map) {
+    m_SpatialPartition.Init(map);
     m_Frontier.resize(map.GetSize());
 
     m_MapCenter = { map.GetWidth(), map.GetHeight() };
@@ -23,6 +24,8 @@ void Enemies::Shutdown() {
     m_CostMap.clear(); 
     m_CostMap.shrink_to_fit(); 
     
+    m_SpatialPartition.Shutdown();
+
     m_Areas.clear();
     m_Areas.shrink_to_fit();
     m_Attacks.clear();
@@ -35,6 +38,7 @@ void Enemies::Shutdown() {
     m_MapCenter = {};
     m_MapScale = {};
 }
+
 void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
     RC_ASSERT(m_Frontier.size(), "Enemies must be initialized before calling Add");
     m_Enemies.emplace_back(position, 5.0f, 0.0f, 0.0f, GetAtlasIndex(type), type);
@@ -51,6 +55,7 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
     static bool shouldUpdate = false;
 
     if (shouldUpdate || m_PreviousPlayerPosition != glm::ivec2(playerPosition)) {
+        m_SpatialPartition.Partition(m_Enemies);
     UpdateApproachMap(map, playerPosition);
         UpdateRangedApproachMap(map, playerPosition);
         shouldUpdate = false;
@@ -69,7 +74,8 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
         .Attacks = m_Attacks,
         .AproachMap = m_ApproachMap,
         .RangedApproachMap = m_RangedApproachMap,
-        .Enemies = m_Enemies
+        .Enemies = m_Enemies,
+        .SpatialPartition = m_SpatialPartition,
     };
 
     for (size_t i = 0; i < Count(); i++) {

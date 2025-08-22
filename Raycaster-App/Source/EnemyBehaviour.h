@@ -11,6 +11,7 @@ struct Context {
     const std::vector<float>& AproachMap;
     const std::vector<float>& RangedApproachMap;
     const std::vector<Enemy>& Enemies;
+    SpatialPartition<Enemy, uint16_t>& SpatialPartition;
 };
 
 enum class ActionStatus : uint8_t {

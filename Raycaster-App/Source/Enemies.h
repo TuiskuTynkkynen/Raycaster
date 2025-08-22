@@ -1,6 +1,7 @@
 #pragma once
 #include "Map.h"
 #include "Entities.h"
+#include "SpatialPartition.h"
 
 #include "Core.h"
 
@@ -76,6 +77,8 @@ private:
     std::vector<float> m_ApproachMap;
     std::vector<float> m_RangedApproachMap;
     std::vector<float> m_CostMap;
+
+    SpatialPartition<Enemy, uint16_t> m_SpatialPartition;
 
     std::vector<LineCollider> m_Areas;
     std::vector<Attack> m_Attacks;
