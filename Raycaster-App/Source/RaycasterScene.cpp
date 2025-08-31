@@ -545,8 +545,8 @@ void RaycasterScene::UseItem(Core::Timestep deltaTime) {
 }
 
 void RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
-    const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness) != glm::vec2(0.0f);
-    m_Player.Health -= damage * hit;
+    float widht = 0.4f;
+    const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness + widht * 0.5f) != glm::vec2(0.0f);
     
     if (m_Player.Health <= 0.0f) {
         m_Paused = true;

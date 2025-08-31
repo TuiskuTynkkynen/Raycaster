@@ -46,7 +46,9 @@ void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
 
 void Enemies::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
     for (auto& enemy : m_Enemies) {
-        bool hit = Algorithms::LineCollisions(enemy.Position, attack, thickness) != glm::vec2(0.0f);
+        float width = GetScale(enemy.Type).x;
+        bool hit = Algorithms::LineCollisions(enemy.Position, attack, thickness + width * 0.5f) != glm::vec2(0.0f);
+        
         enemy.Health -= damage * hit;
     }
 }
