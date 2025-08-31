@@ -39,7 +39,7 @@ void RaycasterScene::Reinit() {
     m_Paused = false;
 
     m_Player.Position = glm::vec3((float)m_Map.GetWidth() / 2, (float)m_Map.GetHeight() / 2, 0.5f);
-    m_Player.Scale = m_Map.GetScale() * 0.4f;
+    m_Player.Scale = m_Map.GetScale() * m_Player.Width * 0.5f;
     m_Player.Rotation = 90.0f;
     m_Player.HeldItem = 0;
     m_Player.Inventory[m_Player.HeldItem] = { .Scale = 0.5f, .Count = 0 };
@@ -495,7 +495,7 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
     }
 
     glm::vec2 col(m_Player.Position.x, m_Player.Position.y);
-    col = Algorithms::LineCollisions(col, m_Walls, 0.4f);
+    col = Algorithms::LineCollisions(col, m_Walls, m_Player.Width * 0.5f);
 
     float length = glm::length(col);
     if (length > velocity) {
@@ -545,7 +545,7 @@ void RaycasterScene::UseItem(Core::Timestep deltaTime) {
 }
 
 void RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
-    float widht = 0.4f;
+    const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness + m_Player.Width * 0.5f) != glm::vec2(0.0f);
     const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness + widht * 0.5f) != glm::vec2(0.0f);
     
     if (m_Player.Health <= 0.0f) {

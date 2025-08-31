@@ -52,6 +52,7 @@ struct Item {
 
 struct Player {
     glm::vec3 Position{};
+    static constexpr float Width = 0.8f;
     glm::vec3 Scale{};
     float Rotation = 0.0f;
     static constexpr float MaxHealth = 10.0f;
