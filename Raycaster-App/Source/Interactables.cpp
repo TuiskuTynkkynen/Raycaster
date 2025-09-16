@@ -178,25 +178,31 @@ std::optional<InteractableType::Enumeration> Interactables::CanInteract(const Pl
 }
 
 InteractionResult Interactables::Interact(const Player& player) {
+    InteractionResult result{};
     auto type = CanInteract(player);
     
     if (!type) {
-        return {};
+        return result;
     }
     
     auto interaction = GetInteraction(type.value());
     if (!interaction) {
-        return {};
+        return result;
     }
     
     if (type == InteractableType::Chest && m_Interactables[m_CachedIndex].AnimationProgress <= 0.0f) {
         Add(InteractableType::Dagger, m_Interactables[m_CachedIndex].Position);
         interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
         
-        return InteractionResult::Create<InteractionResult::Type::Add>(std::span<Interactable>(m_Interactables.end() - 1, m_Interactables.end()), 0);
+        return result;
     }
 
-    return interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
+    result = interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
+    if (result.GetType() == InteractionResult::Type::Pickup) {
+        Remove(result.Index);
+    }
+
+    return result;
 }
 
 void Interactables::Update(Core::Timestep deltaTime){

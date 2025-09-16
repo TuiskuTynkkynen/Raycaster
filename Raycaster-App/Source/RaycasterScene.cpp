@@ -519,8 +519,6 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
             case InteractionResult::Type::Pickup:
                 m_Player.Inventory[m_Player.HeldItem] = std::get<Item>(result.Data);
                 break;
-            case InteractionResult::Type::Add:
-                break;
             case InteractionResult::Type::None:
                 break;
         }

@@ -35,7 +35,6 @@ public:
         None = 0,
         Debug,
         Pickup,
-        Add
     };
     Type GetType() const { return static_cast<Type>(Data.index()); };
 
@@ -60,7 +59,7 @@ public:
 
     void Add(InteractableType::Enumeration type, glm::vec2 position);
     void Remove(size_t index);
-
+    
     std::optional<InteractableType::Enumeration> CanInteract(const Player& player);
     InteractionResult Interact(const Player& player);
 
