@@ -216,21 +216,23 @@ void Interactables::Update(Core::Timestep deltaTime){
     }
 }
 
-void Interactables::UpdateRender(std::span<Sprite> sprites, std::span<Core::Model> models) {
+void Interactables::UpdateRender(Renderables& renderables) {
     for (size_t i = 0; i < Count(); i++) {
         const Interactable& interactable = m_Interactables[i];
-        
-        // Update on Raycaster-layer
-        sprites[i].Scale = glm::vec3(interactable.Scale);
-        sprites[i].AtlasIndex = interactable.AtlasIndex;
-        sprites[i].FlipTexture = false;
+        auto& sprite = renderables.GetNextSprite();
+        auto& model = renderables.GetNextModel();
 
-        sprites[i].Position = interactable.Position;
-        sprites[i].WorldPosition = sprites[i].Position;
+        // Update on Raycaster-layer
+        sprite.Scale = glm::vec3(interactable.Scale);
+        sprite.AtlasIndex = interactable.AtlasIndex;
+        sprite.FlipTexture = false;
+
+        sprite.Position = interactable.Position;
+        sprite.WorldPosition = sprite.Position;
 
         //Update on 3D-layer
         glm::vec2 index = glm::vec2((interactable.AtlasIndex) % ATLASWIDTH, (interactable.AtlasIndex) / ATLASWIDTH);
-        models[i].Materials.front()->Parameters.back().Value = 0.0f;
-        models[i].Materials.front()->Parameters.front().Value = index;
+        model.Materials.front()->Parameters.back().Value = 0.0f;
+        model.Materials.front()->Parameters.front().Value = index;
     }
 }

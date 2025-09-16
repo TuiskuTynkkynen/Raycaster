@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Entities.h"
+#include "Renderables.h"
 
 #include "Core.h"
 #include "Core/Debug/Debug.h"
@@ -64,7 +65,7 @@ public:
     InteractionResult Interact(const Player& player);
 
     void Update(Core::Timestep deltaTime);
-    void UpdateRender(std::span<Sprite> sprites, std::span<Core::Model> models);
+    void UpdateRender(Renderables& renderables);
 
     inline size_t Count() const { return m_Interactables.size(); }
 
