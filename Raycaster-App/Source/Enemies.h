@@ -2,6 +2,7 @@
 #include "Map.h"
 #include "Entities.h"
 #include "SpatialPartition.h"
+#include "Renderables.h"
 
 #include "Core.h"
 
@@ -52,7 +53,7 @@ public:
 
     void Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerPosition);
 
-    void UpdateRender(std::span<Tile> tiles, std::span<Sprite> sprites, std::span<Core::Model> models);
+    void UpdateRender(std::span<Tile> tiles, Renderables& renderables);
 
     inline size_t Count() const { return m_Enemies.size(); }
 

@@ -103,22 +103,25 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
     shouldUpdate |= context.UpdateDjikstraMap;
             }   
 
-void Enemies::UpdateRender(std::span<Tile> tiles, std::span<Sprite> sprites, std::span<Core::Model> models) {
+void Enemies::UpdateRender(std::span<Tile> tiles, Renderables& renderables) {
     for (size_t i = 0; i < Count(); i++) {
+        auto& sprite = renderables.GetNextSprite();
+        auto& model = renderables.GetNextModel();
+
         const Enemy& enemy = m_Enemies[i];
         glm::vec3 scale = GetScale(enemy.Type);
 
         // Update on Raycaster-layer
-        sprites[i].Position.x = enemy.Position.x;
-        sprites[i].Position.y = enemy.Position.y;
-        sprites[i].Position.z = scale.z * 0.5f;
-        sprites[i].WorldPosition = sprites[i].Position;
+        sprite.Position.x = enemy.Position.x;
+        sprite.Position.y = enemy.Position.y;
+        sprite.Position.z = scale.z * 0.5f;
+        sprite.WorldPosition = sprite.Position;
 
-        sprites[i].Scale = scale;
-        sprites[i].AtlasIndex = enemy.AtlasIndex;
+        sprite.Scale = scale;
+        sprite.AtlasIndex = enemy.AtlasIndex;
 
         bool flip = (uint32_t)enemy.Tick % 2 == 0;
-        sprites[i].FlipTexture = flip;
+        sprite.FlipTexture = flip;
 
         //Update on 2D-layer
         tiles[i].Posistion.x = (enemy.Position.x - m_MapCenter.x) * m_MapScale.x;
@@ -126,8 +129,8 @@ void Enemies::UpdateRender(std::span<Tile> tiles, std::span<Sprite> sprites, std
 
         //Update on 3D-layer
         glm::vec2 index = glm::vec2((enemy.AtlasIndex) % ATLASWIDTH, (enemy.AtlasIndex) / ATLASWIDTH);
-        models[i].Materials.front()->Parameters.back().Value = glm::vec2(flip ? 0.0f : 1.0f, 0.0f);
-        models[i].Materials.front()->Parameters.front().Value = index;
+        model.Materials.front()->Parameters.back().Value = glm::vec2((flip ? 0.0f : 1.0f), 0.0f);
+        model.Materials.front()->Parameters.front().Value = index;
     }
 }
 
