@@ -61,11 +61,11 @@ public:
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override;
 
-    inline const std::vector<Ray>& GetRays() const { return m_Rays; }
-    inline const std::vector<Floor>& GetFloors() const { return m_Floors; }
-    inline const std::vector<Line>& GetLines() const { return m_Lines; }
-    inline const std::vector<Tile>& GetTiles() const { return m_Tiles; }
-    inline const std::vector<Core::Model>& GetModels() const { return m_Models; }
+    inline std::span<const Ray> GetRays() const { return m_Rays; }
+    inline std::span<const Floor> GetFloors() const { return m_Floors; }
+    inline std::span<const Line> GetLines() const { return m_Lines; }
+    inline std::span<const Tile> GetTiles() const { return m_Tiles; }
+    inline std::span<const Core::Model> GetModels() const { return m_Models; }
 
     inline const Player& GetPlayer() const { return m_Player; }
     inline const Core::RaycasterCamera& GetCamera() const { return *m_Camera; }

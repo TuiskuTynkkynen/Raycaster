@@ -76,7 +76,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     rayScale.x = 2.0f / rayCount;
     texScale = glm::vec2(0.0f, 1.0f);
 
-    const std::vector<Ray>& rays = static_cast<RaycasterScene&>(*m_Scene).GetRays();
+    std::span<const Ray> rays = static_cast<RaycasterScene&>(*m_Scene).GetRays();
     for (const auto& ray : rays) {
         rayPos.x = ray.Position.x;
         rayPos.y = ray.Position.y;
@@ -150,7 +150,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(static_cast<RaycasterScene&>(*m_Scene).GetCamera());
 
-    const std::vector<Tile>& tiles = static_cast<RaycasterScene&>(*m_Scene).GetTiles();
+    std::span<const Tile> tiles = static_cast<RaycasterScene&>(*m_Scene).GetTiles();
     size_t mapSize = tiles.size();
 
     for (size_t i = 0; i < mapSize; i++) {
@@ -170,7 +170,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::DrawRotatedFlatQuad(zero, player.Rotation, AxisZ, player.Scale, colour);
     
     colour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-    std::vector <Line> lines = static_cast<RaycasterScene&>(*m_Scene).GetLines();
+    std::span<const Line> lines = static_cast<RaycasterScene&>(*m_Scene).GetLines();
     size_t lineCount = lines.size();
     for (size_t i = 0; i < lineCount; i++) {
         Core::Renderer2D::DrawLine(lines[i].Posistion, lines[i].Scale, colour);
@@ -197,7 +197,7 @@ void Layer3D::OnUpdate(Core::Timestep deltaTime) {
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer::BeginScene(viewPerspective);
 
-    const std::vector<Core::Model>& models = static_cast<RaycasterScene&>(*m_Scene).GetModels();
+    std::span<const Core::Model> models = static_cast<RaycasterScene&>(*m_Scene).GetModels();
 
     for (const Core::Model& model : models) {
         Core::Renderer::DrawModel(model);
