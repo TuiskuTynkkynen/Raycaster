@@ -6,6 +6,7 @@
 #include "Map.h"
 #include "Enemies.h"
 #include "Interactables.h"
+#include "Renderables.h"
 #include "RaycasterEvents.h"
 
 #include <memory>
@@ -21,11 +22,10 @@ private:
     std::vector<Floor> m_Floors;
     std::vector<Line> m_Lines;
     std::vector<Tile> m_Tiles;
-    std::vector<Core::Model> m_Models;
     std::vector<glm::vec3> m_Lights;
     float* m_ZBuffer = new float[m_RayCount];
     
-    std::vector<Sprite> m_SpriteObjects;
+    Renderables m_Renderables;
     
     Interactables m_Interactables;
     Enemies m_Enemies;
@@ -65,7 +65,7 @@ public:
     inline std::span<const Floor> GetFloors() const { return m_Floors; }
     inline std::span<const Line> GetLines() const { return m_Lines; }
     inline std::span<const Tile> GetTiles() const { return m_Tiles; }
-    inline std::span<const Core::Model> GetModels() const { return m_Models; }
+    inline std::span<const Core::Model> GetModels() const { return m_Renderables.GetModels(); }
 
     inline const Player& GetPlayer() const { return m_Player; }
     inline const Core::RaycasterCamera& GetCamera() const { return *m_Camera; }

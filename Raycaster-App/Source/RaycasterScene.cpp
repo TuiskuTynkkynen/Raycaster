@@ -19,7 +19,7 @@ void RaycasterScene::Init(){
     m_Map.CalculateLightMap(m_Lights);
     m_Tiles = m_Map.CreateTiles();
     m_Walls = m_Map.CreateWalls();
-        
+    
 
     Reinit();
 
@@ -62,14 +62,43 @@ void RaycasterScene::Reinit() {
     m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
     m_Enemies.Add(EnemyType::Ranged, glm::vec2(2.5f, 3.0f));
 
-    m_SpriteObjects.resize(m_Interactables.Count() + m_Enemies.Count());
+    m_Renderables.Shutdown();
 
-    m_Models.clear();
-    InitModels();
+    auto shader = std::make_shared<Core::Shader>("3DAtlasShader.glsl");
+    //setup shader
+    {
+        shader->Bind();
+        shader->setInt("Texture", 0);
+
+        RC_ASSERT(m_Lights.size() < std::numeric_limits<uint32_t>::max());
+        const uint32_t lightCount = glm::min(static_cast<uint32_t>(m_Lights.size()), 10u);
+        glm::uvec2 atlasSize(11, 2);
+
+        shader->setVec2("AtlasSize", atlasSize);
+        shader->setInt("LightCount", lightCount);
+
+        for (uint32_t i = 0; i < lightCount; i++) {
+            std::string lightName = "PointLights[i]";
+            lightName[12] = '0' + i;
+            glm::vec3 pos(m_Lights[i].x, m_Lights[i].z, m_Lights[i].y);
+            shader->setVec3(lightName.c_str(), pos);
+        }
+    }
+    
+    auto textureAtlas = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
+    textureAtlas->BindImage("wolfenstein_texture_atlas.png");
+
+    m_Renderables.Init(shader, textureAtlas);
+
+    
+    m_Renderables.PushStaticModel(m_Map.CreateModel(m_Walls, textureAtlas, shader)); // Map
+    m_Renderables.PushStaticModel(); // Inventory/Hand
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     if (!m_Paused) {
+        m_Renderables.ResetDynamic();
+
         Core::RenderAPI::Clear();
 
         ProcessInput(deltaTime);
@@ -79,10 +108,10 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         for (auto& attack : attacks) {
             DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
         }
-        m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, { m_SpriteObjects.end() - m_Enemies.Count(), m_SpriteObjects.end() }, { m_Models.end() - m_Enemies.Count(), m_Models.end() });
+        m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, m_Renderables);
 
         m_Interactables.Update(deltaTime);
-        m_Interactables.UpdateRender({ m_SpriteObjects.begin(), m_SpriteObjects.end() - m_Enemies.Count() }, { m_Models.end() - m_Enemies.Count() - m_Interactables.Count(), m_Models.end() - m_Enemies.Count()});
+        m_Interactables.UpdateRender(m_Renderables);
 
         CastRays();
         CastFloors();
@@ -301,40 +330,47 @@ void RaycasterScene::CastFloors() {
 }
 
 void RaycasterScene::RenderSprites() {
-    size_t count = m_SpriteObjects.size();
+    auto spriteObjects = m_Renderables.GetSprites();
+    auto models = m_Renderables.GetDynamicModels();
+
+    size_t count = spriteObjects.size();
     uint32_t rayIndex = m_RayCount;
     size_t space = m_Rays.size();
 
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
 
-    size_t offset = m_Models.size() - count;
     for (size_t index = 0; index < count; index++) {
+        auto& model = models[index];
+        auto& sprite = spriteObjects[index];
+
         //3D
-        glm::vec3 position3D(m_SpriteObjects[index].Position.x, m_SpriteObjects[index].Position.z, m_SpriteObjects[index].Position.y);
-        m_Models[index + offset].Transform = glm::translate(glm::mat4(1.0f), position3D);
-        m_Models[index + offset].Transform = glm::rotate(m_Models[index + offset].Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::vec3 position3D(sprite.Position.x, sprite.Position.z, sprite.Position.y);
+        model.Transform = glm::translate(glm::mat4(1.0f), position3D);
+        model.Transform = glm::rotate(model.Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        model.Transform = glm::scale(model.Transform, sprite.Scale);
         
         //Transform for 2D
-        m_SpriteObjects[index].Position = m_SpriteObjects[index].Position - m_Player.Position;
-        m_SpriteObjects[index].Position = matrix * m_SpriteObjects[index].Position;
+        sprite.Position = sprite.Position - m_Player.Position;
+        sprite.Position = matrix * sprite.Position;
     }
 
-    std::sort(m_SpriteObjects.begin(), m_SpriteObjects.end(), [this](Sprite a, Sprite b) {
+    std::sort(spriteObjects.begin(), spriteObjects.end(), [this](Sprite a, Sprite b) {
         return a.Position.y > b.Position.y;
     });
 
     for (size_t index = 0; index < count; index++) {
-        glm::vec3 position = m_SpriteObjects[index].Position;
+        auto& sprite = spriteObjects[index];
+        glm::vec3 position = spriteObjects[index].Position;
         
         if (position.y < 0) {
             break;
         }
 
-        glm::vec3 scale = m_SpriteObjects[index].Scale;
-        uint32_t atlasIndex = m_SpriteObjects[index].AtlasIndex;
-        bool flipTexture = m_SpriteObjects[index].FlipTexture;
+        glm::vec3 scale = sprite.Scale;
+        uint32_t atlasIndex = sprite.AtlasIndex;
+        bool flipTexture = sprite.FlipTexture;
 
-        float brightness = LightBilinear({ m_SpriteObjects[index].WorldPosition.x, m_SpriteObjects[index].WorldPosition.y });
+        float brightness = LightBilinear({ sprite.WorldPosition.x, sprite.WorldPosition.y });
         
         float distance = position.y;
         position.x *= -1.0f / distance;
@@ -438,12 +474,14 @@ void RaycasterScene::RenderInventory() {
     position3D.x += glm::cos(glm::radians(m_Player.Rotation)) * epsilon;
     position3D.z += -glm::sin(glm::radians(m_Player.Rotation)) * epsilon;
 
-    m_Models[1].Transform = glm::translate(glm::mat4(1.0f), position3D);
-    m_Models[1].Transform = glm::rotate(m_Models[1].Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m_Models[1].Transform = glm::scale(m_Models[1].Transform, glm::vec3(2.0f * epsilon));
+    auto& model = m_Renderables.GetStaticModels()[1];
 
-    m_Models[1].Materials.front()->Parameters.back().Value = 0.0f;
-    m_Models[1].Materials.front()->Parameters.front().Value = glm::vec2(atlasIndex % ATLASWIDTH, atlasIndex / ATLASWIDTH);
+    model.Transform = glm::translate(glm::mat4(1.0f), position3D);
+    model.Transform = glm::rotate(model.Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model.Transform = glm::scale(model.Transform, glm::vec3(2.0f * epsilon * m_Player.Inventory[0].Scale));
+
+    model.Materials.front()->Parameters.back().Value = 0.0f;
+    model.Materials.front()->Parameters.front().Value = glm::vec2(atlasIndex % ATLASWIDTH, atlasIndex / ATLASWIDTH);
 }
 
 void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
@@ -479,15 +517,9 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
                 RC_TRACE("{}", std::get<std::string_view>(result.Data));
                 break;
             case InteractionResult::Type::Pickup:
-                if (!m_Player.Inventory[m_Player.HeldItem].Count) {
-                    m_Player.Inventory[m_Player.HeldItem] = std::get<Item>(result.Data);
-                    m_SpriteObjects.pop_back();
-                    m_Models.erase(m_Models.end() - m_Enemies.Count() - m_Interactables.Count() + result.Index);
-                    m_Interactables.Remove(result.Index);
-                }
+                m_Player.Inventory[m_Player.HeldItem] = std::get<Item>(result.Data);
                 break;
             case InteractionResult::Type::Add:
-                InitInteractables(std::get<std::span<const Interactable>>(result.Data));
                 break;
             case InteractionResult::Type::None:
                 break;
@@ -546,123 +578,10 @@ void RaycasterScene::UseItem(Core::Timestep deltaTime) {
 
 void RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
     const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness + m_Player.Width * 0.5f) != glm::vec2(0.0f);
-    const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness + widht * 0.5f) != glm::vec2(0.0f);
+    m_Player.Health -= damage * hit;
     
     if (m_Player.Health <= 0.0f) {
         m_Paused = true;
-    }
-}
-
-static Core::Model CreateBillboard(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Core::Texture2D> texture, glm::vec3 scale, uint32_t atlasIndex) {
-    Core::Model model;
-
-    std::vector<float> vertices;
-    std::vector<uint32_t> indices;
-    vertices.reserve(4 * 8);
-    indices.reserve(6);
-
-    for (uint32_t j = 0; j < 4; j++) {
-        float x = (j < 2) ? scale.x * 0.5f : -scale.x * 0.5f;
-        float y = (j % 2) ? scale.y * 0.5f : -scale.y * 0.5f;
-
-        //position
-        vertices.push_back(x);
-        vertices.push_back(y);
-        vertices.push_back(0.0f);
-
-        //normal
-        const glm::vec3 normal(0.0f, 0.0f, 1.0f);
-        vertices.push_back(normal.x);
-        vertices.push_back(normal.y);
-        vertices.push_back(normal.z);
-
-        //uv
-        vertices.push_back((j >= 2) ? 0.0f : 1.0f);
-        vertices.push_back((j % 2 == 0) ? 0.0f : 1.0f);
-    }
-
-    indices.push_back(0);
-    indices.push_back(1);
-    indices.push_back(2);
-    indices.push_back(3);
-    indices.push_back(2);
-    indices.push_back(1);
-
-    auto mesh = std::make_shared<Core::Mesh>();
-    mesh->VAO = std::make_unique<Core::VertexArray>();
-    mesh->VBO = std::make_unique<Core::VertexBuffer>(vertices.data(), static_cast<uint32_t>(sizeof(float) * vertices.size()));
-    Core::VertexBufferLayout wallLayout;
-
-    wallLayout.Push<float>(3);
-    wallLayout.Push<float>(3);
-    wallLayout.Push<float>(2);
-    mesh->VAO->AddBuffer(*mesh->VBO, wallLayout);
-
-    mesh->EBO = std::make_unique<Core::ElementBuffer>(indices.data(), static_cast<uint32_t>(indices.size()));
-
-    model.Meshes.emplace_back(mesh, 0);
-
-    auto mat = std::make_shared<Core::Material>();
-    mat->Shader = shader;
-    mat->MaterialMaps.emplace_back();
-    mat->MaterialMaps.back().Texture = texture;
-    mat->MaterialMaps.back().TextureIndex = 0;
-    glm::vec2 index{ static_cast<float>(atlasIndex % ATLASWIDTH), static_cast<float>(atlasIndex / ATLASWIDTH) };
-
-    mat->Parameters.emplace_back(index, "AtlasOffset");
-    mat->Parameters.emplace_back(0.0f, "FlipTexture");
-    model.Materials.push_back(mat);
-
-    return model;
-}
-
-void RaycasterScene::InitModels() {
-    //setup shader
-    auto shader = std::make_shared<Core::Shader>("3DAtlasShader.glsl");
-    shader->Bind();
-    shader->setInt("Texture", 0);
-
-    RC_ASSERT(m_Lights.size() < std::numeric_limits<uint32_t>::max());
-    const uint32_t lightCount = glm::min(static_cast<uint32_t>(m_Lights.size()), 10u);
-    glm::uvec2 atlasSize(11, 2);
-
-    shader->setVec2("AtlasSize", atlasSize);
-    shader->setInt("LightCount", lightCount);
-
-    for (uint32_t i = 0; i < lightCount; i++) {
-        std::string lightName = "PointLights[i]";
-        lightName[12] = '0' + i;
-        glm::vec3 pos(m_Lights[i].x, m_Lights[i].z, m_Lights[i].y);
-        shader->setVec3(lightName.c_str(), pos);
-    }
-
-    auto textureAtlas = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
-    textureAtlas->BindImage("wolfenstein_texture_atlas.png");
-    
-    // Map model (walls and ceilings)
-    m_Models.push_back(m_Map.CreateModel(m_Walls, textureAtlas, shader));
-
-    //Create and set up model for static objects and enemies
-    const size_t totalCount = m_Interactables.Count() + m_Enemies.Count() + 1; // + 1 for held item
-    glm::vec3 scale(m_Player.Inventory[m_Player.HeldItem].Scale);
-    uint32_t atlasIndex = m_Player.Inventory[m_Player.HeldItem].UseAnimation.GetFrame(0.0f);
-    for (size_t i = 0; i < totalCount; i++) {
-        if (i > m_Interactables.Count()) {
-            scale = m_Enemies[i - 1 - m_Interactables.Count()].Scale();
-            atlasIndex = m_Enemies[i - 1 - m_Interactables.Count()].AtlasIndex;
-        } else if (i) {
-            scale = glm::vec3(m_Interactables[i - 1].Scale);
-            atlasIndex = m_Interactables[i - 1].AtlasIndex;
-        } 
-
-        m_Models.emplace_back(CreateBillboard(shader, textureAtlas, scale, atlasIndex));
-    }
-}
-
-void RaycasterScene::InitInteractables(std::span<const Interactable> interactables) {
-    for (const auto& interactable : interactables) {
-        m_SpriteObjects.emplace_back();
-        m_Models.insert(m_Models.end() - m_Enemies.Count(), CreateBillboard(m_Models.back().Materials.back()->Shader, m_Models.back().Materials.back()->MaterialMaps.back().Texture, glm::vec3(interactable.Scale), interactable.AtlasIndex));
     }
 }
 
