@@ -72,7 +72,7 @@ void RaycasterScene::Reinit() {
 
         RC_ASSERT(m_Lights.size() < std::numeric_limits<uint32_t>::max());
         const uint32_t lightCount = glm::min(static_cast<uint32_t>(m_Lights.size()), 10u);
-        glm::uvec2 atlasSize(11, 2);
+        glm::uvec2 atlasSize(ATLASWIDTH, ATLASHEIGHT);
 
         shader->setVec2("AtlasSize", atlasSize);
         shader->setInt("LightCount", lightCount);
