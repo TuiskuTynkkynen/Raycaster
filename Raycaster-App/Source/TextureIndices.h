@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <limits>
 
-inline constexpr uint32_t ATLASWIDTH = 11;
+inline constexpr uint32_t ATLASWIDTH = 16;
 inline constexpr uint32_t ATLASHEIGHT = 2;
 
 namespace TextureIndices {
@@ -23,8 +23,8 @@ namespace TextureIndices {
         Light                          = 10,
         Enemy_Basic                    = 11,
         Floor_Item_Dagger              = 14,
-        Chest_Animation_Start          = 15,
-        Attack_Animation_Dagger_Start  = 17,
+        Chest_Animation_Start          = 16,
+        Attack_Animation_Dagger_Start  = 18,
     };
 }
 
