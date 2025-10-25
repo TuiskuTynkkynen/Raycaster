@@ -23,8 +23,12 @@ namespace TextureIndices {
         Light                          = 10,
         Enemy_Basic                    = 11,
         Floor_Item_Dagger              = 14,
+        Floor_Item_Dart                = 15,
         Chest_Animation_Start          = 16,
         Attack_Animation_Dagger_Start  = 18,
+        Attack_Animation_Dart_Start    = 23,
+        Projectile_Dart_First          = 27,
+        Projectile_Dart_Last           = 30,
     };
 }
 
@@ -49,4 +53,5 @@ struct AtlasAnimation {
 namespace Animations {
     inline constexpr AtlasAnimation ChestOpen = AtlasAnimation{ TextureIndices::Chest_Animation_Start, 2 };
     inline constexpr AtlasAnimation AttackDagger = AtlasAnimation{ TextureIndices::Attack_Animation_Dagger_Start, 5 };
+    inline constexpr AtlasAnimation AttackDart = AtlasAnimation{ TextureIndices::Attack_Animation_Dart_Start, 4 };
 }
