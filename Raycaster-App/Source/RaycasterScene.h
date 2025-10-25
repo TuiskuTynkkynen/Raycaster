@@ -44,7 +44,7 @@ private:
     void Reinit();
     void ProcessInput(Core::Timestep deltaTime);
     void UseItem(Core::Timestep deltaTime);
-    void DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
+    bool DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
     void CastRays();
     void CastFloors();
     void RenderSprites();

@@ -574,13 +574,15 @@ void RaycasterScene::UseItem(Core::Timestep deltaTime) {
     }
 }
 
-void RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
+bool RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
     const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness + m_Player.Width * 0.5f) != glm::vec2(0.0f);
     m_Player.Health -= damage * hit;
     
     if (m_Player.Health <= 0.0f) {
         m_Paused = true;
     }
+
+    return hit;
 }
 
 static glm::ivec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
