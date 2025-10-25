@@ -48,6 +48,10 @@ uint32_t Enemies::DamageAreas(std::span<const LineCollider> attack, float thickn
     uint32_t count = 0;
     
     for (auto& enemy : m_Enemies) {
+        if (enemy.State == EnemyState::Dead) {
+            continue;
+        }
+
         float width = GetScale(enemy.Type).x;
         bool hit = Algorithms::LineCollisions(enemy.Position, attack, thickness + width * 0.5f) != glm::vec2(0.0f);
         
