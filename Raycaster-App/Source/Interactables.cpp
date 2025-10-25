@@ -1,6 +1,7 @@
 #include "Interactables.h"
 
 #include "Easings.h"
+#include "Projectiles.h"
 
 #include <array>
 
@@ -9,7 +10,14 @@ static constexpr InteractionResult DebugInteraction(Interactable& interactable, 
 }
 
 static constexpr InteractionResult PickupInteraction(Interactable& interactable, size_t index) {
-    return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 1, Animations::AttackDagger, 0.75f, MeleeWeaponData{ 0.75f, 0.25f, 1.0f, 0.75f }), index);
+    switch (interactable.Type) {
+    case InteractableType::Dagger:
+            return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 1, Animations::AttackDagger, 0.75f, MeleeWeaponData{ 0.75f, 0.25f, 1.0f, 0.75f }), index);
+    case InteractableType::Dart:
+        return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(1.0f, 5, Animations::AttackDart, 0.75f, RangedWeaponData{ .AttackTiming = 0.8f, .ProjectileSpeed = 0.1f, .Type = ProjectileType::Dart }), index);
+    }
+
+    RC_ASSERT(false, "Tried to pickup interactable with invalid type");
 }
 
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
@@ -53,6 +61,12 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Interaction = PickupInteraction,
         .Scale = 0.5f,
         .Animation = {TextureIndices::Floor_Item_Dagger},
+        .Placement = PlacementType::Falling
+    };
+    parameters[InteractableType::Dart] = InteractableParameters{
+        .Interaction = PickupInteraction,
+        .Scale = 0.5f,
+        .Animation = {TextureIndices::Floor_Item_Dart},
         .Placement = PlacementType::Falling
     };
     return parameters;
@@ -192,6 +206,7 @@ InteractionResult Interactables::Interact(const Player& player) {
     
     if (type == InteractableType::Chest && m_Interactables[m_CachedIndex].AnimationProgress <= 0.0f) {
         Add(InteractableType::Dagger, m_Interactables[m_CachedIndex].Position);
+        Add(InteractableType::Dart, m_Interactables[m_CachedIndex].Position);
         interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
         
         return result;

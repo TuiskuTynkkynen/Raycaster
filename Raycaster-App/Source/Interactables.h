@@ -15,7 +15,8 @@ namespace InteractableType {
         Barrel,
         Chest,
         Dagger,
-        ENUMERATION_MAX = Dagger,
+        Dart,
+        ENUMERATION_MAX = Dart,
     };
 }
 
