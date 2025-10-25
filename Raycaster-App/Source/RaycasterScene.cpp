@@ -62,6 +62,9 @@ void RaycasterScene::Reinit() {
     m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
     m_Enemies.Add(EnemyType::Ranged, glm::vec2(2.5f, 3.0f));
 
+    m_Projectiles.Shutdown();
+    m_Projectiles.Init();
+
     m_Renderables.Shutdown();
 
     auto shader = std::make_shared<Core::Shader>("3DAtlasShader.glsl");
@@ -103,6 +106,23 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
 
         ProcessInput(deltaTime);
         
+
+        m_Projectiles.Update(deltaTime, m_Map);
+        for (size_t i = 0; i < m_Projectiles.Count(); i++) {
+            auto& projectile = m_Projectiles[i];
+
+            std::array area = { LineCollider(projectile.Position, projectile.Position) };
+            bool hit = m_Enemies.DamageAreas(area, 1e-5f, projectile.Damage);
+
+            hit |= DamageAreas(area, 1e-5f, projectile.Damage);
+
+            if (hit) {
+                m_Projectiles.Remove(i--);
+            }
+        }
+
+        m_Projectiles.UpdateRender(m_Renderables, m_Player.Position);
+
         m_Enemies.Update(deltaTime, m_Map, m_Player.Position);
         auto attacks = m_Enemies.GetAttacks();
         for (auto& attack : attacks) {

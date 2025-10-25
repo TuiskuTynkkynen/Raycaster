@@ -7,6 +7,7 @@
 #include "Enemies.h"
 #include "Interactables.h"
 #include "Renderables.h"
+#include "Projectiles.h"
 #include "RaycasterEvents.h"
 
 #include <memory>
@@ -27,6 +28,7 @@ private:
     
     Renderables m_Renderables;
     
+    Projectiles m_Projectiles;
     Interactables m_Interactables;
     Enemies m_Enemies;
 
