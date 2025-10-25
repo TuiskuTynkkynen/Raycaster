@@ -44,13 +44,18 @@ void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
     m_Enemies.emplace_back(position, 5.0f, 0.0f, 0.0f, GetAtlasIndex(type), type);
 }
 
-void Enemies::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
+uint32_t Enemies::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
+    uint32_t count = 0;
+    
     for (auto& enemy : m_Enemies) {
         float width = GetScale(enemy.Type).x;
         bool hit = Algorithms::LineCollisions(enemy.Position, attack, thickness + width * 0.5f) != glm::vec2(0.0f);
         
         enemy.Health -= damage * hit;
+        count += hit;
     }
+
+    return count;
 }
 
 void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerPosition) {

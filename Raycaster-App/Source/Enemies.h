@@ -49,7 +49,7 @@ public:
 
     void Add(EnemyType::Enumeration type, glm::vec2 position);
 
-    void DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
+    uint32_t DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
 
     void Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerPosition);
 
