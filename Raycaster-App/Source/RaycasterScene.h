@@ -27,7 +27,7 @@ private:
     float* m_ZBuffer = new float[m_RayCount];
     
     Renderables m_Renderables;
-    
+
     Projectiles m_Projectiles;
     Interactables m_Interactables;
     Enemies m_Enemies;
@@ -51,8 +51,6 @@ private:
     void CastFloors();
     void RenderSprites();
     void RenderInventory();
-    void InitModels();
-    void InitInteractables(std::span<const Interactable> interactables);
     float LightBilinear(glm::vec2 position);
 
     bool OnRestart(Restart& event);
