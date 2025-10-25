@@ -41,13 +41,24 @@ struct MeleeWeaponData {
     float AttackTiming = 0.0f;
 };
 
+namespace ProjectileType {
+    enum Enumeration : uint8_t;
+}
+
+struct RangedWeaponData {
+    float AttackTiming = 0.0f;
+    float ProjectileSpeed = 0.0f;
+
+    ProjectileType::Enumeration Type;
+};
+
 struct Item {
     float Scale = 0.0f;
     uint32_t Count = 0;
     
     AtlasAnimation UseAnimation{};
     float UseDuration = 0.0f;
-    std::variant<MeleeWeaponData> AdditionalData;
+    std::variant<MeleeWeaponData, RangedWeaponData> AdditionalData;
 };
 
 struct Player {

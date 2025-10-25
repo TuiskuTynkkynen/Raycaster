@@ -573,7 +573,7 @@ void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
 
 void RaycasterScene::UseItem(Core::Timestep deltaTime) {
     RC_ASSERT(m_Player.HeldItem < m_Player.Inventory.size());
-    const auto& heldItem = m_Player.Inventory[m_Player.HeldItem];
+    auto& heldItem = m_Player.Inventory[m_Player.HeldItem];
     
     const float relativeDeltaTime = deltaTime / heldItem.UseDuration;
     m_Player.AnimationProgress += relativeDeltaTime;
@@ -586,12 +586,23 @@ void RaycasterScene::UseItem(Core::Timestep deltaTime) {
                 std::array area = { LineCollider(m_Player.Position, m_Player.Position + data.AttackLength * front) };
                 m_Enemies.DamageAreas(area, data.AttackThickness, data.Damage);
             }
+        } else if constexpr (std::is_same_v<T, RangedWeaponData>) {
+            if (m_Player.AnimationProgress >= data.AttackTiming && m_Player.AnimationProgress - relativeDeltaTime < data.AttackTiming) {
+                glm::vec3 front(cos(glm::radians(m_Player.Rotation)), -sin(glm::radians(m_Player.Rotation)), 0.0f);
+                m_Projectiles.Add(data.Type, m_Player.Position + 0.5f * m_Player.Width * front, data.ProjectileSpeed * front);
+                
+                heldItem.Count--;
+            }
         }
         }, heldItem.AdditionalData);
 
     if (m_Player.AnimationProgress >= 1.0f) {
         m_Player.AnimationProgress = -std::numeric_limits<float>::infinity();
+
+        if (heldItem.Count == 0) {
+            heldItem = { .Scale = 0.5f, .Count = 0 };
     }
+}
 }
 
 bool RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
