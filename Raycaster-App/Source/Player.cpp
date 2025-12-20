@@ -34,6 +34,10 @@ void Player::Shutdown() {
 }
 
 void Player::Update(std::span<const LineCollider> walls, Core::Timestep deltaTime) {
+    m_Areas.clear();
+    m_Attacks.clear();
+    m_Projectiles.clear();
+
     Move(walls, deltaTime);
     if (m_AnimationProgress >= 0.0f) {
         UseItem(deltaTime);
