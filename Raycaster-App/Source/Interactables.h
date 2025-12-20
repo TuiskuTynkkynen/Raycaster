@@ -61,8 +61,8 @@ public:
     void Add(InteractableType::Enumeration type, glm::vec2 position);
     void Remove(size_t index);
     
-    std::optional<InteractableType::Enumeration> CanInteract(const Player& player);
-    InteractionResult Interact(const Player& player);
+    std::optional<InteractableType::Enumeration> CanInteract(glm::vec2 position, float rotation);
+    InteractionResult Interact(glm::vec2 position, float rotation);
 
     void Update(Core::Timestep deltaTime);
     void UpdateRender(Renderables& renderables);

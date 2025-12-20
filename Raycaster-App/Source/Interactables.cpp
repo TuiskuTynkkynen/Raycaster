@@ -146,9 +146,8 @@ void Interactables::Remove(size_t index) {
     }
 }
 
-std::optional<InteractableType::Enumeration> Interactables::CanInteract(const Player& player) {
-    glm::vec2 playerPosition = player.Position;
-    if (m_CachedPosition == playerPosition && m_CachedAngle == player.Rotation) {
+std::optional<InteractableType::Enumeration> Interactables::CanInteract(glm::vec2 position, float rotation) {
+    if (m_CachedPosition == position && m_CachedAngle == rotation) {
         if (m_CachedIndex >= Count()) {
             return std::nullopt;
         }
@@ -156,11 +155,11 @@ std::optional<InteractableType::Enumeration> Interactables::CanInteract(const Pl
         return std::optional<InteractableType::Enumeration>(m_Interactables[m_CachedIndex].Type);
     }
 
-    m_CachedPosition = playerPosition;
-    m_CachedAngle = player.Rotation;
+    m_CachedPosition = position;
+    m_CachedAngle = rotation;
     m_CachedIndex = -1;
 
-    glm::vec2 forward{ glm::cos(glm::radians(player.Rotation )), -glm::sin(glm::radians(player.Rotation )) };
+    glm::vec2 forward{ glm::cos(glm::radians(rotation)), -glm::sin(glm::radians(rotation)) };
 
     float maxDot = 0.0f;
     for (size_t i = 0; i < m_Interactables.size(); i++) {
@@ -191,9 +190,9 @@ std::optional<InteractableType::Enumeration> Interactables::CanInteract(const Pl
     return std::optional<InteractableType::Enumeration>(m_Interactables[m_CachedIndex].Type);
 }
 
-InteractionResult Interactables::Interact(const Player& player) {
+InteractionResult Interactables::Interact(glm::vec2 position, float rotation) {
     InteractionResult result{};
-    auto type = CanInteract(player);
+    auto type = CanInteract(position, rotation);
     
     if (!type) {
         return result;

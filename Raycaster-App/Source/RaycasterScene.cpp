@@ -105,6 +105,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         Core::RenderAPI::Clear();
 
         ProcessInput(deltaTime);
+            auto result = m_Interactables.Interact(m_Player.Position, m_Player.Rotation);
         
 
         m_Projectiles.Update(deltaTime, m_Map);
