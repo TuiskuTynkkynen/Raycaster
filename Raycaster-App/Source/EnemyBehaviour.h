@@ -7,7 +7,7 @@ struct Context {
     glm::vec2 PlayerPosition;
     const Map& Map;
     std::vector<LineCollider>& Areas;
-    std::vector<Enemies::Attack>& Attacks;
+    std::vector<Attack>& Attacks;
     const std::vector<float>& AproachMap;
     const std::vector<float>& RangedApproachMap;
     const std::vector<Enemy>& Enemies;

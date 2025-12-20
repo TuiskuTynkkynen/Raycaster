@@ -62,11 +62,6 @@ public:
         RC_ASSERT(index < Count());
         return m_Enemies[index];
     }
-    struct Attack {
-        std::span<LineCollider> Areas;
-        float Thickness;
-        float Damage;
-    };
     inline const std::span<const Attack> GetAttacks() const { return m_Attacks;  };
 private:
     void UpdateApproachMap(const Map& map, glm::ivec2 playerPosition);

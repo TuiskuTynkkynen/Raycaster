@@ -7,6 +7,7 @@
 
 #include <array>
 #include <variant>
+#include <span>
 
 struct Tile {
     glm::vec3 Posistion{};
@@ -93,4 +94,23 @@ struct Sprite {
 
     uint32_t AtlasIndex = 0;
     bool FlipTexture = false;
+};
+
+struct LineCollider {
+    const glm::vec2 Position;
+    const glm::vec2 Vector;
+    const glm::vec2 Normal;
+    const float Length;
+
+    LineCollider(glm::vec2 point1, glm::vec2 point2)
+        : Position(point1), Vector(point2 - point1), Length(glm::length(point2 - point1)),
+        Normal(Vector.y / glm::length(point2 - point1), -Vector.x / glm::length(point2 - point1))
+    {
+    }
+};
+
+struct Attack {
+    std::span<LineCollider> Areas;
+    float Thickness;
+    float Damage;
 };

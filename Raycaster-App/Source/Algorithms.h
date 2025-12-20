@@ -1,22 +1,12 @@
 #pragma once
 
+#include "Entities.h"
+
 #include "glm/glm.hpp"
 
 #include <optional>
 #include <vector>
 #include <span>
-
-struct LineCollider {
-    const glm::vec2 Position;
-    const glm::vec2 Vector;
-    const glm::vec2 Normal;
-    const float Length;
-
-    LineCollider(glm::vec2 point1, glm::vec2 point2)
-        : Position(point1), Vector(point2 - point1), Length(glm::length(point2 - point1)),
-        Normal(Vector.y / glm::length(point2 - point1), -Vector.x / glm::length(point2 - point1))
-    {}
-};
 
 class Algorithms {
 public:
