@@ -62,19 +62,6 @@ struct Item {
     std::variant<MeleeWeaponData, RangedWeaponData> AdditionalData;
 };
 
-struct Player {
-    glm::vec3 Position{};
-    static constexpr float Width = 0.8f;
-    glm::vec3 Scale{};
-    float Rotation = 0.0f;
-    static constexpr float MaxHealth = 10.0f;
-    float Health = MaxHealth;
-
-    Core::Timestep AnimationProgress = -std::numeric_limits<float>::infinity();
-    size_t HeldItem = 0;
-    std::array<Item, 1> Inventory;
-};
-
 struct Floor {
     glm::vec2 Position{};
     float Length = 0.0f;

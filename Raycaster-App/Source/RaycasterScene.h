@@ -8,6 +8,7 @@
 #include "Interactables.h"
 #include "Renderables.h"
 #include "Projectiles.h"
+#include "Player.h"
 #include "RaycasterEvents.h"
 
 #include <memory>
@@ -44,9 +45,6 @@ private:
     const bool m_SnappingEnabled = true;
 
     void Reinit();
-    void ProcessInput(Core::Timestep deltaTime);
-    void UseItem(Core::Timestep deltaTime);
-    bool DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
     void CastRays();
     void CastFloors();
     void RenderSprites();

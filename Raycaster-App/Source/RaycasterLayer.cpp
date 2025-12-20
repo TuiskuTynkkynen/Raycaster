@@ -52,7 +52,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     glm::vec2 texScale(0.0f);
 
     const auto& floors = static_cast<RaycasterScene&>(*m_Scene).GetFloors();
-    float rot = -static_cast<RaycasterScene&>(*m_Scene).GetPlayer().Rotation + 90.0f;
+    float rot = -static_cast<RaycasterScene&>(*m_Scene).GetPlayer().GetRotation() + 90.0f;
 
     for (const auto& ray : floors) {
         rayPos.x = ray.Position.x;
@@ -108,11 +108,11 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
     Core::UI::Text(frameStats, 0.5f, Core::UI::PositioningType::Relative, {-0.495f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
-    uint32_t health = static_cast<RaycasterScene&>(*m_Scene).GetPlayer().Health;
+    uint32_t health = static_cast<RaycasterScene&>(*m_Scene).GetPlayer().GetHealth();
     std::string playerStats = "Health: " + std::format("{:2}", health) + "/" + std::to_string(static_cast<uint32_t>(Player::MaxHealth));
     Core::UI::Text(playerStats, 0.5f, Core::UI::PositioningType::Relative, {0.3f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
-    if (static_cast<RaycasterScene&>(*m_Scene).GetPlayer().Health <= 0.0f) {
+    if (static_cast<RaycasterScene&>(*m_Scene).GetPlayer().GetHealth ()<= 0.0f) {
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, {-0.025f, 0.0f}, { 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f, 0.5f });
             Core::UI::Text("You died!", { 0.5f, 0.2f }, glm::vec4(1.0f));
             if (Core::UI::Button("Restart", { 0.5f, 0.2f })) {
@@ -167,7 +167,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
 
     glm::vec4 colour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     const Player& player = static_cast<RaycasterScene&>(*m_Scene).GetPlayer();
-    Core::Renderer2D::DrawRotatedFlatQuad(zero, player.Rotation, AxisZ, player.Scale, colour);
+    Core::Renderer2D::DrawRotatedFlatQuad(zero, player.GetRotation(), AxisZ, player.GetScale(), colour);
     
     colour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
     std::span<const Line> lines = static_cast<RaycasterScene&>(*m_Scene).GetLines();

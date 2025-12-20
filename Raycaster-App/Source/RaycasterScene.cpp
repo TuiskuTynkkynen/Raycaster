@@ -25,12 +25,12 @@ void RaycasterScene::Init(){
 
     Tile tile;
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
-    tile.Scale = m_Player.Scale;
+    tile.Scale = m_Player.GetScale();
     m_Tiles.push_back(tile);
     m_Tiles.push_back(tile);
 
-    m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.Position, m_Player.Rotation, glm::sqrt((float)m_Map.GetSize()) / 1.4f, static_cast<float>(m_Map.GetWidth()), static_cast<float>(m_Map.GetHeight()));
-    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.Rotation, 0.0f);
+    m_Camera = std::make_unique<Core::RaycasterCamera>(m_Player.GetPosition(), m_Player.GetRotation(), glm::sqrt((float)m_Map.GetSize()) / 1.4f, static_cast<float>(m_Map.GetWidth()), static_cast<float>(m_Map.GetHeight()));
+    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.GetRotation(), 0.0f);
 
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
 }
@@ -38,12 +38,7 @@ void RaycasterScene::Init(){
 void RaycasterScene::Reinit() {
     m_Paused = false;
 
-    m_Player.Position = glm::vec3((float)m_Map.GetWidth() / 2, (float)m_Map.GetHeight() / 2, 0.5f);
-    m_Player.Scale = m_Map.GetScale() * m_Player.Width * 0.5f;
-    m_Player.Rotation = 90.0f;
-    m_Player.HeldItem = 0;
-    m_Player.Inventory[m_Player.HeldItem] = { .Scale = 0.5f, .Count = 0 };
-    m_Player.Health = m_Player.MaxHealth;
+    m_Player.Init(m_Map);
 
     const size_t interactableCount = m_Interactables.Count();
     m_Interactables.Shutdown();
@@ -104,9 +99,35 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
 
         Core::RenderAPI::Clear();
 
-        ProcessInput(deltaTime);
-            auto result = m_Interactables.Interact(m_Player.Position, m_Player.Rotation);
-        
+        if (m_Player.ShouldInteract()) {
+            auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetRotation());
+
+            switch (result.GetType()) {
+            case InteractionResult::Type::Debug:
+                RC_TRACE("{}", std::get<std::string_view>(result.Data));
+                break;
+            case InteractionResult::Type::Pickup:
+                m_Player.PickUp(std::get<Item>(result.Data));
+                break;
+            case InteractionResult::Type::None:
+                break;
+            }
+        }
+
+        {
+            auto attacks = m_Player.GetAttacks();
+            for (auto& attack : attacks) {
+                m_Enemies.DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
+            }
+            auto projectiles = m_Player.GetProjectiles();
+            for (auto& projectile : projectiles) {
+                m_Projectiles.Add(projectile.Type, projectile.Position, projectile.Velocity);
+            }
+        }
+        m_Player.Update(m_Walls, deltaTime);
+
+        m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetRotation());
+        m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), -m_Player.GetRotation());
 
         m_Projectiles.Update(deltaTime, m_Map);
         for (size_t i = 0; i < m_Projectiles.Count(); i++) {
@@ -115,19 +136,19 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
             std::array area = { LineCollider(projectile.Position, projectile.Position) };
             bool hit = m_Enemies.DamageAreas(area, 1e-5f, projectile.Damage);
 
-            hit |= DamageAreas(area, 1e-5f, projectile.Damage);
+            hit |= m_Player.DamageAreas(area, 1e-5f, projectile.Damage);
 
             if (hit) {
                 m_Projectiles.Remove(i--);
             }
         }
 
-        m_Projectiles.UpdateRender(m_Renderables, m_Player.Position);
+        m_Projectiles.UpdateRender(m_Renderables, m_Player.GetPosition());
 
-        m_Enemies.Update(deltaTime, m_Map, m_Player.Position);
+        m_Enemies.Update(deltaTime, m_Map, m_Player.GetPosition());
         auto attacks = m_Enemies.GetAttacks();
         for (auto& attack : attacks) {
-            DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
+            m_Player.DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
         }
         m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, m_Renderables);
 
@@ -142,14 +163,14 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
 }
 
 void RaycasterScene::CastRays() {
-    float planeAngle = glm::radians(m_Player.Rotation + 90.0f);
+    float planeAngle = glm::radians(m_Player.GetRotation() + 90.0f);
     glm::vec2 rotation{ glm::sin(planeAngle), glm::cos(planeAngle) };
 
     //Wall casting
     for (uint32_t i = 0; i < m_RayCount; i++) {
         float cameraX = 2 * i / float(m_RayCount) - 1;
         glm::vec3 rayDirection = m_Camera->GetDirection() + m_Camera->GetPlane() * cameraX;
-        auto hit = m_Map.CastRay(m_Player.Position, rayDirection);
+        auto hit = m_Map.CastRay(m_Player.GetPosition(), rayDirection);
 
         float wallDistance = 0.0f;
         if (hit.Side == 0) {
@@ -165,7 +186,7 @@ void RaycasterScene::CastRays() {
             m_Rays[i].TexPosition.x = hit.WorlPosition.x;
             
             // Get the distance perpendicular to the camera plane
-            glm::vec2 perpendicular{ hit.WorlPosition.x - m_Player.Position.x, hit.WorlPosition.y - m_Player.Position.y };
+            glm::vec2 perpendicular{ hit.WorlPosition.x - m_Player.GetPosition().x, hit.WorlPosition.y - m_Player.GetPosition().y };
             perpendicular *= rotation;
 
             wallDistance = perpendicular.x + perpendicular.y;
@@ -197,7 +218,7 @@ void RaycasterScene::CastFloors() {
         float currentHeight = 1.0f / scale;
         float prevPos = -1.0f;
 
-        glm::vec2 worldPosition(scale * 0.5f * rayDirection.x + m_Player.Position.x, scale * 0.5f * -rayDirection.y + m_Player.Position.y);
+        glm::vec2 worldPosition(scale * 0.5f * rayDirection.x + m_Player.GetPosition().x, scale * 0.5f * -rayDirection.y + m_Player.GetPosition().y);
         if (worldPosition.x < 0.0f || worldPosition.x >= m_Map.GetWidth() || worldPosition.y < 0.0f || worldPosition.y >= m_Map.GetHeight()) {
             glm::vec2 direction(worldPosition.x + m_Camera->GetPlane().x, worldPosition.y - m_Camera->GetPlane().y);
             // 2 closest edges
@@ -358,7 +379,7 @@ void RaycasterScene::RenderSprites() {
     uint32_t rayIndex = m_RayCount;
     size_t space = m_Rays.size();
 
-    glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.Rotation + 90.0f));
+    glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.GetRotation() + 90.0f));
 
     for (size_t index = 0; index < count; index++) {
         auto& model = models[index];
@@ -367,11 +388,11 @@ void RaycasterScene::RenderSprites() {
         //3D
         glm::vec3 position3D(sprite.Position.x, sprite.Position.z, sprite.Position.y);
         model.Transform = glm::translate(glm::mat4(1.0f), position3D);
-        model.Transform = glm::rotate(model.Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        model.Transform = glm::rotate(model.Transform, glm::radians(m_Player.GetRotation() - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         model.Transform = glm::scale(model.Transform, sprite.Scale);
         
         //Transform for 2D
-        sprite.Position = sprite.Position - m_Player.Position;
+        sprite.Position = sprite.Position - m_Player.GetPosition();
         sprite.Position = matrix * sprite.Position;
     }
 
@@ -442,15 +463,16 @@ void RaycasterScene::RenderSprites() {
 }
 
 void RaycasterScene::RenderInventory() {
-    RC_ASSERT(!m_Player.Inventory.size() || m_Player.HeldItem < m_Player.Inventory.size());
-    if (!m_Player.Inventory[m_Player.HeldItem].Count) {
+    auto heldItem = m_Player.GetHeldItem();
+    
+    if (!heldItem.Count) {
         return;
     }
-    uint32_t atlasIndex = m_Player.Inventory[0].UseAnimation.GetFrame(m_Player.AnimationProgress);
+    uint32_t atlasIndex = heldItem.UseAnimation.GetFrame(m_Player.GetAnimationProgress());
 
     // Update on Raycaster-layer
-    glm::vec3 scale(2.0f * m_Player.Inventory[0].Scale);
-    glm::vec3 position(0.0f, -(1.0f - m_Player.Inventory[0].Scale), 0.0f);
+    glm::vec3 scale(2.0f * heldItem.Scale);
+    glm::vec3 position(0.0f, -(1.0f - heldItem.Scale), 0.0f);
     
     if (m_SnappingEnabled) {
         position.y = glm::round(position.y * m_RayCount * 0.5f) * m_RayWidth;
@@ -470,7 +492,7 @@ void RaycasterScene::RenderInventory() {
         return;
     }
 
-    float brightness = LightBilinear(m_Player.Position);
+    float brightness = LightBilinear(m_Player.GetPosition());
 
     size_t rayIndex = m_Rays.size();
     size_t startIndex = static_cast<size_t>(glm::max(startX, 0.0f));
@@ -491,130 +513,18 @@ void RaycasterScene::RenderInventory() {
 
     //Update on 3D-layer
     float epsilon = 0.1f + 1e-5f;
-    glm::vec3 position3D(m_Player.Position.x, 0.5f - 0.5f * epsilon, m_Player.Position.y);
-    position3D.x += glm::cos(glm::radians(m_Player.Rotation)) * epsilon;
-    position3D.z += -glm::sin(glm::radians(m_Player.Rotation)) * epsilon;
+    glm::vec3 position3D(m_Player.GetPosition().x, 0.5f - 0.5f * epsilon, m_Player.GetPosition().y);
+    position3D.x += glm::cos(glm::radians(m_Player.GetRotation())) * epsilon;
+    position3D.z += -glm::sin(glm::radians(m_Player.GetRotation())) * epsilon;
 
     auto& model = m_Renderables.GetStaticModels()[1];
 
     model.Transform = glm::translate(glm::mat4(1.0f), position3D);
-    model.Transform = glm::rotate(model.Transform, glm::radians(m_Player.Rotation - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    model.Transform = glm::scale(model.Transform, glm::vec3(2.0f * epsilon * m_Player.Inventory[0].Scale));
+    model.Transform = glm::rotate(model.Transform, glm::radians(m_Player.GetRotation ()- 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model.Transform = glm::scale(model.Transform, glm::vec3(2.0f * epsilon * heldItem.Scale));
 
     model.Materials.front()->Parameters.back().Value = 0.0f;
     model.Materials.front()->Parameters.front().Value = glm::vec2(atlasIndex % ATLASWIDTH, atlasIndex / ATLASWIDTH);
-}
-
-void RaycasterScene::ProcessInput(Core::Timestep deltaTime) {
-    float velocity = 2.0f * deltaTime;
-    float rotationSpeed = 180.0f * deltaTime;
-
-    glm::vec3 front(0.0f);
-    front.x = cos(glm::radians(m_Player.Rotation));
-    front.y = -sin(glm::radians(m_Player.Rotation)); //player y is flipped (array index)
-    front.z = 0.0f;
-
-    if (Core::Input::IsKeyPressed(RC_KEY_W)) {
-        m_Player.Position += velocity * front;
-    }
-
-    if (Core::Input::IsKeyPressed(RC_KEY_S)) {
-        m_Player.Position -= velocity * front;
-    }
-
-    if (Core::Input::IsKeyPressed(RC_KEY_A)) {
-        m_Player.Rotation += rotationSpeed;
-    }
-
-    if (Core::Input::IsKeyPressed(RC_KEY_D)) {
-        m_Player.Rotation -= rotationSpeed;
-    }
-
-    if (Core::Input::IsKeyPressed(RC_KEY_SPACE)) {
-        auto result = m_Interactables.Interact(m_Player);
-        
-        switch (result.GetType()) {
-            case InteractionResult::Type::Debug:
-                RC_TRACE("{}", std::get<std::string_view>(result.Data));
-                break;
-            case InteractionResult::Type::Pickup:
-                m_Player.Inventory[m_Player.HeldItem] = std::get<Item>(result.Data);
-                break;
-            case InteractionResult::Type::None:
-                break;
-        }
-    }
-
-    glm::vec2 col(m_Player.Position.x, m_Player.Position.y);
-    col = Algorithms::LineCollisions(col, m_Walls, m_Player.Width * 0.5f);
-
-    float length = glm::length(col);
-    if (length > velocity) {
-        col *= 1.0f / length * velocity;
-    }
-
-    m_Player.Position.x += col.x;
-    m_Player.Position.y += col.y;
-
-    m_Camera->UpdateCamera(m_Player.Position, m_Player.Rotation);
-    m_Camera3D->UpdateCamera(glm::vec3(m_Player.Position.x, 0.5f, m_Player.Position.y), -m_Player.Rotation);
-
-    bool HoldingItem = m_Player.HeldItem < m_Player.Inventory.size() && m_Player.Inventory[m_Player.HeldItem].UseDuration;
-    bool UsingItem = HoldingItem && m_Player.AnimationProgress >= 0.0f;
-    if (Core::Input::IsKeyPressed(RC_KEY_Q)) {
-        if (HoldingItem && !UsingItem) {
-            m_Player.AnimationProgress = 0.0f;
-        }
-    }
-
-    if (UsingItem) {
-        UseItem(deltaTime);
-    }
-}
-
-void RaycasterScene::UseItem(Core::Timestep deltaTime) {
-    RC_ASSERT(m_Player.HeldItem < m_Player.Inventory.size());
-    auto& heldItem = m_Player.Inventory[m_Player.HeldItem];
-    
-    const float relativeDeltaTime = deltaTime / heldItem.UseDuration;
-    m_Player.AnimationProgress += relativeDeltaTime;
-
-    std::visit([&](auto& data) { 
-        using T = std::decay_t<decltype(data)>;
-        if constexpr (std::is_same_v<T, MeleeWeaponData>) {
-            if (m_Player.AnimationProgress >= data.AttackTiming && m_Player.AnimationProgress - relativeDeltaTime < data.AttackTiming) {
-                glm::vec3 front(cos(glm::radians(m_Player.Rotation)), -sin(glm::radians(m_Player.Rotation)), 0.0f);
-                std::array area = { LineCollider(m_Player.Position, m_Player.Position + data.AttackLength * front) };
-                m_Enemies.DamageAreas(area, data.AttackThickness, data.Damage);
-            }
-        } else if constexpr (std::is_same_v<T, RangedWeaponData>) {
-            if (m_Player.AnimationProgress >= data.AttackTiming && m_Player.AnimationProgress - relativeDeltaTime < data.AttackTiming) {
-                glm::vec3 front(cos(glm::radians(m_Player.Rotation)), -sin(glm::radians(m_Player.Rotation)), 0.0f);
-                m_Projectiles.Add(data.Type, m_Player.Position + 0.5f * m_Player.Width * front, data.ProjectileSpeed * front);
-                
-                heldItem.Count--;
-            }
-        }
-        }, heldItem.AdditionalData);
-
-    if (m_Player.AnimationProgress >= 1.0f) {
-        m_Player.AnimationProgress = -std::numeric_limits<float>::infinity();
-
-        if (heldItem.Count == 0) {
-            heldItem = { .Scale = 0.5f, .Count = 0 };
-    }
-}
-}
-
-bool RaycasterScene::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
-    const bool hit = Algorithms::LineCollisions(m_Player.Position, attack, thickness + m_Player.Width * 0.5f) != glm::vec2(0.0f);
-    m_Player.Health -= damage * hit;
-    
-    if (m_Player.Health <= 0.0f) {
-        m_Paused = true;
-    }
-
-    return hit;
 }
 
 static glm::ivec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
@@ -722,4 +632,6 @@ bool RaycasterScene::OnRestart(Restart& event) {
 void RaycasterScene::OnEvent(Core::Event& event) {
     Core::EventDispatcher dispatcer(event);
     dispatcer.Dispatch<Restart>([this](Restart& event) { return OnRestart(event); });
+    dispatcer.Dispatch<Core::KeyPressed>([this](Core::KeyPressed& event) { return m_Player.OnKeyEvent(event); });
+    dispatcer.Dispatch<Core::KeyReleased>([this](Core::KeyReleased& event) { return m_Player.OnKeyEvent(event); });
 }
