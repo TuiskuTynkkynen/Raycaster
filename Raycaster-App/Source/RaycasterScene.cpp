@@ -513,7 +513,7 @@ void RaycasterScene::RenderInventory() {
 
     //Update on 3D-layer
     float epsilon = 0.1f + 1e-5f;
-    glm::vec3 position3D(m_Player.GetPosition().x, 0.5f - 0.5f * epsilon, m_Player.GetPosition().y);
+    glm::vec3 position3D(m_Player.GetPosition().x, 0.5f - (1.0f - heldItem.Scale) * epsilon, m_Player.GetPosition().y);
     position3D.x += glm::cos(glm::radians(m_Player.GetRotation())) * epsilon;
     position3D.z += -glm::sin(glm::radians(m_Player.GetRotation())) * epsilon;
 
