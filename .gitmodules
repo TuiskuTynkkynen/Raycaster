@@ -1,0 +1,15 @@
+[submodule "Raycaster-Core/Dependencies/GLFW"]
+	path = Raycaster-Core/Dependencies/GLFW
+	url = https://github.com/glfw/glfw.git
+[submodule "Raycaster-Core/Dependencies/glad_generator"]
+	path = Raycaster-Core/Dependencies/glad_generator
+	url = https://github.com/Dav1dde/glad.git
+[submodule "Raycaster-Core/Dependencies/FreeType"]
+	path = Raycaster-Core/Dependencies/FreeType
+	url = https://github.com/freetype/freetype.git
+[submodule "Raycaster-Core/Dependencies/miniaudio/miniaudio"]
+	path = Raycaster-Core/Dependencies/miniaudio/miniaudio
+	url = https://github.com/mackron/miniaudio.git
+[submodule "Raycaster-Core/Dependencies/glm"]
+	path = Raycaster-Core/Dependencies/glm
+	url = https://github.com/g-truc/glm.git

@@ -2,6 +2,7 @@
 .vs/
 Binaries/
 Raycaster-Core/Source/Libraries/
+Raycaster-Core/Dependencies/
 Raycaster-Core/obj/
 Raycaster-App/obj/
 
