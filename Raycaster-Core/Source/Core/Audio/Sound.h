@@ -6,6 +6,7 @@
 
 #include <string_view>
 #include <filesystem>
+#include <optional>
 
 #define Bit(x) (1 << x)
 

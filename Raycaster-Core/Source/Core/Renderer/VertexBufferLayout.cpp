@@ -1,6 +1,6 @@
 #include "VertexBufferLayout.h"
 
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 
 uint32_t VertexAttributePointer::GetSizeOfType(uint32_t type) {
     switch (type)

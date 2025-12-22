@@ -94,7 +94,7 @@ namespace Core {
                     glm::vec2(face->glyph->bitmap.width * pixelDimensions, face->glyph->bitmap.rows * pixelDimensions),
                     glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
                     glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-                    face->glyph->advance.x >> 6
+                    static_cast<uint32_t>(face->glyph->advance.x >> 6)
                 };
                 m_Glyphs[c] = glyph;
                 x += face->glyph->bitmap.width + 1;
@@ -111,7 +111,7 @@ namespace Core {
                         glm::vec2(0, (face->size->metrics.height >> 6)),
                         glm::ivec2(0, 0),
                         glm::ivec2(0, 0),
-                        face->glyph->advance.x
+                        static_cast<uint32_t>(face->glyph->advance.x)
             };
             m_Glyphs[' '] = space;
         }
@@ -219,7 +219,7 @@ namespace Core {
                                     glm::vec2(width * pixelDimensions, rows * pixelDimensions),
                                     glm::ivec2(width, rows),
                                     glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-                                    face->glyph->advance.x >> 6
+                                    static_cast<uint32_t>(face->glyph->advance.x >> 6)
                 };
                 m_Glyphs[c] = glyphInfo;
                 x += width + 1;
@@ -236,7 +236,7 @@ namespace Core {
                         glm::vec2(0, (face->size->metrics.height >> 6)),
                         glm::ivec2(0, 0),
                         glm::ivec2(0, 0),
-                        face->glyph->advance.x
+                        static_cast<uint32_t>(face->glyph->advance.x)
             };
             m_Glyphs[' '] = space;
         }

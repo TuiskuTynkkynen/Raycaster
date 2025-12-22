@@ -6,6 +6,8 @@
 
 #include "miniaudio/miniaudio.h"
 
+#include <utility>
+
 namespace Core::Audio {
     static ma_uint32 ParseFlags(Sound::Flags flags) {
         ma_uint32 result = 0;

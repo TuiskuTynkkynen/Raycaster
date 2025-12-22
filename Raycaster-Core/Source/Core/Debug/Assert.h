@@ -9,7 +9,7 @@
 
 
 	#define RC_INTERNAL_ASSERT_WITH_MSG(check, ...) { if(!(check)) { RC_FATAL("Assertion failed: {}", __VA_ARGS__); RC_DEBUGBREAK(); } }
-	#define RC_INTERNAL_ASSERT_NO_MSG(check) { if(!(check)) { RC_FATAL("Assertion '{}' failed at {}", RC_INTERNAL_STRINGIFY(check), std::source_location::current()); RC_DEBUGBREAK(); } }
+	#define RC_INTERNAL_ASSERT_NO_MSG(check) { if(!(check)) { RC_FATAL("Assertion '{}' failed.", RC_INTERNAL_STRINGIFY(check)); RC_DEBUGBREAK(); } }
 
 	#define RC_INTERNAL_ASSERT_GET_MACRO(arg1, arg2, macro, ...) macro
 

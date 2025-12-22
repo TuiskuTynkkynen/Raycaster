@@ -4,6 +4,7 @@
 
 #include <span>
 #include <ranges>
+#include <algorithm>
 #include <numeric>
 
 template <typename T>

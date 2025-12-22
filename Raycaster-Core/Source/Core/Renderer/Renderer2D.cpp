@@ -22,8 +22,8 @@ struct SimpleVertex {
 };
 
 struct Renderer2DDAta {
-    static const uint32_t MaxVertices = 1000 * 4;
-    static const uint32_t MaxIndices = 1000 * 6;
+    inline static const uint32_t MaxVertices = 1000 * 4;
+    inline static const uint32_t MaxIndices = 1000 * 6;
 
     std::unique_ptr<Core::VertexArray> LineVertexArray;
     std::unique_ptr<Core::VertexBuffer> LineVertexBuffer;

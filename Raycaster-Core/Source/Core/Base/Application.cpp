@@ -5,7 +5,7 @@
 #include "Core/Renderer/Renderer2D.h"
 #include "Core/Debug/Debug.h"
 
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 
 namespace Core {
     Application* Application::s_Instance = nullptr;

@@ -3,6 +3,7 @@
 #include "InputCodes.h"
 
 #include <utility>
+#include <cstdint>
 
 namespace Core {
 	class Input

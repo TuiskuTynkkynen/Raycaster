@@ -74,8 +74,8 @@ namespace Core::UI::Widgets {
         return true;
     }
 
-    template TextWidget<char>;
-    template TextWidget<wchar_t>;
+    template class TextWidget<char>;
+    template class TextWidget<wchar_t>;
 
     template <typename T>
     void TextDisplayWidget<T>::Update(Surface& current) {
@@ -90,8 +90,8 @@ namespace Core::UI::Widgets {
         return true;
     }
 
-    template TextDisplayWidget<char>;
-    template TextDisplayWidget<wchar_t>;
+    template class TextDisplayWidget<char>;
+    template class TextDisplayWidget<wchar_t>;
     
     template <typename T>
     void TextInputWidget<T>::Update(Surface& current) {
@@ -420,8 +420,8 @@ namespace Core::UI::Widgets {
         return true;
     }
 
-    template TextInputWidget<char>;
-    template TextInputWidget<wchar_t>;
+    template class TextInputWidget<char>;
+    template class TextInputWidget<wchar_t>;
     
     template <typename T>
     void TextureTextInputWidget<T>::Update(Surface& current) {
@@ -836,8 +836,8 @@ namespace Core::UI::Widgets {
         return true;
     }
 
-    template TextureTextInputWidget<char>;
-    template TextureTextInputWidget<wchar_t>;
+    template class TextureTextInputWidget<char>;
+    template class TextureTextInputWidget<wchar_t>;
     
     template <typename ValueType, typename CharType>
     void NumericInputWidget<ValueType, CharType>::Update(Surface& current) {
@@ -878,16 +878,16 @@ namespace Core::UI::Widgets {
         }
     }
 
-    template NumericInputWidget<int32_t, char>;
-    template NumericInputWidget<int32_t, wchar_t>;
-    template NumericInputWidget<int64_t, char>;
-    template NumericInputWidget<int64_t, wchar_t>;
-    template NumericInputWidget<uint64_t, char>;
-    template NumericInputWidget<uint64_t, wchar_t>;
-    template NumericInputWidget<float, char>;
-    template NumericInputWidget<float, wchar_t>;
-    template NumericInputWidget<double, char>;
-    template NumericInputWidget<double, wchar_t>;
+    template class NumericInputWidget<int32_t, char>;
+    template class NumericInputWidget<int32_t, wchar_t>;
+    template class NumericInputWidget<int64_t, char>;
+    template class NumericInputWidget<int64_t, wchar_t>;
+    template class NumericInputWidget<uint64_t, char>;
+    template class NumericInputWidget<uint64_t, wchar_t>;
+    template class NumericInputWidget<float, char>;
+    template class NumericInputWidget<float, wchar_t>;
+    template class NumericInputWidget<double, char>;
+    template class NumericInputWidget<double, wchar_t>;
 
     bool ToggleWidget::Render(Surface& current) {
         constexpr glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
@@ -970,14 +970,14 @@ namespace Core::UI::Widgets {
         return true;
     }
 
-    template SliderWidget<int8_t>;
-    template SliderWidget<uint8_t>;
-    template SliderWidget<int32_t>;
-    template SliderWidget<uint32_t>;
-    template SliderWidget<int64_t>;
-    template SliderWidget<uint64_t>;
-    template SliderWidget<float>;
-    template SliderWidget<double>;
+    template class SliderWidget<int8_t>;
+    template class SliderWidget<uint8_t>;
+    template class SliderWidget<int32_t>;
+    template class SliderWidget<uint32_t>;
+    template class SliderWidget<int64_t>;
+    template class SliderWidget<uint64_t>;
+    template class SliderWidget<float>;
+    template class SliderWidget<double>;
 
     template <typename T>
     void AtlasTextureSliderWidget<T>::Update(Surface& current) {
@@ -1027,14 +1027,14 @@ namespace Core::UI::Widgets {
         return true;
     }
 
-    template AtlasTextureSliderWidget<int8_t>;
-    template AtlasTextureSliderWidget<uint8_t>;
-    template AtlasTextureSliderWidget<int32_t>;
-    template AtlasTextureSliderWidget<uint32_t>;
-    template AtlasTextureSliderWidget<int64_t>;
-    template AtlasTextureSliderWidget<uint64_t>;
-    template AtlasTextureSliderWidget<float>;
-    template AtlasTextureSliderWidget<double>;
+    template class AtlasTextureSliderWidget<int8_t>;
+    template class AtlasTextureSliderWidget<uint8_t>;
+    template class AtlasTextureSliderWidget<int32_t>;
+    template class AtlasTextureSliderWidget<uint32_t>;
+    template class AtlasTextureSliderWidget<int64_t>;
+    template class AtlasTextureSliderWidget<uint64_t>;
+    template class AtlasTextureSliderWidget<float>;
+    template class AtlasTextureSliderWidget<double>;
     
     void ScrollWidget::Update(Surface& current) {
         size_t parentIndex = current.ParentID;

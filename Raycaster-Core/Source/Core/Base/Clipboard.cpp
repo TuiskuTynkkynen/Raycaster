@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include <codecvt>
+#include <locale>
 
 namespace Core {
 	std::u8string Clipboard::GetClipboard() {

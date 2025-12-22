@@ -42,7 +42,7 @@ public:
     static constexpr uint32_t GetWidth() { return s_MapData.Width; }
     static constexpr uint32_t GetSize() { return s_MapData.Size; }
 
-    static constexpr float GetScalingFactor() { return s_MapData.ScalingFactor; }
+    static float GetScalingFactor() { return s_MapData.ScalingFactor; }
     static constexpr glm::vec3 GetScale() { return s_MapData.Scale; }
 
     inline static constexpr size_t GetIndex(size_t x, size_t y) { return y * s_MapData.Width + x; }
@@ -142,8 +142,8 @@ private:
             6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6
         };
 
-        const float ScalingFactor = glm::sqrt((float)Size) / 1.4f;
-        const glm::vec3 Scale = glm::vec3(1.0f / ScalingFactor, 1.0f / ScalingFactor, 0.0f);
+        inline static const float ScalingFactor = glm::sqrt((float)Size) / 1.4f;
+        inline static const glm::vec3 Scale = glm::vec3(1.0f / ScalingFactor, 1.0f / ScalingFactor, 0.0f);
     };
     inline static MapData s_MapData;
 

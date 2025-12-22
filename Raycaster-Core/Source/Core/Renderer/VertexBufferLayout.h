@@ -1,6 +1,7 @@
 #pragma once
 
-#include  <vector>
+#include <vector>
+#include <cstdint>
 
 struct VertexAttributePointer{
     uint32_t type;

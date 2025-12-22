@@ -78,7 +78,7 @@ namespace Core::Audio::Effects {
     };
 
     class Filter {
-        friend class Bus;
+        friend class Core::Audio::Bus;
     public:
         template <typename T>
         Filter(T settings, Bus& parent);

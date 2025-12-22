@@ -26,6 +26,7 @@ namespace Core::Audio::Effects {
 
     static constexpr FilterType FilterNodeToType(auto* node) {
         static_assert(false, "Pointer to unsupported type passed as node");
+        return static_cast<FilterType>(-1); // Unreachable
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

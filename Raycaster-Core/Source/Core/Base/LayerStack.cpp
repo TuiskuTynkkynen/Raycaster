@@ -1,5 +1,7 @@
 #include "LayerStack.h"
 
+#include <algorithm>
+
 namespace Core {
 	LayerStack::LayerStack(){
 		m_LayerInsert = m_Layers.begin();

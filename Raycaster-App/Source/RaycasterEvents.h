@@ -2,8 +2,8 @@
 
 #include "Core/Events/Event.h"
 
-enum class EventType {
-    None = Core::EventType::Custom,
+enum class EventType : uint8_t {
+    None = static_cast<uint8_t>(Core::EventType::Custom),
     Restart,
 };
 
