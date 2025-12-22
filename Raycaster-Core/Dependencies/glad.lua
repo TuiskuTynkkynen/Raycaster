@@ -1,18 +1,39 @@
-function AddGlad()
-	files 
-	{
-		"glad/include/**.h",
-		"glad/src/gl.c",
-	}
+project "glad"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   targetdir "Binaries/%{cfg.buildcfg}"
+   staticruntime "off"
+   warnings "off"
 
-	includedirs
-	{
-		"glad/include"
-	}
+   files 
+   {
+        "glad/include/**.h",
+        "glad/src/gl.c",
+   }
 
-   filter { "system:linux" }
-      links { "GL" }
+   includedirs
+   {
+        "glad/include"
+   }
+       
+   targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
+   objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
-   filter { "system:windows" }
-      links { "OpenGL32" }
-end
+   filter "system:windows"
+        systemversion "latest"
+        defines { "_CRT_SECURE_NO_WARNINGS" }
+
+   filter "configurations:Debug"
+         runtime "Debug"
+         symbols "On"
+
+   filter "configurations:Release"
+         runtime "Release"
+         optimize "On"
+         symbols "On"
+
+   filter "configurations:Dist"
+         runtime "Release"
+         optimize "On"
+         symbols "Off"

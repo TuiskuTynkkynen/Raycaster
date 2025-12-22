@@ -12,6 +12,7 @@ Raycaster-App/obj/
 *.sln
 *.log
 Makefile
+*.make
 
 # Exclude
 !Vendor/Binaries
