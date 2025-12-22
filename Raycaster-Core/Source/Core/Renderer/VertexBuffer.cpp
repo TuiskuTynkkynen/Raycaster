@@ -1,6 +1,6 @@
 #include "VertexBuffer.h"
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 
 namespace Core {
 	VertexBuffer::VertexBuffer(const void* data, uint32_t size)

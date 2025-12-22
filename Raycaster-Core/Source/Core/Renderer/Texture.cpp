@@ -1,8 +1,9 @@
 #include "Texture.h"
 #include "Core/Debug/Debug.h"
 
-#include <glad/glad.h>
-#include <utils/stb_image.h>
+#include <glad/gl.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
 
 #include <filesystem> 
 #include <string>

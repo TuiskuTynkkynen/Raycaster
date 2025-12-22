@@ -1,6 +1,6 @@
 #include "ElementBuffer.h"
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 
 namespace Core {
 	ElementBuffer::ElementBuffer(const uint32_t* data, uint32_t count)

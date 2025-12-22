@@ -2,12 +2,12 @@
 
 #include "Core/Debug/Assert.h"
 
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
 
 namespace Core {
     void RenderAPI::Init() {
-        int32_t success = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        int32_t success = gladLoadGL(glfwGetProcAddress);
         RC_ASSERT(success, "Failed to initialize GLAD");
 
         glEnable(GL_BLEND);
