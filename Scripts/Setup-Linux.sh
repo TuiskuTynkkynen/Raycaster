@@ -2,9 +2,9 @@
 
 pushd ..
 
-if [ ! -d ./Core/Dependencies/glad/include/ ]; then
+if [ ! -d ./Raycaster-Core/Dependencies/glad/include/ ]; then
     echo Generating glad...
-    pushd ./Core/Dependencies/glad_generator
+    pushd ./Raycaster-Core/Dependencies/glad_generator
 
     python -m venv venv
     source ./venv/bin/activate
@@ -18,6 +18,6 @@ if [ ! -d ./Core/Dependencies/glad/include/ ]; then
     popd
 fi
 
-./Vendor/premake/bin/release/premake5 --cc=clang --file=Build.lua gmake
+./Vendor/Binaries/Premake/Linux/premake5 --cc=clang --file=Build.lua gmake
 
 popd
