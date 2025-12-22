@@ -9,8 +9,6 @@ project "Raycaster-App"
         "Source/**.h", "Source/**.cpp",
         "Source/Shaders/**.glsl",
         "Source/Textures/**",
-        "Source/Libraries/GLFW/**",
-        "Source/Libraries/glad/**"
     }
 
     includedirs
@@ -33,7 +31,10 @@ project "Raycaster-App"
     links
     {
         "Raycaster-Core",
-        "Raycaster-Dependencies",
+	"Raycaster-Dependencies",
+	"GLFW",
+        "glad",
+        "FreeType",
     }
 
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")

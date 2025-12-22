@@ -13,17 +13,20 @@ project "Raycaster-Core"
     {
         "Source",
         "Dependencies/GLFW/include",
-	    "Dependencies/glad/include",
-	    "Dependencies/glm",
-	    "Dependencies/FreeType/include",
-	    "Dependencies/miniaudio",
-	    "Dependencies/utils",
+        "Dependencies/glad/include",
+        "Dependencies/glm",
+        "Dependencies/FreeType/include",
+        "Dependencies/miniaudio",
+        "Dependencies/utils",
     }
 
     links {
-        "Raycaster-Dependencies"
+        "Raycaster-Dependencies",
+        "GLFW",
+        "glad",
+        "FreeType",
     }
-   
+
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
