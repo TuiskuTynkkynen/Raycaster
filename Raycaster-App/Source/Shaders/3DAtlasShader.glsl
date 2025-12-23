@@ -46,7 +46,7 @@ void main(){
         discard;
     }
 
-    float brightness;
+    float brightness = 0.0f;
     for(int i = 0; i < LightCount; i++){
         float distance = length(WorldPosition - PointLights[i]);
         brightness += 1.0f / (0.95f + 0.1f * distance + 0.03f * (distance * distance));
