@@ -11,7 +11,7 @@ if [ ! -d ./Raycaster-Core/Dependencies/glad/include/ ]; then
 
     python -m pip install -r requirements.txt
     python -m pip install -e .
-    glad --api gl:compatibility=3.3 --out-path ../glad
+    glad --api gl:compatibility=4.6 --out-path ../glad
 
     deactivate
     rm -rf ./venv

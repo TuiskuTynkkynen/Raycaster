@@ -7,7 +7,7 @@ if not exist .\Raycaster-Core\Dependencies\glad\include\ (
     pushd .\Raycaster-Core\Dependencies\glad_generator
 
     python -m venv venv
-    cmd /c ".\venv\Scripts\activate && python -m pip install -r requirements.txt && python -m pip install -e . && glad --api gl:compatibility=3.3 --out-path ..\glad && deactivate"
+    cmd /c ".\venv\Scripts\activate && python -m pip install -r requirements.txt && python -m pip install -e . && glad --api gl:compatibility=4.6 --out-path ..\glad && deactivate"
 
     rmdir /S /Q .\venv
     popd
