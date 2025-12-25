@@ -192,7 +192,8 @@ bool Layer2D::OnWindowResizeEvent(Core::WindowResize& event) {
 }
 
 void Layer3D::OnUpdate(Core::Timestep deltaTime) {
-    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 500.0f) * static_cast<RaycasterScene&>(*m_Scene).GetCamera3D().GetViewMatrix();
+    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), m_ViewPortWidth / (float)m_ViewPortHeight, 1e-5f, 500.0f)
+        * static_cast<RaycasterScene&>(*m_Scene).GetCamera3D().GetViewMatrix();
     
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer::BeginScene(viewPerspective);
