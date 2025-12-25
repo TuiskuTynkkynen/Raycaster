@@ -169,7 +169,7 @@ void RaycasterScene::CastRays() {
     //Wall casting
     for (uint32_t i = 0; i < m_RayCount; i++) {
         float cameraX = 2 * i / float(m_RayCount) - 1;
-        glm::vec3 rayDirection = m_Camera->GetDirection() + m_Camera->GetPlane() * cameraX;
+        glm::vec3 rayDirection = m_Camera->GetDirection() + m_Camera->GetPlane() * cameraX * m_AspectRatio;
         auto hit = m_Map.CastRay(m_Player.GetPosition(), rayDirection);
 
         float wallDistance = 0.0f;
@@ -212,9 +212,10 @@ void RaycasterScene::CastFloors() {
     size_t floorIndex = 0;
     std::vector<float> visibleRanges; // Ranges in NDC
 
-    glm::vec3 rayDirection = m_Camera->GetDirection() - m_Camera->GetPlane();
+    const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
+    glm::vec3 rayDirection = m_Camera->GetDirection() * reciprocalAspectRatio - m_Camera->GetPlane();
     for (uint32_t i = 0; i < m_RayCount / 2; i++) {
-        float scale = m_RayCount / (m_RayCount - (2.0f * i + 1));
+        float scale = m_RayCount / (m_RayCount - (2.0f * i + 1)) * m_AspectRatio;
         float currentHeight = 1.0f / scale;
         float prevPos = -1.0f;
 
@@ -253,7 +254,7 @@ void RaycasterScene::CastFloors() {
         for (size_t j = m_RayCount; j > 0; j--) {
             // compares the current height to the height of a wall
             // m_zBuffer stores distances (half of the reciprocal height), so we compare with the reciprocal height -> (scale * 0.5f)
-            if (occluded != (occlusionScale * 0.5f < m_ZBuffer[j - 1])) {
+            if (occluded != (occlusionScale * 0.5f * reciprocalAspectRatio < m_ZBuffer[j - 1])) {
                 continue;
             }
         
@@ -335,7 +336,7 @@ void RaycasterScene::CastFloors() {
                 Floor& floor = m_Floors[floorIndex++];
 
                 floor.Position.x = 0.5f * length + position;
-                floor.Position.y = currentHeight;
+                floor.Position.y = currentHeight * m_AspectRatio;
                 floor.Length = length;
 
                 floor.TexturePosition = worldPosition;
@@ -378,6 +379,7 @@ void RaycasterScene::RenderSprites() {
     size_t count = spriteObjects.size();
     uint32_t rayIndex = m_RayCount;
     size_t space = m_Rays.size();
+    const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
 
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(m_Player.GetRotation() + 90.0f));
 
@@ -415,8 +417,8 @@ void RaycasterScene::RenderSprites() {
         float brightness = LightBilinear({ sprite.WorldPosition.x, sprite.WorldPosition.y });
         
         float distance = position.y;
-        position.x *= -1.0f / distance;
-        scale /= distance;
+        position.x *= -reciprocalAspectRatio / distance;
+        scale /= distance ;
         position.y = position.z / distance;
         
         if (m_SnappingEnabled) {
@@ -430,7 +432,7 @@ void RaycasterScene::RenderSprites() {
             continue;
         }
 
-        float width = scale.x * m_RayCount * 0.5f;
+        float width = scale.x * m_RayCount * 0.5f * reciprocalAspectRatio;
         float startX = 0.5f * (m_RayCount - width + position.x * m_RayCount);
         int32_t endX = static_cast<int32_t>(startX + width);
         if (endX < 0) {
@@ -472,6 +474,7 @@ void RaycasterScene::RenderInventory() {
 
     // Update on Raycaster-layer
     glm::vec3 scale(2.0f * heldItem.Scale);
+    scale.x /= m_AspectRatio;
     glm::vec3 position(0.0f, -(1.0f - heldItem.Scale), 0.0f);
     
     if (m_SnappingEnabled) {
@@ -629,9 +632,16 @@ bool RaycasterScene::OnRestart(Restart& event) {
     return true;
 }
 
+
+bool RaycasterScene::OnWindowResize(Core::WindowResize& event) {
+    m_AspectRatio = event.GetWidth() * 0.5f / event.GetHeight();
+    return false;
+}
+
 void RaycasterScene::OnEvent(Core::Event& event) {
     Core::EventDispatcher dispatcer(event);
     dispatcer.Dispatch<Restart>([this](Restart& event) { return OnRestart(event); });
     dispatcer.Dispatch<Core::KeyPressed>([this](Core::KeyPressed& event) { return m_Player.OnKeyEvent(event); });
     dispatcer.Dispatch<Core::KeyReleased>([this](Core::KeyReleased& event) { return m_Player.OnKeyEvent(event); });
+    dispatcer.Dispatch<Core::WindowResize>([this](Core::WindowResize& event) { return OnWindowResize(event); });
 }

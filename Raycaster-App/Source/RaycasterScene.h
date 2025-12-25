@@ -11,6 +11,8 @@
 #include "Player.h"
 #include "RaycasterEvents.h"
 
+#include "Core/Events/WindowEvent.h"
+
 #include <memory>
 
 class RaycasterScene : public Core::Scene {
@@ -19,6 +21,7 @@ private:
 
     const uint32_t m_RayCount = 500;
     const float m_RayWidth = 2.0f / m_RayCount; // Screen is 2.0f wide/tall
+    float m_AspectRatio = 1.0f;
 
     std::vector<Ray> m_Rays;
     std::vector<Floor> m_Floors;
@@ -52,6 +55,7 @@ private:
     float LightBilinear(glm::vec2 position);
 
     bool OnRestart(Restart& event);
+    bool OnWindowResize(Core::WindowResize& event);
 public: 
     void Init() override;
     void Shutdown() override { m_Enemies.Shutdown(); }

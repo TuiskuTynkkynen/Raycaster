@@ -59,7 +59,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         rayPos.y = ray.Position.y;
 
         rayScale.x = ray.Length;
-        texScale.x = ray.Length * (0.5f / ray.Position.y);
+        texScale.x = ray.Length * (m_ViewPortWidth / (2.0f * m_ViewPortHeight * ray.Position.y));
 
         colour = glm::vec4(ray.BrightnessEnd);
         colour.a = 1.0f;
