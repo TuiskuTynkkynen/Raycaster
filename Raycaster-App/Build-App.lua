@@ -13,26 +13,21 @@ project "Raycaster-App"
 
     includedirs
     {
-        "Source",
-
-	    "Source/Shaders",
-	    "Source/Textures",
-
-	    -- Include Core
-	    "../Raycaster-Core/Source",
+        -- Include Core
+        "../Raycaster-Core/Source",
         "../Raycaster-Core/Dependencies/GLFW/include",
-	    "../Raycaster-Core/Dependencies/glad/include",
-	    "../Raycaster-Core/Dependencies/glm",
-	    "../Raycaster-Core/Dependencies/FreeType/include",
-	    "../Raycaster-Core/Dependencies/miniaudio",
-	    "../Raycaster-Core/Dependencies/utils",
+        "../Raycaster-Core/Dependencies/glad/include",
+        "../Raycaster-Core/Dependencies/glm",
+        "../Raycaster-Core/Dependencies/FreeType/include",
+        "../Raycaster-Core/Dependencies/miniaudio",
+        "../Raycaster-Core/Dependencies/utils",
     }	
 
     links
     {
         "Raycaster-Core",
-	"Raycaster-Dependencies",
-	"GLFW",
+        "Raycaster-Dependencies",
+        "GLFW",
         "glad",
         "FreeType",
     }

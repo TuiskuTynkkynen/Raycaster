@@ -1,4 +1,4 @@
-#include <EnemyBehaviour.h>
+#include "EnemyBehaviour.h"
 
 static constexpr size_t s_DirectionCount = 8;
 static constexpr std::array<glm::vec2, s_DirectionCount + 1> s_Directions = {
