@@ -150,7 +150,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         for (auto& attack : attacks) {
             m_Player.DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
         }
-        m_Enemies.UpdateRender({ m_Tiles.begin() , m_Tiles.end() }, m_Renderables);
+        m_Enemies.UpdateRender({ m_Tiles.end() - m_Enemies.Count(), m_Tiles.end()}, m_Renderables);
 
         m_Interactables.Update(deltaTime);
         m_Interactables.UpdateRender(m_Renderables);
@@ -204,7 +204,9 @@ void RaycasterScene::CastRays() {
         m_Rays[i].Brightness = LightBilinear(hit.WorlPosition);
 
         m_ZBuffer[i] = wallDistance;
-        m_Lines[i].Scale = rayDirection * wallDistance * m_Map.GetScale();
+        m_Lines[i].Scale = rayDirection * wallDistance;
+        m_Lines[i].Scale.y *= -1;
+        m_Lines[i].Posistion = m_Player.GetPosition();
     }
 }
 

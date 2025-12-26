@@ -40,7 +40,7 @@ private:
 
     float max = 0.0f;
     Player m_Player;
-    std::unique_ptr<Core::RaycasterCamera> m_Camera;
+    std::unique_ptr<Core::Camera2D> m_Camera;
     std::unique_ptr<Core::FlyCamera> m_Camera3D;
 
     bool m_Paused = false;

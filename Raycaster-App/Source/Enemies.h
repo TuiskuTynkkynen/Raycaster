@@ -81,7 +81,4 @@ private:
     std::vector<Attack> m_Attacks;
 
     std::vector<std::pair<glm::ivec3, float>> m_Frontier;
-
-    glm::vec2 m_MapCenter{};
-    glm::vec2 m_MapScale{};
 };

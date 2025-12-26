@@ -9,7 +9,7 @@
 
 void Player::Init(const Map& map) {
     m_Position = glm::vec3((float)map.GetWidth() / 2, (float)map.GetHeight() / 2, 0.5f);
-    m_Scale = map.GetScale() * Width * 0.5f;
+    m_Scale = glm::vec3(Width * 0.5f);
     m_Rotation = 90.0f;
 
     m_HeldItemIndex = 0;

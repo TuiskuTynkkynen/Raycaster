@@ -73,7 +73,7 @@ std::vector<Tile> Map::CreateTiles() {
     result.reserve(s_MapData.Size);
 
     Tile tile;
-    tile.Scale = glm::vec3(0.95f * s_MapData.Scale.x, 0.95f * s_MapData.Scale.y, 1.0f);
+    tile.Scale = glm::vec3(0.95f, 0.95f, 1.0f);
     tile.Posistion.z = 0.0f;
 
     float centreY = (s_MapData.Height - 1) / 2.0f, centreX = (s_MapData.Width - 1) / 2.0f;
@@ -81,8 +81,8 @@ std::vector<Tile> Map::CreateTiles() {
         uint32_t mapX = i % s_MapData.Width;
         uint32_t mapY = i / s_MapData.Width;
 
-        tile.Posistion.x = (mapX - centreX) * s_MapData.Scale.x;
-        tile.Posistion.y = (centreY - mapY) * s_MapData.Scale.y;
+        tile.Posistion.x = mapX + 0.5f;
+        tile.Posistion.y = mapY + 0.5f;
 
         float brightness = m_LightMap[GetIndex(mapX, mapY)];
 
@@ -92,11 +92,8 @@ std::vector<Tile> Map::CreateTiles() {
         if (s_MapData.Map[GetIndex(mapX, mapY)] < 0) {
             Neighbourhood adjacent = GetNeighbours(GetIndex(mapX, mapY));
             
-            if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
-                tile.Rotation = adjacent.South && !(adjacent.North && adjacent.West) ? 270.0f : 90.0f;
-            } else {
-                tile.Rotation = adjacent.North ? 0.0f : 180.0f;
-            }
+            tile.Rotation = (adjacent.South && adjacent.West) || (adjacent.North && adjacent.East) ? 90.0f : 0.0f;
+            tile.Rotation += adjacent.North ? 180.0f : 0.0f;
 
             tile.Colour = glm::vec3(1.0f);
             tile.IsTriangle = true;

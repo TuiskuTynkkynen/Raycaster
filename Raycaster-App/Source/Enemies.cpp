@@ -6,11 +6,6 @@
 void Enemies::Init(const Map& map) {
     m_SpatialPartition.Init(map);
     m_Frontier.resize(map.GetSize());
-
-    m_MapCenter = { map.GetWidth(), map.GetHeight() };
-    m_MapCenter *= 0.5f;
-
-    m_MapScale = map.GetScale();
 }
 
 void Enemies::Shutdown() {
@@ -35,8 +30,6 @@ void Enemies::Shutdown() {
     m_Frontier.shrink_to_fit();
 
     m_PreviousPlayerPosition = {};
-    m_MapCenter = {};
-    m_MapScale = {};
 }
 
 void Enemies::Add(EnemyType::Enumeration type, glm::vec2 position) {
@@ -133,8 +126,8 @@ void Enemies::UpdateRender(std::span<Tile> tiles, Renderables& renderables) {
         sprite.FlipTexture = flip;
 
         //Update on 2D-layer
-        tiles[i].Posistion.x = (enemy.Position.x - m_MapCenter.x) * m_MapScale.x;
-        tiles[i].Posistion.y = (m_MapCenter.y - enemy.Position.y) * m_MapScale.y;
+        tiles[i].Posistion.x = enemy.Position.x;
+        tiles[i].Posistion.y = enemy.Position.y;
 
         //Update on 3D-layer
         glm::vec2 index = glm::vec2((enemy.AtlasIndex) % ATLASWIDTH, (enemy.AtlasIndex) / ATLASWIDTH);
