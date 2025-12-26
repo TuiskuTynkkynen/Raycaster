@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Core.h"
-#include "Algorithms.h"
 #include "Entities.h"
 #include "Map.h"
 #include "Enemies.h"
@@ -10,6 +8,7 @@
 #include "Projectiles.h"
 #include "Player.h"
 #include "RaycasterEvents.h"
+#include "RaycastRenderer.h"
 
 #include "Core/Events/WindowEvent.h"
 
@@ -19,17 +18,10 @@ class RaycasterScene : public Core::Scene {
 private:
     Map m_Map{};
 
-    const uint32_t m_RayCount = 500;
-    const float m_RayWidth = 2.0f / m_RayCount; // Screen is 2.0f wide/tall
-    float m_AspectRatio = 1.0f;
-
-    std::vector<Ray> m_Rays;
-    std::vector<Floor> m_Floors;
-    std::vector<Line> m_Lines;
     std::vector<Tile> m_Tiles;
     std::vector<glm::vec3> m_Lights;
-    float* m_ZBuffer = new float[m_RayCount];
     
+    RaycastRenderer m_Renderer;
     Renderables m_Renderables;
 
     Projectiles m_Projectiles;
@@ -38,22 +30,13 @@ private:
 
     std::vector<LineCollider> m_Walls;
 
-    float max = 0.0f;
     Player m_Player;
     std::unique_ptr<Core::Camera2D> m_Camera;
     std::unique_ptr<Core::FlyCamera> m_Camera3D;
 
     bool m_Paused = false;
 
-    const bool m_SnappingEnabled = true;
-
     void Reinit();
-    void CastRays();
-    void CastFloors();
-    void RenderSprites();
-    void RenderInventory();
-    float LightBilinear(glm::vec2 position);
-
     bool OnRestart(Restart& event);
     bool OnWindowResize(Core::WindowResize& event);
 public: 
@@ -63,16 +46,14 @@ public:
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override;
 
-    inline std::span<const Ray> GetRays() const { return m_Rays; }
-    inline std::span<const Floor> GetFloors() const { return m_Floors; }
-    inline std::span<const Line> GetLines() const { return m_Lines; }
+    inline std::span<const Ray> GetRays() const { return m_Renderer.GetRays(); }
+    inline std::span<const Floor> GetFloors() const { return m_Renderer.GetFloors(); }
+    inline std::span<const Line> GetLines() const { return m_Renderer.GetLines(); }
     inline std::span<const Tile> GetTiles() const { return m_Tiles; }
     inline std::span<const Core::Model> GetModels() const { return m_Renderables.GetModels(); }
 
     inline const Player& GetPlayer() const { return m_Player; }
     inline const Core::Camera2D& GetCamera() const { return *m_Camera; }
     inline const Core::FlyCamera& GetCamera3D() const { return *m_Camera3D;  }
-
-    inline uint32_t GetRayCount() const { return m_RayCount; }
 };
 

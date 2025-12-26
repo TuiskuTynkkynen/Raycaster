@@ -44,11 +44,9 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(identity);
 
-    uint32_t rayCount = static_cast<RaycasterScene&>(*m_Scene).GetRayCount();
-
     glm::vec4 colour, colour1;
     glm::vec3 rayPos(0.0f);
-    glm::vec3 rayScale(0.0f, 2.0f / rayCount, 0.0f);
+    glm::vec3 rayScale(0.0f, RaycastRenderer::GetRayWidth(), 0.0f);
     glm::vec2 texScale(0.0f);
 
     const auto& floors = static_cast<RaycasterScene&>(*m_Scene).GetFloors();
@@ -73,7 +71,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         Core::Renderer2D::DrawTextureGradientQuad(rayPos, rayScale, colour, colour1, ray.TexturePosition, texScale, ray.BottomAtlasIndex, rot);
     }
 
-    rayScale.x = 2.0f / rayCount;
+    rayScale.x = RaycastRenderer::GetRayWidth();
     texScale = glm::vec2(0.0f, 1.0f);
 
     std::span<const Ray> rays = static_cast<RaycasterScene&>(*m_Scene).GetRays();
