@@ -58,18 +58,17 @@ namespace Core {
 		void UpdateCameraVectors();
 	};
 
-	class RaycasterCamera : public Camera { //2D Camera
+	class Camera2D : public Camera {
 	public: 
-		RaycasterCamera(const glm::vec3& playerPosition, float yaw, float centre, float width, float height);
-		RaycasterCamera(float posX, float posY, float yaw, float centre, float width, float height);
+		Camera2D(const glm::vec3& position, float yaw, float zoom);
 
 		inline const glm::mat4& GetViewMatrix() const override { return m_View; };
 		inline const glm::vec3& GetPosition() const { return m_Position; } 
 		inline const glm::vec3& GetDirection() const { return m_Direction; }
 		inline const glm::vec3& GetPlane() const { return m_Plane; }
 
-		void UpdateCamera(const glm::vec3& playerPosition, float yaw);
-		void UpdateCamera(float posX, float posY, float yaw);
+		void UpdateCamera(const glm::vec3& position, float yaw);
+		void UpdateCamera(float zoom);
 	private:
 		glm::mat4 m_View;
 
@@ -77,10 +76,7 @@ namespace Core {
 		glm::vec3 m_Direction;
 		glm::vec3 m_Plane;
 
-		float m_CameraYaw;
-		const float m_ReciprocalCentre;
-		const float m_HalfWidth;
-		const float m_HalfHeight;
+		float m_Zoom;
 	};
 }
 

@@ -70,7 +70,7 @@ public:
     inline std::span<const Core::Model> GetModels() const { return m_Renderables.GetModels(); }
 
     inline const Player& GetPlayer() const { return m_Player; }
-    inline const Core::RaycasterCamera& GetCamera() const { return *m_Camera; }
+    inline const Core::Camera2D& GetCamera() const { return *m_Camera; }
     inline const Core::FlyCamera& GetCamera3D() const { return *m_Camera3D;  }
 
     inline uint32_t GetRayCount() const { return m_RayCount; }
