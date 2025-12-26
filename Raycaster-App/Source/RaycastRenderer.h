@@ -25,6 +25,9 @@ public:
     inline std::span<const Line> GetLines() const { return m_Lines; }
     inline std::span<const Floor> GetFloors() const { return m_Floors; }
 
+    inline static constexpr size_t GetRayCount() { return m_RayCount; }
+    inline static constexpr size_t GetRayWidth() { return m_RayWidth; }
+
     inline void SetAspecRatio(float aspectRatio) { m_AspectRatio = aspectRatio; m_ReciprocalAspectRatio = 1.0f / aspectRatio; };
 private:
     static constexpr size_t m_RayCount = 500;
