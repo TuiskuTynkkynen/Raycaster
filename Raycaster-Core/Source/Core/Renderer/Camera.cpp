@@ -21,10 +21,6 @@ namespace Core {
         UpdateCameraVectors();
     }
 
-    glm::mat4 FlyCamera::GetViewMatrix() const {
-        return glm::lookAt(m_Position, m_Position + m_Direction, m_CameraUp);
-    }
-
     void FlyCamera::ProcessKeyboard(CameraMovement movement, float deltaTime) {
         float velocity = m_MovementSpeed * deltaTime;
 
@@ -97,10 +93,10 @@ namespace Core {
         
         m_CameraRight = glm::normalize(glm::cross(m_Direction, m_WorldUp));
         m_CameraUp = glm::normalize(glm::cross(m_CameraRight, m_Direction));
+
+        m_View = glm::lookAt(m_Position, m_Position + m_Direction, m_CameraUp);
     }
 
-
-    
     RaycasterCamera::RaycasterCamera(const glm::vec3& playerPosition, float yaw, float centre, float width, float height) 
         : m_ReciprocalCentre(1 / centre), m_HalfWidth(width/2), m_HalfHeight(height/2), m_CameraYaw(yaw)
     {
@@ -114,10 +110,11 @@ namespace Core {
 
         m_Direction = glm::normalize(front);
         m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
+        m_View = glm::translate(glm::mat4(1.0f), -m_Position);
     }
 
-    RaycasterCamera::RaycasterCamera(float posX, float posY, float yaw, float centre, float width, float height) 
-        : m_ReciprocalCentre(1 / centre), m_HalfWidth(width/2), m_HalfHeight(height/2), m_CameraYaw(yaw)
+    RaycasterCamera::RaycasterCamera(float posX, float posY, float yaw, float centre, float width, float height)
+        : m_ReciprocalCentre(1 / centre), m_HalfWidth(width / 2), m_HalfHeight(height / 2), m_CameraYaw(yaw)
     {
         m_Position = glm::vec3(0.0f);
         m_Position.x = (posX - m_HalfWidth) * m_ReciprocalCentre;
@@ -129,10 +126,7 @@ namespace Core {
 
         m_Direction = glm::normalize(front);
         m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
-    }
-
-    glm::mat4 RaycasterCamera::GetViewMatrix() const {
-        return glm::translate(glm::mat4(1.0f), -m_Position);
+        m_View = glm::translate(glm::mat4(1.0f), -m_Position);
     }
 
     void RaycasterCamera::UpdateCamera(const glm::vec3& playerPosition, float yaw) {
@@ -146,6 +140,7 @@ namespace Core {
 
         m_Direction = glm::normalize(front);
         m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
+        m_View = glm::translate(glm::mat4(1.0f), -m_Position);
     }
 
     void RaycasterCamera::UpdateCamera(float posX, float posY, float yaw) {
@@ -159,5 +154,6 @@ namespace Core {
 
         m_Direction = glm::normalize(front);
         m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
+        m_View = glm::translate(glm::mat4(1.0f), -m_Position);
     }
 }
