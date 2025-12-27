@@ -13,7 +13,7 @@ void Player::Init(const Map& map) {
     m_Rotation = 90.0f;
 
     m_HeldItemIndex = 0;
-    m_Inventory[m_HeldItemIndex] = { .Scale = 0.5f, .Count = 0 };
+    m_Inventory[m_HeldItemIndex] = { .Scale = 0.0f, .Count = 0 };
     
     m_Health = MaxHealth;
 
@@ -43,6 +43,35 @@ void Player::Update(std::span<const LineCollider> walls, Core::Timestep deltaTim
         UseItem(deltaTime);
     }
     m_ShouldInteract = false;
+}
+
+void Player::UpdateRender(Renderables& renderables) {
+    auto& heldItem = GetHeldItem();
+
+    if (heldItem.Count == 0) {
+        return;
+    }
+
+    auto& sprite = renderables.GetNextSprite();
+    auto& model = renderables.GetNextModel();
+
+    uint32_t atlasIndex = heldItem.UseAnimation.GetFrame(m_AnimationProgress);
+
+    // Update on Raycaster-layer
+    float epsilon = 1e-3f;
+    sprite.Position = glm::vec3(m_Position.x, m_Position.y, 0.5f - (1.0f - heldItem.Scale) * epsilon);
+    sprite.Position.x += glm::cos(glm::radians(m_Rotation)) * epsilon;
+    sprite.Position.y += -glm::sin(glm::radians(m_Rotation)) * epsilon;
+    sprite.WorldPosition = sprite.Position;
+
+    sprite.Scale = glm::vec3(2.0f * heldItem.Scale * epsilon);
+    sprite.AtlasIndex = atlasIndex;
+    sprite.FlipTexture = false;
+
+    //Update on 3D-layer
+    glm::vec2 index = glm::vec2((atlasIndex) % ATLASWIDTH, (atlasIndex) / ATLASWIDTH);
+    model.Materials.front()->Parameters.back().Value = glm::vec2(0.0f, 0.0f);
+    model.Materials.front()->Parameters.front().Value = index;
 }
 
 bool Player::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {

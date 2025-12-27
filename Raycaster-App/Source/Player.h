@@ -2,6 +2,7 @@
 
 #include "Map.h"
 #include "Entities.h"
+#include "Renderables.h"
 #include "Projectiles.h"
 
 #include "Core/Base/Timestep.h"
@@ -19,6 +20,7 @@ public:
     void Shutdown();
 
     void Update(std::span<const LineCollider> walls, Core::Timestep deltaTime);
+    void UpdateRender(Renderables& renderables);
     
     bool DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
     void PickUp(Item item);
