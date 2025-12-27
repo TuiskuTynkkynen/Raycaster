@@ -12,7 +12,6 @@ void RaycasterScene::Init(){
     m_Tiles = m_Map.CreateTiles();
     m_Walls = m_Map.CreateWalls();
     
-
     Reinit();
 
     Tile tile;
@@ -38,30 +37,24 @@ void RaycasterScene::Shutdown() {
 }
 
 void RaycasterScene::Reinit() {
+    Shutdown();
     m_Paused = false;
 
     m_Player.Init(m_Map);
+    m_Projectiles.Init();
 
-    m_Interactables.Shutdown();
     m_Interactables.Init();
-    
     m_Interactables.Add(InteractableType::Barrel, { 3.0f, 2.5f });
     m_Interactables.Add(InteractableType::Barrel, { 2.5f, 2.5f });
+    m_Interactables.Add(InteractableType::Chest, { 8.5f, 6.5f });
 
     for (glm::vec2 light : m_Lights) {
         m_Interactables.Add(InteractableType::Light, light);
     }
-    m_Interactables.Add(InteractableType::Chest, { 8.5f, 6.5f });
 
-    m_Enemies.Shutdown();
     m_Enemies.Init(m_Map);
     m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
     m_Enemies.Add(EnemyType::Ranged, glm::vec2(2.5f, 3.0f));
-
-    m_Projectiles.Shutdown();
-    m_Projectiles.Init();
-
-    m_Renderables.Shutdown();
 
     auto shader = std::make_shared<Core::Shader>("3DAtlasShader.glsl");
     //setup shader
@@ -88,8 +81,6 @@ void RaycasterScene::Reinit() {
     textureAtlas->BindImage("wolfenstein_texture_atlas.png");
 
     m_Renderables.Init(shader, textureAtlas);
-
-    
     m_Renderables.PushStaticModel(m_Map.CreateModel(m_Walls, textureAtlas, shader)); // Map
 }
 
