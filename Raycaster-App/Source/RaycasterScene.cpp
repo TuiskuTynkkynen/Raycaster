@@ -32,7 +32,6 @@ void RaycasterScene::Reinit() {
 
     m_Player.Init(m_Map);
 
-    const size_t interactableCount = m_Interactables.Count();
     m_Interactables.Shutdown();
     m_Interactables.Init();
     
@@ -82,7 +81,6 @@ void RaycasterScene::Reinit() {
 
     
     m_Renderables.PushStaticModel(m_Map.CreateModel(m_Walls, textureAtlas, shader)); // Map
-    m_Renderables.PushStaticModel(); // Inventory/Hand
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
@@ -117,6 +115,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
             }
         }
         m_Player.Update(m_Walls, deltaTime);
+        m_Player.UpdateRender(m_Renderables);
 
         m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetRotation());
         m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), -m_Player.GetRotation());

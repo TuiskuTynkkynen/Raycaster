@@ -19,14 +19,13 @@ public:
     void RenderWalls(const Map& map, const Core::Camera2D& camera);
     void RenderFloors(const Map& map, const Core::Camera2D& camera);
     void RenderSprites(const Map& map, const Player& player, Renderables& renderables);
-    void RenderInventory(const Map& map, const Player& player, Renderables& renderables);
-
+    
     inline std::span<const Ray> GetRays() const { return m_Rays; }
     inline std::span<const Line> GetLines() const { return m_Lines; }
     inline std::span<const Floor> GetFloors() const { return m_Floors; }
 
     inline static constexpr size_t GetRayCount() { return m_RayCount; }
-    inline static constexpr size_t GetRayWidth() { return m_RayWidth; }
+    inline static constexpr float GetRayWidth() { return m_RayWidth; }
 
     inline void SetAspecRatio(float aspectRatio) { m_AspectRatio = aspectRatio; m_ReciprocalAspectRatio = 1.0f / aspectRatio; };
 private:

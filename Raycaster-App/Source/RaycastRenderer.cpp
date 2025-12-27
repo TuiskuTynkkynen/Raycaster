@@ -104,7 +104,6 @@ void RaycastRenderer::Render(const Map& map, const Core::Camera2D& camera, const
     RenderWalls(map, camera);
     RenderFloors(map, camera);
     RenderSprites(map, player, renderables);
-    RenderInventory(map, player, renderables);
 }
 
 void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) {
@@ -401,70 +400,4 @@ void RaycastRenderer::RenderSprites(const Map& map, const Player& player, Render
     }
 
     m_Rays.resize(rayIndex);
-}
-
-void RaycastRenderer::RenderInventory(const Map& map, const Player& player, Renderables& renderables) {
-    auto& heldItem = player.GetHeldItem();
-
-    if (!heldItem.Count) {
-        return;
-    }
-    uint32_t atlasIndex = heldItem.UseAnimation.GetFrame(player.GetAnimationProgress());
-
-    // Update on RaycastRenderer-layer
-    glm::vec3 scale(2.0f * heldItem.Scale);
-    scale.x /= m_AspectRatio;
-    glm::vec3 position(0.0f, -(1.0f - heldItem.Scale), 0.0f);
-
-    if (m_SnappingEnabled) {
-        position.y = glm::floorMultiple(position.y + 0.5f * m_RayWidth, m_RayWidth);
-        // The center of a sprite is @ an integer multiple of ray width, so scale needs to be even multiple of m_RayWidth
-        // to prevent sprite getting rendered at the middle of a floor ray -> round to 2.0f * m_RayWidth
-        scale.y = glm::floorMultiple(scale.y + m_RayWidth, m_RayWidth * 2.0f);
-    }
-
-    if (scale.y < m_RayWidth * 0.25f) {
-        return;
-    }
-
-    float width = scale.x * m_RayCount * 0.5f;
-    float startX = 0.5f * (m_RayCount - width + position.x * m_RayCount);
-    int32_t endX = glm::min(static_cast<int32_t>(startX + width), static_cast<int32_t>(m_RayCount));
-    if (endX < 0) {
-        return;
-    }
-
-    float brightness = LightBilinear(player.GetPosition(), map);
-
-    size_t rayIndex = m_Rays.size();
-    size_t startIndex = static_cast<size_t>(glm::max(startX, 0.0f));
-    m_Rays.resize(rayIndex + endX - startIndex);
-
-    for (size_t i = startIndex; i < endX; i++) {
-        position.x = (i + 0.5f) * m_RayWidth - 1.0f;
-        float texturePosition = glm::max((i - startX) / width, 0.0f);
-
-        m_Rays[rayIndex].Position = position;
-        m_Rays[rayIndex].Scale = scale.y;
-        m_Rays[rayIndex].TexPosition.x = texturePosition;
-        m_Rays[rayIndex].Atlasindex = atlasIndex;
-        m_Rays[rayIndex].Brightness = brightness;
-
-        rayIndex++;
-    }
-
-    //Update on 3D-layer
-    float epsilon = 0.1f + 1e-5f;
-    glm::vec3 position3D(player.GetPosition().x, 0.5f - (1.0f - heldItem.Scale) * epsilon, player.GetPosition().y);
-    position3D.x += glm::cos(glm::radians(player.GetRotation())) * epsilon;
-    position3D.z += -glm::sin(glm::radians(player.GetRotation())) * epsilon;
-
-    auto& model = renderables.GetStaticModels()[1];
-
-    model.Transform = glm::translate(glm::mat4(1.0f), position3D);
-    model.Transform = glm::rotate(model.Transform, glm::radians(player.GetRotation() - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    model.Transform = glm::scale(model.Transform, glm::vec3(2.0f * epsilon * heldItem.Scale));
-
-    model.Materials.front()->Parameters.back().Value = 0.0f;
-    model.Materials.front()->Parameters.front().Value = glm::vec2(atlasIndex % ATLASWIDTH, atlasIndex / ATLASWIDTH);
 }
