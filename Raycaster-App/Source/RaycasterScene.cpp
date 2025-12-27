@@ -27,7 +27,7 @@ void RaycasterScene::Init(){
 }
 
 void RaycasterScene::Shutdown() {
-    m_Paused = true;
+    m_State = State::Invalid;
 
     m_Player.Shutdown();
     m_Interactables.Shutdown();
@@ -38,7 +38,7 @@ void RaycasterScene::Shutdown() {
 
 void RaycasterScene::Reinit() {
     Shutdown();
-    m_Paused = false;
+    m_State = State::Running;
 
     m_Player.Init(m_Map);
     m_Projectiles.Init();
@@ -85,69 +85,75 @@ void RaycasterScene::Reinit() {
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
-    if (!m_Paused) {
-        m_Renderables.ResetDynamic();
+    if (m_State != State::Running) {
+        return;
+    }
+    
+    m_Renderables.ResetDynamic();
 
-        Core::RenderAPI::Clear();
+    Core::RenderAPI::Clear();
 
-        if (m_Player.ShouldInteract()) {
-            auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetRotation());
+    if (m_Player.ShouldInteract()) {
+        auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetRotation());
 
-            switch (result.GetType()) {
-            case InteractionResult::Type::Debug:
-                RC_TRACE("{}", std::get<std::string_view>(result.Data));
-                break;
-            case InteractionResult::Type::Pickup:
-                m_Player.PickUp(std::get<Item>(result.Data));
-                break;
-            case InteractionResult::Type::None:
-                break;
-            }
+        switch (result.GetType()) {
+        case InteractionResult::Type::Debug:
+            RC_TRACE("{}", std::get<std::string_view>(result.Data));
+            break;
+        case InteractionResult::Type::Pickup:
+            m_Player.PickUp(std::get<Item>(result.Data));
+            break;
+        case InteractionResult::Type::None:
+            break;
         }
+    }
 
-        {
-            auto attacks = m_Player.GetAttacks();
-            for (auto& attack : attacks) {
-                m_Enemies.DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
-            }
-            auto projectiles = m_Player.GetProjectiles();
-            for (auto& projectile : projectiles) {
-                m_Projectiles.Add(projectile.Type, projectile.Position, projectile.Velocity);
-            }
-        }
-        m_Player.Update(m_Walls, deltaTime);
-        m_Player.UpdateRender(m_Renderables);
-
-        m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetRotation());
-        m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), -m_Player.GetRotation());
-
-        m_Projectiles.Update(deltaTime, m_Map);
-        for (size_t i = 0; i < m_Projectiles.Count(); i++) {
-            auto& projectile = m_Projectiles[i];
-
-            std::array area = { LineCollider(projectile.Position, projectile.Position) };
-            bool hit = m_Enemies.DamageAreas(area, 1e-5f, projectile.Damage);
-
-            hit |= m_Player.DamageAreas(area, 1e-5f, projectile.Damage);
-
-            if (hit) {
-                m_Projectiles.Remove(i--);
-            }
-        }
-
-        m_Projectiles.UpdateRender(m_Renderables, m_Player.GetPosition());
-
-        m_Enemies.Update(deltaTime, m_Map, m_Player.GetPosition());
-        auto attacks = m_Enemies.GetAttacks();
+    {
+        auto attacks = m_Player.GetAttacks();
         for (auto& attack : attacks) {
-            m_Player.DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
+            m_Enemies.DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
         }
-        m_Enemies.UpdateRender({ m_Tiles.end() - m_Enemies.Count(), m_Tiles.end()}, m_Renderables);
+        auto projectiles = m_Player.GetProjectiles();
+        for (auto& projectile : projectiles) {
+            m_Projectiles.Add(projectile.Type, projectile.Position, projectile.Velocity);
+        }
+    }
+    m_Player.Update(m_Walls, deltaTime);
+    m_Player.UpdateRender(m_Renderables);
 
-        m_Interactables.Update(deltaTime);
-        m_Interactables.UpdateRender(m_Renderables);
+    m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetRotation());
+    m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), -m_Player.GetRotation());
 
-        m_Renderer.Render(m_Map, *m_Camera.get(), m_Player, m_Renderables);
+    m_Projectiles.Update(deltaTime, m_Map);
+    for (size_t i = 0; i < m_Projectiles.Count(); i++) {
+        auto& projectile = m_Projectiles[i];
+
+        std::array area = { LineCollider(projectile.Position, projectile.Position) };
+        bool hit = m_Enemies.DamageAreas(area, 1e-5f, projectile.Damage);
+
+        hit |= m_Player.DamageAreas(area, 1e-5f, projectile.Damage);
+
+        if (hit) {
+            m_Projectiles.Remove(i--);
+        }
+    }
+
+    m_Projectiles.UpdateRender(m_Renderables, m_Player.GetPosition());
+
+    m_Enemies.Update(deltaTime, m_Map, m_Player.GetPosition());
+    auto attacks = m_Enemies.GetAttacks();
+    for (auto& attack : attacks) {
+        m_Player.DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
+    }
+    m_Enemies.UpdateRender({ m_Tiles.end() - m_Enemies.Count(), m_Tiles.end()}, m_Renderables);
+
+    m_Interactables.Update(deltaTime);
+    m_Interactables.UpdateRender(m_Renderables);
+
+    m_Renderer.Render(m_Map, *m_Camera.get(), m_Player, m_Renderables);
+    
+    if (m_Player.GetHealth() <= 0.0f) {
+        m_State = State::Dead;
     }
 }
 
