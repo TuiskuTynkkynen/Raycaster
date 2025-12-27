@@ -85,13 +85,12 @@ void RaycasterScene::Reinit() {
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
+    Core::RenderAPI::Clear();
     if (m_State != State::Running) {
         return;
     }
     
     m_Renderables.ResetDynamic();
-
-    Core::RenderAPI::Clear();
 
     if (m_Player.ShouldInteract()) {
         auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetRotation());
@@ -163,6 +162,24 @@ bool RaycasterScene::OnRestart(Restart& event) {
     return true;
 }
 
+bool RaycasterScene::OnResume(Resume& event) {
+    RC_ASSERT(m_State == State::Paused, "Scene must be in paused state to unpause");
+    m_State = State::Running;
+
+    return true;
+}
+
+bool RaycasterScene::OnKeyReleased(Core::KeyReleased& event) {
+    if (event.GetKeyCode() != RC_KEY_ESCAPE) {
+        return false;
+    }
+
+    if (m_State <= State::Paused) {
+        m_State = m_State == State::Running ? State::Paused : State::Running;
+    }
+
+    return true;
+}
 
 bool RaycasterScene::OnWindowResize(Core::WindowResize& event) {
     m_Renderer.SetAspecRatio(event.GetWidth() * 0.5f / event.GetHeight());
@@ -172,7 +189,10 @@ bool RaycasterScene::OnWindowResize(Core::WindowResize& event) {
 void RaycasterScene::OnEvent(Core::Event& event) {
     Core::EventDispatcher dispatcer(event);
     dispatcer.Dispatch<Restart>([this](Restart& event) { return OnRestart(event); });
-    dispatcer.Dispatch<Core::KeyPressed>([this](Core::KeyPressed& event) { return m_Player.OnKeyEvent(event); });
-    dispatcer.Dispatch<Core::KeyReleased>([this](Core::KeyReleased& event) { return m_Player.OnKeyEvent(event); });
+    dispatcer.Dispatch<Resume>([this](Resume& event) { return OnResume(event); });
+    dispatcer.Dispatch<Core::KeyReleased>([this](Core::KeyReleased& event) { return OnKeyReleased(event); });
     dispatcer.Dispatch<Core::WindowResize>([this](Core::WindowResize& event) { return OnWindowResize(event); });
+
+    dispatcer.Dispatch<Core::KeyPressed>([this](Core::KeyPressed& event) { return m_Player.OnKeyEvent(event); });
+    dispatcer.Dispatch<Core::KeyReleased>([this](Core::KeyReleased& event) {  return m_Player.OnKeyEvent(event); });
 }

@@ -111,11 +111,16 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::UI::Text(playerStats, 0.5f, Core::UI::PositioningType::Relative, {0.3f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
     RaycasterScene::State sceneState = static_cast<RaycasterScene&>(*m_Scene).GetState();
-    if (sceneState != RaycasterScene::State::Dead) {
+    if (sceneState != RaycasterScene::State::Running) {
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, {-0.025f, 0.0f}, { 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f, 0.5f });
-            Core::UI::Text("You died!", { 0.5f, 0.2f }, glm::vec4(1.0f));
-            if (Core::UI::Button("Restart", { 0.5f, 0.2f })) {
+            Core::UI::Text(sceneState == RaycasterScene::State::Dead ? "You died!" : "Paused", { 0.5f, 0.2f }, glm::vec4(1.0f));
+            
+            if (sceneState >= RaycasterScene::State::Dead && Core::UI::Button("Restart", { 0.5f, 0.2f })) {
                 Core::Application::PushEvent<Restart>();
+            }
+            
+            if (sceneState == RaycasterScene::State::Paused && Core::UI::Button("Continue", { 0.5f, 0.2f })) {
+                Core::Application::PushEvent<Resume>();
             }
             
             if (Core::UI::Button("Quit", { 0.5f, 0.2f })) {
