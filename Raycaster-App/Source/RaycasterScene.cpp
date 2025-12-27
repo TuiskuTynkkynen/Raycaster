@@ -27,6 +27,16 @@ void RaycasterScene::Init(){
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
 }
 
+void RaycasterScene::Shutdown() {
+    m_Paused = true;
+
+    m_Player.Shutdown();
+    m_Interactables.Shutdown();
+    m_Enemies.Shutdown();
+    m_Projectiles.Shutdown();
+    m_Renderables.Shutdown();
+}
+
 void RaycasterScene::Reinit() {
     m_Paused = false;
 

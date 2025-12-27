@@ -41,7 +41,7 @@ private:
     bool OnWindowResize(Core::WindowResize& event);
 public: 
     void Init() override;
-    void Shutdown() override { m_Enemies.Shutdown(); }
+    void Shutdown() override;
 
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override;
