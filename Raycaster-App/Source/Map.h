@@ -48,7 +48,7 @@ public:
     inline static constexpr size_t GetIndex(glm::ivec2 position) { return GetIndex(position.x, position.y); }
     inline static constexpr size_t GetIndex(glm::vec2 position) { return GetIndex(static_cast<size_t>(position.x), static_cast<size_t>(position.y)); }
     
-    inline constexpr std::span<LineCollider> GetDoors() { return m_Doors; }
+    inline constexpr std::span<const LineCollider> GetDoors() const { return m_Doors; }
 
     int8_t operator [](size_t index) const {
         if (index < s_MapData.Size) {

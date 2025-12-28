@@ -117,7 +117,8 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
             m_Projectiles.Add(projectile.Type, projectile.Position, projectile.Velocity);
         }
     }
-    m_Player.Update(m_Walls, deltaTime);
+
+    m_Player.Update(m_Walls, m_Map.GetDoors(), deltaTime);
     m_Player.UpdateRender(m_Renderables);
 
     m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetRotation());

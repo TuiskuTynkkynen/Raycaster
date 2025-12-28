@@ -33,12 +33,12 @@ void Player::Shutdown() {
     m_Projectiles.shrink_to_fit();
 }
 
-void Player::Update(std::span<const LineCollider> walls, Core::Timestep deltaTime) {
+void Player::Update(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime) {
     m_Areas.clear();
     m_Attacks.clear();
     m_Projectiles.clear();
 
-    Move(walls, deltaTime);
+    Move(walls, doors, deltaTime);
     if (m_AnimationProgress >= 0.0f) {
         UseItem(deltaTime);
     }
@@ -135,7 +135,7 @@ bool Player::OnKeyEvent(Core::KeyReleased event) {
     return false;
 }
 
-void Player::Move(std::span<const LineCollider> walls, Core::Timestep deltaTime) {
+void Player::Move(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime) {
     const float MaxLateralSpeed = 2.0f;
     const float MaxRotationalSpeed = 180.0f;
 
@@ -147,8 +147,8 @@ void Player::Move(std::span<const LineCollider> walls, Core::Timestep deltaTime)
     m_Position += front * m_LateralSpeed * MaxLateralSpeed * deltaTime.GetSeconds();
     m_Rotation += m_RotationalSpeed * MaxRotationalSpeed * deltaTime.GetSeconds();
 
-    glm::vec2 col(m_Position.x, m_Position.y);
-    col = Algorithms::LineCollisions(col, walls, Width * 0.5f);
+    glm::vec2 col = Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), walls, Width * 0.5f);
+    col += Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), doors, Width * 0.5f);
 
     float length = glm::length(col);
     if (length > MaxLateralSpeed) {

@@ -19,7 +19,7 @@ public:
     void Init(const Map& map);
     void Shutdown();
 
-    void Update(std::span<const LineCollider> walls, Core::Timestep deltaTime);
+    void Update(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime);
     void UpdateRender(Renderables& renderables);
     
     bool DamageAreas(std::span<const LineCollider> areas, float areaThickness, float damage);
@@ -45,7 +45,7 @@ public:
     bool OnKeyEvent(Core::KeyPressed event);
     bool OnKeyEvent(Core::KeyReleased event);
 private:
-    void Move(std::span<const LineCollider> walls, Core::Timestep deltaTime);
+    void Move(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime);
     void UseItem(Core::Timestep deltaTime);
 
     glm::vec3 m_Position{};
