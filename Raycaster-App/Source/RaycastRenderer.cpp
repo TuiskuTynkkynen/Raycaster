@@ -127,7 +127,7 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
 
             wallDistance = perpendicular.x + perpendicular.y;
 
-            m_Rays[i].TexPosition.x = glm::fract(hit.WorlPosition.x);
+            m_Rays[i].TexPosition.x = glm::fract(hit.WorlPosition[hit.Side - 2]);
         }
 
         m_Rays[i].Scale = 1.0f / wallDistance;

@@ -15,6 +15,22 @@ Map::Map() {
         bool SE = index + s_MapData.Width + 1 >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width + 1];
 
         m_NeighbourMap[index].Bitboard ^= Neighbourhood{ SE, S, SW, E, W, NE, N, NW }.Bitboard;
+
+        if (s_MapData.Map[index] >= 0) {
+            continue;
+        }
+
+        if (S && N) {
+            RC_ASSERT(index - s_MapData.Width <= s_MapData.Size, "Door must not be on the nothern most row");
+            m_NeighbourMap[index - s_MapData.Width].South = false;
+            RC_ASSERT(index + s_MapData.Width <= s_MapData.Size, "Door must not be on the southern most row");
+            m_NeighbourMap[index + s_MapData.Width].North = true;
+        }  else if (E && W) {
+            RC_ASSERT(index - 1 <= s_MapData.Size, "Door must not be on the western most column");
+            m_NeighbourMap[index - 1].East = false;
+            RC_ASSERT(index + 1 <= s_MapData.Size, "Door must not be on the eastern most column");
+            m_NeighbourMap[index + 1].West = true;
+        }
     }
 }
 
@@ -58,8 +74,18 @@ std::vector<LineCollider> Map::CreateWalls() const {
 
         glm::vec2 end = start;
 
-        // Diagonal wall checks
-        if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
+        if (adjacent.South && adjacent.North) { // Door checks
+            end.y++;
+            start.x = end.x += 0.5f;
+
+            result.emplace_back(end, start);
+        }
+        else if (adjacent.East && adjacent.West) {
+            end.x++;
+            start.y = end.y += 0.5f;
+
+            result.emplace_back(start, end);
+        } else if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) { // Diagonal wall checks
             start.x++;
             end.y++;
         } else {
@@ -434,10 +460,11 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
 
     bool hit = false;
     uint8_t side = 0;
+    size_t index = GetIndex(mapX, mapY);
     glm::vec2 worldPosition;
     while (!hit) {
         //if diagonal, needs to be handled first, because origin may be inside diagonal
-        if (s_MapData.Map[GetIndex(mapX, mapY)] < 0) {
+        if (s_MapData.Map[index] < 0) {
             glm::vec2 point3(origin.x, origin.y);
             glm::vec2 point4 = point3;
             point3.x += direction.x;
@@ -446,8 +473,18 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
             glm::vec2 point1(mapX, mapY);
             glm::vec2 point2(point1);
 
-            Neighbourhood adjacent = GetNeighbours(GetIndex(mapX, mapY));
-            if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
+            Neighbourhood adjacent = GetNeighbours(index);
+            side = 2;
+
+            if (adjacent.South && adjacent.North) {
+                side = 3;
+
+                point1.y += 1.0f - m_AnimationProgress[index];
+                point1.x = point2.x += 0.5f;
+            } else if (adjacent.East && adjacent.West) {
+                point2.x += 1.0f - m_AnimationProgress[index];
+                point1.y = point2.y += 0.5f;
+            } else if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
                 point1.x++;
                 point2.y++;
             } else {
@@ -457,11 +494,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
 
             if (std::optional<glm::vec2> intersection = Algorithms::LineIntersection(point1, point2, point3, point4, true)) {
                 worldPosition = intersection.value();
-                sideDistance.x = intersection.value().x;
-                sideDistance.y = intersection.value().y;
-                sideDistance.z = 0.0f;
 
-                side = 2;
                 hit = true;
 
                 break;
@@ -483,7 +516,8 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
             break;
         }
 
-        if (s_MapData.Map[GetIndex(mapX, mapY)] > 0) {
+        index = GetIndex(mapX, mapY);
+        if (s_MapData.Map[index] > 0) {
             hit = true;
         }
     }
