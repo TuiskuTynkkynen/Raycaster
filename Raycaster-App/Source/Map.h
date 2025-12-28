@@ -12,6 +12,8 @@
 
 class  Map {
 public:
+    Map();
+
     std::vector<LineCollider> CreateWalls() const;
     std::vector<Tile> CreateTiles();
     Core::Model CreateModel(const std::span<LineCollider> walls, std::shared_ptr<Core::Texture2D> atlas, std::shared_ptr<Core::Shader> shader);
@@ -141,7 +143,7 @@ private:
     };
     inline static MapData s_MapData;
 
-    std::array<float, s_MapData.Size> m_LightMap;
+    std::array<float, s_MapData.Size> m_LightMap{};
 
     struct Quad {
         uint16_t x, y;
@@ -168,6 +170,8 @@ private:
             return (Bitboard >> index) & 1;
         }
     };
+
+    std::array<Neighbourhood, s_MapData.Size> m_NeighbourMap{};
     public:
-    Neighbourhood GetNeighbours(size_t index) const;
+    inline Neighbourhood GetNeighbours(size_t index) const { return m_NeighbourMap[index]; }
 };

@@ -1,5 +1,23 @@
 #include "Map.h"
 
+Map::Map() {
+    for (size_t index = 0; index < m_NeighbourMap.size(); index++)
+    {
+        bool NW = index - s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width - 1];
+        bool N = index - s_MapData.Width >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width];
+        bool NE = index - s_MapData.Width + 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width + 1];
+
+        bool W = index - 1 >= s_MapData.Size || s_MapData.Map[index - 1];
+        bool E = index + 1 >= s_MapData.Size || s_MapData.Map[index + 1];
+
+        bool SW = index + s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width - 1];
+        bool S = index + s_MapData.Width >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width];
+        bool SE = index + s_MapData.Width + 1 >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width + 1];
+
+        m_NeighbourMap[index].Bitboard ^= Neighbourhood{ SE, S, SW, E, W, NE, N, NW }.Bitboard;
+    }
+}
+
 std::vector<LineCollider> Map::CreateWalls() const {
     std::vector<LineCollider> result;
 
@@ -623,19 +641,4 @@ float Map::GetLight(size_t x, size_t y) const {
     y = glm::min(y, static_cast<size_t>(s_MapData.Height - 1));
 
     return m_LightMap[y * s_MapData.Width + x];
-}
-
-Map::Neighbourhood Map::GetNeighbours(size_t index) const {
-    bool NW = index - s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width - 1];
-    bool N = index - s_MapData.Width >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width];
-    bool NE = index - s_MapData.Width + 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width + 1];
-    
-    bool W = index - 1 >= s_MapData.Size || s_MapData.Map[index - 1];
-    bool E = index + 1 >= s_MapData.Size || s_MapData.Map[index + 1];
-    
-    bool SW = index + s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width - 1];
-    bool S = index + s_MapData.Width >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width];
-    bool SE = index + s_MapData.Width + 1 >= s_MapData.Size || s_MapData.Map[index + s_MapData.Width + 1];
-
-    return { SE, S, SW, E, W, NE, N, NW };
 }
