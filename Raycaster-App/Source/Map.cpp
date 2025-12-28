@@ -22,14 +22,28 @@ Map::Map() {
 
         if (S && N) {
             RC_ASSERT(index - s_MapData.Width <= s_MapData.Size, "Door must not be on the nothern most row");
-            m_NeighbourMap[index - s_MapData.Width].South = false;
             RC_ASSERT(index + s_MapData.Width <= s_MapData.Size, "Door must not be on the southern most row");
+            
+            m_NeighbourMap[index - s_MapData.Width].South = false;
             m_NeighbourMap[index + s_MapData.Width].North = true;
+
+            glm::vec2 start(index % s_MapData.Width + 0.5f, index / s_MapData.Width);
+            glm::vec2 end(start.x, start.y + 1.0f);
+            
+            m_DoorIndexMap[index] = m_Doors.size();
+            m_Doors.emplace_back(start, end);
         }  else if (E && W) {
             RC_ASSERT(index - 1 <= s_MapData.Size, "Door must not be on the western most column");
-            m_NeighbourMap[index - 1].East = false;
             RC_ASSERT(index + 1 <= s_MapData.Size, "Door must not be on the eastern most column");
+
+            m_NeighbourMap[index - 1].East = false;
             m_NeighbourMap[index + 1].West = true;
+
+            glm::vec2 start(index % s_MapData.Width, index / s_MapData.Width + 0.5f);
+            glm::vec2 end(start.x + 1.0f, start.y);
+
+            m_DoorIndexMap[index] = m_Doors.size();
+            m_Doors.emplace_back(start, end);
         }
     }
 }
@@ -74,18 +88,13 @@ std::vector<LineCollider> Map::CreateWalls() const {
 
         glm::vec2 end = start;
 
-        if (adjacent.South && adjacent.North) { // Door checks
-            end.y++;
-            start.x = end.x += 0.5f;
-
-            result.emplace_back(end, start);
+        // Doors
+        if (adjacent.South && adjacent.North || adjacent.East && adjacent.West) {
+            continue;
         }
-        else if (adjacent.East && adjacent.West) {
-            end.x++;
-            start.y = end.y += 0.5f;
 
-            result.emplace_back(start, end);
-        } else if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) { // Diagonal wall checks
+        // Diagonal wall checks
+        if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
             start.x++;
             end.y++;
         } else {
@@ -476,14 +485,12 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
             Neighbourhood adjacent = GetNeighbours(index);
             side = 2;
 
-            if (adjacent.South && adjacent.North) {
-                side = 3;
+            if (adjacent.South && adjacent.North || adjacent.East && adjacent.West) {
+                side += adjacent.South && adjacent.North;
 
-                point1.y += 1.0f - m_AnimationProgress[index];
-                point1.x = point2.x += 0.5f;
-            } else if (adjacent.East && adjacent.West) {
-                point2.x += 1.0f - m_AnimationProgress[index];
-                point1.y = point2.y += 0.5f;
+                auto& door = m_Doors[m_DoorIndexMap[index]];
+                point1 = point2 = door.Position;
+                point2 += door.Vector * door.Length;
             } else if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
                 point1.x++;
                 point2.y++;
