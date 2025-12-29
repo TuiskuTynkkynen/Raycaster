@@ -507,13 +507,16 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
 
             Neighbourhood adjacent = GetNeighbours(index);
             side = 2;
+            float lenght = 1.0f;
 
             if (adjacent.South && adjacent.North || adjacent.East && adjacent.West) {
                 side += adjacent.South && adjacent.North;
 
                 auto& door = m_Doors[m_DoorIndexMap[index]];
+                lenght = door.Length;
+
                 point1 = point2 = door.Position;
-                point2 += door.Vector * door.Length;
+                point2 += door.Vector * lenght;
             } else if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
                 point1.x++;
                 point2.y++;
@@ -525,7 +528,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
             if (std::optional<glm::vec2> intersection = Algorithms::LineIntersection(point1, point2, point3, point4, true)) {
                 worldPosition = intersection.value();
 
-                texturePosition = glm::fract(worldPosition[side - 2]);
+                texturePosition = lenght - glm::fract(worldPosition[side - 2]);
                 hit = true;
 
                 break;
@@ -571,9 +574,9 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
         texturePosition = glm::fract(worldPosition.x);
     }
 
-    return { 
-        .Distance = wallDistance, 
-        .Side = side, 
+    return {
+        .Distance = wallDistance,
+        .Side = side,
         .Material = static_cast<uint8_t>(glm::abs(s_MapData.Map[GetIndex(mapX, mapY)])),
         .TexturePosition = static_cast<decltype(HitInfo::TexturePosition)>(std::numeric_limits<decltype(HitInfo::TexturePosition)>::max() * texturePosition),
         .WorldPosition = worldPosition
