@@ -24,7 +24,7 @@ public:
         uint8_t Side = 0; // 0 -> x, 1 -> y, 2 -> diagonal
         uint8_t Material = 0;
         uint16_t TexturePosition = 0.0f;
-        glm::vec2 WorlPosition{};
+        glm::vec2 WorldPosition{};
     };
     HitInfo CastRay(glm::vec3 origin, glm::vec3 direction) const;
 
@@ -33,7 +33,7 @@ public:
         uint8_t Side = 0; // 0 -> x, 1 -> y, >= 2 -> off the map
         uint8_t BottomMaterial = 0;
         uint8_t TopMaterial = 0;
-        glm::vec2 WorlPosition{};
+        glm::vec2 WorldPosition{};
     };
     FloorHitInfo CastFloors(glm::vec2 origin, glm::vec3 reciprocalDirection, float maxDistance) const;
 

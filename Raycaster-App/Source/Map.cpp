@@ -554,7 +554,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
         .Side = side, 
         .Material = static_cast<uint8_t>(glm::abs(s_MapData.Map[GetIndex(mapX, mapY)])),
         .TexturePosition = static_cast<decltype(HitInfo::TexturePosition)>(std::numeric_limits<decltype(HitInfo::TexturePosition)>::max() * texturePosition),
-        .WorlPosition = worldPosition
+        .WorldPosition = worldPosition
     };
 }
 
@@ -679,7 +679,7 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
         .Side = side,
         .BottomMaterial = static_cast<uint8_t>(glm::abs(floorIndex)),
         .TopMaterial = static_cast<uint8_t>(glm::abs(ceilingIndex)),
-        .WorlPosition = worldPosition
+        .WorldPosition = worldPosition
     };
 }
 

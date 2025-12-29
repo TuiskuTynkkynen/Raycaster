@@ -119,7 +119,7 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
         float wallDistance = hit.Distance;
         if (hit.Side > 1) {
             // Get the distance perpendicular to the camera plane
-            glm::vec2 perpendicular{ hit.WorlPosition.x - camera.GetPosition().x, hit.WorlPosition.y - camera.GetPosition().y };
+            glm::vec2 perpendicular{ hit.WorldPosition.x - camera.GetPosition().x, hit.WorldPosition.y - camera.GetPosition().y };
             perpendicular *= rotation;
 
             wallDistance = perpendicular.x + perpendicular.y;
@@ -134,7 +134,7 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
         m_Rays[i].Position.x = cameraX + 0.5f * m_RayWidth;
         m_Rays[i].Atlasindex = hit.Material;
 
-        m_Rays[i].Brightness = LightBilinear(hit.WorlPosition, map);
+        m_Rays[i].Brightness = LightBilinear(hit.WorldPosition, map);
 
         m_ZBuffer[i] = wallDistance;
         m_Lines[i].Scale = rayDirection * wallDistance;
@@ -293,7 +293,7 @@ void RaycastRenderer::RenderFloors(const Map& map, const Core::Camera2D& camera)
             }
 
             prevPos += rayLength;
-            worldPosition = hit.WorlPosition;
+            worldPosition = hit.WorldPosition;
 
             if (prevPos + 1e-5f >= activeRange[1] && index > 1) {
                 activeRange = glm::vec2{ visibleRanges[--index], visibleRanges[--index] };
