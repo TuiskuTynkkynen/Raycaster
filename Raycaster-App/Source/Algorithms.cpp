@@ -103,11 +103,15 @@ glm::vec2 Algorithms::LineCollisions(glm::vec2 point, std::span<const LineCollid
     glm::vec2 movement(0.0f);
 
     for (size_t i = 0; i < lineCount; i++) {
+        if (lines[i].Length == 0.0f) {
+            continue;
+        }
+
         float pointDX = point.x - lines[i].Position.x;
         float pointDY = point.y - lines[i].Position.y;
         float distance = std::max(lines[i].Vector.x * lines[i].Vector.x + lines[i].Vector.y * lines[i].Vector.y, 0.0001f);
         distance = (lines[i].Vector.x * pointDX + lines[i].Vector.y * pointDY) / distance;
-      
+        
         if (distance * lines[i].Length < -thickness * 0.5f || distance * lines[i].Length > lines[i].Length + thickness * 0.5f) {
             continue;
         }
