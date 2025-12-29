@@ -114,20 +114,15 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
         float cameraX = 2.0f * i / m_RayCount - 1.0f;
         glm::vec3 rayDirection = camera.GetDirection() + camera.GetPlane() * cameraX * m_AspectRatio;
         auto hit = map.CastRay(camera.GetPosition(), rayDirection);
+        m_Rays[i].TexPosition.x = static_cast<float>(hit.TexturePosition) / std::numeric_limits<decltype(hit.TexturePosition)>::max();
 
-        float wallDistance = 0.0f;
-        if (hit.Side <= 1) {
-            wallDistance = hit.Distance;
-
-            m_Rays[i].TexPosition.x = glm::fract(hit.WorlPosition[1 - hit.Side]);
-        } else {
+        float wallDistance = hit.Distance;
+        if (hit.Side > 1) {
             // Get the distance perpendicular to the camera plane
             glm::vec2 perpendicular{ hit.WorlPosition.x - camera.GetPosition().x, hit.WorlPosition.y - camera.GetPosition().y };
             perpendicular *= rotation;
 
             wallDistance = perpendicular.x + perpendicular.y;
-
-            m_Rays[i].TexPosition.x = glm::fract(hit.WorlPosition[hit.Side - 2]);
         }
 
         m_Rays[i].Scale = 1.0f / wallDistance;

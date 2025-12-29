@@ -23,6 +23,7 @@ public:
         float Distance = 0.0f;
         uint8_t Side = 0; // 0 -> x, 1 -> y, 2 -> diagonal
         uint8_t Material = 0;
+        uint16_t TexturePosition = 0.0f;
         glm::vec2 WorlPosition{};
     };
     HitInfo CastRay(glm::vec3 origin, glm::vec3 direction) const;

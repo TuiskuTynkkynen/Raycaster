@@ -471,6 +471,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
     uint8_t side = 0;
     size_t index = GetIndex(mapX, mapY);
     glm::vec2 worldPosition;
+    float texturePosition = 0.0f;
     while (!hit) {
         //if diagonal, needs to be handled first, because origin may be inside diagonal
         if (s_MapData.Map[index] < 0) {
@@ -502,6 +503,7 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
             if (std::optional<glm::vec2> intersection = Algorithms::LineIntersection(point1, point2, point3, point4, true)) {
                 worldPosition = intersection.value();
 
+                texturePosition = glm::fract(worldPosition[side - 2]);
                 hit = true;
 
                 break;
@@ -536,18 +538,22 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
         float offset = origin.y - wallDistance * direction.y;
         offset -= floor(offset);
         worldPosition = glm::vec2(mapX - stepX, mapY + offset);
+
+        texturePosition = glm::fract(worldPosition.y);
     } else if (side == 1) {
         wallDistance = sideDistance.y - deltaDistance.y;
 
         float offset = origin.x + wallDistance * direction.x;
         offset -= floor(offset);
         worldPosition = glm::vec2(mapX + offset, mapY - stepY);
+        texturePosition = glm::fract(worldPosition.x);
     }
 
     return { 
         .Distance = wallDistance, 
         .Side = side, 
         .Material = static_cast<uint8_t>(glm::abs(s_MapData.Map[GetIndex(mapX, mapY)])),
+        .TexturePosition = static_cast<decltype(HitInfo::TexturePosition)>(std::numeric_limits<decltype(HitInfo::TexturePosition)>::max() * texturePosition),
         .WorlPosition = worldPosition
     };
 }
