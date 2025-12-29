@@ -91,6 +91,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     }
     
     m_Renderables.ResetDynamic();
+    m_Map.Update(deltaTime);
 
     if (m_Player.ShouldInteract()) {
         auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetRotation());
@@ -186,6 +187,11 @@ bool RaycasterScene::OnResume(Resume& event) {
 }
 
 bool RaycasterScene::OnKeyReleased(Core::KeyReleased& event) {
+    // TODO move this into player / interactables
+    if (event.GetKeyCode() == RC_KEY_SPACE) {
+        m_Map.ToggleDoor(m_Player.GetPosition());
+        return false;
+    }
     if (event.GetKeyCode() != RC_KEY_ESCAPE) {
         return false;
     }

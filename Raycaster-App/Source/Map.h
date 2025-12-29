@@ -19,6 +19,9 @@ public:
     Core::Model CreateModel(const std::span<LineCollider> walls, std::shared_ptr<Core::Texture2D> atlas, std::shared_ptr<Core::Shader> shader);
     void CalculateLightMap(std::span<glm::vec3> lights);
 
+    void Update(Core::Timestep deltaTime);
+    void ToggleDoor(glm::vec2 position);
+
     struct HitInfo {
         float Distance = 0.0f;
         uint8_t Side = 0; // 0 -> x, 1 -> y, 2 -> diagonal
@@ -147,6 +150,7 @@ private:
     inline static MapData s_MapData;
 
     std::vector<LineCollider> m_Doors;
+    std::vector<bool> m_DoorState;
     std::array<uint8_t, s_MapData.Size> m_DoorIndexMap{};
     std::array<float, s_MapData.Size> m_LightMap{};
 

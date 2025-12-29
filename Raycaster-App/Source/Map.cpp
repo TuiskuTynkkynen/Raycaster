@@ -1,6 +1,8 @@
 #include "Map.h"
 
 Map::Map() {
+    m_DoorIndexMap.fill(-1);
+
     for (size_t index = 0; index < m_NeighbourMap.size(); index++)
     {
         bool NW = index - s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width - 1];
@@ -46,6 +48,8 @@ Map::Map() {
             m_Doors.emplace_back(start, end);
         }
     }
+
+    m_DoorState.resize(m_Doors.size());
 }
 
 std::vector<LineCollider> Map::CreateWalls() const {
@@ -452,6 +456,24 @@ void Map::CalculateLightMap(std::span<glm::vec3> lights) {
             }
         }
     }
+}
+
+void Map::Update(Core::Timestep dt) {
+    for (size_t i = 0; i < m_Doors.size(); i++)
+    {
+        float sign = m_DoorState[i] ? -1.0f : 1.0f;
+        m_Doors[i].Length = glm::clamp(m_Doors[i].Length + sign * dt, 0.0f, 1.0f);
+    }
+}
+
+void Map::ToggleDoor(glm::vec2 position) {
+    size_t mapIndex = GetIndex(position);
+    if (mapIndex >= s_MapData.Size) return;
+
+    size_t doorIndex = m_DoorIndexMap[mapIndex];
+    if (doorIndex == (uint8_t)-1) return;
+
+    m_DoorState[doorIndex] = !m_DoorState[doorIndex];
 }
 
 Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
