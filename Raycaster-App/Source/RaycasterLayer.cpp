@@ -106,7 +106,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     std::wstring frameStats = std::to_wstring(int(1000/ frameTime)) + L" FPS\n" + std::to_wstring(frameTime) + L" ms";
     Core::UI::Text(frameStats, 0.5f, Core::UI::PositioningType::Relative, {-0.495f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
-    uint32_t health = static_cast<RaycasterScene&>(*m_Scene).GetPlayer().GetHealth();
+    float health = static_cast<RaycasterScene&>(*m_Scene).GetPlayer().GetHealth();
     std::string playerStats = "Health: " + std::format("{:2}", health) + "/" + std::to_string(static_cast<uint32_t>(Player::MaxHealth));
     Core::UI::Text(playerStats, 0.5f, Core::UI::PositioningType::Relative, {0.3f, -0.47f}, {0.125f, 0.075f}, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 

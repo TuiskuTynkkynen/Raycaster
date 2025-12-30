@@ -13,8 +13,8 @@ inline constinit std::array<ProjectileParameters, ProjectileType::ENUMERATION_MA
     params[ProjectileType::Dart] = ProjectileParameters{
         .Damage = 1.0f,
         .Scale = 0.25f,
-        .AtlasIndex{TextureIndices::Projectile_Dart_First},
-        .DirectionCount{TextureIndices::Projectile_Dart_Last - TextureIndices::Projectile_Dart_First},
+        .AtlasIndex = TextureIndices::Projectile_Dart_First,
+        .DirectionCount = TextureIndices::Projectile_Dart_Last - TextureIndices::Projectile_Dart_First,
     };
 
     return params;
@@ -54,12 +54,12 @@ inline constexpr uint32_t GetAtlasOffset(ProjectileType::Enumeration type, DotPr
         return 0;
     }
 
-    float multiplier = glm::pow(dots.View, 3); //Bias away from 0/180 degree angles
+    double multiplier = glm::pow(dots.View, 3); //Bias away from 0/180 degree angles
     multiplier = glm::abs(multiplier + 1.0f) * 0.4999f; // Convert into range 0 to 1
     
     RC_ASSERT(multiplier <= 1.0f);
 
-    return (s_ProjectileParameters[type].DirectionCount + 1) * multiplier;
+    return static_cast<uint32_t>((s_ProjectileParameters[type].DirectionCount + 1) * multiplier);
 }
 
 

@@ -15,9 +15,10 @@ static constexpr InteractionResult PickupInteraction(Interactable& interactable,
             return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 1, Animations::AttackDagger, 0.75f, MeleeWeaponData{ 0.75f, 0.25f, 1.0f, 0.75f }), index);
     case InteractableType::Dart:
         return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(1.0f, 5, Animations::AttackDart, 0.75f, RangedWeaponData{ .AttackTiming = 0.8f, .ProjectileSpeed = 0.1f, .Type = ProjectileType::Dart }), index);
+    default:
+        RC_ASSERT(false, "Tried to pickup interactable with invalid type");
+        return {};
     }
-
-    RC_ASSERT(false, "Tried to pickup interactable with invalid type");
 }
 
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
@@ -33,7 +34,7 @@ enum class PlacementType {
 
 struct InteractableParameters {
     InteractionPtr Interaction = nullptr;
-    float Scale;
+    float Scale = 0.0f;
     AtlasAnimation Animation{};
     PlacementType Placement = PlacementType::Floor;
 };
@@ -111,6 +112,9 @@ static constexpr float CalculatePositionZ(InteractableType::Enumeration type) {
     case PlacementType::Ceiling:
         return 1.0f - GetScale(type) * 0.5f;
     }
+
+    RC_ASSERT("This should not be reached");
+    return std::numeric_limits<float>::signaling_NaN();
 }
 
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index) {

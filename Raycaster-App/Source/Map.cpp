@@ -32,7 +32,7 @@ Map::Map() {
             glm::vec2 start(index % s_MapData.Width + 0.5f, index / s_MapData.Width);
             glm::vec2 end(start.x, start.y + 1.0f);
             
-            m_DoorIndexMap[index] = m_Doors.size();
+            m_DoorIndexMap[index] = static_cast<uint8_t>(m_Doors.size());
             m_Doors.emplace_back(start, end);
         }  else if (E && W) {
             RC_ASSERT(index - 1 <= s_MapData.Size, "Door must not be on the western most column");
@@ -44,7 +44,7 @@ Map::Map() {
             glm::vec2 start(index % s_MapData.Width, index / s_MapData.Width + 0.5f);
             glm::vec2 end(start.x + 1.0f, start.y);
 
-            m_DoorIndexMap[index] = m_Doors.size();
+            m_DoorIndexMap[index] = static_cast<uint8_t>(m_Doors.size());
             m_Doors.emplace_back(start, end);
         }
     }
@@ -284,7 +284,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
             float dy = wall.y - wall.w;
             glm::vec3 normal = glm::normalize(glm::vec3(-dy, 0.0f, dx));
 
-            float uvLength = std::max(abs(dx), abs(dy)) * 0.5f;
+            float uvLength = std::max(glm::abs(dx), glm::abs(dy)) * 0.5f;
 
             for (uint32_t i = 0; i < 4; i++) {
                 float y = (i % 2 == 0) ? 0.0f : 1.0f;

@@ -138,25 +138,25 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
         .ActionTable = s_BasicActions,
         .TransitionTable = s_BasicTransitions,
 
-        .Scale{0.8f},
-        .Speed{1.0f},
-        .AttackDamage{1.0f},
-        .AttackRange{1.25f},
-        .AttackDuration{1.5f},
-        .AttackTiming{1.0f / 1.5f},
-        .AtlasIndex{TextureIndices::Enemy_Basic},
+        .Scale = glm::vec3(0.8f),
+        .Speed = 1.0f,
+        .AttackDamage = 1.0f,
+        .AttackRange = 1.25f,
+        .AttackDuration = 1.5f,
+        .AttackTiming = 1.0f / 1.5f,
+        .AtlasIndex = TextureIndices::Enemy_Basic,
     };
     params[EnemyType::Ranged] = EnemyParameters{
         .ActionTable = s_RangedActions,
         .TransitionTable = s_RangedTransitions,
 
-        .Scale{0.8f},
-        .Speed{1.0f},
-        .AttackDamage{1.0f},
-        .AttackRange{0.0f},
-        .AttackDuration{1.0f},
-        .AttackTiming{1.0f},
-        .AtlasIndex{TextureIndices::Enemy_Basic},
+        .Scale = glm::vec3(0.8f),
+        .Speed = 1.0f,
+        .AttackDamage = 1.0f,
+        .AttackRange = 0.0f,
+        .AttackDuration = 1.0f,
+        .AttackTiming = 1.0f,
+        .AtlasIndex = TextureIndices::Enemy_Basic,
     };
     return params;
     }();

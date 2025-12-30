@@ -91,11 +91,11 @@ static float LightBilinear(glm::vec2 position, const Map& map) {
         uint8_t mapBitboard = map.GetNeighbours(index).Bitboard;
         glm::ivec2 offset = GetBilinearOffset(mapBitboard, decreaseX, decreaseY);
 
-        min.x = position.x + offset.x * (offset.x < 0.0f); // Only decrease min 
-        min.y = position.y + offset.y * (offset.y < 0.0f); // Only decrease min 
+        min.x = static_cast<int>(position.x) + offset.x * (offset.x < 0.0f); // Only decrease min 
+        min.y = static_cast<int>(position.y) + offset.y * (offset.y < 0.0f); // Only decrease min 
 
-        max.x = position.x + offset.x * (offset.x > 0.0f); // Only increase max
-        max.y = position.y + offset.y * (offset.y > 0.0f); // Only increase max
+        max.x = static_cast<int>(position.x) + offset.x * (offset.x > 0.0f); // Only increase max
+        max.y = static_cast<int>(position.y) + offset.y * (offset.y > 0.0f); // Only increase max
     }
 
     // Bilinear interpolation of m_LightMap
