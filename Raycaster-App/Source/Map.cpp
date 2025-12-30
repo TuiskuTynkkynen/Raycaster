@@ -510,12 +510,13 @@ Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
             float lenght = 1.0f;
 
             if (adjacent.South && adjacent.North || adjacent.East && adjacent.West) {
-                side += adjacent.South && adjacent.North;
+                bool AlignedAxisY = adjacent.South && adjacent.North;
+                side += AlignedAxisY;
 
                 auto& door = m_Doors[m_DoorIndexMap[index]];
                 lenght = door.Length;
 
-                point1 = point2 = door.Position;
+                point1 = point2 = door.Position - 0.125f * glm::vec2(AlignedAxisY * stepX, !AlignedAxisY * stepY);
                 point2 += door.Vector * lenght;
             } else if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
                 point1.x++;

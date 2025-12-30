@@ -157,17 +157,19 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         m_State = State::Dead;
     }
 
+    // Render door on 3D-layer
     for (const auto& door : m_Map.GetDoors()) {
         auto& model = m_Renderables.GetNextModel();
         int8_t atlasIndex = glm::abs(m_Map[m_Map.GetIndex(door.Position)]);
 
-        //Update on 3D-layer
         glm::vec2 index = glm::vec2((atlasIndex) % ATLASWIDTH, (atlasIndex) / ATLASWIDTH);
         model.Materials.front()->Parameters.back().Value = glm::vec2(0.0f, 0.0f);
         model.Materials.front()->Parameters.front().Value = index;
 
-        glm::vec2 offset = door.Vector * (door.Length - 0.5f);
-        glm::vec3 position3D(door.Position.x + offset.x, 0.5f, door.Position.y + offset.y);
+        glm::vec2 position = door.Position + door.Vector * (door.Length - 0.5f);
+        glm::vec2 offset = 0.125f * glm::sign(glm::vec2(m_Player.GetPosition()) - door.Position);
+        
+        glm::vec3 position3D(position.x + door.Vector.y * offset.x, 0.5f, position.y + door.Vector.x * offset.y);
         model.Transform = glm::translate(glm::mat4(1.0f), position3D);
         float rot = door.Vector.y ? glm::radians(90.0f): glm::radians(0.0f);
         model.Transform = glm::rotate(model.Transform, rot, glm::vec3(0.0f, 1.0f, 0.0f));
