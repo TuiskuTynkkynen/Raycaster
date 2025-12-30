@@ -1,0 +1,14 @@
+//Platform
+#ifdef _WIN32
+    #ifdef _WIN64
+        #define PLATFORM_WINDOWS
+    #else
+    #error "Windows x86 Builds not supported"
+#endif
+#elif defined(__ANDROID__)
+    #error "Android not supported"
+#elif defined(__linux__)
+    #define PLATFORM_LINUX
+#else
+    #error "Unknown platform"
+#endif
