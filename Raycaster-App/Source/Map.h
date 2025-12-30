@@ -19,7 +19,7 @@ public:
     Core::Model CreateModel(const std::span<LineCollider> walls, std::shared_ptr<Core::Texture2D> atlas, std::shared_ptr<Core::Shader> shader);
     void CalculateLightMap(std::span<glm::vec3> lights);
 
-    void Update(Core::Timestep deltaTime);
+    void Update(Core::Timestep deltaTime, std::span<glm::vec3> lights);
     void ToggleDoor(glm::vec2 position);
 
     struct HitInfo {

@@ -458,11 +458,15 @@ void Map::CalculateLightMap(std::span<glm::vec3> lights) {
     }
 }
 
-void Map::Update(Core::Timestep dt) {
-    for (size_t i = 0; i < m_Doors.size(); i++)
-    {
+void Map::Update(Core::Timestep dt, std::span<glm::vec3> lights) {
+    for (size_t i = 0; i < m_Doors.size(); i++) {
         float sign = m_DoorState[i] ? -1.0f : 1.0f;
+        float oldLength = m_Doors[i].Length;
         m_Doors[i].Length = glm::clamp(m_Doors[i].Length + sign * dt, 0.0f, 1.0f);
+
+        if (glm::round(0.5f * sign + m_Doors[i].Length * 4.0f) != glm::round(0.5f * sign + oldLength * 4.0f)) {
+            CalculateLightMap(lights); // TODO don't recalculate entire lightmap
+        }
     }
 }
 
@@ -598,6 +602,7 @@ bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) const {
     sideDistance.x *= (rayDirection.x < 0.0f) ? (start.x - mapX) : (mapX + 1.0f - start.x);
     sideDistance.y *= (rayDirection.y < 0.0f) ? (start.y - mapY) : (mapY + 1.0f - start.y);
 
+    size_t index = GetIndex(mapX, mapY);
     while (mapX != static_cast<uint32_t>(end.x) || mapY != static_cast<uint32_t>(end.y)) {
         if (sideDistance.x < sideDistance.y) {
             sideDistance.x += deltaDistance.x;
@@ -607,11 +612,31 @@ bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) const {
             mapY += stepY;
         }
 
-        if (mapY >= s_MapData.Height || mapX >= s_MapData.Width) {
+        index = GetIndex(mapX, mapY);
+        if (index >= s_MapData.Size || s_MapData.Map[index] > 0) {
             return false;
         }
 
-        if (s_MapData.Map[GetIndex(mapX, mapY)]) {
+        if (s_MapData.Map[index] == 0) {
+            continue;
+        }
+
+        // Handle diagonals and doors
+        glm::vec2 point1(mapX, mapY);
+        glm::vec2 point2 = point1;
+
+        Neighbourhood adjacent = GetNeighbours(index);
+        if (adjacent.South && adjacent.North || adjacent.East && adjacent.West) {
+            auto& door = m_Doors[m_DoorIndexMap[index]];
+            point1 = point2 = door.Position;
+            point2 += door.Vector * door.Length;
+        } else {
+            point1.x += (adjacent.South && adjacent.East || adjacent.North && adjacent.West);
+            point2.x += !(adjacent.South && adjacent.East || adjacent.North && adjacent.West);
+            point2.y++;
+        }
+
+        if (std::optional<glm::vec2> intersection = Algorithms::LineIntersection(point1, point2, start, end)) {
             return false;
         }
     }

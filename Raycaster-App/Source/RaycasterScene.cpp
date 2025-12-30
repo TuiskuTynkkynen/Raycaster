@@ -91,7 +91,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     }
     
     m_Renderables.ResetDynamic();
-    m_Map.Update(deltaTime);
+    m_Map.Update(deltaTime, m_Lights);
 
     if (m_Player.ShouldInteract()) {
         auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetRotation());
