@@ -28,6 +28,8 @@ namespace Core {
 
     class Event {
     public:
+        virtual ~Event() {}
+
         bool Handled = false;
 
         virtual EventType GetType() const = 0;

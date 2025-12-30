@@ -102,6 +102,8 @@ namespace Core::UI {
 
     class Widget {
     public:
+        virtual ~Widget(){};
+
         virtual void Update(Surface& current) = 0;
         virtual bool Render(Surface& current) = 0;
     };

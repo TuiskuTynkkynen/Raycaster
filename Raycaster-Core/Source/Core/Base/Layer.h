@@ -12,6 +12,8 @@ namespace Core {
         std::shared_ptr<Core::Scene> m_Scene;
         bool m_Enabled = true;
     public: 
+        virtual ~Layer() {}
+
         virtual void OnAttach() = 0;
         virtual void OnDetach() = 0;
         virtual void OnUpdate(Timestep deltaTime) = 0;
