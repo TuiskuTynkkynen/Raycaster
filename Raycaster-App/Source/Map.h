@@ -53,6 +53,13 @@ public:
     inline static constexpr size_t GetIndex(glm::vec2 position) { return GetIndex(static_cast<size_t>(position.x), static_cast<size_t>(position.y)); }
     
     inline constexpr std::span<const LineCollider> GetDoors() const { return m_Doors; }
+    inline constexpr bool HasDoor(size_t index) const {
+        if (index < s_MapData.Size) {
+            return m_DoorIndexMap[index] != (uint8_t)-1;
+        }
+
+        return false;
+    }
 
     int8_t operator [](size_t index) const {
         if (index < s_MapData.Size) {

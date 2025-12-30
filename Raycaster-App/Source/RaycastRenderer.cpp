@@ -4,7 +4,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_transform_2d.hpp>
 
-static glm::ivec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
+static glm::ivec2 GetBilinearOffset(uint8_t bitboard, bool decreaseX, bool decreaseY) {
     /*
     Bitboard        NAND(bitboard, test bitboard)    Result offsets
     0 = empty                                              x  y
@@ -47,10 +47,6 @@ static glm::ivec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
         glm::ivec2{  0.0f,  1.0f },
     };
     
-    position = glm::fract(position);
-    bool decreaseY = (position.y < 0.5f);
-    bool decreaseX = (position.x < 0.5f);
-
     for (size_t i = 0; i < 8; i++) {
         // First check all 2x2 areas, then 2x1/1x2
         size_t index = (i >= 4) * 4;
@@ -71,33 +67,48 @@ static glm::ivec2 GetBilinearOffset(uint8_t bitboard, glm::vec2 position) {
 }
 
 static float LightBilinear(glm::vec2 position, const Map& map) {
-    // Bilinear interpolation of m_LightMap
-    glm::ivec2 min = position;
-    glm::ivec2 max = min;
+    glm::ivec2 min, max;
 
     // Prevent sampling light map inside a wall by shifting min and max 
     {
-        uint8_t mapBitboard = map.GetNeighbours(map.GetIndex(min.x, min.y)).Bitboard;
+        size_t index = map.GetIndex(position);
+        bool decreaseX = (glm::fract(position.x) < 0.5f);
+        bool decreaseY = (glm::fract(position.y) < 0.5f);
 
-        glm::ivec2 offset = GetBilinearOffset(mapBitboard, position);
+        // Doors need a special case :(
+        if (map.HasDoor(index)) {
+            auto adjacent = map.GetNeighbours(index);
 
-        min.x += offset.x * (offset.x < 0.0f); // Only decrease min 
-        min.y += offset.y * (offset.y < 0.0f); // Only decrease min 
+            if (decreaseX && !adjacent.West || !decreaseX && !adjacent.East) {
+                position.x += decreaseX ? -1.0f : 1.0f;
+                index += decreaseX ? -1 : 1;
+            } else if (decreaseY && !adjacent.North || !decreaseY && !adjacent.South) {
+                position.y += decreaseY ? -1.0f : 1.0f;
+                index += static_cast<int32_t>((decreaseY ? -1 : 1) * map.GetWidth());
+            }
+        }
 
-        max.x += offset.x * (offset.x > 0.0f); // Only increase max
-        max.y += offset.y * (offset.y > 0.0f); // Only increase max
+        uint8_t mapBitboard = map.GetNeighbours(index).Bitboard;
+        glm::ivec2 offset = GetBilinearOffset(mapBitboard, decreaseX, decreaseY);
+
+        min.x = position.x + offset.x * (offset.x < 0.0f); // Only decrease min 
+        min.y = position.y + offset.y * (offset.y < 0.0f); // Only decrease min 
+
+        max.x = position.x + offset.x * (offset.x > 0.0f); // Only increase max
+        max.y = position.y + offset.y * (offset.y > 0.0f); // Only increase max
     }
 
+    // Bilinear interpolation of m_LightMap
     glm::vec2 Xmin{ map.GetLight(min.x, min.y), map.GetLight(min.x, max.y) };
     glm::vec2 Xmax{ map.GetLight(max.x, min.y), map.GetLight(max.x, max.y) };
 
     // Add 0.5f to min, since light is evaluated at the middle of a tile
-    float mix = glm::clamp(position.x - (min.x + 0.5f), 0.0f, 1.0f);
+    float mix = (position.x - (min.x + 0.5f));
     glm::vec2 y = glm::mix(Xmin, Xmax, mix);
 
     // Add 0.5f to min, since light is evaluated at the middle of a tile
-    mix = glm::clamp(position.y - (min.y + 0.5f), 0.0f, 1.0f);
-    return glm::mix(y[0], y[1], mix);
+    mix = (position.y - (min.y + 0.5f));
+    return glm::clamp(glm::mix(y[0], y[1], mix), 0.0f, 1.0f);
 }
 
 void RaycastRenderer::Render(const Map& map, const Core::Camera2D& camera, const Player& player, Renderables& renderables) {
