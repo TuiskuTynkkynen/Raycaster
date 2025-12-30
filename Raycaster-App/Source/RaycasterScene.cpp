@@ -129,7 +129,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     for (size_t i = 0; i < m_Projectiles.Count(); i++) {
         auto& projectile = m_Projectiles[i];
 
-        std::array area = { LineCollider(projectile.Position, projectile.Position) };
+        std::array area = { LineCollider(projectile.Position, projectile.Position + 1e-5f) };
         bool hit = m_Enemies.DamageAreas(area, 1e-5f, projectile.Damage);
 
         hit |= m_Player.DamageAreas(area, 1e-5f, projectile.Damage);
