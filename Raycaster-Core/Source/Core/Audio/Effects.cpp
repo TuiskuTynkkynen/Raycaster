@@ -74,7 +74,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static bool ReinitFilterNode(Internal::Delay* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::Delay* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
 
         ma_delay_node_config config = ma_delay_node_config_init(node->delay.config.channels, node->delay.config.sampleRate, node->delay.config.delayInFrames, node->delay.config.decay);
@@ -108,7 +108,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::Delay* node) {
+    void UninitFilterNode(Internal::Delay* node) {
         ma_delay_node_uninit(node, nullptr);
         delete node;
     }
@@ -147,7 +147,7 @@ namespace Core::Audio::Effects {
         return node;
     }
 
-    static bool ReinitFilterNode(Internal::Biquad* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::Biquad* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
         
         RC_ASSERT(node->biquad.format == ma_format_f32, "Only float32 format is supported");
@@ -178,7 +178,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::Biquad* node) {
+    void UninitFilterNode(Internal::Biquad* node) {
         ma_biquad_node_uninit(node, nullptr);
         delete node;
     }
@@ -218,7 +218,7 @@ namespace Core::Audio::Effects {
         return node;
     }
 
-    static bool ReinitFilterNode(Internal::LowPass* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::LowPass* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
         
         ma_uint32 order = node->lpf.lpf1Count + 2 * node->lpf.lpf2Count;
@@ -251,7 +251,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::LowPass* node) {
+    void UninitFilterNode(Internal::LowPass* node) {
         ma_lpf_node_uninit(node, nullptr);
         delete node;
     }
@@ -291,7 +291,7 @@ namespace Core::Audio::Effects {
         return node;
     }
 
-    static bool ReinitFilterNode(Internal::HighPass* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::HighPass* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
         
         ma_uint32 order = node->hpf.hpf1Count + 2 * node->hpf.hpf2Count;
@@ -324,7 +324,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::HighPass* node) {
+    void UninitFilterNode(Internal::HighPass* node) {
         ma_hpf_node_uninit(node, nullptr);
         delete node;
     }
@@ -368,7 +368,7 @@ namespace Core::Audio::Effects {
         return node;
     }
 
-    static bool ReinitFilterNode(Internal::BandPass* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::BandPass* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
         
         ma_uint32 order = 2 * node->bpf.bpf2Count;
@@ -401,7 +401,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::BandPass* node) {
+    void UninitFilterNode(Internal::BandPass* node) {
         ma_bpf_node_uninit(node, nullptr);
         delete node;
     }
@@ -442,7 +442,7 @@ namespace Core::Audio::Effects {
         return node;
     }
 
-    static bool ReinitFilterNode(Internal::Notch* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::Notch* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
         ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
         
@@ -473,7 +473,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::Notch* node) {
+    void UninitFilterNode(Internal::Notch* node) {
         ma_notch_node_uninit(node, nullptr);
         delete node;
     }
@@ -515,7 +515,7 @@ namespace Core::Audio::Effects {
         return node;
     }
 
-    static bool ReinitFilterNode(Internal::PeakingEQ* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::PeakingEQ* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
         ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
         
@@ -546,7 +546,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::PeakingEQ* node) {
+    void UninitFilterNode(Internal::PeakingEQ* node) {
         ma_peak_node_uninit(node, nullptr);
         delete node;
     }
@@ -588,7 +588,7 @@ namespace Core::Audio::Effects {
         return node;
     }
 
-    static bool ReinitFilterNode(Internal::LowShelf* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::LowShelf* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
         ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
         
@@ -619,7 +619,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::LowShelf* node) {
+    void UninitFilterNode(Internal::LowShelf* node) {
         ma_loshelf_node_uninit(node, nullptr);
         delete node;
     }
@@ -661,7 +661,7 @@ namespace Core::Audio::Effects {
         return node;
     }
 
-    static bool ReinitFilterNode(Internal::HighShelf* node, ma_node* parent) {
+    bool ReinitFilterNode(Internal::HighShelf* node, ma_node* parent) {
         RC_ASSERT(Internal::System->Engine);
         ma_uint32 channels = ma_engine_get_channels(Internal::System->Engine);
         
@@ -692,7 +692,7 @@ namespace Core::Audio::Effects {
     }
 
     template<>
-    static void UninitFilterNode(Internal::HighShelf* node) {
+    void UninitFilterNode(Internal::HighShelf* node) {
         ma_hishelf_node_uninit(node, nullptr);
         delete node;
     }

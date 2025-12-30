@@ -39,7 +39,7 @@ namespace Core {
         RC_ASSERT(m_LayerStack.begin() != m_LayerStack.end(), "Layer stack is empty");
         while (m_Running)
         {
-            float currentFrame = glfwGetTime();
+            float currentFrame = static_cast<float>(glfwGetTime());
             Timestep deltaTime = currentFrame - m_LastFrame;
             m_LastFrame = currentFrame;
 

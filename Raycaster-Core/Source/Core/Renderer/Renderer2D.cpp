@@ -13,9 +13,7 @@
 #include <glm/gtx/matrix_transform_2d.hpp>
 
 #include <memory>
-#include <array>
 
-#include "Core/Debug/Debug.h"
 struct SimpleVertex {
     glm::vec3 Position{ 0.0f };
     glm::vec3 Colour{ 0.0f };
@@ -104,15 +102,15 @@ namespace Core {
         simpleVertexLayout.Push<float>(3);
 
         s_Data.LineVertexArray = std::make_unique<VertexArray>();;
-        s_Data.LineVertexBuffer = std::make_unique<VertexBuffer>(sizeof(SimpleVertex) * s_Data.MaxVertices);
+        s_Data.LineVertexBuffer = std::make_unique<VertexBuffer>(static_cast<uint32_t>(sizeof(SimpleVertex) * s_Data.MaxVertices));
         s_Data.LineVertexArray->AddBuffer(*s_Data.LineVertexBuffer, simpleVertexLayout);
 
         s_Data.TriangleVertexArray = std::make_unique<VertexArray>();
-        s_Data.TriangleVertexBuffer = std::make_unique<VertexBuffer>(sizeof(SimpleVertex) * s_Data.MaxVertices);
+        s_Data.TriangleVertexBuffer = std::make_unique<VertexBuffer>(static_cast<uint32_t>(sizeof(SimpleVertex) * s_Data.MaxVertices));
         s_Data.TriangleVertexArray->AddBuffer(*s_Data.TriangleVertexBuffer, simpleVertexLayout);
 
         s_Data.QuadVertexArray = std::make_unique<VertexArray>();
-        s_Data.QuadVertexBuffer = std::make_unique<VertexBuffer>(sizeof(Shapes::Vertex) * s_Data.MaxVertices);
+        s_Data.QuadVertexBuffer = std::make_unique<VertexBuffer>(static_cast<uint32_t>(sizeof(Shapes::Vertex) * s_Data.MaxVertices));
 
         VertexBufferLayout quadLayout;
         quadLayout.Push<float>(3);
@@ -145,7 +143,7 @@ namespace Core {
         s_Data.ShapeIndices.reserve(s_Data.MaxIndices);
 
         s_Data.ShapeVertexArray = std::make_unique<VertexArray>();
-        s_Data.ShapeVertexBuffer = std::make_unique<VertexBuffer>(sizeof(Shapes::Vertex) * s_Data.MaxVertices);
+        s_Data.ShapeVertexBuffer = std::make_unique<VertexBuffer>(static_cast <uint32_t>(sizeof(Shapes::Vertex) * s_Data.MaxVertices));
         s_Data.ShapeVertexArray->AddBuffer(*s_Data.ShapeVertexBuffer, quadLayout);
         s_Data.ShapeElementBuffer = std::make_unique<ElementBuffer>(s_Data.MaxIndices);
 
@@ -224,7 +222,7 @@ namespace Core {
             s_Data.TextureAtlas->Activate(1);
             s_Data.Font->ActivateAtlas(2);
 
-            uint32_t vertexCount =  s_Data.QuadBackIter - s_Data.QuadVertices.begin();
+            uint32_t vertexCount = static_cast<uint32_t>(s_Data.QuadBackIter - s_Data.QuadVertices.begin());
             s_Data.QuadVertexArray->Bind();
             s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertices.data(), sizeof(Shapes::Vertex) * vertexCount);
             s_Data.QuadElementBuffer->Bind();
@@ -252,10 +250,10 @@ namespace Core {
             s_Data.Font->ActivateAtlas(2);
 
             s_Data.ShapeVertexArray->Bind();
-            s_Data.ShapeVertexBuffer->SetData(s_Data.ShapeVertices.data(), sizeof(Shapes::Vertex) * s_Data.ShapeVertices.size());
-            s_Data.ShapeElementBuffer->SetData(s_Data.ShapeIndices.data(), s_Data.ShapeIndices.size());
-            
-            RenderAPI::DrawIndexed(*s_Data.ShapeVertexArray, s_Data.ShapeIndices.size());
+            s_Data.ShapeVertexBuffer->SetData(s_Data.ShapeVertices.data(), sizeof(Shapes::Vertex) * static_cast<uint32_t>(s_Data.ShapeVertices.size()));
+            s_Data.ShapeElementBuffer->SetData(s_Data.ShapeIndices.data(), static_cast<uint32_t>(s_Data.ShapeIndices.size()));
+
+            RenderAPI::DrawIndexed(*s_Data.ShapeVertexArray, static_cast<uint32_t>(s_Data.ShapeIndices.size()));
 
             s_Data.ShapeVertices.clear();
             s_Data.ShapeIndices.clear();
@@ -274,7 +272,7 @@ namespace Core {
             s_Data.QuadBackIter->Colour = colour;
             s_Data.QuadBackIter->TextureCoords = textureTransform * s_Data.BaseQuadTextureCoords[i];
             s_Data.QuadBackIter->AtlasOffset = atlasOffset;
-            s_Data.QuadBackIter->TextureIndex = textureIndex;
+            s_Data.QuadBackIter->TextureIndex = static_cast<float>(textureIndex);
             s_Data.QuadBackIter++;
         }
 
@@ -291,7 +289,7 @@ namespace Core {
             s_Data.QuadBackIter->Colour = i % 2 ? colour2 : colour1;
             s_Data.QuadBackIter->TextureCoords = textureTransform * s_Data.BaseQuadTextureCoords[i];
             s_Data.QuadBackIter->AtlasOffset = atlasOffset;
-            s_Data.QuadBackIter->TextureIndex = textureIndex;
+            s_Data.QuadBackIter->TextureIndex = static_cast<float>(textureIndex);
             s_Data.QuadBackIter++;
         }
 
@@ -389,7 +387,7 @@ namespace Core {
 
             s_Data.ShapeVertices[i].Colour = colour;
             s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
-            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+            s_Data.ShapeVertices[i].TextureIndex = static_cast<float>(textureIndex);
         }
     }
     
@@ -501,7 +499,7 @@ namespace Core {
 
             s_Data.ShapeVertices[i].Colour = colour;
             s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
-            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+            s_Data.ShapeVertices[i].TextureIndex = static_cast<float>(textureIndex);;
         }
     }
 
@@ -551,7 +549,7 @@ namespace Core {
 
             s_Data.ShapeVertices[i].Colour = colour;
             s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
-            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+            s_Data.ShapeVertices[i].TextureIndex = static_cast<float>(textureIndex);;
         }
     }
 
@@ -601,7 +599,7 @@ namespace Core {
 
             s_Data.ShapeVertices[i].Colour = colour;
             s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
-            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+            s_Data.ShapeVertices[i].TextureIndex = static_cast<float>(textureIndex);;
         }
     }
 
@@ -651,7 +649,7 @@ namespace Core {
 
             s_Data.ShapeVertices[i].Colour = colour;
             s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
-            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+            s_Data.ShapeVertices[i].TextureIndex = static_cast<float>(textureIndex);;
         }
     }
 
@@ -701,7 +699,7 @@ namespace Core {
 
             s_Data.ShapeVertices[i].Colour = colour;
             s_Data.ShapeVertices[i].AtlasOffset = atlasOffset;
-            s_Data.ShapeVertices[i].TextureIndex = textureIndex;
+            s_Data.ShapeVertices[i].TextureIndex = static_cast<float>(textureIndex);;
         }
     }
 

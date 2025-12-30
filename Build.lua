@@ -2,6 +2,7 @@ workspace "Raycaster"
    architecture "x64"
    configurations { "Debug", "Release", "Dist" }
    startproject "Raycaster-App"
+   flags {"FatalWarnings"}
 
    -- Workspace-wide build options for MSVC
    filter "system:windows"

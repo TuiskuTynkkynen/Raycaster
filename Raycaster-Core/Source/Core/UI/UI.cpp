@@ -177,7 +177,8 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to render UI before initializing");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to render UI before calling UI Begin");
 
-        RenderAPI::SetViewPort(Internal::System->Position.x, Internal::System->Position.y, Internal::System->Position.x + Internal::System->Size.x, Internal::System->Position.y + Internal::System->Size.y);
+        RenderAPI::SetViewPort(static_cast<uint32_t>(Internal::System->Position.x), static_cast<uint32_t>(Internal::System->Position.y),
+            static_cast<uint32_t>(Internal::System->Position.x + Internal::System->Size.x), static_cast<uint32_t>(Internal::System->Position.y + Internal::System->Size.y));
         Renderer2D::BeginScene(glm::ortho(0.0f, 1.0f, 1.0f, 0.0f));
         
         if(Internal::Font) { Internal::Font->ActivateAtlas(2); }
@@ -204,8 +205,8 @@ namespace Core {
                     scissorID = scissorIDs.back();
                     Surface& parent = Internal::System->Elements[scissorID];
 
-                    float offsetX = glm::round(Internal::System->Size.x * (parent.Position.x - parent.Size.x * 0.5f));
-                    float offsetY = glm::round(Internal::System->Size.y * (1.0f - parent.Position.y - parent.Size.y * 0.5f));
+                    uint32_t offsetX = static_cast<uint32_t>(glm::round(Internal::System->Size.x * (parent.Position.x - parent.Size.x * 0.5f)));
+                    uint32_t offsetY = static_cast<uint32_t>(glm::round(Internal::System->Size.y * (1.0f - parent.Position.y - parent.Size.y * 0.5f)));
                     glm::uvec2 size = glm::round(Internal::System->Size * parent.Size);
 
                     Renderer2D::Flush();

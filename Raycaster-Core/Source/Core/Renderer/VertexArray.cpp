@@ -21,11 +21,11 @@ namespace Core {
 		glBindVertexArray(0);
 	}
 
-	void VertexArray::AddBuffer(const Core::VertexBuffer& VBO, const Core::VertexBufferLayout& layout) {
+	void VertexArray::AddBuffer(const Core::VertexBuffer& VBO, const Core::VertexBufferLayout& layout) const {
 		Bind();
 		VBO.Bind();
 		const auto& vertexAttributes = layout.GetAttributes();
-		uint32_t  offset = 0;
+		uint64_t  offset = 0;
 
 		for (int i = 0; i < vertexAttributes.size(); i++) {
 			const VertexAttributePointer& attribute = vertexAttributes[i];

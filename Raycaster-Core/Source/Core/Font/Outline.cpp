@@ -1,5 +1,7 @@
 #include "Outline.h"
 
+#include FT_OUTLINE_H
+
 namespace Core::SDF {
     void Outline::Init(const FT_BBox& bounds, FT_Outline* ftOutline) {
         Bounds = bounds;
@@ -7,7 +9,7 @@ namespace Core::SDF {
         int32_t x = (bounds.xMax - bounds.xMin) >> 6;
         int32_t y = (bounds.yMax - bounds.yMin) >> 6;
 
-        IterationCount = sqrt(x * x + y * y) * 2;
+        IterationCount = static_cast<uint32_t>(glm::sqrt(x * x + y * y)) * 2;
         StepSize = 1.0f / IterationCount;
 
 
@@ -22,7 +24,7 @@ namespace Core::SDF {
                 Outline* outline = (Outline*)ptr;
 
                 outline->Points.push_back(outline->CalculatePixelPositions(*to));
-                outline->Contours.emplace_back(outline->Beziers.size(), outline->Lines.size());
+                outline->Contours.emplace_back(static_cast<uint32_t>(outline->Beziers.size()), static_cast<uint32_t>(outline->Lines.size()));
 
                 return 0;
             },
@@ -40,7 +42,7 @@ namespace Core::SDF {
 
                 outline->Points.push_back(outline->CalculatePixelPositions(*control));
                 outline->Points.push_back(outline->CalculatePixelPositions(*to));
-                outline->Beziers.emplace_back(outline->Points.size() - 3, outline->Points.size() - 1);
+                outline->Beziers.emplace_back(static_cast<uint32_t>(outline->Points.size() - 3), static_cast<uint32_t>(outline->Points.size() - 1));
 
                 outline->Contours.back().BeziersEnd++;
                 return 0;
@@ -51,7 +53,7 @@ namespace Core::SDF {
                 outline->Points.push_back(outline->CalculatePixelPositions(*c1));
                 outline->Points.push_back(outline->CalculatePixelPositions(*c2));
                 outline->Points.push_back(outline->CalculatePixelPositions(*to));
-                outline->Beziers.emplace_back(outline->Points.size() - 4, outline->Points.size() - 1);
+                outline->Beziers.emplace_back(static_cast<uint32_t>(outline->Points.size() - 4), static_cast<uint32_t>(outline->Points.size() - 1));
 
                 outline->Contours.back().BeziersEnd++;
                 return 0;
@@ -80,14 +82,14 @@ namespace Core::SDF {
         float minBezierDistance = FLT_MAX;
 
         uint32_t minBezierIndex = 0;
-        uint32_t minLutIndex = 0;
+        size_t minLutIndex = 0;
         for (uint32_t i = 0; i < Beziers.size(); i++) {
             if (Beziers[i].Lenght == 0.0f) {
                 ComputeLUT(Beziers[i]);
             }
             RC_ASSERT(LUT.size() >= Beziers[i].LUTStart + IterationCount);
 
-            for (uint32_t j = Beziers[i].LUTStart; j < Beziers[i].LUTStart + IterationCount; j++) {
+            for (size_t j = Beziers[i].LUTStart; j < Beziers[i].LUTStart + IterationCount; j++) {
                 const glm::vec2 temp = point - LUT[j];
                 const float distance = sqrt(temp.x * temp.x + temp.y * temp.y);
 

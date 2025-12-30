@@ -49,7 +49,7 @@ namespace Core {
     }
 
     void RenderAPI::SetLineWidth(uint32_t width) {
-        glLineWidth(width);
+        glLineWidth(static_cast<GLfloat>(width));
     }
 
     void RenderAPI::SetDepthBuffer(bool enabled) {
@@ -61,13 +61,10 @@ namespace Core {
     }
 
     void RenderAPI::SetScissor(bool enabled) {
-        switch (enabled) {
-        case true:
+        if (enabled) {
             glEnable(GL_SCISSOR_TEST);
-            return;
-        case false:
+        } else {
             glDisable(GL_SCISSOR_TEST);
-            return;
         }
     }
 

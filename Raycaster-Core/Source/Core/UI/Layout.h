@@ -1,8 +1,5 @@
 #pragma once
-
 #include "Types.h"
-
-#include <vector>
 
 namespace Core::UI {
 	class Layout {
@@ -29,7 +26,7 @@ namespace Core::UI {
 	
 		void Next(Surface& s) override;
 	private:
-		size_t m_PaddingDimension = 0;
+		uint32_t m_PaddingDimension = 0;
 		float m_Padding = 0.0f;
 		float m_RelativePosition = 0.0f;
 	};

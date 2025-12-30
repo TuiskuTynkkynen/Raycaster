@@ -53,7 +53,7 @@ namespace Core {
         float width = glm::max(glm::max(side.x, glm::abs(1.f - side.x)), 1.0f);
         scale /= glm::max(width, side.y);
 
-        size_t vertOffset = vertices.size();
+        uint32_t vertOffset = static_cast<uint32_t>(vertices.size());
         vertices.resize(vertOffset + 3);
         
         vertices[vertOffset + 0].Position = { (sign * 0.5f * width + side.x - sign * 0.5f - 0.5f) * scale, 0.5f * side.y * scale, 0.0f };
@@ -101,7 +101,7 @@ namespace Core {
             return ShapeError::InvalidParameters;
         }
 
-        size_t vertOffset = vertices.size();
+        uint32_t vertOffset = static_cast<uint32_t>(vertices.size());
         vertices.resize(vertOffset + 4);
 
         vertices[vertOffset + 0].Position = { 0.5f * size.x, 0.5f * size.y, 0.0f };
@@ -139,7 +139,7 @@ namespace Core {
             float sign = 1.f - i % 2 * 2.f;
             float foo = i >= 2;
 
-            size_t dimension = i < 2;
+            glm::length_t dimension = i < 2;
 
             result[6 * i + 0][dimension] = size[dimension] * 0.5f * sign;
             result[6 * i + 1][dimension] = size[dimension] * 0.5f * sign;
@@ -171,9 +171,9 @@ namespace Core {
             return ShapeError::InvalidParameters;
         }
 
-        thickness *= std::min(size.x, size.y);
+        thickness *= glm::min(size.x, size.y);
 
-        size_t vertOffset = vertices.size();
+        uint32_t vertOffset = static_cast<uint32_t>(vertices.size());
         vertices.resize(vertOffset + 12);
         size_t indOffset = indices.size();
         indices.resize(indOffset + 24);
@@ -248,8 +248,8 @@ namespace Core {
             return result;
         }
 
-        roundness = std::min(roundness, 1.f) * 0.5f;
-        const float radius = std::min(abs(size.x * roundness), abs(size.y * roundness));
+        roundness = glm::min(roundness, 1.f) * 0.5f;
+        const float radius = glm::min(glm::abs(size.x * roundness), glm::abs(size.y * roundness));
         if (radius == 0.f) {
             return result;
         }
@@ -285,7 +285,7 @@ namespace Core {
             float angle = glm::radians(90.f - k * 90.f);
             const glm::vec2& center = points[8 + k];
 
-            for (int i = 0; i < segments; i++) {
+            for (uint32_t i = 0; i < segments; i++) {
                 result.emplace_back(center);
                 result.emplace_back(center.x + glm::cos(angle) * radius, center.y + glm::sin(angle) * radius);
 
@@ -329,8 +329,8 @@ namespace Core {
             return ShapeError::InvalidParameters;
         }
 
-        roundness = std::min(roundness, 1.f) * 0.5f;
-        const float radius = std::min(abs(size.x * roundness), abs(size.y * roundness));
+        roundness = glm::min(roundness, 1.f) * 0.5f;
+        const float radius = glm::min(glm::abs(size.x * roundness), glm::abs(size.y * roundness));
         if (radius == 0.f) {
             return ShapeError::InvalidParameters;
         }
@@ -351,16 +351,17 @@ namespace Core {
             glm::vec2(radius - size.x * 0.5f, radius - size.y * 0.5f),
         };
 
+        const uint32_t pointCount = static_cast<uint32_t>(points.size());
         const float step = glm::radians(90.0f / segments);
-        const size_t vertOffset = vertices.size();
-        vertices.resize(vertOffset + (segments - 1) * 4 + points.size());
+        const uint32_t vertOffset = static_cast<uint32_t>(vertices.size());
+        vertices.resize(vertOffset + (segments - 1) * 4 + pointCount);
 
-        for (size_t i = 0; i < points.size(); i++) {
+        for (size_t i = 0; i < pointCount; i++) {
             vertices[vertOffset + i].Position = { points[i].x, points[i].y, 0.f };
             vertices[vertOffset + i].TextureCoords = 0.5f + points[i] / size;
         }
 
-        for (size_t k = 0; k < 4; k++) {
+        for (uint32_t k = 0; k < 4; k++) {
             if (segments == 1) {
                 indices.emplace_back(vertOffset + k * 2 + 1);
                 indices.emplace_back(vertOffset + k * 2);
@@ -372,30 +373,30 @@ namespace Core {
             float angle = glm::radians(90.f - k * 90.f);
             const glm::vec2& center = points[8 + k];
             
-            for (int i = 1; i < segments; i++) {
+            for (uint32_t i = 1; i < segments; i++) {
                 angle += step;
                 glm::vec2 offset(glm::cos(angle) * radius, glm::sin(angle) * radius);
 
-                vertices[vertOffset + points.size() + (segments - 1) * k + i - 1].Position = { center.x + offset.x, center.y + offset.y, 0.f };
-                vertices[vertOffset + points.size() + (segments - 1) * k + i - 1].TextureCoords = vertices[vertOffset + k + 8].TextureCoords + offset / size;
+                vertices[vertOffset + pointCount + (segments - 1) * k + i - 1].Position = { center.x + offset.x, center.y + offset.y, 0.f };
+                vertices[vertOffset + pointCount + (segments - 1) * k + i - 1].TextureCoords = vertices[vertOffset + k + 8].TextureCoords + offset / size;
             }
 
             indices.emplace_back(vertOffset + k + 8);
             indices.emplace_back(vertOffset + k * 2 + 1);
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * k);
-            
+            indices.emplace_back(vertOffset + pointCount + (segments - 1) * k);
+
             for (uint32_t i = 1; i < segments - 1; i++) {
                 indices.emplace_back(vertOffset + k + 8);
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k + i - 1);
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k + i);
+                indices.emplace_back(vertOffset + pointCount + (segments - 1) * k + i - 1);
+                indices.emplace_back(vertOffset + pointCount + (segments - 1) * k + i);
             }
-            
+
             indices.emplace_back(vertOffset + k + 8);
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * (k + 1) - 1);
+            indices.emplace_back(vertOffset + pointCount + (segments - 1) * (k + 1) - 1);
             indices.emplace_back(vertOffset + k * 2);
         }
 
-        for (size_t i = 0; i < 3; i += 2) {
+        for (uint32_t i = 0; i < 3; i += 2) {
             indices.emplace_back(vertOffset + 8 + i);
             indices.emplace_back(vertOffset + 2 + i * 2);
             indices.emplace_back(vertOffset + 1 + i * 2);
@@ -434,9 +435,9 @@ namespace Core {
             return ShapeError::InvalidParameters;
         }
 
-        thickness = thickness * std::min(abs(size.x), abs(size.y));
-        roundness = std::min(roundness, 1.f) * 0.5f;
-        const float radius = std::min(abs(size.x * roundness), abs(size.y * roundness));
+        thickness = thickness * glm::min(glm::abs(size.x), glm::abs(size.y));
+        roundness = glm::min(roundness, 1.f) * 0.5f;
+        const float radius = glm::min(glm::abs(size.x * roundness), glm::abs(size.y * roundness));
         if (radius == 0.f) {
             return ShapeError::InvalidParameters;
         }
@@ -467,16 +468,17 @@ namespace Core {
             glm::vec2(radius - size.x * 0.5f, radius - size.y * 0.5f),
         };
 
+        const uint32_t pointCount = static_cast<uint32_t>(points.size());
         const float step = glm::radians(90.0f / segments);
-        const size_t vertOffset = vertices.size();
-        vertices.resize(vertOffset + points.size() + (segments - 1) * 8);
+        const uint32_t vertOffset = static_cast<uint32_t>(vertices.size());
+        vertices.resize(vertOffset + pointCount + (segments - 1) * 8);
 
-        for (size_t i = 0; i < points.size(); i++) {
+        for (size_t i = 0; i < pointCount; i++) {
             vertices[vertOffset + i].Position = { points[i].x, points[i].y, 0.f };
             vertices[vertOffset + i].TextureCoords = 0.5f + points[i] / size;
         }
 
-        for (size_t k = 0; k < 4; k++) {
+        for (uint32_t k = 0; k < 4; k++) {
             indices.emplace_back(vertOffset + (k * 2 - 1) % 8);
             indices.emplace_back(vertOffset + k * 2 + 8);
             indices.emplace_back(vertOffset + k * 2);
@@ -489,7 +491,7 @@ namespace Core {
                 indices.emplace_back(vertOffset + k * 2 + 8);
                 indices.emplace_back(vertOffset + k * 2 + 1);
                 indices.emplace_back(vertOffset + k * 2);
-                
+
                 indices.emplace_back(vertOffset + k * 2 + 1);
                 indices.emplace_back(vertOffset + k * 2 + 8);
                 indices.emplace_back(vertOffset + k * 2 + 9);
@@ -499,42 +501,42 @@ namespace Core {
             float angle = glm::radians(90.f - k * 90.f);
             const glm::vec2& center = centers[k];
             const glm::vec2& textureCenter = 0.5f + centers[k] / size;
-            
-            for (int i = 1; i < segments; i++) {
+
+            for (uint32_t i = 1; i < segments; i++) {
                 angle += step;
                 glm::vec2 offset(glm::cos(angle), glm::sin(angle));
 
-                vertices[vertOffset + points.size() + (segments - 1) * k * 2 + 2 * i - 2].Position = { center.x + offset.x * radius, center.y + offset.y * radius, 0.f };
-                vertices[vertOffset + points.size() + (segments - 1) * k * 2 + 2 * i - 2].TextureCoords = textureCenter + offset * radius / size;
-            
-                vertices[vertOffset + points.size() + (segments - 1) * k * 2 + 2 * i - 1].Position = { center.x + offset.x * (radius - thickness), center.y + offset.y * (radius - thickness), 0.f };
-                vertices[vertOffset + points.size() + (segments - 1) * k * 2 + 2 * i - 1].TextureCoords = textureCenter + offset * (radius - thickness) / size;
+                vertices[vertOffset + pointCount + (segments - 1) * k * 2 + 2 * i - 2].Position = { center.x + offset.x * radius, center.y + offset.y * radius, 0.f };
+                vertices[vertOffset + pointCount + (segments - 1) * k * 2 + 2 * i - 2].TextureCoords = textureCenter + offset * radius / size;
+
+                vertices[vertOffset + pointCount + (segments - 1) * k * 2 + 2 * i - 1].Position = { center.x + offset.x * (radius - thickness), center.y + offset.y * (radius - thickness), 0.f };
+                vertices[vertOffset + pointCount + (segments - 1) * k * 2 + 2 * i - 1].TextureCoords = textureCenter + offset * (radius - thickness) / size;
             }
-            
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2);
+
+            indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2);
             indices.emplace_back(vertOffset + k * 2 + 8 + 1);
             indices.emplace_back(vertOffset + k * 2 + 1);
-            
-            indices.emplace_back(vertOffset + k * 2 + 8 + 1);
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2);
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + 1);
-            
-            for (uint32_t i = 1; i < segments - 1; i++) {
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2);
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 - 1);
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 - 2);
 
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 - 1);
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2);
-                indices.emplace_back(vertOffset + points.size() + (segments - 1) * k * 2 + i * 2 + 1);
+            indices.emplace_back(vertOffset + k * 2 + 8 + 1);
+            indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2);
+            indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2 + 1);
+
+            for (uint32_t i = 1; i < segments - 1; i++) {
+                indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2 + i * 2);
+                indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2 + i * 2 - 1);
+                indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2 + i * 2 - 2);
+
+                indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2 + i * 2 - 1);
+                indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2 + i * 2);
+                indices.emplace_back(vertOffset + pointCount + (segments - 1) * k * 2 + i * 2 + 1);
             }
 
             indices.emplace_back(vertOffset + k * 2);
             indices.emplace_back(vertOffset + k * 2 + 8);
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * (k + 1) * 2 - 2);
-            
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * (k + 1) * 2 - 1);
-            indices.emplace_back(vertOffset + points.size() + (segments - 1) * (k + 1) * 2 - 2);
+            indices.emplace_back(vertOffset + pointCount + (segments - 1) * (k + 1) * 2 - 2);
+
+            indices.emplace_back(vertOffset + pointCount + (segments - 1) * (k + 1) * 2 - 1);
+            indices.emplace_back(vertOffset + pointCount + (segments - 1) * (k + 1) * 2 - 2);
             indices.emplace_back(vertOffset + k * 2 + 8);
         }
 
@@ -589,7 +591,7 @@ namespace Core {
         
         float step = glm::radians(360.0f / segments);
         
-        size_t vertOffset = vertices.size();
+        uint32_t vertOffset = static_cast<uint32_t>(vertices.size());
         vertices.resize(vertOffset + segments + 1);
         vertices[vertOffset].Position = { 0.f, 0.f, 0.f };
         vertices[vertOffset].TextureCoords = { 0.5f, 0.5f };

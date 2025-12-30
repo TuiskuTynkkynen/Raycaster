@@ -16,7 +16,7 @@ namespace Core {
 		void Bind() const;
 		void Unbind() const;
 
-		void AddBuffer(const Core::VertexBuffer& VBO, const Core::VertexBufferLayout& layout);
+		void AddBuffer(const Core::VertexBuffer& VBO, const Core::VertexBufferLayout& layout) const;
 	};
 }
 

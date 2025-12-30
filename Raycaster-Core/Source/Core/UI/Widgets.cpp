@@ -33,7 +33,7 @@ namespace Core::UI::Widgets {
     template <typename T>
     void TextWidget<T>::Update(Surface& current) {
         glm::vec2 size(0.0f);
-        size.y = Internal::Font->GetGlyphInfo(' ').Size.y;
+        size.y = static_cast<float>(Internal::Font->GetGlyphInfo(' ').Size.y);
         
         if (m_Scale) {
             m_Scale *= current.Size.y / size.y;
@@ -58,7 +58,7 @@ namespace Core::UI::Widgets {
         if (!m_Scale) {
             glm::vec2 scale(size.x, size.y * lineCount);
             scale = current.Size / scale;
-            m_Scale = std::min(scale.x, scale.y);
+            m_Scale = glm::min(scale.x, scale.y);
         }
 
         size *= m_Scale * glm::vec2(-0.5f, 0.75f - lineCount * 0.5f);
@@ -79,7 +79,7 @@ namespace Core::UI::Widgets {
 
     template <typename T>
     void TextDisplayWidget<T>::Update(Surface& current) {
-        float lineHeight = Internal::Font->GetGlyphInfo(' ').Size.y;
+        float lineHeight = static_cast<float>(Internal::Font->GetGlyphInfo(' ').Size.y);
         TextScale *= current.Size.y / lineHeight;
     }
 
@@ -106,11 +106,11 @@ namespace Core::UI::Widgets {
                 return true;
             }
 
-            int32_t direction = Internal::Input->TestInputKey(Internal::Keys::Rigth) - Internal::Input->TestInputKey(Internal::Keys::Left);
+            int64_t direction = Internal::Input->TestInputKey(Internal::Keys::Rigth) - Internal::Input->TestInputKey(Internal::Keys::Left);
             
             bool skipWordSearch = false;
             if (Internal::Input->TestInputKey(Internal::Keys::Home) || Internal::Input->TestInputKey(Internal::Keys::Up) || Internal::Input->TestInputKey(Internal::Keys::PageUp)) {
-                direction = -m_SelectionStart;
+                direction = -1 * m_SelectionStart;
                 skipWordSearch = true;
             }
 
@@ -137,12 +137,12 @@ namespace Core::UI::Widgets {
                     Other,
                 };
                 
-                int32_t offset = 0;
+                int64_t offset = 0;
                 
                 size_t current = (1 + direction) / 2;
                 size_t previous = 1 - current;
                 std::array<CharacterType, 2> window = { CharacterType::None, CharacterType::None };
-                for (int32_t i = m_SelectionStart - (direction < 0); direction && i < m_Text.size(); i += direction) {
+                for (size_t i = m_SelectionStart - (direction < 0); direction && i < m_Text.size(); i += direction) {
                     uint32_t c = m_Text[i];
 
                     window[previous] = window[current];
@@ -164,7 +164,7 @@ namespace Core::UI::Widgets {
                 }
             }
 
-            m_SelectionStart = glm::clamp((int32_t)m_SelectionStart + direction, 0, (int32_t)m_Text.size());
+            m_SelectionStart = glm::clamp<int64_t>(m_SelectionStart + direction, 0, m_Text.size());
             if (!Internal::Input->TestModKey(Internal::Keys::Shift)) {
                 m_SelectionEnd = m_SelectionStart;
             }
@@ -270,7 +270,7 @@ namespace Core::UI::Widgets {
         glm::vec2 innerSize = glm::vec2(1.0f) - edgeWidth / current.Size;
         
         Surface& scrollContainer = Internal::System->Elements[currentIndex + 1];
-        if (scrollContainer.Widget && typeid(*scrollContainer.Widget) == typeid(ScrollWidget)) {
+        if (scrollContainer.Widget && typeid(scrollContainer.Widget) == typeid(ScrollWidget*)) {
             scrollContainer.Size *= innerSize;
         } else {
             RC_WARN("The first child of UI element with TextInputWidget<T> should have a ScrollWidget<T> member");
@@ -278,7 +278,7 @@ namespace Core::UI::Widgets {
         }
 
         Surface& textDisplay = Internal::System->Elements[currentIndex + 2];
-        if (!textDisplay.Widget || typeid(*textDisplay.Widget) != typeid(TextDisplayWidget<T>)) {
+        if (!textDisplay.Widget || typeid(textDisplay.Widget) != typeid(TextDisplayWidget<T>*)) {
             RC_WARN("The first grandchild of UI element with TextInputWidget<T> should have a TextDisplayWidget<T> member");
             return;
         }
@@ -308,10 +308,10 @@ namespace Core::UI::Widgets {
             size_t selStart = (swapSelection) ? m_SelectionEnd : m_SelectionStart;
             size_t selEnd = (swapSelection) ? m_SelectionStart : m_SelectionEnd;
             for (size_t i = 0; i < selEnd; i++) {
-                float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+                float charWidth = static_cast<float>(Internal::Font->GetGlyphInfo(m_Text[i]).Advance);
                     
                 if (charWidth == 0) {
-                    charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+                    charWidth = static_cast<float>(Internal::Font->GetGlyphInfo('?').Advance);
                 }
                     
                 if (i < m_SelectionStart) {
@@ -382,10 +382,10 @@ namespace Core::UI::Widgets {
 
         size_t i = 0;
         for (; i < m_Text.size(); i++) {
-            float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
-
+            float charWidth = static_cast<float>(Internal::Font->GetGlyphInfo(m_Text[i]).Advance);
+            
             if (charWidth == 0) {
-                charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+                charWidth = static_cast<float>(Internal::Font->GetGlyphInfo('?').Advance);
             }
 
             if (textOffset + 0.5f * charWidth >= mouseOffset) {
@@ -436,11 +436,11 @@ namespace Core::UI::Widgets {
                 return true;
             }
 
-            int32_t direction = Internal::Input->TestInputKey(Internal::Keys::Rigth) - Internal::Input->TestInputKey(Internal::Keys::Left);
+            int64_t direction = Internal::Input->TestInputKey(Internal::Keys::Rigth) - Internal::Input->TestInputKey(Internal::Keys::Left);
 
             bool skipWordSearch = false;
             if (Internal::Input->TestInputKey(Internal::Keys::Home) || Internal::Input->TestInputKey(Internal::Keys::Up) || Internal::Input->TestInputKey(Internal::Keys::PageUp)) {
-                direction = -m_SelectionStart;
+                direction = -1 * m_SelectionStart;
                 skipWordSearch = true;
             }
 
@@ -467,12 +467,12 @@ namespace Core::UI::Widgets {
                     Other,
                 };
 
-                int32_t offset = 0;
+                int64_t offset = 0;
 
                 size_t current = (1 + direction) / 2;
                 size_t previous = 1 - current;
                 std::array<CharacterType, 2> window = { CharacterType::None, CharacterType::None };
-                for (int32_t i = m_SelectionStart - (direction < 0); direction && i < m_Text.size(); i += direction) {
+                for (size_t i = m_SelectionStart - (direction < 0); direction && i < m_Text.size(); i += direction) {
                     uint32_t c = m_Text[i];
 
                     window[previous] = window[current];
@@ -494,7 +494,7 @@ namespace Core::UI::Widgets {
                 }
             }
 
-            m_SelectionStart = glm::clamp((int32_t)m_SelectionStart + direction, 0, (int32_t)m_Text.size());
+            m_SelectionStart = glm::clamp<int64_t>(m_SelectionStart + direction, 0, m_Text.size());
             if (!Internal::Input->TestModKey(Internal::Keys::Shift)) {
                 m_SelectionEnd = m_SelectionStart;
             }
@@ -601,13 +601,13 @@ namespace Core::UI::Widgets {
 
         Surface& scrollContainer = Internal::System->Elements[currentIndex + 1];
         scrollContainer.Size *= innerSize;
-        if (!scrollContainer.Widget || typeid(*scrollContainer.Widget) != typeid(ScrollWidget)) {
+        if (!scrollContainer.Widget || typeid(scrollContainer.Widget) != typeid(ScrollWidget*)) {
             RC_WARN("The first child of UI element with TextureTextInputWidget<T> should have a ScrollWidget<T> member");
             return;
         }
         
         Surface& textDisplay = Internal::System->Elements[currentIndex + 2];
-        if (!textDisplay.Widget || typeid(*textDisplay.Widget) != typeid(TextDisplayWidget<T>)) {
+        if (!textDisplay.Widget || typeid(textDisplay.Widget) != typeid(TextDisplayWidget<T>*)) {
             RC_WARN("The first grandchild of UI element with TextureTextInputWidget<T> should have a TextDisplayWidget<T> member");
             return;
         }
@@ -637,10 +637,10 @@ namespace Core::UI::Widgets {
             size_t selStart = (swapSelection) ? m_SelectionEnd : m_SelectionStart;
             size_t selEnd = (swapSelection) ? m_SelectionStart : m_SelectionEnd;
             for (size_t i = 0; i < selEnd; i++) {
-                float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+                float charWidth = static_cast<float>(Internal::Font->GetGlyphInfo(m_Text[i]).Advance);
 
                 if (charWidth == 0) {
-                    charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+                    charWidth = static_cast<float>(Internal::Font->GetGlyphInfo('?').Advance);
                 }
 
                 if (i < m_SelectionStart) {
@@ -684,7 +684,7 @@ namespace Core::UI::Widgets {
             }
         } else {
             Surface& caretSurface = Internal::System->Elements[currentIndex + 3];
-            if (!caretSurface.Widget || typeid(*caretSurface.Widget) != typeid(AtlasTextureWidget)) {
+            if (!caretSurface.Widget || typeid(caretSurface.Widget) != typeid(AtlasTextureWidget*)) {
                  RC_WARN("The second child of UI element with TextureTextInputWidget should have a AtlasTextureWidget member");
                 return;
             }
@@ -726,10 +726,10 @@ namespace Core::UI::Widgets {
 
         size_t i = 0;
         for (; i < m_Text.size(); i++) {
-            float charWidth = Internal::Font->GetGlyphInfo(m_Text[i]).Advance;
+            float charWidth = static_cast<float>(Internal::Font->GetGlyphInfo(m_Text[i]).Advance);
 
             if (charWidth == 0) {
-                charWidth = Internal::Font->GetGlyphInfo('?').Advance;
+                charWidth = static_cast<float>(Internal::Font->GetGlyphInfo('?').Advance);
             }
 
             if (textOffset + 0.5f * charWidth >= mouseOffset) {
@@ -786,7 +786,7 @@ namespace Core::UI::Widgets {
             }
 
             Surface& caretSurface = Internal::System->Elements[currentIndex + 3];
-            if (!caretSurface.Widget || typeid(*caretSurface.Widget) != typeid(AtlasTextureWidget)) {
+            if (!caretSurface.Widget || typeid(caretSurface.Widget) != typeid(AtlasTextureWidget*)) {
                 RC_WARN("The second child of UI element with TextureTextInputWidget should have a AtlasTextureWidget member");
                 return true;
             }
@@ -797,10 +797,10 @@ namespace Core::UI::Widgets {
 
         float selectionEndsWidth = m_CaretSize.y * m_SelectionEndsScale.x / m_SelectionEndsScale.y;
 
-        if (abs(m_CaretSize.x) > selectionEndsWidth) {
+        if (glm::abs(m_CaretSize.x) > selectionEndsWidth) {
             //Selection middle
             transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition, current.Position.y, 0.0f });
-            transform = glm::scale(transform, { abs(m_CaretSize.x) - 2.0f * selectionEndsWidth, m_CaretSize.y, 0.0f });
+            transform = glm::scale(transform, { glm::abs(m_CaretSize.x) - 2.0f * selectionEndsWidth, m_CaretSize.y, 0.0f });
 
             atlasOffset = glm::vec2(m_SelectionAtlasIndices[1] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[1] / (uint32_t)Internal::AtlasSize.x * -1.0f);
 
@@ -810,7 +810,7 @@ namespace Core::UI::Widgets {
             Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
         
             //Selection rigth
-            transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition + 0.5f * (abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, 0.0f });
+            transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition + 0.5f * (glm::abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, 0.0f });
             transform = glm::scale(transform, { selectionEndsWidth, m_CaretSize.y, 0.0f });
 
             atlasOffset = glm::vec2(m_SelectionAtlasIndices[2] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[2] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -822,7 +822,7 @@ namespace Core::UI::Widgets {
         }
 
         //Selection left
-        transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition - 0.5f * (abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, 0.0f });
+        transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition - 0.5f * (glm::abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, 0.0f });
         transform = glm::scale(transform, { selectionEndsWidth, m_CaretSize.y, 0.0f });
 
         atlasOffset = glm::vec2(m_SelectionAtlasIndices[0] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[0] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -940,11 +940,12 @@ namespace Core::UI::Widgets {
         }
 
         float maxPosition = (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
-        if (std::is_integral<T>::value) {
-            m_Value = glm::clamp<T>(glm::round((Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min)), m_Min, m_Max);
-        } else {
-            m_Value = glm::clamp<T>((Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min), m_Min, m_Max);
+        double nextValue = (Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min);
+        if constexpr (std::is_integral<T>::value) {
+            nextValue = glm::round(nextValue);
         }
+    
+        m_Value = glm::clamp<T>(static_cast<T>(nextValue), m_Min, m_Max);
     }
 
     template <typename T>
@@ -956,7 +957,7 @@ namespace Core::UI::Widgets {
 
         glm::vec3 sliderPosition(0.0f);
         float maxPosition = current.Size[m_SliderDimension] * (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
-        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + maxPosition * glm::clamp<float>((float)m_Value / (m_Max - m_Min) - 0.5, -0.5f, 0.5f);
+        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + maxPosition * glm::clamp(static_cast<float>(m_Value) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
         sliderPosition[1 - m_SliderDimension] = current.Position[1 - m_SliderDimension];
         
         glm::vec3 sliderSize(0.0f);
@@ -985,13 +986,12 @@ namespace Core::UI::Widgets {
             return;
         }
 
+        double nextValue = (Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min);
+        if constexpr (std::is_integral<T>::value) {
+            nextValue = glm::round(nextValue);
+        }
 
-        if (std::is_integral<T>::value) {
-            m_Value = glm::clamp<T>(glm::round((Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min)), m_Min, m_Max);
-        }
-        else {
-            m_Value = glm::clamp<T>((Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min), m_Min, m_Max);
-        }
+        m_Value = glm::clamp<T>(static_cast<T>(nextValue), m_Min, m_Max);
     }
 
     template <typename T>
@@ -1012,7 +1012,7 @@ namespace Core::UI::Widgets {
 
         //Slider
         glm::vec3 sliderPosition(0.0f);
-        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * glm::clamp<float>((float)m_Value / (m_Max - m_Min) - 0.5, -0.5f, 0.5f);
+        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * glm::clamp(static_cast<float>(m_Value) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
         sliderPosition[1 - m_SliderDimension] = current.Position[1 - m_SliderDimension];
 
         transform = glm::translate(glm::mat4(1.0f), sliderPosition);
@@ -1102,7 +1102,7 @@ namespace Core::UI::Widgets {
 
         //Set the slider max value to scrollSize
         Surface& parent = Internal::System->Elements[current.ParentID];
-        if (parent.Widget && typeid(*parent.Widget) == typeid(ScrollWidget)) {
+        if (parent.Widget && typeid(parent.Widget) == typeid(ScrollWidget*)) {
             float scrollSize = ((ScrollWidget*)parent.Widget.get())->m_ScrollSize;
             
             if (moveDirection != 0) {
@@ -1112,10 +1112,10 @@ namespace Core::UI::Widgets {
 
             Surface& child = Internal::System->Elements[currentIndex + 1];
             if(child.Widget) {
-                if (typeid(*child.Widget) == typeid(SliderWidget<float>)) {
+                if (typeid(child.Widget) == typeid(SliderWidget<float>*)) {
                     ((SliderWidget<float>*)child.Widget.get())->m_Max = scrollSize;
                     
-                    size_t scrollDimension = ((ScrollWidget*)parent.Widget.get())->m_ScrollDimension;
+                    uint32_t scrollDimension = ((ScrollWidget*)parent.Widget.get())->m_ScrollDimension;
                     ((SliderWidget<float>*)child.Widget.get())->m_SliderSize = glm::clamp(glm::abs(parent.Size[scrollDimension] / scrollSize), 0.05f, 0.9f);
                 } else {
                     RC_WARN("The first child of UI element with ScrollBarWidget should have a SliderWidget member");
@@ -1144,7 +1144,7 @@ namespace Core::UI::Widgets {
 
         //Set the slider max value to scrollSize
         Surface& parent = Internal::System->Elements[current.ParentID];
-        if (parent.Widget && typeid(*parent.Widget) == typeid(ScrollWidget)) {
+        if (parent.Widget && typeid(parent.Widget) == typeid(ScrollWidget*)) {
             float scrollSize = ((ScrollWidget*)parent.Widget.get())->m_ScrollSize;
             
             if (moveDirection != 0) {
@@ -1154,7 +1154,7 @@ namespace Core::UI::Widgets {
 
             Surface& child = Internal::System->Elements[currentIndex + 1];
             if(child.Widget) {
-                if (typeid(*child.Widget) == typeid(AtlasTextureSliderWidget<float>)) {
+                if (typeid(child.Widget) == typeid(AtlasTextureSliderWidget<float>*)) {
                     ((AtlasTextureSliderWidget<float>*)child.Widget.get())->m_Max = scrollSize;
                 } else {
                     RC_WARN("The first child of UI element with AtlasTextureScrollBarWidget should have a AtlasTextureSliderWidget member");

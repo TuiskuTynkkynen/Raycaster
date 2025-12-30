@@ -5,7 +5,6 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include FT_BBOX_H
 #include FT_OUTLINE_H
 
 #include <filesystem>
@@ -55,7 +54,7 @@ namespace Core {
         FT_Set_Pixel_Sizes(face, width, height);
 
         uint32_t textureDimensions = 1;
-        uint32_t maxDimensions = (1 + (face->size->metrics.height >> 6)) * ceil(sqrtf(characterCount));
+        uint32_t maxDimensions = (1 + (face->size->metrics.height >> 6)) * static_cast<uint32_t>(glm::ceil(glm::sqrt(characterCount)));
         //set textureDimensions to next largest power of two 
         while (textureDimensions < maxDimensions) {
             textureDimensions *= 2;
@@ -156,7 +155,7 @@ namespace Core {
         FT_Set_Pixel_Sizes(face, width * scaleFactor, height * scaleFactor);
 
         uint32_t textureDimensions = 1;
-        uint32_t maxDimensions = (1 + (2 + face->size->metrics.height >> 6)) * ceil(sqrtf(characterCount));
+        uint32_t maxDimensions = (1 + ((2 + face->size->metrics.height) >> 6)) * static_cast<uint32_t>(glm::ceil(glm::sqrt(characterCount)));
         //set textureDimensions to next largest power of two 
         while (textureDimensions < maxDimensions) {
             textureDimensions *= 2;
@@ -196,7 +195,7 @@ namespace Core {
                 }
 
                 glyph.Init(box, &outline);
-                const float spread = sqrt(width * width + rows * rows);
+                const float spread = glm::sqrt(static_cast<float>(width * width + rows * rows));
 
                 for (uint32_t row = 0; row < rows; row++) {
                     for (uint32_t column = 0; column < width; column++) {
@@ -208,7 +207,7 @@ namespace Core {
 
                         const uint32_t index = (y + row) * textureDimensions + x + column;
                         if (index < textureDimensions * textureDimensions) {
-                            textureData[index] = len * UCHAR_MAX;
+                            textureData[index] = static_cast<unsigned char>(len * std::numeric_limits<unsigned char>::max());
                         }
 
                     }

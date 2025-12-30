@@ -199,7 +199,7 @@ namespace Core::UI::Widgets {
         T m_Min;
         T m_Max;
 
-        size_t m_SliderDimension;
+        uint32_t m_SliderDimension;
         float m_SliderSize;
 
         const std::array<glm::vec4, 3> m_SliderColours;
@@ -220,7 +220,7 @@ namespace Core::UI::Widgets {
         T m_Min;
         T m_Max;
 
-        size_t m_SliderDimension;
+        uint32_t m_SliderDimension;
 
         const glm::vec2 m_BoxScale;
         const glm::uvec3 m_BoxAtlasIndices;
@@ -242,16 +242,16 @@ namespace Core::UI::Widgets {
     private:
         float& m_ScrollOffset;
 
-        size_t m_ScrollDimension;
+        uint32_t m_ScrollDimension;
         float m_ScrollSpeed;
         float m_ScrollSize = 0.0f;
 
         friend void ScrollBarWidget::Update(Surface&);
         friend void AtlasTextureScrollBarWidget::Update(Surface&);
-        template <typename T>
-        friend void TextInputWidget<T>::Update(Surface&);
-        template <typename T>
-        friend void TextureTextInputWidget<T>::Update(Surface&);
+        friend void TextInputWidget<char>::Update(Surface&);
+        friend void TextInputWidget<wchar_t>::Update(Surface&);
+        friend void TextureTextInputWidget<char>::Update(Surface&);
+        friend void TextureTextInputWidget<wchar_t>::Update(Surface&);
     };
 
     class HoverWidget : public Widget {

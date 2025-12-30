@@ -5,8 +5,6 @@
 #include <glm/glm.hpp>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include FT_BBOX_H
-#include FT_OUTLINE_H
 
 #include <vector>
 namespace Core::SDF {
@@ -22,7 +20,7 @@ namespace Core::SDF {
             uint32_t PointsStart;
             uint32_t PointsEnd;
 
-            uint32_t LUTStart = 0;
+            size_t LUTStart = 0;
             float Lenght = 0.0f;
 
             Bezier(uint32_t start, uint32_t end)

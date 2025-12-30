@@ -1,5 +1,7 @@
 #include "VertexBufferLayout.h"
 
+#include "Core/Debug/Assert.h"
+
 #include <GLFW/glfw3.h>
 
 uint32_t VertexAttributePointer::GetSizeOfType(uint32_t type) {
@@ -10,6 +12,9 @@ uint32_t VertexAttributePointer::GetSizeOfType(uint32_t type) {
     case GL_UNSIGNED_INT:
         return 4;
     }
+
+    RC_ASSERT("Invalid buffer type");
+    return -1;
 }
 
 namespace Core {
