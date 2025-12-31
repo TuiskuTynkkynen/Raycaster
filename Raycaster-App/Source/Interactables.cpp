@@ -21,6 +21,10 @@ static constexpr InteractionResult PickupInteraction(Interactable& interactable,
     }
 }
 
+static constexpr InteractionResult ToggleInteraction(Interactable& interactable, size_t index) {
+    return InteractionResult::Create<InteractionResult::Type::Toggle>(interactable.Position, index);
+}
+
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
 
 using InteractionPtr = InteractionResult(*)(Interactable& interactable, size_t);
@@ -56,6 +60,12 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Interaction = AnimationInteraction,
         .Scale = 0.5f,
         .Animation = Animations::ChestOpen,
+        .Placement = PlacementType::Floor
+    };
+    parameters[InteractableType::DoorToggle] = InteractableParameters{
+        .Interaction = ToggleInteraction,
+        .Scale = 0.0f,
+        .Animation = {},
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::Dagger] = InteractableParameters{

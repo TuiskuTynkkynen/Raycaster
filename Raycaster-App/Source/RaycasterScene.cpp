@@ -52,6 +52,11 @@ void RaycasterScene::Reinit() {
         m_Interactables.Add(InteractableType::Light, light);
     }
 
+    for (const auto& door : m_Map.GetDoors()) {
+        glm::vec2 postion = door.Position + 0.5f * door.Vector;
+        m_Interactables.Add(InteractableType::DoorToggle, postion);
+    }
+
     m_Enemies.Init(m_Map);
     m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
     m_Enemies.Add(EnemyType::Ranged, glm::vec2(2.5f, 3.0f));
@@ -99,6 +104,9 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         switch (result.GetType()) {
         case InteractionResult::Type::Debug:
             RC_TRACE("{}", std::get<std::string_view>(result.Data));
+            break;
+        case InteractionResult::Type::Toggle:
+            m_Map.ToggleDoor(std::get<glm::vec2>(result.Data));
             break;
         case InteractionResult::Type::Pickup:
             m_Player.PickUp(std::get<Item>(result.Data));
@@ -190,11 +198,6 @@ bool RaycasterScene::OnResume(Resume& event) {
 }
 
 bool RaycasterScene::OnKeyReleased(Core::KeyReleased& event) {
-    // TODO move this into player / interactables
-    if (event.GetKeyCode() == RC_KEY_SPACE) {
-        m_Map.ToggleDoor(m_Player.GetPosition());
-        return false;
-    }
     if (event.GetKeyCode() != RC_KEY_ESCAPE) {
         return false;
     }
