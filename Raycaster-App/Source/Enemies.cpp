@@ -179,7 +179,7 @@ static std::vector<float> CreateDjikstraMap(std::span<glm::ivec2> destinations, 
             float nextValue = value + (diagonal ? sqrt2 : 1.0f) + costMap[index];
             if (index >= mapSize
                 || result[index] <= nextValue
-                || map[index]) {
+                || !map.IsPassable(index)) {
                 continue;
             }
 
