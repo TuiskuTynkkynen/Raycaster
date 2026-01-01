@@ -61,6 +61,16 @@ public:
         return false;
     }
 
+    bool IsPassable(size_t index) const {
+        if (index >= s_MapData.Size) return false;
+
+        if (auto doorIndex = m_DoorIndexMap[index]; doorIndex != (uint8_t)-1) {
+            return m_Doors[doorIndex].Length <= 0.1f;
+        }
+        
+        return s_MapData.Map[index] == 0;
+    }
+
     int8_t operator [](size_t index) const {
         if (index < s_MapData.Size) {
             return s_MapData.Map[index];
