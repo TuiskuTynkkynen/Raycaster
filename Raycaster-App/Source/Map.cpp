@@ -137,22 +137,30 @@ std::vector<Tile> Map::CreateTiles() {
     for (uint32_t i = 0; i < s_MapData.Size; i++) {
         uint32_t mapX = i % s_MapData.Width;
         uint32_t mapY = i / s_MapData.Width;
+        size_t index = GetIndex(mapX, mapY);
 
         tile.Posistion.x = mapX + 0.5f;
         tile.Posistion.y = mapY + 0.5f;
 
-        float brightness = m_LightMap[GetIndex(mapX, mapY)];
+        float brightness = m_LightMap[index];
 
         tile.Colour = glm::vec3(brightness);
         result.push_back(tile);
 
-        if (s_MapData.Map[GetIndex(mapX, mapY)] < 0) {
-            Neighbourhood adjacent = GetNeighbours(GetIndex(mapX, mapY));
+        if (s_MapData.Map[index] < 0) {
+            tile.Colour = glm::vec3(1.0f);
+
+            if (auto doorIndex = m_DoorIndexMap[index]; doorIndex != (uint8_t)-1) {
+                result.push_back(tile);
+                result.back().Scale[m_Doors[doorIndex].Vector.x == 1.0f] = 0.25f;
+                continue;
+            }
+
+            Neighbourhood adjacent = GetNeighbours(index);
             
             tile.Rotation = (adjacent.South && adjacent.West) || (adjacent.North && adjacent.East) ? 90.0f : 0.0f;
             tile.Rotation += adjacent.North ? 180.0f : 0.0f;
 
-            tile.Colour = glm::vec3(1.0f);
             tile.IsTriangle = true;
             
             result.push_back(tile);
