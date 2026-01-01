@@ -243,7 +243,10 @@ void Interactables::Update(Core::Timestep deltaTime){
 
         if (s_InteractableParameters[interactable.Type].Placement == PlacementType::Falling) {
             interactable.Position.z = glm::mix(0.6f, GetScale(interactable.Type) * 0.5f, Easings::EaseOutBounce(clampedProgress * 1.25f - 0.25f));
-            glm::vec3 direction(2.5f - i % 5, 3.0f - i % 6, 0.0f);
+
+            float x = 1.0f - 2.0f * glm::fract(i * glm::root_two<float>());
+            float y = 1.0f - 2.0f * glm::fract(3 * i * glm::root_two<float>());
+            glm::vec3 direction(x, y, 0.0f);
             direction = glm::normalize(direction);
             interactable.Position += 0.5f * direction * (1.0f - clampedProgress) * deltaTime.GetSeconds();
         }
