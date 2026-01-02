@@ -11,6 +11,8 @@ project "Raycaster-App"
 
     includedirs
     {
+        "Source/",
+        "Source/*/",
         -- Include Core
         "../Raycaster-Core/Source",
         "../Raycaster-Core/Dependencies/GLFW/include",
