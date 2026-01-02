@@ -26,7 +26,7 @@ static std::filesystem::path CreatePath() {
     ssize_t length = ::readlink("/proc/self/exe", buffer.data(), PATH_MAX);
 
     if (length != -1) {
-        return std::filesystem::path(buffer.begin(), buffer.begin() + length);
+        return std::filesystem::path(buffer.begin(), buffer.begin() + length).remove_filename();
     }
 
     return {};
