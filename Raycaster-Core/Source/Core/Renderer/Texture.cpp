@@ -1,5 +1,6 @@
 #include "Texture.h"
 #include "Core/Debug/Debug.h"
+#include "Platform.h"
 
 #include <glad/gl.h>
 #define STB_IMAGE_IMPLEMENTATION
@@ -67,8 +68,7 @@ namespace Core {
     }
 
     void Texture2D::BindImage(const char* fileName) {
-        std::filesystem::path directoryPath = std::filesystem::current_path() / "Source" / "Textures";
-        std::string fileString = directoryPath.append(fileName).string();
+        std::string fileString = ApplicationDirectory().append(fileName).string();
         const char* filePath = fileString.c_str();
 
         stbi_set_flip_vertically_on_load(true);

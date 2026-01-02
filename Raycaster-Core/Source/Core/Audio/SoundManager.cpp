@@ -344,13 +344,7 @@ namespace Core::Audio {
     }
 
     std::filesystem::path SoundManager::ConvertFilePath(std::string_view filePath) {
-        std::filesystem::path directoryPath = filePath;
-        
-        if (directoryPath.is_relative()) {
-            directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
-        }
-        
-        return directoryPath;
+        return ApplicationDirectory().append(filePath);
     }
 
     void SoundManager::StoreFilePath(const std::filesystem::path& filePath, uint32_t soundIndex, Sound::Flags flags) {

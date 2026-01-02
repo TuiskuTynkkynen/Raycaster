@@ -3,6 +3,7 @@
 #include "Internal.h"
 #include "Bus.h"
 #include "Core/Debug/Debug.h"
+#include "Platform.h"
 
 #include "miniaudio/miniaudio.h"
 
@@ -110,11 +111,7 @@ namespace Core::Audio {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         m_InternalSound = new Internal::SoundObject;
 
-        std::filesystem::path directoryPath = filePath;
-        if (directoryPath.is_relative()) {
-            directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
-        }
-        std::string fileString = directoryPath.string();
+        std::string fileString = ApplicationDirectory().append(filePath).string();
         
         ma_sound_group* group = parent ? parent->m_InternalBus.get() : nullptr;
         ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), group, nullptr, m_InternalSound);
@@ -129,11 +126,7 @@ namespace Core::Audio {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         m_InternalSound = new Internal::SoundObject;
         
-        std::filesystem::path directoryPath = filePath;
-        if (directoryPath.is_relative()) {
-            directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
-        }
-        std::string fileString = directoryPath.string();
+        std::string fileString = ApplicationDirectory().append(filePath).string();
 
         ma_sound_group* group = parent ? parent->m_InternalBus.get() : nullptr;
         ma_result result = ma_sound_init_from_file(Internal::System->Engine, fileString.c_str(), ParseFlags(m_Flags), group, nullptr, m_InternalSound);
@@ -189,21 +182,11 @@ namespace Core::Audio {
     }
     
     void Sound::ReinitFromFile(const char* filePath) {
-        std::filesystem::path directoryPath = filePath;
-        if (directoryPath.is_relative()) {
-            directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
-        }
-
-        ReinitFromFile(directoryPath);
+        ReinitFromFile(ApplicationDirectory().append(filePath));
     }
 
     void Sound::ReinitFromFile(const std::string_view& filePath) {
-        std::filesystem::path directoryPath = filePath;
-        if (directoryPath.is_relative()) {
-            directoryPath = std::filesystem::current_path() / "Source" / "Audio" / directoryPath;
-        }
-
-        ReinitFromFile(directoryPath);
+        ReinitFromFile(ApplicationDirectory().append(filePath));
     }
 
     void Sound::ReinitFromFile(const std::filesystem::path& filePath) {

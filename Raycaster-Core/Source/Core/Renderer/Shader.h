@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-#include <string>
+#include <string_view>
 #include <unordered_map>
 
 enum class ShaderType {
@@ -20,8 +20,8 @@ namespace Core {
 
         uint32_t GetUniformLocation(const char* name);
     public:
-        Shader(const std::string& shaderFileName);
-        Shader(const char* vertexFileName, const char* fragmentFileName);
+        Shader(std::string_view shaderFileName);
+        Shader(const char* vertexFilePath, const char* fragmentFilePath);
         ~Shader();
 
         void Bind();

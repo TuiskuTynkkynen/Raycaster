@@ -7,8 +7,6 @@ project "Raycaster-App"
 
     files { 
         "Source/**.h", "Source/**.cpp",
-        "Source/Shaders/**.glsl",
-        "Source/Textures/**",
     }
 
     includedirs
@@ -34,6 +32,8 @@ project "Raycaster-App"
 
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
+
+    postbuildcommands "{COPYDIR} Assets ../Binaries/%{OutputDir}/%{prj.name}/Assets"
 
     filter "system:windows"
         systemversion "latest"

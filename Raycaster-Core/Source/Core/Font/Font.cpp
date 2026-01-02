@@ -2,6 +2,7 @@
 
 #include "Core/Font/Outline.h"
 #include "Core/Debug/Debug.h"
+#include "Platform.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -36,8 +37,7 @@ namespace Core {
             return;
         }
 
-        std::filesystem::path directoryPath = std::filesystem::current_path() / "Source" / "Fonts" / filePath;
-        std::string fileString = directoryPath.string();
+        std::string fileString = ApplicationDirectory().append(filePath).string();
 
         FT_Library ft;
         if (FT_Init_FreeType(&ft)) {
@@ -135,8 +135,7 @@ namespace Core {
 
         RC_INFO("Generating SDF font with {} characters", characterCount);
 
-        std::filesystem::path directoryPath = std::filesystem::current_path() / "Source" / "Fonts" / filePath;
-        std::string fileString = directoryPath.string();
+        std::string fileString = ApplicationDirectory().append(filePath).string();
 
         FT_Library ft;
         if (FT_Init_FreeType(&ft)) {

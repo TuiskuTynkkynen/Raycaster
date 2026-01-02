@@ -1,6 +1,7 @@
 #include "Shader.h"
 
 #include "Core/Debug/Debug.h"
+#include "Platform.h"
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>
@@ -12,13 +13,18 @@
 #include <sstream>
 
 namespace Core {
-    Shader::Shader(const std::string& shaderFileName)
+    Shader::Shader(std::string_view shaderFilePath)
         : m_RendererID(0)
     {
         std::string vertexCode, fragmentCode;
         {
-            std::filesystem::path filePath = std::filesystem::current_path() / "Source" / "Shaders" / shaderFileName;
+            std::filesystem::path filePath = ApplicationDirectory() / shaderFilePath;
             std::ifstream ShaderFile(filePath);
+
+            if (!ShaderFile.good()) {
+                RC_ERROR("SHADER FILE {} READ FAILED", filePath.string());
+                return;
+            }
 
             std::stringstream shaderStrings[2];
 
@@ -40,6 +46,16 @@ namespace Core {
 
             vertexCode = shaderStrings[0].str();
             fragmentCode = shaderStrings[1].str();
+
+            if (vertexCode.empty()) {
+                RC_ERROR("COULD NOT FIND VERTEX SHADER CODE IN SHADER FILE {}", filePath.string());
+                return;
+            }
+
+            if (fragmentCode.empty()) {
+                RC_ERROR("COULD NOT FIND FRAGMENT SHADER CODE IN SHADER FILE {}", filePath.string());
+                return;
+            }
         }
 
         const char* vertexShaderCode = vertexCode.c_str();
@@ -83,10 +99,10 @@ namespace Core {
         glDeleteShader(fragmentShader);
     }
 
-    Shader::Shader(const char* vertexFileName, const char* fragmentFileName)
+    Shader::Shader(const char* vertexFilePath, const char* fragmentFilePath)
         : m_RendererID(0)
     {
-        std::filesystem::path filePath = std::filesystem::current_path() / "Source" / "Shaders";
+        std::filesystem::path basePath = ApplicationDirectory();
         
         std::string vertexCode, fragmentCode;
         std::ifstream vertexShaderFile, fragmentShaderFile;
@@ -95,8 +111,8 @@ namespace Core {
         fragmentShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         try
         {
-            vertexShaderFile.open(filePath / vertexFileName);
-            fragmentShaderFile.open(filePath / fragmentFileName);
+            vertexShaderFile.open(basePath / vertexFilePath);
+            fragmentShaderFile.open(basePath / fragmentFilePath);
          
             std::stringstream vShaderStream, fShaderStream;
             vShaderStream << vertexShaderFile.rdbuf();
@@ -110,7 +126,7 @@ namespace Core {
         }
         catch (std::ifstream::failure e) 
         {
-            RC_ERROR("SHADER FILE {} OR {} READ FAILED", vertexFileName, fragmentFileName);
+            RC_ERROR("SHADER FILE {} OR {} READ FAILED", vertexFilePath, fragmentFilePath);
             return;
         }
 

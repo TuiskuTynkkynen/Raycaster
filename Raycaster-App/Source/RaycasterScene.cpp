@@ -1,7 +1,5 @@
 #include "RaycasterScene.h"
 
-#include <ranges>
-
 void RaycasterScene::Init(){
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
@@ -61,7 +59,7 @@ void RaycasterScene::Reinit() {
     m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
     m_Enemies.Add(EnemyType::Ranged, glm::vec2(2.5f, 3.0f));
 
-    auto shader = std::make_shared<Core::Shader>("3DAtlasShader.glsl");
+    auto shader = std::make_shared<Core::Shader>("Assets/Shaders/3DAtlasShader.glsl");
     //setup shader
     {
         shader->Bind();
@@ -83,7 +81,7 @@ void RaycasterScene::Reinit() {
     }
     
     auto textureAtlas = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
-    textureAtlas->BindImage("wolfenstein_texture_atlas.png");
+    textureAtlas->BindImage("Assets/Textures/wolfenstein_texture_atlas.png");
 
     m_Renderables.Init(shader, textureAtlas);
     m_Renderables.PushStaticModel(m_Map.CreateModel(m_Walls, textureAtlas, shader)); // Map

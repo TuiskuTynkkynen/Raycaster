@@ -1,11 +1,11 @@
 #include "Audio.h"
 
 #include "Internal.h"
+#include "Core/Debug/Debug.h"
+#include "Platform.h"
 
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio/miniaudio.h"
-
-#include "Core/Debug/Debug.h"
 
 #include <utility>
 
@@ -167,7 +167,7 @@ namespace Core {
     void Audio::PlayInlineSound(std::string_view filePath) {
         std::filesystem::path path = filePath;
         if (path.is_relative()) {
-            path = std::filesystem::current_path() / "Source" / "Audio" / path;
+            path = ApplicationDirectory() / path;
         }
 
         PlayInlineSound(path);

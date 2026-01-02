@@ -7,18 +7,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 void RaycasterLayer::OnAttach() {
-    Core::Renderer2D::SetTextureAtlas("wolfenstein_texture_atlas.png", ATLASWIDTH, ATLASHEIGHT);
+    Core::Renderer2D::SetTextureAtlas("Assets/Textures/wolfenstein_texture_atlas.png", ATLASWIDTH, ATLASHEIGHT);
 
     std::shared_ptr<Core::Font> font = std::make_shared<Core::Font>(false);
     font->AddCharacterRange(' ', '~'); //Printable ASCII
     font->AddCharacterRange(0x00A1, 0x0FF); //Printable Latin-1 Supplement
-    font->GenerateAtlas("tiny5/tiny5-Medium.ttf", 8);
+    font->GenerateAtlas("Assets/Fonts/tiny5/tiny5-Medium.ttf", 8);
     Core::Renderer2D::SetFont(font);
     
     Core::UI::Init();
     Core::UI::SetFont(font);
     std::shared_ptr<Core::Texture2D> buttonTexture = std::make_unique<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
-    buttonTexture->BindImage("Button.png");
+    buttonTexture->BindImage("Assets/Textures/Button.png");
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
 
     Core::Audio::Init();
@@ -27,7 +27,7 @@ void RaycasterLayer::OnAttach() {
     Core::Audio::SetMasterBalance(0.5f);
 
     Core::Audio::Sound::Flags flags(Core::Audio::Sound::DisablePitch, Core::Audio::Sound::DisableSpatialization);
-    Core::Audio::GetSoundManager().RegisterSound("sound", "test.wav", flags);
+    Core::Audio::GetSoundManager().RegisterSound("sound", "Assets/Audio/test.wav", flags);
 
     auto& master = Core::Audio::GetMasterBus();
     master.AddFilter(Core::Audio::Effects::DelaySettings(std::chrono::milliseconds(100), 0.5f));

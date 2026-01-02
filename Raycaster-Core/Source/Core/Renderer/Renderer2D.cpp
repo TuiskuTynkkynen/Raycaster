@@ -147,7 +147,7 @@ namespace Core {
         s_Data.ShapeVertexArray->AddBuffer(*s_Data.ShapeVertexBuffer, quadLayout);
         s_Data.ShapeElementBuffer = std::make_unique<ElementBuffer>(s_Data.MaxIndices);
 
-        s_Data.TextureShader = std::make_unique<Shader>("2DShader.glsl");
+        s_Data.TextureShader = std::make_unique<Shader>("Assets/Shaders/2DShader.glsl");
         s_Data.TextureShader->Bind();
         
         s_Data.TextureAtlas = std::make_unique<Texture2D>(Texture2D::WrapMode::Repeat, Texture2D::WrapMode::Repeat, Texture2D::Filter::Nearest, Texture2D::Filter::Nearest);
@@ -177,7 +177,7 @@ namespace Core {
         s_Data.atlasWidth = s_Data.atlasHeight = 1;
         s_Data.TextureShader->setVec2("AtlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
 
-        s_Data.SimpleShader = std::make_unique<Shader>("2DSimpleShader.glsl");
+        s_Data.SimpleShader = std::make_unique<Shader>("Assets/Shaders/2DSimpleShader.glsl");
 
         s_Data.Font = std::make_shared<Font>();
 
