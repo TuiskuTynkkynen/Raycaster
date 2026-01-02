@@ -12,3 +12,9 @@
 #else
     #error "Unknown platform"
 #endif
+
+#include <filesystem>
+
+namespace Core {
+    std::filesystem::path ApplicationDirectory();
+}
