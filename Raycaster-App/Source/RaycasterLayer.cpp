@@ -1,10 +1,10 @@
 #include "RaycasterLayer.h"
 
+#include "RaycasterScene.h"
+
 #include "Core/UI/UI.h"
 #include "Core/Audio/Audio.h"
 #include "Core/Audio/Bus.h"
-
-#include <glm/gtc/matrix_transform.hpp>
 
 void RaycasterLayer::OnAttach() {
     Core::Renderer2D::SetTextureAtlas("Assets/Textures/wolfenstein_texture_atlas.png", ATLASWIDTH, ATLASHEIGHT);
@@ -140,81 +140,6 @@ void RaycasterLayer::OnEvent(Core::Event& event) {
 }
 
 bool RaycasterLayer::OnWindowResizeEvent(Core::WindowResize& event) {
-    m_ViewPortWidth = event.GetWidth() / 2;
-    m_ViewPortHeight = event.GetHeight();
-
-    return false;
-}
-
-void Layer2D::OnUpdate(Core::Timestep deltaTime) {
-    static glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
-    static glm::vec3 zero(0.0f);
-    static glm::mat4 identity(1.0f);
-    
-    Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
-    Core::Renderer2D::BeginScene(static_cast<RaycasterScene&>(*m_Scene).GetCamera());
-
-    std::span<const Tile> tiles = static_cast<RaycasterScene&>(*m_Scene).GetTiles();
-    size_t mapSize = tiles.size();
-
-    for (size_t i = 0; i < mapSize; i++) {
-        if (tiles[i].IsTriangle) {
-            Core::Renderer2D::DrawRotatedFlatTriangle(tiles[i].Posistion, tiles[i].Rotation, AxisZ, tiles[i].Scale, { tiles[i].Colour.x, tiles[i].Colour.y, tiles[i].Colour.z, 1.0f });
-        }
-        else {
-            Core::Renderer2D::DrawFlatQuad(tiles[i].Posistion, tiles[i].Scale, { tiles[i].Colour.x, tiles[i].Colour.y, tiles[i].Colour.z, 1.0f });
-        }
-    }
-
-
-    glm::vec4 colour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    const Player& player = static_cast<RaycasterScene&>(*m_Scene).GetPlayer();
-    Core::Renderer2D::DrawRotatedFlatQuad(player.GetPosition(), -player.GetRotation(), AxisZ, player.GetScale(), colour);
-    
-    Core::Renderer2D::Flush();
-
-    colour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-    std::span<const Line> lines = static_cast<RaycasterScene&>(*m_Scene).GetLines();
-    size_t lineCount = lines.size();
-    for (size_t i = 0; i < lineCount; i++) {
-        Core::Renderer2D::DrawLine(lines[i].Posistion, lines[i].Scale, colour);
-    }
-
-    Core::Renderer2D::EndScene();
-}
-
-void Layer2D::OnEvent(Core::Event& event) {
-    Core::EventDispatcher dispatcer(event);
-    dispatcer.Dispatch<Core::WindowResize>(std::bind(&Layer2D::OnWindowResizeEvent, this, std::placeholders::_1));
-}
-
-bool Layer2D::OnWindowResizeEvent(Core::WindowResize& event) {
-    m_ViewPortWidth = event.GetWidth() / 2;
-    m_ViewPortHeight = event.GetHeight();
-
-    return false;
-}
-
-void Layer3D::OnUpdate(Core::Timestep deltaTime) {
-    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), m_ViewPortWidth / (float)m_ViewPortHeight, 1e-5f, 500.0f)
-        * static_cast<RaycasterScene&>(*m_Scene).GetCamera3D().GetViewMatrix();
-    
-    Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
-    Core::Renderer::BeginScene(viewPerspective);
-
-    std::span<const Core::Model> models = static_cast<RaycasterScene&>(*m_Scene).GetModels();
-
-    for (const Core::Model& model : models) {
-        Core::Renderer::DrawModel(model);
-    }
-}
-
-void Layer3D::OnEvent(Core::Event& event) {
-    Core::EventDispatcher dispatcer(event);
-    dispatcer.Dispatch<Core::WindowResize>(std::bind(&Layer3D::OnWindowResizeEvent, this, std::placeholders::_1));
-}
-
-bool Layer3D::OnWindowResizeEvent(Core::WindowResize& event) {
     m_ViewPortWidth = event.GetWidth() / 2;
     m_ViewPortHeight = event.GetHeight();
 

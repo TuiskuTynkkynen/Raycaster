@@ -1,6 +1,8 @@
 #include "Core.h"
 
 #include "RaycasterLayer.h"
+#include "Layer2D.h"
+#include "Layer3D.h"
 #include "RaycasterScene.h"
 
 class Raycaster : public Core::Application {
