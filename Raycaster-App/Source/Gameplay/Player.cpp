@@ -82,7 +82,17 @@ bool Player::DamageAreas(std::span<const LineCollider> attack, float thickness, 
 }
 
 void Player::PickUp(Item item) {
+    m_HeldItemIndex = item.AdditionalData.index() + 1;
+    RC_ASSERT(m_HeldItemIndex < m_Inventory.size());
+
     m_Inventory[m_HeldItemIndex] = item;
+}
+
+void Player::SwitchItem(size_t index) {
+    RC_ASSERT(index < m_Inventory.size());
+    if (index == 0 || m_Inventory[index].Count > 0) {
+        m_HeldItemIndex = index;
+    }
 }
 
 bool Player::OnKeyEvent(Core::KeyPressed event) {
@@ -107,9 +117,14 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
             m_AnimationProgress = 0.0f;
         }
         return true;
-    case RC_KEY_SPACE:
-        m_ShouldInteract = true;
+    case RC_KEY_0:
+    case RC_KEY_1:
+    case RC_KEY_2:
+        SwitchItem(event.GetKeyCode() - RC_KEY_0);
         return true;
+    case RC_KEY_SPACE:
+            m_ShouldInteract = true;
+            return true;
     }
 
     return false;
@@ -186,8 +201,7 @@ void Player::UseItem(Core::Timestep deltaTime) {
         m_AnimationProgress = -std::numeric_limits<float>::infinity();
 
         if (heldItem.Count == 0) {
-            heldItem = { .Scale = 0.5f, .Count = 0 };
-            m_HeldItemIndex -= m_HeldItemIndex < 0;
+            m_HeldItemIndex -= m_HeldItemIndex > 0;
         }
     }
 }

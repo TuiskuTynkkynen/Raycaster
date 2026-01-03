@@ -47,6 +47,7 @@ public:
 private:
     void Move(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime);
     void UseItem(Core::Timestep deltaTime);
+    void SwitchItem(size_t index);
 
     glm::vec3 m_Position{};
     glm::vec3 m_Scale{};
@@ -59,7 +60,7 @@ private:
 
     Core::Timestep m_AnimationProgress = -std::numeric_limits<float>::infinity();
     size_t m_HeldItemIndex = 0;
-    std::array<Item, 1> m_Inventory;
+    std::array<Item, 3> m_Inventory;
 
     std::vector<LineCollider> m_Areas;
     std::vector<Attack> m_Attacks;
