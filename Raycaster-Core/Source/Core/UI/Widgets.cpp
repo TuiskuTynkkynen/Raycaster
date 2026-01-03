@@ -270,21 +270,20 @@ namespace Core::UI::Widgets {
         glm::vec2 innerSize = glm::vec2(1.0f) - edgeWidth / current.Size;
         
         Surface& scrollContainer = Internal::System->Elements[currentIndex + 1];
-        if (scrollContainer.Widget && typeid(scrollContainer.Widget) == typeid(ScrollWidget*)) {
-            scrollContainer.Size *= innerSize;
-        } else {
+        scrollContainer.Size *= innerSize;
+        if (dynamic_cast<ScrollWidget*>(scrollContainer.Widget.get()) == nullptr) {
             RC_WARN("The first child of UI element with TextInputWidget<T> should have a ScrollWidget<T> member");
             return;
         }
 
         Surface& textDisplay = Internal::System->Elements[currentIndex + 2];
-        if (!textDisplay.Widget || typeid(textDisplay.Widget) != typeid(TextDisplayWidget<T>*)) {
+        auto widget = dynamic_cast<TextDisplayWidget<T>*>(textDisplay.Widget.get());
+        if (widget == nullptr) {
             RC_WARN("The first grandchild of UI element with TextInputWidget<T> should have a TextDisplayWidget<T> member");
             return;
         }
 
-        auto& widget = *((TextDisplayWidget<T>*)textDisplay.Widget.get());
-        widget.ColourIndex = !m_Text.empty() + (&Internal::System->Elements[Internal::System->ActiveID] == &current);
+        widget->ColourIndex = !m_Text.empty() + (&Internal::System->Elements[Internal::System->ActiveID] == &current);
         
         textDisplay.Size *= innerSize;
             
@@ -295,10 +294,10 @@ namespace Core::UI::Widgets {
             return;
         }
 
-        widget.Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
+        widget->Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
 
         m_CaretSize = glm::vec2(Internal::Font->GetGlyphInfo(' ').Advance * 0.25f, Internal::Font->GetGlyphInfo(' ').Size.y);
-        float fontSizeMultiplier = widget.TextScale * textDisplay.Size.y / m_CaretSize.y;
+        float fontSizeMultiplier = widget->TextScale * textDisplay.Size.y / m_CaretSize.y;
         float textWidth = m_CaretSize.x * 3.0f;
                 
         bool swapSelection = m_SelectionEnd < m_SelectionStart;
@@ -341,7 +340,7 @@ namespace Core::UI::Widgets {
         }
 
         m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset;
-        m_CaretSize.y = widget.TextScale * textDisplay.Size.y * 0.75f;
+        m_CaretSize.y = widget->TextScale * textDisplay.Size.y * 0.75f;
         if(m_SelectionStart != m_SelectionEnd) {
             m_CaretPosition -= m_CaretSize.x * 0.5f * -(1.0f - swapSelection * 2.0f) + 0.5f * (1.0f - innerSize.x);
 
@@ -601,19 +600,19 @@ namespace Core::UI::Widgets {
 
         Surface& scrollContainer = Internal::System->Elements[currentIndex + 1];
         scrollContainer.Size *= innerSize;
-        if (!scrollContainer.Widget || typeid(scrollContainer.Widget) != typeid(ScrollWidget*)) {
+        if (dynamic_cast<ScrollWidget*>(scrollContainer.Widget.get()) == nullptr) {
             RC_WARN("The first child of UI element with TextureTextInputWidget<T> should have a ScrollWidget<T> member");
             return;
         }
         
         Surface& textDisplay = Internal::System->Elements[currentIndex + 2];
-        if (!textDisplay.Widget || typeid(textDisplay.Widget) != typeid(TextDisplayWidget<T>*)) {
+        auto widget = dynamic_cast<TextDisplayWidget<T>*>(textDisplay.Widget.get());
+        if (widget == nullptr) {
             RC_WARN("The first grandchild of UI element with TextureTextInputWidget<T> should have a TextDisplayWidget<T> member");
             return;
         }
 
-        auto& widget = *((TextDisplayWidget<T>*)textDisplay.Widget.get());
-        widget.ColourIndex = !m_Text.empty() + (&Internal::System->Elements[Internal::System->ActiveID] == &current);
+        widget->ColourIndex = !m_Text.empty() + (&Internal::System->Elements[Internal::System->ActiveID] == &current);
 
         textDisplay.Size *= innerSize;
 
@@ -624,10 +623,10 @@ namespace Core::UI::Widgets {
             return;
         }
 
-        widget.Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
+        widget->Text = std::basic_string_view<T>(m_Text.data(), m_Text.size());
 
-        m_CaretSize = glm::vec2(Internal::Font->GetGlyphInfo(' ').Advance * 0.25f, widget.TextScale * textDisplay.Size.y * 0.75f);
-        float fontSizeMultiplier = widget.TextScale * textDisplay.Size.y / Internal::Font->GetGlyphInfo(' ').Size.y;
+        m_CaretSize = glm::vec2(Internal::Font->GetGlyphInfo(' ').Advance * 0.25f, widget->TextScale * textDisplay.Size.y * 0.75f);
+        float fontSizeMultiplier = widget->TextScale * textDisplay.Size.y / Internal::Font->GetGlyphInfo(' ').Size.y;
         float textWidth = m_CaretSize.x * 3.0f;
 
         bool swapSelection = m_SelectionEnd < m_SelectionStart;
@@ -684,7 +683,7 @@ namespace Core::UI::Widgets {
             }
         } else {
             Surface& caretSurface = Internal::System->Elements[currentIndex + 3];
-            if (!caretSurface.Widget || typeid(caretSurface.Widget) != typeid(AtlasTextureWidget*)) {
+            if (dynamic_cast<AtlasTextureWidget*>(caretSurface.Widget.get()) == nullptr) {
                  RC_WARN("The second child of UI element with TextureTextInputWidget should have a AtlasTextureWidget member");
                 return;
             }
@@ -786,7 +785,7 @@ namespace Core::UI::Widgets {
             }
 
             Surface& caretSurface = Internal::System->Elements[currentIndex + 3];
-            if (!caretSurface.Widget || typeid(caretSurface.Widget) != typeid(AtlasTextureWidget*)) {
+            if (dynamic_cast<AtlasTextureWidget*>(caretSurface.Widget.get()) == nullptr) {
                 RC_WARN("The second child of UI element with TextureTextInputWidget should have a AtlasTextureWidget member");
                 return true;
             }
@@ -1102,8 +1101,9 @@ namespace Core::UI::Widgets {
 
         //Set the slider max value to scrollSize
         Surface& parent = Internal::System->Elements[current.ParentID];
-        if (parent.Widget && typeid(parent.Widget) == typeid(ScrollWidget*)) {
-            float scrollSize = ((ScrollWidget*)parent.Widget.get())->m_ScrollSize;
+        auto scrollWidget = dynamic_cast<ScrollWidget*>(parent.Widget.get());
+        if (scrollWidget) {
+            float scrollSize = scrollWidget->m_ScrollSize;
             
             if (moveDirection != 0) {
                 m_ScrollOffset += moveDirection * SCROLLSTEP;
@@ -1111,15 +1111,14 @@ namespace Core::UI::Widgets {
             }
 
             Surface& child = Internal::System->Elements[currentIndex + 1];
-            if(child.Widget) {
-                if (typeid(child.Widget) == typeid(SliderWidget<float>*)) {
-                    ((SliderWidget<float>*)child.Widget.get())->m_Max = scrollSize;
-                    
-                    uint32_t scrollDimension = ((ScrollWidget*)parent.Widget.get())->m_ScrollDimension;
-                    ((SliderWidget<float>*)child.Widget.get())->m_SliderSize = glm::clamp(glm::abs(parent.Size[scrollDimension] / scrollSize), 0.05f, 0.9f);
-                } else {
-                    RC_WARN("The first child of UI element with ScrollBarWidget should have a SliderWidget member");
-                }
+            auto sliderWidget = dynamic_cast<SliderWidget<float>*>(child.Widget.get());
+            if(sliderWidget) {
+                sliderWidget->m_Max = scrollSize;
+
+                uint32_t scrollDimension = scrollWidget->m_ScrollDimension;
+                sliderWidget->m_SliderSize = glm::clamp(glm::abs(parent.Size[scrollDimension] / scrollSize), 0.05f, 0.9f);
+            } else {
+                RC_WARN("The first child of UI element with ScrollBarWidget should have a SliderWidget member");
             }
         }
     }
@@ -1144,8 +1143,9 @@ namespace Core::UI::Widgets {
 
         //Set the slider max value to scrollSize
         Surface& parent = Internal::System->Elements[current.ParentID];
-        if (parent.Widget && typeid(parent.Widget) == typeid(ScrollWidget*)) {
-            float scrollSize = ((ScrollWidget*)parent.Widget.get())->m_ScrollSize;
+        auto scrollWidget = dynamic_cast<ScrollWidget*>(parent.Widget.get());
+        if (scrollWidget) {
+            float scrollSize = scrollWidget->m_ScrollSize;
             
             if (moveDirection != 0) {
                 m_ScrollOffset += moveDirection * SCROLLSTEP;
@@ -1153,12 +1153,11 @@ namespace Core::UI::Widgets {
             }
 
             Surface& child = Internal::System->Elements[currentIndex + 1];
-            if(child.Widget) {
-                if (typeid(child.Widget) == typeid(AtlasTextureSliderWidget<float>*)) {
-                    ((AtlasTextureSliderWidget<float>*)child.Widget.get())->m_Max = scrollSize;
-                } else {
-                    RC_WARN("The first child of UI element with AtlasTextureScrollBarWidget should have a AtlasTextureSliderWidget member");
-                }
+            auto sliderWidget = dynamic_cast<AtlasTextureSliderWidget<float>*>(child.Widget.get());
+            if(sliderWidget) {
+                sliderWidget->m_Max = scrollSize;
+            } else {
+                RC_WARN("The first child of UI element with AtlasTextureScrollBarWidget should have a AtlasTextureSliderWidget member");
             }
         }
     }
