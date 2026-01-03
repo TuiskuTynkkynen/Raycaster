@@ -123,7 +123,7 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
         SwitchItem(event.GetKeyCode() - RC_KEY_0);
         return true;
     case RC_KEY_SPACE:
-            m_ShouldInteract = true;
+            m_ShouldInteract = !event.IsRepeated();
             return true;
     }
 
