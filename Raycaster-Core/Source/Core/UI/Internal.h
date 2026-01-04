@@ -22,6 +22,7 @@ namespace Core::UI::Internal {
 		std::vector<Surface> Elements;
 
 		Timestep Time{};
+		float AspectRatio;
 	};
 
 	enum class MouseButtonState {

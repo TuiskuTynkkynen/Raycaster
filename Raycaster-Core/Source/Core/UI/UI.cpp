@@ -92,7 +92,9 @@ namespace Core {
         Internal::System->Position = screenPosition;
         Internal::System->Size = screenSize;
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, layout, PositioningType::Auto, glm::vec2(0.5f), glm::vec2(1.0f), std::array<glm::vec4, 3>{colour, colour, colour});
+        float aspectRatio = Internal::System->Size.x / Internal::System->Size.y;
+        Internal::System->AspectRatio = aspectRatio;
+        Internal::System->Elements.emplace_back(SurfaceType::None, layout, PositioningType::Auto, glm::vec2(0.5f * aspectRatio, 0.5f), glm::vec2(aspectRatio, 1.0f), std::array<glm::vec4, 3>{colour, colour, colour});
         Internal::System->OpenElement = 0;
     }
 
@@ -179,7 +181,7 @@ namespace Core {
 
         RenderAPI::SetViewPort(static_cast<uint32_t>(Internal::System->Position.x), static_cast<uint32_t>(Internal::System->Position.y),
             static_cast<uint32_t>(Internal::System->Position.x + Internal::System->Size.x), static_cast<uint32_t>(Internal::System->Position.y + Internal::System->Size.y));
-        Renderer2D::BeginScene(glm::ortho(0.0f, 1.0f, 1.0f, 0.0f));
+        Renderer2D::BeginScene(glm::ortho(0.0f, Internal::System->AspectRatio, 1.0f, 0.0f));
         
         if(Internal::Font) { Internal::Font->ActivateAtlas(2); }
         if(Internal::TextureAtlas) { Internal::TextureAtlas->Activate(3); }
@@ -1092,6 +1094,7 @@ namespace Core {
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
 
         Internal::Input->MouseState.Position = event.GetPosition() / Internal::System->Size;
+        Internal::Input->MouseState.Position.x *= Internal::System->AspectRatio;
 
         return false;
     }
