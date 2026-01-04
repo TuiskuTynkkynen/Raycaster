@@ -1,5 +1,6 @@
 #include "Core.h"
 
+#include "UILayer.h"
 #include "RaycasterLayer.h"
 #include "Layer2D.h"
 #include "Layer3D.h"
@@ -11,6 +12,8 @@ public:
 		RaycasterScene* scene = new RaycasterScene();
 		SetActiveScene(scene);
 		
+		auto f = new UILayer;
+		PushOverlay(f);
 		RaycasterLayer* layer0 = new RaycasterLayer();
 		PushLayer(layer0);
 		Layer3D* layer1 = new Layer3D();
