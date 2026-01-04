@@ -271,7 +271,8 @@ namespace Core::UI::Widgets {
         
         Surface& scrollContainer = Internal::System->Elements[currentIndex + 1];
         scrollContainer.Size *= innerSize;
-        if (dynamic_cast<ScrollWidget*>(scrollContainer.Widget.get()) == nullptr) {
+        auto scrollWidget = dynamic_cast<ScrollWidget*>(scrollContainer.Widget.get());
+        if (scrollWidget == nullptr) {
             RC_WARN("The first child of UI element with TextInputWidget<T> should have a ScrollWidget<T> member");
             return;
         }
@@ -328,21 +329,18 @@ namespace Core::UI::Widgets {
         }
 
         m_CaretSize.x *= fontSizeMultiplier;
-                
-        float& scrollContainerOffset = ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset;
-        float scrollOffset = scrollContainerOffset * scrollContainer.Size.x;
-                
-        //Update scroll offset if caret is too far to either side
         textWidth *= fontSizeMultiplier;
+        
+        float scrollOffset = (scrollWidget->m_ScrollOffset - 0.025f) * scrollContainer.Size.x + fontSizeMultiplier;
         if (textWidth - scrollOffset > scrollContainer.Size.x || textWidth - scrollOffset < m_CaretSize.x * 1.5f * (m_SelectionStart == m_SelectionEnd)) {
             scrollOffset = glm::max(0.0f, textWidth - scrollContainer.Size.x);
-            scrollContainerOffset = scrollOffset / scrollContainer.Size.x;
+            scrollWidget->m_ScrollOffset = (scrollOffset - fontSizeMultiplier) / scrollContainer.Size.x + 0.025f;
         }
 
         m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset;
         m_CaretSize.y = widget->TextScale * textDisplay.Size.y * 0.75f;
         if(m_SelectionStart != m_SelectionEnd) {
-            m_CaretPosition -= m_CaretSize.x * 0.5f * -(1.0f - swapSelection * 2.0f) + 0.5f * (1.0f - innerSize.x);
+            m_CaretPosition -= m_CaretSize.x * 0.5f * - (1.0f - swapSelection * 2.0f) + 0.5f * edgeWidth;
 
             float sign = 1.0f - 2.0f * (m_CaretPosition < 0.0f);
             float size = innerSize.x * current.Size.x * 0.5f;
@@ -600,7 +598,8 @@ namespace Core::UI::Widgets {
 
         Surface& scrollContainer = Internal::System->Elements[currentIndex + 1];
         scrollContainer.Size *= innerSize;
-        if (dynamic_cast<ScrollWidget*>(scrollContainer.Widget.get()) == nullptr) {
+        auto scrollWidget = dynamic_cast<ScrollWidget*>(scrollContainer.Widget.get());
+        if (scrollWidget == nullptr) {
             RC_WARN("The first child of UI element with TextureTextInputWidget<T> should have a ScrollWidget<T> member");
             return;
         }
@@ -657,23 +656,21 @@ namespace Core::UI::Widgets {
         }
 
         m_CaretSize.x *= fontSizeMultiplier;
+        textWidth *= fontSizeMultiplier;
 
         float caretWidth = m_SelectionStart == m_SelectionEnd ? m_CaretAspectRatio * m_CaretSize.y : 0.0f;
+        float scrollOffset = (scrollWidget->m_ScrollOffset - 0.025f) * scrollContainer.Size.x + fontSizeMultiplier;
 
-        float& scrollContainerOffset = ((ScrollWidget*)scrollContainer.Widget.get())->m_ScrollOffset;
-        float scrollOffset = scrollContainerOffset * scrollContainer.Size.x;
-        
         //Update scroll offset if caret is too far to either side
-        textWidth = textWidth * fontSizeMultiplier;
         bool right = textWidth + caretWidth - scrollOffset > scrollContainer.Size.x;
-        if (right ||textWidth - scrollOffset < m_CaretSize.x * 1.5f * (m_SelectionStart == m_SelectionEnd)) {
+        if (right || textWidth - scrollOffset < m_CaretSize.x * 1.5f * (m_SelectionStart == m_SelectionEnd)) {
             scrollOffset = glm::max(0.0f, textWidth + right * caretWidth - scrollContainer.Size.x);
-            scrollContainerOffset = scrollOffset / scrollContainer.Size.x;
+            scrollWidget->m_ScrollOffset = (scrollOffset - fontSizeMultiplier) / scrollContainer.Size.x + 0.025f;
         }
         
         m_CaretPosition = textDisplay.Size.x * -0.5f + textWidth - scrollOffset;
         if (m_SelectionStart != m_SelectionEnd) {
-            m_CaretPosition -= m_CaretSize.x * 0.5f * -(1.0f - swapSelection * 2.0f) + 0.5f * (1.0f - innerSize.x);
+            m_CaretPosition -= m_CaretSize.x * 0.5f * -(1.0f - swapSelection * 2.0f) + 0.5f * edgeWidth;
 
             float sign = 1.0f - 2.0f * (m_CaretPosition < 0.0f);
             float size = innerSize.x * current.Size.x * 0.5f;
