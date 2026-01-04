@@ -207,14 +207,15 @@ namespace Core {
                     scissorID = scissorIDs.back();
                     Surface& parent = Internal::System->Elements[scissorID];
 
-                    uint32_t offsetX = static_cast<uint32_t>(glm::round(Internal::System->Size.x * (parent.Position.x - parent.Size.x * 0.5f)));
+                    uint32_t offsetX = static_cast<uint32_t>(glm::round(Internal::System->Size.x * (parent.Position.x - parent.Size.x * 0.5f) / Internal::System->AspectRatio));
                     uint32_t offsetY = static_cast<uint32_t>(glm::round(Internal::System->Size.y * (1.0f - parent.Position.y - parent.Size.y * 0.5f)));
-                    glm::uvec2 size = glm::round(Internal::System->Size * parent.Size);
+                    uint32_t sizeX = static_cast<uint32_t>(glm::round(Internal::System->Size.x * parent.Size.x  / Internal::System->AspectRatio));
+                    uint32_t sizeY = static_cast<uint32_t>(glm::round(Internal::System->Size.y * parent.Size.y));
 
                     Renderer2D::Flush();
 
                     RenderAPI::SetScissor(true);
-                    RenderAPI::SetScissorRectangle(offsetX, offsetY, size.x, size.y);
+                    RenderAPI::SetScissorRectangle(offsetX, offsetY, sizeX, sizeY);
                 }
 
                 //Remove scissor test if it is not needed
