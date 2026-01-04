@@ -4,7 +4,7 @@
 
 namespace Core {
 	LayerStack::LayerStack(){
-		m_LayerInsert = m_Layers.begin();
+		m_InsertIndex = 0;
 	}
 	
 	LayerStack::~LayerStack(){
@@ -14,7 +14,8 @@ namespace Core {
 	}
 
 	void LayerStack::PushLayer(Layer* layer){
-		m_LayerInsert = m_Layers.emplace(m_LayerInsert, layer);
+		m_Layers.emplace(m_Layers.begin() + m_InsertIndex, layer);
+		m_InsertIndex++;
 	}
 	
 	void LayerStack::PopLayer(Layer* layer){
@@ -22,7 +23,7 @@ namespace Core {
 		if (iterator != m_Layers.end()) {
 			layer->SetEnabled(false);
 			m_Layers.erase(iterator);
-			m_LayerInsert--;
+			m_InsertIndex--;
 		}
 
 	}
@@ -36,7 +37,7 @@ namespace Core {
 		if (iterator != m_Layers.end()) {
 			overlay->SetEnabled(false);
 			m_Layers.erase(iterator);
-			m_LayerInsert--;
+			m_InsertIndex--;
 		}
 	}
 }

@@ -8,7 +8,7 @@ namespace Core {
 	class LayerStack {
 	private:
 		std::vector<Layer*> m_Layers;
-		std::vector<Layer*>::iterator m_LayerInsert;
+		size_t m_InsertIndex;
 	public:
 		LayerStack();
 		~LayerStack();
