@@ -89,6 +89,7 @@ namespace Core {
     void Application::PushOverlay(Layer* overlay) {
         RC_ASSERT(overlay, "Attempted to push invalid overlay");
         m_LayerStack.PushOverlay(overlay);
+        overlay->SetScene(m_ActiveScene);
         overlay->OnAttach();
     }
 
