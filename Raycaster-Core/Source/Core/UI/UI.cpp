@@ -496,12 +496,12 @@ namespace Core {
         }
     }
 
-    void UI::Text(std::string_view text, float textScale, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+    void UI::Text(std::string_view text, float textScale, TextAlignment alignment, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI text before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(text, textScale);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(text, textScale, alignment);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
@@ -514,12 +514,12 @@ namespace Core {
         }
     }
 
-    void UI::Text(std::wstring_view text, float textScale, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+    void UI::Text(std::wstring_view text, float textScale, TextAlignment alignment, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI text before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
         Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(text, textScale);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(text, textScale, alignment);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 

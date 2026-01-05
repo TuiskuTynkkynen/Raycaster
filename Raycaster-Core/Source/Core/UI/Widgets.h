@@ -48,9 +48,8 @@ namespace Core::UI::Widgets {
     template <typename T>
     class TextDisplayWidget : public Widget {
     public:
-        TextDisplayWidget() {}
-        TextDisplayWidget(float textScale) : TextScale(textScale) {}
         TextDisplayWidget(std::basic_string_view<T> text, float textScale) : Text(text), TextScale(textScale) {}
+        TextDisplayWidget(std::basic_string_view<T> text, float textScale, TextAlignment alignment) : Text(text), TextScale(textScale), Align(alignment) {}
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
@@ -60,6 +59,7 @@ namespace Core::UI::Widgets {
         size_t ColourIndex = 0;
 
         float TextScale = 1.0f;
+        TextAlignment Align = TextAlignment::Left;
     };
     
     template <typename T>

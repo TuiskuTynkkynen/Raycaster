@@ -81,6 +81,26 @@ namespace Core::UI::Widgets {
     void TextDisplayWidget<T>::Update(Surface& current) {
         float lineHeight = static_cast<float>(Internal::Font->GetGlyphInfo(' ').Size.y);
         TextScale *= current.Size.y / lineHeight;
+        
+        if (Align == TextAlignment::Left) {
+            current.Position.x -= current.Size.x * 0.5f;
+            return;
+        }
+
+        float textWidth = 0.0f, lineWidth = 0.0f;
+        for (size_t i = 0; i < Text.length(); i++) {
+            if (i == Text.length() - 1 || Text[i + 1] == '\n') {
+                textWidth = glm::max(textWidth, lineWidth + Internal::Font->GetGlyphInfo(Text[i]).Size.x);
+                lineWidth = 0.0f;
+
+                i++;
+                continue;
+            }
+
+            lineWidth += Internal::Font->GetGlyphInfo(Text[i]).Advance;
+        }
+
+        current.Position.x += 0.5f * current.Size.x - textWidth * TextScale;
     }
 
     template <typename T>
@@ -289,7 +309,7 @@ namespace Core::UI::Widgets {
         textDisplay.Size *= innerSize;
             
         textDisplay.Positioning = PositioningType::Offset;
-        textDisplay.Position = glm::vec2(- 0.5f, 0.25f);
+        textDisplay.Position = glm::vec2(0.0f, 0.25f);
         
         if (m_Text.empty()) {
             return;
@@ -616,7 +636,7 @@ namespace Core::UI::Widgets {
         textDisplay.Size *= innerSize;
 
         textDisplay.Positioning = PositioningType::Offset;
-        textDisplay.Position = glm::vec2(-0.5f, 0.25f);
+        textDisplay.Position = glm::vec2(0.0f, 0.25f);
 
         if (m_Text.empty()) {
             return;

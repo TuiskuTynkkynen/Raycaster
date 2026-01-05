@@ -45,11 +45,10 @@ void UILayer::OnUpdate(Core::Timestep deltaTime) {
     }
 
     std::string frameStats = std::to_string(int(1000 / frameTime)) + " FPS\n" + std::to_string(frameTime) + " ms";
-    Core::UI::Text(frameStats, 0.5f, Core::UI::PositioningType::Relative, { -0.495f + 0.125f * 0.5f, -0.47f }, { 0.125f, 0.075f }, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
+    Core::UI::Text(frameStats, 0.5f, Core::UI::TextAlignment::Left, Core::UI::PositioningType::Relative, { -0.495f, -0.47f }, { 0.0f, 0.075f }, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
-    float health = scene.GetPlayer().GetHealth();
-    std::string playerStats = "Health: " + std::format("{:2}", health) + "/" + std::to_string(static_cast<uint32_t>(Player::MaxHealth));
-    Core::UI::Text(playerStats, 0.5f, Core::UI::PositioningType::Relative, { 0.4f, -0.47f }, { 0.125f, 0.075f }, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
+    std::string playerStats = "Health: " + std::format("{:2}", scene.GetPlayer().GetHealth()) + "/" + std::to_string(static_cast<uint32_t>(Player::MaxHealth));
+    Core::UI::Text(playerStats, 0.5f, Core::UI::TextAlignment::Right, Core::UI::PositioningType::Relative, { 0.495f, -0.47f }, { 0.0f, 0.075f }, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
     RaycasterScene::State sceneState = scene.GetState();
     if (sceneState != RaycasterScene::State::Running) {

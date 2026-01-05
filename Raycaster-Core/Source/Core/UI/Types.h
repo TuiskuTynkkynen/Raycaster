@@ -76,6 +76,11 @@ namespace Core::UI {
         Active,
     };
 
+    enum class TextAlignment : uint8_t {
+        Left = 0,
+        Right,
+    };
+
     class Widget;
 
     struct Surface {
