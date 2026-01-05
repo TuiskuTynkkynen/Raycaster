@@ -11,7 +11,7 @@ void Layer3D::OnUpdate(Core::Timestep deltaTime) {
     RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
     const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
 
-    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), m_ViewPortWidth / (float)m_ViewPortHeight, 1e-3f, 500.0f)
+    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), m_ViewPortWidth / (float)m_ViewPortHeight, 5e-4f, 500.0f)
         * scene.GetCamera3D().GetViewMatrix();
 
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
