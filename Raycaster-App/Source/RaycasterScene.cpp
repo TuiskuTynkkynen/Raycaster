@@ -129,7 +129,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     m_Player.UpdateRender(m_Renderables);
 
     m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetRotation());
-    m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), -m_Player.GetRotation());
+    m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, m_Player.GetPosition().z, m_Player.GetPosition().y), -m_Player.GetRotation());
 
     m_Projectiles.Update(deltaTime, m_Map);
     for (size_t i = 0; i < m_Projectiles.Count(); i++) {

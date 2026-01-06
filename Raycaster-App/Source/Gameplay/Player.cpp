@@ -8,7 +8,7 @@
 #include <vector>
 
 void Player::Init(const Map& map) {
-    m_Position = glm::vec3((float)map.GetWidth() / 2, (float)map.GetHeight() / 2, 0.5f);
+    m_Position = glm::vec3((float)map.GetWidth() / 2, (float)map.GetHeight() / 2, 0.75f);
     m_Scale = glm::vec3(Width * 0.5f);
     m_Rotation = 90.0f;
 
@@ -59,7 +59,7 @@ void Player::UpdateRender(Renderables& renderables) {
 
     // Update on Raycaster-layer
     float epsilon = 1e-3f;
-    sprite.Position = glm::vec3(m_Position.x, m_Position.y, 0.5f - (1.0f - heldItem.Scale) * epsilon);
+    sprite.Position = glm::vec3(m_Position.x, m_Position.y, m_Position.z - (1.0f - heldItem.Scale) * epsilon);
     sprite.Position.x += glm::cos(glm::radians(m_Rotation)) * epsilon;
     sprite.Position.y += -glm::sin(glm::radians(m_Rotation)) * epsilon;
     sprite.WorldPosition = sprite.Position;
