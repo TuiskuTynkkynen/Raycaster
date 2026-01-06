@@ -5,8 +5,10 @@
 void RaycasterLayer::OnAttach() {}
 void RaycasterLayer::OnDetach() {}
 
-void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) { 
-    static glm::mat4 identity(1.0f);
+void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
+    RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
+    const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
+    constexpr glm::mat4 identity(1.0f);
 
     Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer2D::BeginScene(identity);
@@ -16,15 +18,15 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     glm::vec3 rayScale(0.0f, RaycastRenderer::GetRayWidth(), 0.0f);
     glm::vec2 texScale(0.0f);
 
-    const auto& floors = static_cast<RaycasterScene&>(*m_Scene).GetFloors();
-    float rot = -static_cast<RaycasterScene&>(*m_Scene).GetPlayer().GetRotation() + 90.0f;
-
+    const auto& floors = scene.GetFloors();
+    float rot = -scene.GetPlayer().GetRotation() + 90.0f;
+    float offset = (0.5f - scene.GetPlayer().GetPosition().z);
     for (const auto& ray : floors) {
         rayPos.x = ray.Position.x;
-        rayPos.y = ray.Position.y;
+        rayPos.y = ray.Position.y + offset * 2.0f * glm::abs(ray.Position.y);
 
         rayScale.x = ray.Length;
-        texScale.x = ray.Length * (m_ViewPortWidth / (2.0f * m_ViewPortHeight * ray.Position.y));
+        texScale.x = ray.Length * (m_ViewPortWidth / (2.0f * m_ViewPortHeight * glm::abs(ray.Position.y)));
 
         colour = glm::vec4(ray.BrightnessEnd);
         colour.a = 1.0f;
@@ -32,16 +34,13 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
         colour1 = glm::vec4(ray.BrightnessStart);
         colour1.a = 1.0f;
 
-        Core::Renderer2D::DrawTextureGradientQuad(rayPos, rayScale, colour, colour1, ray.TexturePosition, texScale, ray.TopAtlasIndex, rot);
-
-        rayPos.y *= -1.0f;
-        Core::Renderer2D::DrawTextureGradientQuad(rayPos, rayScale, colour, colour1, ray.TexturePosition, texScale, ray.BottomAtlasIndex, rot);
+        Core::Renderer2D::DrawTextureGradientQuad(rayPos, rayScale, colour, colour1, ray.TexturePosition, texScale, ray.AtlasIndex, rot);
     }
 
     rayScale.x = RaycastRenderer::GetRayWidth();
     texScale = glm::vec2(0.0f, 1.0f);
 
-    std::span<const Ray> rays = static_cast<RaycasterScene&>(*m_Scene).GetRays();
+    std::span<const Ray> rays = scene.GetRays();
     for (const auto& ray : rays) {
         rayPos.x = ray.Position.x;
         rayPos.y = ray.Position.y;

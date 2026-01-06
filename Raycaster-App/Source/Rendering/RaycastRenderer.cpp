@@ -155,14 +155,16 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
     }
 }
 
-void RaycastRenderer::RenderFloors(const Map& map, const Core::Camera2D& camera) {
-    size_t floorIndex = 0;
+void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const Core::Camera2D& camera) {
     std::vector<float> visibleRanges; // Ranges in NDC
 
     const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
     glm::vec3 rayDirection = camera.GetDirection() * reciprocalAspectRatio - camera.GetPlane();
+
+    float sign = (ceiling ? 1.f : -1.f);
+    float density = 1.0f + 2.0f * sign * (0.5f - camera.GetPosition().z);
     for (uint32_t i = 0; i < m_RayCount / 2; i++) {
-        float scale = m_RayCount / (m_RayCount - (2.0f * i + 1)) * m_AspectRatio;
+        float scale = density * m_RayCount / (m_RayCount - (2.0f * i + 1)) * m_AspectRatio;
         float currentHeight = 1.0f / scale;
         float prevPos = -1.0f;
 
@@ -197,7 +199,7 @@ void RaycastRenderer::RenderFloors(const Map& map, const Core::Camera2D& camera)
 
         bool occluded = true;
         // Fixes incorrect occluded areas when walls aren't aligned to the width of a ray
-        float occlusionScale = m_SnappingEnabled ? scale : m_RayCount / (m_RayCount - (2.0f * i));
+        float occlusionScale = m_SnappingEnabled ? scale : density * m_RayCount / (m_RayCount - (2.0f * i));
         for (size_t j = m_RayCount; j > 0; j--) {
             // compares the current height to the height of a wall
             // m_zBuffer stores distances (half of the reciprocal height), so we compare with the reciprocal height -> (scale * 0.5f)
@@ -227,7 +229,7 @@ void RaycastRenderer::RenderFloors(const Map& map, const Core::Camera2D& camera)
 
         while (prevPos <= maxPos) {
             float maxDistance = (2.0f - prevPos) * scale * 0.5f;
-            auto hit = map.CastFloors(worldPosition, camera.GetPlane(), maxDistance);
+            auto hit = map.CastFloor(ceiling, worldPosition, camera.GetPlane(), maxDistance);
 
             // NDC
             float rayLength = 2.0f * hit.Distance * currentHeight;
@@ -269,25 +271,21 @@ void RaycastRenderer::RenderFloors(const Map& map, const Core::Camera2D& camera)
                 }
 
                 if (m_SnappingEnabled) {
-                    length = glm::floorMultiple(length  + 0.5f * m_RayWidth, m_RayWidth);
+                    length = glm::floorMultiple(length + 0.5f * m_RayWidth, m_RayWidth);
                 }
 
                 if (length < m_RayWidth * 0.25f) {
                     break;
                 }
 
-                if (floorIndex == m_Floors.size()) {
-                    m_Floors.emplace_back();
-                }
-                Floor& floor = m_Floors[floorIndex++];
+                Floor& floor = m_Floors.emplace_back();
 
                 floor.Position.x = 0.5f * length + position;
-                floor.Position.y = currentHeight * m_AspectRatio;
+                floor.Position.y = sign * currentHeight * m_AspectRatio;
                 floor.Length = length;
 
                 floor.TexturePosition = worldPosition;
-                floor.BottomAtlasIndex = hit.BottomMaterial;
-                floor.TopAtlasIndex = hit.TopMaterial;
+                floor.AtlasIndex = hit.Material;
 
                 glm::vec2 lightingPosition = worldPosition;
                 floor.BrightnessStart = LightBilinear(lightingPosition, map);
@@ -313,8 +311,12 @@ void RaycastRenderer::RenderFloors(const Map& map, const Core::Camera2D& camera)
         }
         visibleRanges.clear();
     }
+}
 
-    m_Floors.resize(floorIndex);
+void RaycastRenderer::RenderFloors(const Map& map, const Core::Camera2D& camera) {
+    m_Floors.resize(0);
+    RenderFloor(true, map, camera);
+    RenderFloor(false, map, camera);
 }
 
 void RaycastRenderer::RenderSprites(const Map& map, const Player& player, Renderables& renderables) {

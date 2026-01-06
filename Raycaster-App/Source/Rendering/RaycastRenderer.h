@@ -29,6 +29,7 @@ public:
 
     inline void SetAspecRatio(float aspectRatio) { m_AspectRatio = aspectRatio; m_ReciprocalAspectRatio = 1.0f / aspectRatio; };
 private:
+    void RenderFloor(bool ceiling, const Map& map, const Core::Camera2D& camera);
     static constexpr size_t m_RayCount = 500;
     static constexpr float m_RayWidth = 2.0f / m_RayCount; // Screen is 2.0f wide/tall
     static constexpr bool m_SnappingEnabled = true;

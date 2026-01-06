@@ -34,11 +34,10 @@ public:
     struct FloorHitInfo {
         float Distance = 0.0f;
         uint8_t Side = 0; // 0 -> x, 1 -> y, >= 2 -> off the map
-        uint8_t BottomMaterial = 0;
-        uint8_t TopMaterial = 0;
+        uint8_t Material = 0;
         glm::vec2 WorldPosition{};
     };
-    FloorHitInfo CastFloors(glm::vec2 origin, glm::vec3 reciprocalDirection, float maxDistance) const;
+    FloorHitInfo CastFloor(bool ceiling, glm::vec2 origin, glm::vec3 reciprocalDirection, float maxDistance) const;
 
     bool LineOfSight(glm::vec2 start, glm::vec2 end) const;
 

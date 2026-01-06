@@ -68,7 +68,7 @@ struct Floor {
 
     glm::vec2 TexturePosition{};
     uint16_t BottomAtlasIndex = 0;
-    uint16_t TopAtlasIndex = 0;
+    uint16_t AtlasIndex = 0;
 
     float BrightnessStart = 0.0f;
     float BrightnessEnd = 0.0f;

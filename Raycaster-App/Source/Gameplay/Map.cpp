@@ -652,14 +652,14 @@ bool Map::LineOfSight(glm::vec2 start, glm::vec2 end) const {
     return true;
 }
 
-Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float maxDistance) const {
+Map::FloorHitInfo Map::CastFloor(bool ceiling, glm::vec2 origin, glm::vec3 direction, float maxDistance) const {
     glm::vec3 deltaDistance = glm::abs(1.0f / direction);
 
     uint32_t mapX = static_cast<uint32_t>(origin.x);
     uint32_t mapY = static_cast<uint32_t>(origin.y);
 
-    int8_t floorIndex = s_MapData.FloorMap[GetIndex(mapX, mapY)];
-    int8_t ceilingIndex = s_MapData.CeilingMap[GetIndex(mapX, mapY)];
+    const std::span<const uint8_t, s_MapData.Size> map = ceiling ? s_MapData.CeilingMap : s_MapData.FloorMap;
+    uint8_t material = map[GetIndex(mapX, mapY)];
 
     int32_t stepX = (direction.x > 0) ? 1 : -1;
     int32_t stepY = (direction.y < 0) ? 1 : -1;
@@ -696,7 +696,7 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
             break;
         }
 
-        if (s_MapData.FloorMap[GetIndex(mapX, mapY)] != floorIndex || s_MapData.CeilingMap[GetIndex(mapX, mapY)] != ceilingIndex) {
+        if (map[GetIndex(mapX, mapY)] != material) {
             hit = true;
         }
 
@@ -736,8 +736,7 @@ Map::FloorHitInfo Map::CastFloors(glm::vec2 origin, glm::vec3 direction, float m
     return {
         .Distance = wallDistance,
         .Side = side,
-        .BottomMaterial = static_cast<uint8_t>(glm::abs(floorIndex)),
-        .TopMaterial = static_cast<uint8_t>(glm::abs(ceilingIndex)),
+        .Material = material,
         .WorldPosition = worldPosition
     };
 }
