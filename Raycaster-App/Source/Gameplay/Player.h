@@ -52,6 +52,7 @@ private:
     glm::vec3 m_Position{};
     glm::vec3 m_Scale{};
     float m_Rotation = 0.0f;
+    float m_ViewBob = 0.0f;
 
     float m_LateralSpeed = 0.0f;
     float m_RotationalSpeed = 0.0f;
