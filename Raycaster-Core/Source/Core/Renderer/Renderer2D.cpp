@@ -13,6 +13,7 @@
 #include <glm/gtx/matrix_transform_2d.hpp>
 
 #include <memory>
+#include <array>
 
 struct SimpleVertex {
     glm::vec3 Position{ 0.0f };
@@ -20,8 +21,8 @@ struct SimpleVertex {
 };
 
 struct Renderer2DDAta {
-    inline static const uint32_t MaxVertices = 1000 * 4;
-    inline static const uint32_t MaxIndices = 1000 * 6;
+    static constexpr uint32_t MaxVertices = 1000 * 4;
+    static constexpr uint32_t MaxIndices = 1000 * 6;
 
     std::unique_ptr<Core::VertexArray> LineVertexArray;
     std::unique_ptr<Core::VertexBuffer> LineVertexBuffer;
@@ -49,9 +50,19 @@ struct Renderer2DDAta {
     std::vector<Core::Shapes::Vertex> QuadVertices;
     std::vector<Core::Shapes::Vertex>::iterator QuadBackIter;
 
-    uint32_t BaseQuadVertexCount = 4;
-    glm::vec4* BaseQuadVertexPositions = nullptr;
-    glm::vec3* BaseQuadTextureCoords = nullptr;
+    static constexpr uint32_t BaseQuadVertexCount = 4;
+    static constexpr std::array<glm::vec4, BaseQuadVertexCount> BaseQuadVertexPositions{
+        glm::vec4( 0.5f,  0.5f, 0.0f , 1.0f),
+            glm::vec4(-0.5f,  0.5f, 0.0f , 1.0f),
+        glm::vec4( 0.5f, -0.5f, 0.0f , 1.0f),
+            glm::vec4(-0.5f, -0.5f, 0.0f , 1.0f),
+    };
+    static constexpr std::array<glm::vec3, BaseQuadVertexCount> BaseQuadTextureCoords{
+            glm::vec3(1.0f, 1.0f, 1.0f),
+            glm::vec3(0.0f, 1.0f, 1.0f),
+            glm::vec3(1.0f, 0.0f, 1.0f),
+            glm::vec3(0.0f, 0.0f, 1.0f),
+    };
 
     std::vector<Core::Shapes::Vertex> ShapeVertices;
     std::vector<uint32_t> ShapeIndices;
@@ -83,20 +94,6 @@ namespace Core {
         s_Data.QuadVertices.resize(s_Data.MaxVertices);
         s_Data.QuadBackIter = s_Data.QuadVertices.begin();
 
-        s_Data.BaseQuadVertexPositions = new glm::vec4[]{
-            { 0.5f,  0.5f, 0.0f , 1.0f },
-            {-0.5f,  0.5f, 0.0f , 1.0f },
-            { 0.5f, -0.5f, 0.0f , 1.0f },
-            { -0.5f, -0.5f, 0.0f , 1.0f },
-        };
-
-        s_Data.BaseQuadTextureCoords = new glm::vec3[]{
-            { 1.0f, 1.0f, 1.0f },
-            { 0.0f, 1.0f, 1.0f },
-            { 1.0f, 0.0f, 1.0f },
-            { 0.0f, 0.0f, 1.0f },
-        };
-
         Core::VertexBufferLayout simpleVertexLayout;
         simpleVertexLayout.Push<float>(3);
         simpleVertexLayout.Push<float>(3);
@@ -122,7 +119,7 @@ namespace Core {
         s_Data.QuadVertexArray->AddBuffer(*s_Data.QuadVertexBuffer, quadLayout);
 
         uint32_t offset = 0;
-        uint32_t* quadIndices = new uint32_t[s_Data.MaxIndices];
+        std::array<uint32_t, s_Data.MaxIndices> quadIndices;
         for (uint32_t i = 0; i < s_Data.MaxIndices; i += 6) {
             quadIndices[i + 0] = offset + 0;
             quadIndices[i + 1] = offset + 1;
@@ -134,8 +131,7 @@ namespace Core {
             offset += 4;
         }
         
-        s_Data.QuadElementBuffer = std::make_unique<ElementBuffer>(quadIndices, s_Data.MaxIndices);
-        delete[] quadIndices;
+        s_Data.QuadElementBuffer = std::make_unique<ElementBuffer>(quadIndices.data(), s_Data.MaxIndices);
 
         s_Data.ShapeVertices = std::vector<Core::Shapes::Vertex>();
         s_Data.ShapeVertices.reserve(s_Data.MaxVertices);
