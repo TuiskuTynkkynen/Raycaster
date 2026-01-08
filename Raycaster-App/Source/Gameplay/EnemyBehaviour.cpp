@@ -185,7 +185,7 @@ static glm::vec2 Collision(const Enemy& enemy, const Map& map, const std::vector
         glm::vec2 fraction = glm::fract(enemy.Position);
 
         for (size_t i = 0; i < s_DirectionCount; i++) {
-            if (!adjacent[i] || map.IsPassable(index + static_cast<int32_t>(s_Directions[s_DirectionCount - 1 - i].y) * map.GetWidth() + static_cast<int32_t>(s_Directions[s_DirectionCount - 1 - i].x))) {
+            if (!adjacent[i] || map.IsPassable(index + static_cast<int32_t>(s_Directions[s_DirectionCount - 1 - i].y * map.GetWidth() + s_Directions[s_DirectionCount - 1 - i].x))) {
                 continue;
             }
 
