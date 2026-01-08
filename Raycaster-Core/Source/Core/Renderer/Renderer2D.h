@@ -3,8 +3,6 @@
 #include "Camera.h"
 #include "Core/Font/Font.h"
 
-#include <string>
-
 namespace Core::Renderer2D {
         void Init();
          
@@ -12,8 +10,9 @@ namespace Core::Renderer2D {
         void BeginScene(const glm::mat4& transform);
         void EndScene();
         void Flush();
-         
+ 
         void DrawQuad(uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform = glm::mat3(1.0f), const glm::vec2& atlasIndex = glm::vec2(0.0f));
+        void DrawQuad(uint32_t textureIndex, const glm::vec4& colour, const glm::vec3& position, const glm::vec3& scale, const glm::vec2& textureOffset = glm::vec2(0.0f), const glm::vec2& textureScale = glm::vec2(0.0f), const glm::vec2& atlasIndex = glm::vec2(0.0f), float textureRotate = 0.0f);
         void DrawTextureQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex = 0, float textureRotate = 0.0f);
         void DrawFlatQuad(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour);
         void DrawGradientQuad(uint32_t textureIndex, const glm::vec4& colour1, const glm::vec4& colour2, const glm::mat4& transform, const glm::mat3& textureTransform = glm::mat3(1.0f), const glm::vec2& atlasIndex = glm::vec2(0.0f));
@@ -21,11 +20,6 @@ namespace Core::Renderer2D {
         void DrawRotatedFlatQuad(const glm::vec3& position, float rotation, const  glm::vec3& rotationAxis, const  glm::vec3& scale, const glm::vec4& colour);
         void DrawRotatedFlatTriangle(const glm::vec3& position, float rotation, const glm::vec3& rotationAxis, const glm::vec3& scale, const glm::vec4& colour);
         void DrawLine(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour);
-        
-        void DrawTriangle(const glm::vec3& angles, uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform = glm::mat3(1.0f), const glm::vec2& atlasIndex = glm::vec2(0.0f));
-        void DrawTextureTriangle(const glm::vec3& angles, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex = 0, float textureRotate = 0.0f);
-        void DrawFlatTriangle(const glm::vec3& angles, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour);
-        void DrawRotatedFlatTriangle(const glm::vec3& angles, const glm::vec3& position, float rotation, const  glm::vec3& rotationAxis, const  glm::vec3& scale, const glm::vec4& colour);
 
         template <typename T>
         void DrawString(const T& text, float x, float y, float scale, const glm::vec4& colour, bool flipVertivcal = false);
@@ -34,6 +28,11 @@ namespace Core::Renderer2D {
         void SetFont(std::shared_ptr<Font> font);
 
         //Using Core::Shapes functions
+        void DrawTriangle(const glm::vec3& angles, uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform = glm::mat3(1.0f), const glm::vec2& atlasIndex = glm::vec2(0.0f));
+        void DrawTextureTriangle(const glm::vec3& angles, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour, const glm::vec2& textureOffset, const glm::vec2& textureScale, uint32_t atlasIndex = 0, float textureRotate = 0.0f);
+        void DrawFlatTriangle(const glm::vec3& angles, const glm::vec3& position, const glm::vec3& scale, const glm::vec4& colour);
+        void DrawRotatedFlatTriangle(const glm::vec3& angles, const glm::vec3& position, float rotation, const  glm::vec3& rotationAxis, const  glm::vec3& scale, const glm::vec4& colour);
+
         void DrawShapeQuad(uint32_t textureIndex, const glm::vec4 & colour, const glm::mat4 & transform, const glm::mat3 & textureTransform = glm::mat3(1.0f), const glm::vec2 & atlasIndex = glm::vec2(0.0f));
         void DrawTextureShapeQuad(const glm::vec3 & position, const glm::vec3 & scale, const glm::vec4 & colour, const glm::vec2 & textureOffset, const glm::vec2 & textureScale, uint32_t atlasIndex = 0, float textureRotate = 0.0f);
         void DrawFlatShapeQuad(const glm::vec3 & position, const glm::vec3 & scale, const glm::vec4 & colour);
