@@ -143,7 +143,7 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
         }
 
         m_Rays[i].Position.x = cameraX + 0.5f * m_RayWidth;
-        m_Rays[i].Position.y = (0.5f - camera.GetPosition().z) * m_Rays[i].Scale;
+        m_Rays[i].Position.y = glm::floorMultiple((0.5f - camera.GetPosition().z) * m_Rays[i].Scale + 0.5f * m_RayWidth, m_RayWidth);
         m_Rays[i].Atlasindex = hit.Material;
 
         m_Rays[i].Brightness = LightBilinear(hit.WorldPosition, map);
