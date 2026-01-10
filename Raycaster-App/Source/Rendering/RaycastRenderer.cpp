@@ -112,6 +112,7 @@ static float LightBilinear(glm::vec2 position, const Map& map) {
 }
 
 void RaycastRenderer::Render(const Map& map, const Core::Camera2D& camera, const Player& player, Renderables& renderables) {
+    for (auto& vec : m_DepthMap) vec.clear();
     RenderWalls(map, camera);
     RenderFloors(map, camera);
     RenderSprites(map, player, renderables);
@@ -119,6 +120,7 @@ void RaycastRenderer::Render(const Map& map, const Core::Camera2D& camera, const
 
 void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) {
     glm::vec2 rotation{ camera.GetDirection().x, -camera.GetDirection().y };
+    int64_t previousOcclusionIndex = -1;
 
     //Wall casting
     for (uint32_t i = 0; i < m_RayCount; i++) {
@@ -139,7 +141,18 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
         m_Rays[i].Scale = 1.0f / wallDistance;
         if constexpr (m_SnappingEnabled) {
             // The center of a wall is @ y = 0, so scale needs to be even multiple of m_RayWidth -> round to 2.0f * m_RayWidth
-            m_Rays[i].Scale = glm::floorMultiple(m_Rays[i].Scale + m_RayWidth, 2.0f * m_RayWidth);
+            m_Rays[i].Scale = glm::ceilMultiple(m_Rays[i].Scale + m_RayWidth, 2.0f * m_RayWidth);
+        }
+
+        int64_t occlusionIndex = occlusionIndex = static_cast<int64_t>(glm::min(m_Rays[i].Scale * 0.5f, 1.0f) * m_RayCount / 2 - 1);
+        if (occlusionIndex != previousOcclusionIndex) {
+            int64_t max = glm::max(previousOcclusionIndex, occlusionIndex);
+            bool offset = (previousOcclusionIndex < occlusionIndex) || (m_DepthMap[occlusionIndex].size() % 2 == 1);
+
+            for (int64_t j = glm::min(previousOcclusionIndex, occlusionIndex) + offset; j <= max; j++) {
+                m_DepthMap[j].push_back(i);
+            }
+            previousOcclusionIndex = occlusionIndex;
         }
 
         m_Rays[i].Position.x = cameraX + 0.5f * m_RayWidth;
@@ -156,8 +169,8 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
 }
 
 void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const Core::Camera2D& camera) {
-    std::vector<float> visibleRanges; // Ranges in NDC
-
+    std::vector<uint32_t> defaultRange = { m_RayCount };
+    
     const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
     glm::vec3 rayDirection = camera.GetDirection() * reciprocalAspectRatio - camera.GetPlane();
 
@@ -197,35 +210,35 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const Core::Came
             }
         }
 
-        bool occluded = true;
-        // Fixes incorrect occluded areas when walls aren't aligned to the width of a ray
-        float occlusionScale = m_SnappingEnabled ? scale : density * m_RayCount / (m_RayCount - (2.0f * i));
-        for (size_t j = m_RayCount; j > 0; j--) {
-            // compares the current height to the height of a wall
-            // m_zBuffer stores distances (half of the reciprocal height), so we compare with the reciprocal height -> (scale * 0.5f)
-            if (occluded != (occlusionScale * 0.5f * reciprocalAspectRatio < m_ZBuffer[j - 1])) {
-                continue;
-            }
-
-            // X position in NDC
-            visibleRanges.emplace_back(2.0f * j / static_cast<float>(m_RayCount) - 1.0f);
-
-            occluded = !occluded;
+        std::span<const uint32_t> occludedRanges = defaultRange;
+        size_t occlusionIndex = occlusionIndex = static_cast<size_t>(glm::min(currentHeight * reciprocalAspectRatio, 1.0f) * m_RayCount / 2);
+        if (occlusionIndex < m_RayCount / 2 && !m_DepthMap[occlusionIndex].empty()) {
+            occludedRanges = m_DepthMap[occlusionIndex];
         }
 
-        size_t index = visibleRanges.size();
-        if (!index) {
-            break; // Every ceiling after this will be occluded by walls
+        if (occludedRanges.back() == 0) {
+            return; // Every ceiling/floor after this will be occluded by walls
         }
 
-        if (index % 2 == 1) {
-            visibleRanges.emplace_back(prevPos);
+        size_t index = 0;
+        float minPos = -1.0f;
+        float maxPos = 1.0f;
+
+        if (occludedRanges.size() % 2 == 1) {
+            maxPos = 2.0f * occludedRanges.back() / static_cast<float>(m_RayCount) - 1.0f;
+        }
+
+        if (occludedRanges.front() == 0) {
+            minPos = 2.0f * occludedRanges[1] / static_cast<float>(m_RayCount) - 1.0f;
+            index += 2;
+        }
+        minPos = glm::max(minPos, prevPos);
+
+        glm::vec2 activeRange{ minPos, maxPos };
+        if (index < occludedRanges.size()) {
+            activeRange[1] = 2.0f * occludedRanges[index] / static_cast<float>(m_RayCount) - 1.0f;
             index++;
         }
-
-        float maxPos = visibleRanges.front();
-        float minPos = glm::max(visibleRanges[--index], prevPos);
-        glm::vec2 activeRange{ minPos, visibleRanges[--index] };
 
         while (prevPos <= maxPos) {
             float maxDistance = (2.0f - prevPos) * scale * 0.5f;
@@ -265,8 +278,11 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const Core::Came
                 if (position + length >= activeRange[1]) {
                     length = activeRange[1] - position;
 
-                    if (index > 1) {
-                        activeRange = glm::vec2{ visibleRanges[--index], visibleRanges[--index] };
+                    if (index < occludedRanges.size()) {
+                        activeRange = glm::vec2{ 2.0f * occludedRanges[index++] / static_cast<float>(m_RayCount) - 1.0f, maxPos };
+                        if (index < occludedRanges.size()) {
+                            activeRange.y = 2.0f * occludedRanges[index++] / static_cast<float>(m_RayCount) - 1.0f;
+                        }
                     }
                 }
 
@@ -305,11 +321,15 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const Core::Came
             prevPos += rayLength;
             worldPosition = hit.WorldPosition;
 
-            if (prevPos + 1e-5f >= activeRange[1] && index > 1) {
-                activeRange = glm::vec2{ visibleRanges[--index], visibleRanges[--index] };
+            if (prevPos + 1e-5f < activeRange[1] || index >= occludedRanges.size()) {
+                continue;
+            }
+
+            activeRange = glm::vec2{ 2.0f * occludedRanges[index++] / static_cast<float>(m_RayCount) - 1.0f, maxPos };
+            if (index < occludedRanges.size()) {
+                activeRange.y = 2.0f * occludedRanges[index++] / static_cast<float>(m_RayCount) - 1.0f;
             }
         }
-        visibleRanges.clear();
     }
 }
 

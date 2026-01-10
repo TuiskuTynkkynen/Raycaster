@@ -38,6 +38,7 @@ private:
     std::vector<Line> m_Lines;
     std::vector<Floor> m_Floors;
     std::array<float, m_RayCount> m_ZBuffer{};
+    std::array<std::vector<uint32_t>, m_RayCount / 2> m_DepthMap;
 
     float m_AspectRatio = 1.0f;
     float m_ReciprocalAspectRatio = 1.0f;
