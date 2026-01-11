@@ -17,4 +17,8 @@
 
 namespace Core {
     std::filesystem::path ApplicationDirectory();
+
+    std::wstring UTF8ToWide(const char* string);
+    std::wstring UTF8ToWide(std::string_view string);
+    std::string WideToUTF8(std::wstring_view string);
 }
