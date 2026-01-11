@@ -45,7 +45,8 @@ namespace Core {
     std::wstring_view Input::KeyCodeToString(uint32_t keyCode) {
         static std::unordered_map<uint32_t, std::wstring> cache = [] {
             std::unordered_map<uint32_t, std::wstring> map;
-            char* locale = std::setlocale(LC_ALL, "");
+            std::string locale(std::setlocale(LC_ALL, nullptr)); // Save current locale
+            std::setlocale(LC_ALL, "");
 
             // GLFW only has names for (most) keys between apostrophe and numpad equal
             for (uint32_t i = RC_KEY_APOSTROPHE; i <= RC_KEY_KP_EQUAL; i++) {
@@ -61,7 +62,7 @@ namespace Core {
                 }
             }
 
-            std::setlocale(LC_ALL, locale);
+            std::setlocale(LC_ALL, locale.c_str()); // Restore locale
             return map;
         }();
         
