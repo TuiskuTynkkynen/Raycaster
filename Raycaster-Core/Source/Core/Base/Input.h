@@ -4,18 +4,17 @@
 
 #include <utility>
 #include <cstdint>
+#include <string_view>
 
-namespace Core {
-	class Input
-	{
-	public:
-		static bool IsKeyPressed(uint32_t key);
-		static bool IsButtonPressed(uint32_t button);
-		static bool IsButtonReleased(uint32_t button);
+namespace Core::Input {
+	bool IsKeyPressed(uint32_t key);
+	bool IsButtonPressed(uint32_t button);
+	bool IsButtonReleased(uint32_t button);
 
-		static float GetMouseX();
-		static float GetMouseY();
-		static std::pair<float, float> GetMousePos();
-	};
+	float GetMouseX();
+	float GetMouseY();
+	std::pair<float, float> GetMousePos();
+
+	std::wstring_view KeyCodeToString(uint32_t keyCode);
 }
 
