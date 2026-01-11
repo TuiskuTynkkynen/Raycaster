@@ -51,7 +51,7 @@ namespace Core {
 
         template<typename T>
         bool Dispatch(EventFunction<T> func) {
-            if (m_Event.GetType() == T::GetStaticType()) {
+            if (!m_Event.Handled && m_Event.GetType() == T::GetStaticType()) {
                 m_Event.Handled = func(*(T*)&m_Event);
                 return true;
             }
