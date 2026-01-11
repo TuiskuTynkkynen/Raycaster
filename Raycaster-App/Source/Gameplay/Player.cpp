@@ -1,5 +1,7 @@
 #include "Player.h"
 
+#include "KeyBinds.h"
+
 #include "Core/Debug/Assert.h"
 
 #include <cmath>
@@ -99,32 +101,38 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
     bool HoldingItem = m_HeldItemIndex < m_Inventory.size() && m_Inventory[m_HeldItemIndex].UseDuration;
     bool UsingItem = HoldingItem && m_AnimationProgress >= 0.0f;
 
-    switch (event.GetKeyCode()) {
-    case RC_KEY_W:
+    std::optional<KeyBinds::Name> action = KeyBinds::KeyCodeToKeyBind(event.GetKeyCode());
+    if (!action) {
+        return false;
+    }
+
+    switch (action.value()) {
+        using enum KeyBinds::Name;
+    case Forward:
         m_LateralSpeed = 1.0f;
         return true;
-    case RC_KEY_S:
+    case Backward:
         m_LateralSpeed = -1.0f;
         return true;
-    case RC_KEY_A:
+    case Left:
         m_RotationalSpeed = 1.0f;
         return true;
-    case RC_KEY_D:
+    case Right:
         m_RotationalSpeed = -1.0f;
         return true;
-    case RC_KEY_Q:
+    case UseItem:
         if (HoldingItem && !UsingItem) {
             m_AnimationProgress = 0.0f;
         }
         return true;
-    case RC_KEY_0:
-    case RC_KEY_1:
-    case RC_KEY_2:
-        SwitchItem(event.GetKeyCode() - RC_KEY_0);
+    case Item0:
+    case Item1:
+    case Item2:
+        SwitchItem(action.value() - Item0);
         return true;
-    case RC_KEY_SPACE:
-            m_ShouldInteract = !event.IsRepeated();
-            return true;
+    case Interact:
+        m_ShouldInteract = !event.IsRepeated();
+        return true;
     }
 
     return false;
@@ -132,17 +140,12 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
 
 
 bool Player::OnKeyEvent(Core::KeyReleased event) {
-    switch (event.GetKeyCode()) {
-    case RC_KEY_W:
+    if (event.GetKeyCode() == s_KeyBinds[KeyBinds::Forward].KeyCode || event.GetKeyCode() == s_KeyBinds[KeyBinds::Backward].KeyCode) {
         m_LateralSpeed = 0.0f;
         return true;
-    case RC_KEY_S:
-        m_LateralSpeed = 0.0f;
-        return true;
-    case RC_KEY_A:
-        m_RotationalSpeed = 0.0f;
-        return true;
-    case RC_KEY_D:
+    }
+    
+    if (event.GetKeyCode() == s_KeyBinds[KeyBinds::Left].KeyCode || event.GetKeyCode() == s_KeyBinds[KeyBinds::Right].KeyCode) {
         m_RotationalSpeed = 0.0f;
         return true;
     }
