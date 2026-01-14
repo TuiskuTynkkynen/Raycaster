@@ -13,10 +13,15 @@ namespace Core::Serialization {
             path = ApplicationDirectory() / fileName;
         }
 
+        // Ensure file exists
+        if (!std::filesystem::exists(path)) {
+            std::ofstream(path.c_str());
+        }
+
         using ios = std::ios_base;
-        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(path.c_str(), ios::binary | ios::ate | ios::app | ios::in | ios::out);
+        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
         m_Size = m_Stream->tellg();
-        m_Stream->seekg(0, ios::beg);
+        m_Stream->seekp(0);
     }
 
     Archive::~Archive() {}
