@@ -3,6 +3,9 @@
 #include <chrono>
 #include <thread>
 
+constexpr auto GRAY = "\033[90m";
+constexpr auto RESET = "\033[0m";
+
 namespace Core {
 	constexpr const char* Logger::GetLogLevelString(LogLevel logLevel) {
 		switch (logLevel) {

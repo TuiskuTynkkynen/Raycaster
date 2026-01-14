@@ -13,9 +13,6 @@
     #define LOG_PREFIX_LEVEL 2 //Default prefix -> Full
 #endif
 
-constexpr auto GRAY = "\033[90m";
-constexpr auto RESET = "\033[0m";
-
 enum class PrefixLevel{
     Minimal = 0,
     Reduced,
@@ -40,6 +37,7 @@ namespace Core {
     public:
         template <typename ... Args>
         static void Log(LogLevel logLevel, PrefixLevel prefixLevel, const std::source_location location, const std::format_string<Args...> fmt, Args&&... args) {
+            constexpr auto RESET = "\033[0m";
             std::string temp = std::format("{}{}{}", CreatePrefix(logLevel, prefixLevel, location), std::vformat(fmt.get(), std::make_format_args(args...)), RESET);
             std::puts(temp.c_str());
         }
