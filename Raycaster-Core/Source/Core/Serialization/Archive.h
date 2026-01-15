@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <string_view>
 #include <memory>
+#include <filesystem>
 
 namespace Core::Serialization {
     class Archive;
@@ -18,6 +19,7 @@ namespace Core::Serialization {
     class Archive {
     public:
         Archive(std::string_view fileName);
+        explicit Archive(std::filesystem::path file);
         Archive(Archive&&) = default;
         ~Archive();
 

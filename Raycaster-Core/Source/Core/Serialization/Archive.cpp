@@ -24,6 +24,20 @@ namespace Core::Serialization {
         m_Stream->seekp(0);
     }
 
+    Archive::Archive(std::filesystem::path file) {
+        RC_ASSERT(std::filesystem::is_directory(file), "Tried to create a Serialization Archive from a directoty");
+
+        // Ensure file exists
+        if (!std::filesystem::exists(file)) {
+            std::ofstream(file.c_str());
+        }
+
+        using ios = std::ios_base;
+        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(file.c_str(), ios::binary | ios::ate | ios::in | ios::out);
+        m_Size = m_Stream->tellg();
+        m_Stream->seekp(0);
+    }
+
     Archive::~Archive() {}
 
     bool Archive::IsGood() const {
