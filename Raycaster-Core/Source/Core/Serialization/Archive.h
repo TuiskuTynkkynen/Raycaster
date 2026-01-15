@@ -35,7 +35,10 @@ namespace Core::Serialization {
         bool Write(std::span<const std::byte>);
         template <Serializable T>
         bool Write(const T& value) { return Serialize(value, *this); }
+
+        void TruncateFile();
     private:
+        std::filesystem::path m_Path;
         std::unique_ptr<std::basic_fstream<std::byte>> m_Stream;
         size_t m_Size;
     };

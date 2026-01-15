@@ -8,32 +8,33 @@
 
 namespace Core::Serialization {
     Archive::Archive(std::string_view fileName) {
-        std::filesystem::path path(fileName);
-        if (!path.is_absolute()) {
-            path = ApplicationDirectory() / fileName;
+        m_Path = std::filesystem::path(fileName);
+        if (!m_Path.is_absolute()) {
+            m_Path = ApplicationDirectory() / fileName;
         }
 
         // Ensure file exists
-        if (!std::filesystem::exists(path)) {
-            std::ofstream(path.c_str());
+        if (!std::filesystem::exists(m_Path)) {
+            std::ofstream(m_Path.c_str());
         }
 
         using ios = std::ios_base;
-        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
+        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(m_Path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
         m_Size = m_Stream->tellg();
         m_Stream->seekp(0);
     }
 
     Archive::Archive(std::filesystem::path file) {
-        RC_ASSERT(std::filesystem::is_directory(file), "Tried to create a Serialization Archive from a directoty");
+        m_Path = file;
+        RC_ASSERT(std::filesystem::is_directory(m_Path), "Tried to create a Serialization Archive from a directoty");
 
         // Ensure file exists
-        if (!std::filesystem::exists(file)) {
-            std::ofstream(file.c_str());
+        if (!std::filesystem::exists(m_Path)) {
+            std::ofstream(m_Path.c_str());
         }
 
         using ios = std::ios_base;
-        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(file.c_str(), ios::binary | ios::ate | ios::in | ios::out);
+        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(m_Path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
         m_Size = m_Stream->tellg();
         m_Stream->seekp(0);
     }
@@ -71,5 +72,10 @@ namespace Core::Serialization {
         }
 
         return false;
+    }
+
+    void Archive::TruncateFile() {
+        m_Size = GetPosition();
+        std::filesystem::resize_file(m_Path, m_Size);
     }
 }
