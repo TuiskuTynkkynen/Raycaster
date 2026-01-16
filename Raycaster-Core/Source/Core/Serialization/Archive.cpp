@@ -58,12 +58,12 @@ namespace Core::Serialization {
         return !m_Stream->bad();
     }
 
-    bool Archive::Read(std::span<std::byte> buffer) {
+    bool Archive::ReadBytes(std::span<std::byte> buffer) {
         m_Stream->read(buffer.data(), buffer.size());
         return m_Stream->gcount() == buffer.size();
     }
 
-    bool Archive::Write(std::span<const std::byte> data) {
+    bool Archive::WriteBytes(std::span<const std::byte> data) {
         m_Stream->write(data.data(), data.size());
 
         if (auto size = m_Stream->tellp(); size != std::streampos(-1)) {

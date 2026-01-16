@@ -28,11 +28,11 @@ namespace Core::Serialization {
         size_t GetPosition() const;
         bool SeekPosition(size_t position);
 
-        bool Read(std::span<std::byte>);
+        bool ReadBytes(std::span<std::byte>);
         template <Serializable T>
         T Read() { return Deserialize<T>(*this); }
 
-        bool Write(std::span<const std::byte>);
+        bool WriteBytes(std::span<const std::byte>);
         template <Serializable T>
         bool Write(const T& value) { return Serialize(value, *this); }
 

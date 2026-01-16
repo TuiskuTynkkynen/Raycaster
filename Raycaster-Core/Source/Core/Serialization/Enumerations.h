@@ -67,7 +67,7 @@ namespace Core::Serialization {
             return false;
         }
 
-        return archive.Write(std::as_bytes(std::span{ name }));
+        return archive.WriteBytes(std::as_bytes(std::span{ name }));
     }
 
     template <SerializableEnumeration Enum>

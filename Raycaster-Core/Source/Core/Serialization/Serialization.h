@@ -26,13 +26,13 @@ namespace Core::Serialization {
     // Arithmetic types
     template <typename T> requires std::is_arithmetic_v<T>
     inline static bool Serialize(const T& value, Archive& archive) {
-        return archive.Write(std::as_bytes(std::span{ &value, 1 }));
+        return archive.WriteBytes(std::as_bytes(std::span{ &value, 1 }));
     }
 
     template <typename T> requires std::is_arithmetic_v<T>
     inline static T Deserialize(Archive& archive) {
         std::array<std::byte, sizeof(T)> buffer;
-        RC_ASSERT(archive.Read(buffer));
+        RC_ASSERT(archive.ReadBytes(buffer));
 
         return std::bit_cast<T>(buffer);
     }
@@ -44,14 +44,14 @@ namespace Core::Serialization {
             return false;
         }
 
-        return archive.Write(std::as_bytes(std::span{ value }));
+        return archive.WriteBytes(std::as_bytes(std::span{ value }));
     }
 
     template <>
     inline static std::string Deserialize(Archive& archive) {
         size_t size = archive.Read<size_t>();
         std::string string(size, '\0');
-        RC_ASSERT(archive.Read(std::as_writable_bytes(std::span{string})));
+        RC_ASSERT(archive.ReadBytes(std::as_writable_bytes(std::span{string})));
         return string;
     }
 
@@ -60,7 +60,7 @@ namespace Core::Serialization {
         if (!archive.Write(value.size())) {
             return false;
         }
-        return archive.Write(std::as_bytes(std::span{ value }));
+        return archive.WriteBytes(std::as_bytes(std::span{ value }));
     }
 
     template <>
@@ -68,7 +68,7 @@ namespace Core::Serialization {
         size_t size = archive.Read<size_t>();
         std::wstring string(size, '\0');
 
-        RC_ASSERT(archive.Read(std::as_writable_bytes(std::span{ string})));
+        RC_ASSERT(archive.ReadBytes(std::as_writable_bytes(std::span{ string})));
         return string;
     }
 
@@ -85,7 +85,7 @@ namespace Core::Serialization {
             return false;
         }
         
-        return archive.Write(std::as_bytes(std::span{ value }));
+        return archive.WriteBytes(std::as_bytes(std::span{ value }));
     }
 
     template <typename VecT> requires is_serializable_vector_v<VecT>
@@ -93,7 +93,7 @@ namespace Core::Serialization {
         size_t size = archive.Read<size_t>();
         VecT vector(size);
 
-        RC_ASSERT(archive.Read(std::as_writable_bytes(std::span{ vector })));
+        RC_ASSERT(archive.ReadBytes(std::as_writable_bytes(std::span{ vector })));
         return vector;
     }
 
@@ -106,13 +106,13 @@ namespace Core::Serialization {
     
     template <typename ArrT> requires is_serializable_array_v<ArrT>
     inline static bool Serialize(const ArrT& value, Archive& archive) {
-        return archive.Write(std::as_bytes(std::span{ value }));
+        return archive.WriteBytes(std::as_bytes(std::span{ value }));
     }
 
     template <typename ArrT> requires is_serializable_array_v<ArrT>
     inline static ArrT Deserialize(Archive& archive) {
         ArrT array{};
-        RC_ASSERT(archive.Read(std::as_writable_bytes(std::span{ array })));
+        RC_ASSERT(archive.ReadBytes(std::as_writable_bytes(std::span{ array })));
         return array;
     }
 }
