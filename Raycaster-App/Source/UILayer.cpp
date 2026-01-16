@@ -1,6 +1,6 @@
 #include "UILayer.h"
 
-#include "Keybinds.h"
+#include "KeyBinds.h"
 
 #include "Core/UI/UI.h"
 
