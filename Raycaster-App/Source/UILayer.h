@@ -16,6 +16,7 @@ private:
     uint32_t m_ViewPortHeight = -1;
 
     bool m_ShowKeyBinds = false;
+    bool m_SavedKeyBinds = true;
     uint32_t m_SelectedKeyBind = -1;
 
     void PauseScreen(const RaycasterScene& scene);
