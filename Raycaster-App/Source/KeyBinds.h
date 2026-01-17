@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Base/InputCodes.h"
+#include "Core/Serialization/Archive.h"
 
 #include <cstdint>
 #include <string_view>
@@ -40,6 +41,9 @@ namespace KeyBinds {
     };
 
     std::optional<KeyBinds::Name> KeyCodeToKeyBind(uint32_t keyCode);
+
+    bool Serialize(Core::Serialization::Archive& archive);
+    bool Deserialize(Core::Serialization::Archive& archive);
 }
 
 inline constinit std::array<KeyBind, KeyBinds::ENUMERATION_MAX + 1> s_KeyBinds = []{
