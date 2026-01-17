@@ -20,7 +20,7 @@ namespace Core::Serialization {
 
         using ios = std::ios_base;
         m_Stream = std::make_unique<std::basic_fstream<std::byte>>(m_Path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
-        m_Size = m_Stream->tellg();
+        m_Size = GetPosition() + 1;
         m_Stream->seekp(0);
     }
 
@@ -35,7 +35,7 @@ namespace Core::Serialization {
 
         using ios = std::ios_base;
         m_Stream = std::make_unique<std::basic_fstream<std::byte>>(m_Path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
-        m_Size = m_Stream->tellg();
+        m_Size = GetPosition() + 1;
         m_Stream->seekp(0);
     }
 
@@ -54,6 +54,7 @@ namespace Core::Serialization {
             RC_WARN("Tried to seek to position, {}, but file size is {}", position, m_Size);
         }
 
+        m_Stream->clear();
         m_Stream->seekp(position, std::ios_base::beg);
         return !m_Stream->bad();
     }
@@ -67,7 +68,7 @@ namespace Core::Serialization {
         m_Stream->write(data.data(), data.size());
 
         if (auto size = m_Stream->tellp(); size != std::streampos(-1)) {
-            m_Size = std::max(m_Size, GetPosition());
+            m_Size = std::max(m_Size, GetPosition() + 1);
             return true;
         }
 
@@ -75,7 +76,7 @@ namespace Core::Serialization {
     }
 
     void Archive::TruncateFile() {
-        m_Size = GetPosition();
+        m_Size = GetPosition() + 1;
         std::filesystem::resize_file(m_Path, m_Size);
     }
 }
