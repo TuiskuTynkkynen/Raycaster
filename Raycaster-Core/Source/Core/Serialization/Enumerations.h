@@ -37,41 +37,42 @@ namespace Core::Serialization {
     };
 
     template <SerializableEnumeration Enum>
-    constexpr std::string_view GetEnumName(Enum value) {
+    constexpr std::optional<std::string_view> GetEnumName(Enum value) {
         for (const auto& pair : Mapping<Enum>::Value) {
             if (value == pair.first) {
                 return pair.second;
             }
         }
 
-        RC_ASSERT(false, "Cannot get the name of enum value that does not appear in the mapping");
-        return "Invalid Enum Value";
+        RC_WARN("Cannot get the name of enum value that does not appear in the mapping");
+        return std::nullopt;
     }
 
     template <SerializableEnumeration Enum>
-    constexpr Enum GetEnumValue(std::string_view name) {
+    constexpr std::optional<Enum> GetEnumValue(std::string_view name) {
         for (const auto& pair : Mapping<Enum>::Value) {
             if (name == pair.second) {
                 return pair.first;
             }
         }
 
-        RC_ASSERT(false, "Cannot get the value of enum name that does not appear in the mapping");
-        return static_cast<Enum>(std::numeric_limits<std::underlying_type_t<Enum>>::max());
+        RC_WARN("Cannot get the value of enum name that does not appear in the mapping");
+        return std::nullopt;
     }
 
     template <SerializableEnumeration Enum>
     inline static bool Serialize(const Enum& value, Archive& archive) {
         auto name = GetEnumName(value);
-        if (!archive.Write(name.size())) {
+        if (!name || !archive.Write(name.value().size())) {
             return false;
         }
 
-        return archive.WriteBytes(std::as_bytes(std::span{ name }));
+        return archive.WriteBytes(std::as_bytes(std::span{ name.value() }));
     }
 
     template <SerializableEnumeration Enum>
-    inline static Enum Deserialize(Archive& archive) {
-        return GetEnumValue<Enum>(archive.Read<std::string>());
+    inline static std::optional<Enum> Deserialize(Archive& archive) {
+        return archive.Read<std::string>()
+            .and_then(GetEnumValue<Enum>);
     }
 }

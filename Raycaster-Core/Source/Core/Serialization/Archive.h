@@ -5,6 +5,7 @@
 #include <string_view>
 #include <memory>
 #include <filesystem>
+#include <optional>
 
 namespace Core::Serialization {
     class Archive;
@@ -30,7 +31,7 @@ namespace Core::Serialization {
 
         bool ReadBytes(std::span<std::byte>);
         template <Serializable T>
-        T Read() { return Deserialize<T>(*this); }
+        std::optional<T> Read() { return Deserialize<T>(*this); }
 
         bool WriteBytes(std::span<const std::byte>);
         template <Serializable T>

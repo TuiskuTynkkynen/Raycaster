@@ -2,11 +2,13 @@
 
 #include "Archive.h"
 
+#include <optional>
+
 // These functions must be specialised for a type to serialize it
 // Note that pointer types and view types will not work
 namespace Core::Serialization {
     template <typename T>
-    T Deserialize(Archive& archive) = delete;
+    std::optional<T> Deserialize(Archive& archive) = delete;
 
     template <typename T>
     bool Serialize(const T& value, Archive& archive) = delete;
@@ -30,11 +32,10 @@ namespace Core::Serialization {
     }
 
     template <typename T> requires std::is_arithmetic_v<T>
-    inline static T Deserialize(Archive& archive) {
+    inline static std::optional<T> Deserialize(Archive& archive) {
         std::array<std::byte, sizeof(T)> buffer;
-        RC_ASSERT(archive.ReadBytes(buffer));
 
-        return std::bit_cast<T>(buffer);
+        return archive.ReadBytes(buffer) ? std::optional(std::bit_cast<T>(buffer)) : std::nullopt;
     }
 
     // String types
@@ -48,11 +49,14 @@ namespace Core::Serialization {
     }
 
     template <>
-    inline static std::string Deserialize(Archive& archive) {
-        size_t size = archive.Read<size_t>();
-        std::string string(size, '\0');
-        RC_ASSERT(archive.ReadBytes(std::as_writable_bytes(std::span{string})));
-        return string;
+    inline static std::optional<std::string> Deserialize(Archive& archive) {
+        return archive.Read<size_t>()
+            .and_then([&archive](auto size) {
+                std::string string(size, '\0');
+
+                return archive.ReadBytes(std::as_writable_bytes(std::span{ string }))
+                    ? std::optional(string) : std::nullopt;
+            });
     }
 
     template <>
@@ -64,12 +68,14 @@ namespace Core::Serialization {
     }
 
     template <>
-    inline static std::wstring Deserialize(Archive& archive) {
-        size_t size = archive.Read<size_t>();
-        std::wstring string(size, '\0');
+    inline static std::optional<std::wstring> Deserialize(Archive& archive) {
+        return archive.Read<size_t>()
+            .and_then([&archive](auto size) {
+                std::wstring string(size, '\0');
 
-        RC_ASSERT(archive.ReadBytes(std::as_writable_bytes(std::span{ string})));
-        return string;
+                return archive.ReadBytes(std::as_writable_bytes(std::span{ string }))
+                    ? std::optional(string) : std::nullopt;
+            });
     }
 
     // Vectors 
@@ -89,12 +95,14 @@ namespace Core::Serialization {
     }
 
     template <typename VecT> requires is_serializable_vector_v<VecT>
-    inline static VecT Deserialize(Archive& archive) {
-        size_t size = archive.Read<size_t>();
-        VecT vector(size);
+    inline static std::optional<VecT> Deserialize(Archive& archive) {
+        return archive.Read<size_t>()
+            .and_then([&archive](auto size) {
+                VecT vector(size);
 
-        RC_ASSERT(archive.ReadBytes(std::as_writable_bytes(std::span{ vector })));
-        return vector;
+                return archive.ReadBytes(std::as_writable_bytes(std::span{ vector })) 
+                    ? std::optional(vector) : std::nullopt;
+            });
     }
 
     // Arrays
@@ -110,9 +118,9 @@ namespace Core::Serialization {
     }
 
     template <typename ArrT> requires is_serializable_array_v<ArrT>
-    inline static ArrT Deserialize(Archive& archive) {
+    inline static std::optional<ArrT> Deserialize(Archive& archive) {
         ArrT array{};
-        RC_ASSERT(archive.ReadBytes(std::as_writable_bytes(std::span{ array })));
-        return array;
+        return archive.ReadBytes(std::as_writable_bytes(std::span{ array }))
+            ? std::optional(array) : std::nullopt;
     }
 }
