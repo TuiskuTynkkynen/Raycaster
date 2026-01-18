@@ -2,8 +2,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-const glm::vec3 worldUp2D = glm::vec3(0.0f, 0.0f, 1.0f);
-
 namespace Core {
     FlyCamera::FlyCamera(const glm::vec3& position, const glm::vec3& up, float yaw, float pitch)
         : m_Position(position), m_MovementSpeed(SPEED), m_MouseSensitivity(SENSITIVITY), m_Fov(FOV), m_WorldUp(up), m_CameraYaw(yaw), m_CameraPitch(pitch)
@@ -97,23 +95,13 @@ namespace Core {
         m_View = glm::lookAt(m_Position, m_Position + m_Direction, m_CameraUp);
     }
 
-    Camera2D::Camera2D(const glm::vec3& position, float yaw, float zoom)
-    {
-        UpdateCamera(position, yaw);
+    Camera2D::Camera2D(glm::vec3 position, float zoom) {
         UpdateCamera(zoom);
+        UpdateCamera(position);
     }
 
-    void Camera2D::UpdateCamera(const glm::vec3& position, float yaw) {
+    void Camera2D::UpdateCamera(glm::vec3 position) {
         m_Position = position;
-
-        glm::vec3 front(0.0f);
-        yaw = glm::radians(yaw);
-        front.x = glm::cos(yaw);
-        front.y = glm::sin(yaw);
-
-        m_Direction = glm::normalize(front);
-        m_Plane = glm::normalize(glm::cross(m_Direction, worldUp2D));
-
         m_View = glm::scale(glm::mat4(1.0f), glm::vec3(m_Zoom, -m_Zoom, m_Zoom));
         m_View = glm::translate(m_View, glm::vec3(-m_Position.x, -m_Position.y, -m_Position.z));
     }

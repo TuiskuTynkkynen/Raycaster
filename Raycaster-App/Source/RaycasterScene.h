@@ -29,7 +29,7 @@ public:
     inline std::span<const Core::Model> GetModels() const { return m_Renderables.GetModels(); }
 
     inline const Player& GetPlayer() const { return m_Player; }
-    inline const Core::Camera2D& GetCamera() const { return *m_Camera; }
+    inline const RaycasterCamera& GetCamera() const { return *m_Camera; }
     inline const Core::FlyCamera& GetCamera3D() const { return *m_Camera3D;  }
 
     enum class State : uint8_t {
@@ -55,7 +55,7 @@ private:
     std::vector<LineCollider> m_Walls;
 
     Player m_Player;
-    std::unique_ptr<Core::Camera2D> m_Camera;
+    std::unique_ptr<RaycasterCamera> m_Camera;
     std::unique_ptr<Core::FlyCamera> m_Camera3D;
 
     State m_State = State::Invalid;

@@ -111,14 +111,14 @@ static float LightBilinear(glm::vec2 position, const Map& map) {
     return glm::clamp(glm::mix(y[0], y[1], mix), 0.0f, 1.0f);
 }
 
-void RaycastRenderer::Render(const Map& map, const Core::Camera2D& camera, const Player& player, Renderables& renderables) {
+void RaycastRenderer::Render(const Map& map, const RaycasterCamera& camera, const Player& player, Renderables& renderables) {
     for (auto& vec : m_DepthMap) vec.clear();
     RenderWalls(map, camera);
     RenderFloors(map, camera);
     RenderSprites(map, player, renderables);
 }
 
-void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) {
+void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera) {
     glm::vec2 rotation{ camera.GetDirection().x, -camera.GetDirection().y };
     int64_t previousOcclusionIndex = -1;
 
@@ -168,7 +168,7 @@ void RaycastRenderer::RenderWalls(const Map& map, const Core::Camera2D& camera) 
     }
 }
 
-void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const Core::Camera2D& camera) {
+void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterCamera& camera) {
     std::vector<uint32_t> defaultRange = { m_RayCount };
     
     const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
@@ -333,7 +333,7 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const Core::Came
     }
 }
 
-void RaycastRenderer::RenderFloors(const Map& map, const Core::Camera2D& camera) {
+void RaycastRenderer::RenderFloors(const Map& map, const RaycasterCamera& camera) {
     m_Floors.resize(0);
     RenderFloor(true, map, camera);
     RenderFloor(false, map, camera);

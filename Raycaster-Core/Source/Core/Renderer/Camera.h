@@ -60,22 +60,18 @@ namespace Core {
 
 	class Camera2D : public Camera {
 	public: 
-		Camera2D(const glm::vec3& position, float yaw, float zoom);
+		Camera2D(glm::vec3 position, float zoom);
+		virtual ~Camera2D(){}
 
 		inline const glm::mat4& GetViewMatrix() const override { return m_View; };
 		inline const glm::vec3& GetPosition() const { return m_Position; } 
-		inline const glm::vec3& GetDirection() const { return m_Direction; }
-		inline const glm::vec3& GetPlane() const { return m_Plane; }
-
-		void UpdateCamera(const glm::vec3& position, float yaw);
+		
+		void UpdateCamera(glm::vec3 position);
 		void UpdateCamera(float zoom);
 	private:
 		glm::mat4 m_View;
 
 		glm::vec3 m_Position;
-		glm::vec3 m_Direction;
-		glm::vec3 m_Plane;
-
 		float m_Zoom;
 	};
 }

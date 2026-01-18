@@ -18,7 +18,7 @@ void RaycasterScene::Init(){
     m_Tiles.push_back(tile);
     m_Tiles.push_back(tile);
 
-    m_Camera = std::make_unique<Core::Camera2D>(m_Player.GetPosition(), m_Player.GetRotation(), glm::sqrt(2.0f) / glm::sqrt((float)m_Map.GetSize()));
+    m_Camera = std::make_unique<RaycasterCamera>(m_Player.GetPosition(), m_Player.GetRotation(), glm::sqrt(2.0f) / glm::sqrt((float)m_Map.GetSize()));
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.GetRotation(), 0.0f);
 
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
