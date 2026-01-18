@@ -19,7 +19,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     glm::vec2 texScale(0.0f);
 
     const auto& floors = scene.GetFloors();
-    float rot = -scene.GetPlayer().GetRotation() + 90.0f;
+    float rot = -scene.GetPlayer().GetYaw() + 90.0f;
     float offset = (0.5f - scene.GetPlayer().GetPosition().z);
     for (const auto& ray : floors) {
         rayPos.x = ray.Position.x;

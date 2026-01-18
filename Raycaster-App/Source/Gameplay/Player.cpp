@@ -12,7 +12,7 @@
 void Player::Init(const Map& map) {
     m_Position = glm::vec3((float)map.GetWidth() / 2, (float)map.GetHeight() / 2, 0.5f);
     m_Scale = glm::vec3(Width * 0.5f);
-    m_Rotation = 90.0f;
+    m_Rotation = glm::vec2(90.0f, 0.0f);
 
     m_HeldItemIndex = 0;
     m_Inventory[m_HeldItemIndex] = { .Scale = 0.0f, .Count = 0 };
@@ -62,8 +62,8 @@ void Player::UpdateRender(Renderables& renderables) {
     // Update on Raycaster-layer
     float epsilon = 1e-3f;
     sprite.Position = glm::vec3(m_Position.x, m_Position.y, m_Position.z - (1.0f - heldItem.Scale) * epsilon);
-    sprite.Position.x += glm::cos(glm::radians(m_Rotation)) * epsilon;
-    sprite.Position.y += -glm::sin(glm::radians(m_Rotation)) * epsilon;
+    sprite.Position.x += glm::cos(glm::radians(m_Rotation.x)) * epsilon;
+    sprite.Position.y += -glm::sin(glm::radians(m_Rotation.x)) * epsilon;
     sprite.WorldPosition = sprite.Position;
 
     sprite.Scale = glm::vec3(2.0f * heldItem.Scale * epsilon);
@@ -115,10 +115,16 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
         m_LateralSpeed = -1.0f;
         return true;
     case Left:
-        m_RotationalSpeed = 1.0f;
+        m_RotationalSpeed.x = 1.0f;
         return true;
     case Right:
-        m_RotationalSpeed = -1.0f;
+        m_RotationalSpeed.x = -1.0f;
+        return true;
+    case LookUp:
+        m_RotationalSpeed.y = 1.0f;
+        return true;
+    case LookDown:
+        m_RotationalSpeed.y = -1.0f;
         return true;
     case UseItem:
         if (HoldingItem && !UsingItem) {
@@ -140,17 +146,28 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
 
 
 bool Player::OnKeyEvent(Core::KeyReleased event) {
-    if (event.GetKeyCode() == s_KeyBinds[KeyBinds::Forward].KeyCode || event.GetKeyCode() == s_KeyBinds[KeyBinds::Backward].KeyCode) {
-        m_LateralSpeed = 0.0f;
-        return true;
-    }
-    
-    if (event.GetKeyCode() == s_KeyBinds[KeyBinds::Left].KeyCode || event.GetKeyCode() == s_KeyBinds[KeyBinds::Right].KeyCode) {
-        m_RotationalSpeed = 0.0f;
-        return true;
+    std::optional<KeyBinds::Name> action = KeyBinds::KeyCodeToKeyBind(event.GetKeyCode());
+    if (!action) {
+        return false;
     }
 
-    return false;
+    switch (action.value()) {
+        using enum KeyBinds::Name;
+    case Forward:
+    case Backward:
+        m_LateralSpeed = 0.0f;
+        return true;
+    case Left:
+    case Right:
+        m_RotationalSpeed.x = 0.0f;
+        return true;
+    case LookUp:
+    case LookDown:
+        m_RotationalSpeed.y = 0.0f;
+        return true;
+    default:
+        return false;
+    }
 }
 
 void Player::Move(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime) {
@@ -158,12 +175,12 @@ void Player::Move(std::span<const LineCollider> walls, std::span<const LineColli
     const float MaxRotationalSpeed = 180.0f;
 
     glm::vec3 front(0.0f);
-    front.x = cos(glm::radians(m_Rotation));
-    front.y = -sin(glm::radians(m_Rotation)); //player y is flipped (array index)
-    front.z = 0.0f;
+    front.x = glm::cos(glm::radians(m_Rotation.x));
+    front.y = -glm::sin(glm::radians(m_Rotation.x)); //player y is flipped (array index)
 
     m_Position += front * m_LateralSpeed * MaxLateralSpeed * deltaTime.GetSeconds();
     m_Rotation += m_RotationalSpeed * MaxRotationalSpeed * deltaTime.GetSeconds();
+    m_Rotation.y = glm::clamp(m_Rotation.y, -89.0f, 89.0f);
 
     glm::vec2 col = Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), walls, Width * 0.5f);
     col += Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), doors, Width * 0.5f);
@@ -189,7 +206,7 @@ void Player::UseItem(Core::Timestep deltaTime) {
 
     std::visit([&](auto& data) {
         using T = std::decay_t<decltype(data)>;
-        glm::vec3 direction(cos(glm::radians(m_Rotation)), -sin(glm::radians(m_Rotation)), 0.0f);
+        glm::vec3 direction(cos(glm::radians(m_Rotation.x)), -sin(glm::radians(m_Rotation.x)), 0.0f);
         if constexpr (std::is_same_v<T, MeleeWeaponData>) {
             if (m_AnimationProgress >= data.AttackTiming && m_AnimationProgress - relativeDeltaTime < data.AttackTiming) {
                 m_Areas.emplace_back(m_Position, m_Position + data.AttackLength * direction);

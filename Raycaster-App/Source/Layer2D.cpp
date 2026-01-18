@@ -28,7 +28,7 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
 
     glm::vec4 colour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     const Player& player = scene.GetPlayer();
-    Core::Renderer2D::DrawRotatedFlatQuad(player.GetPosition(), -player.GetRotation(), AxisZ, player.GetScale(), colour);
+    Core::Renderer2D::DrawRotatedFlatQuad(player.GetPosition(), -player.GetYaw(), AxisZ, player.GetScale(), colour);
 
     Core::Renderer2D::Flush();
 

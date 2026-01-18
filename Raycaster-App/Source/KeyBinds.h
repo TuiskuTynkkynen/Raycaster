@@ -31,6 +31,8 @@ namespace KeyBinds {
         Backward,
         Left,
         Right,
+        LookUp,
+        LookDown,
         Interact,
         UseItem,
         Item0,
@@ -53,6 +55,8 @@ inline constinit std::array<KeyBind, KeyBinds::ENUMERATION_MAX + 1> s_KeyBinds =
     keyBinds[KeyBinds::Backward]    = KeyBind("Move Backward",  RC_KEY_S);
     keyBinds[KeyBinds::Left]        = KeyBind("Turn Left",      RC_KEY_A);
     keyBinds[KeyBinds::Right]       = KeyBind("Turn Right",     RC_KEY_D);
+    keyBinds[KeyBinds::LookUp]      = KeyBind("Look Up",        RC_KEY_UP);
+    keyBinds[KeyBinds::LookDown]    = KeyBind("Look Down",      RC_KEY_DOWN);
     keyBinds[KeyBinds::Interact]    = KeyBind("Interact",       RC_KEY_SPACE);
     keyBinds[KeyBinds::UseItem]     = KeyBind("Use Item",       RC_KEY_Q);
     keyBinds[KeyBinds::Item0]       = KeyBind("Empty hand",     RC_KEY_0);

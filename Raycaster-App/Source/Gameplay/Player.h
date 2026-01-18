@@ -26,7 +26,8 @@ public:
     void PickUp(Item item);
 
     inline const glm::vec3 GetPosition() const { return m_Position; }
-    inline const float GetRotation() const { return m_Rotation; }
+    inline const float GetYaw() const { return m_Rotation.x; }
+    inline const float GetPitch() const { return m_Rotation.y; }
     inline const glm::vec3 GetScale() const { return m_Scale; }
     
     inline const float GetHealth() const { return m_Health; }
@@ -51,11 +52,11 @@ private:
 
     glm::vec3 m_Position{};
     glm::vec3 m_Scale{};
-    float m_Rotation = 0.0f;
+    glm::vec2 m_Rotation{};
     float m_ViewBob = 0.0f;
 
     float m_LateralSpeed = 0.0f;
-    float m_RotationalSpeed = 0.0f;
+    glm::vec2 m_RotationalSpeed{};
 
     float m_Health = MaxHealth;
 

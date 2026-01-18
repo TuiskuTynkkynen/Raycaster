@@ -19,7 +19,7 @@ void RaycasterScene::Init(){
     m_Tiles.push_back(tile);
 
     m_Camera = std::make_unique<RaycasterCamera>(m_Player.GetPosition(), m_Player.GetRotation(), glm::sqrt(2.0f) / glm::sqrt((float)m_Map.GetSize()));
-    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.GetRotation(), 0.0f);
+    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.GetYaw()-m_Player.GetPitch());
 
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
 }
@@ -129,7 +129,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     m_Player.UpdateRender(m_Renderables);
 
     m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetRotation());
-    m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, m_Player.GetPosition().z, m_Player.GetPosition().y), -m_Player.GetRotation());
+    m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, m_Player.GetPosition().z, m_Player.GetPosition().y), -m_Player.GetYaw(), m_Player.GetPitch());
 
     m_Projectiles.Update(deltaTime, m_Map);
     for (size_t i = 0; i < m_Projectiles.Count(); i++) {
