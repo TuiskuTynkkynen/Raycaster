@@ -18,7 +18,7 @@ void RaycasterScene::Init(){
     m_Tiles.push_back(tile);
     m_Tiles.push_back(tile);
 
-    m_Camera = std::make_unique<RaycasterCamera>(m_Player.GetPosition(), m_Player.GetRotation(), glm::sqrt(2.0f) / glm::sqrt((float)m_Map.GetSize()));
+    m_Camera = std::make_unique<RaycasterCamera>(m_Player.GetPosition(), glm::sqrt(2.0f) / glm::sqrt((float)m_Map.GetSize()), m_Player.GetYaw(), m_Player.GetPitch());
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.GetYaw()-m_Player.GetPitch());
 
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
@@ -97,7 +97,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     m_Map.Update(deltaTime, m_Lights);
 
     if (m_Player.ShouldInteract()) {
-        auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetRotation());
+        auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetYaw());
 
         switch (result.GetType()) {
         case InteractionResult::Type::Debug:
@@ -128,7 +128,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     m_Player.Update(m_Walls, m_Map.GetDoors(), deltaTime);
     m_Player.UpdateRender(m_Renderables);
 
-    m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetRotation());
+    m_Camera->UpdateCamera(m_Player.GetPosition(), m_Player.GetYaw(), m_Player.GetPitch());
     m_Camera3D->UpdateCamera(glm::vec3(m_Player.GetPosition().x, m_Player.GetPosition().z, m_Player.GetPosition().y), -m_Player.GetYaw(), m_Player.GetPitch());
 
     m_Projectiles.Update(deltaTime, m_Map);
