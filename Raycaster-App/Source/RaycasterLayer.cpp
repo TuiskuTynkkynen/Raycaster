@@ -14,19 +14,15 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     Core::Renderer2D::BeginScene(identity);
 
     glm::vec4 colour, colour1;
-    glm::vec3 rayPos(0.0f);
     glm::vec3 rayScale(0.0f, RaycastRenderer::GetRayWidth(), 0.0f);
     glm::vec2 texScale(0.0f);
 
     const auto& floors = scene.GetFloors();
     float rot = -scene.GetPlayer().GetYaw() + 90.0f;
-    float offset = (0.5f - scene.GetPlayer().GetPosition().z);
     for (const auto& ray : floors) {
-        rayPos.x = ray.Position.x;
-        rayPos.y = ray.Position.y + offset * 2.0f * glm::abs(ray.Position.y);
-
+        glm::vec3 rayPos = glm::vec3(ray.Position, 0.0f);
         rayScale.x = ray.Length;
-        texScale.x = ray.Length * (m_ViewPortWidth / (2.0f * m_ViewPortHeight * glm::abs(ray.Position.y)));
+        texScale.x = ray.Length * 0.5f * ray.Scale;
 
         colour = glm::vec4(ray.BrightnessEnd);
         colour.a = 1.0f;
@@ -42,8 +38,7 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
 
     std::span<const Ray> rays = scene.GetRays();
     for (const auto& ray : rays) {
-        rayPos.x = ray.Position.x;
-        rayPos.y = ray.Position.y;
+        glm::vec3 rayPos = glm::vec3(ray.Position, 0.0f);
         rayScale.y = ray.Scale;
 
         colour = glm::vec4(ray.Brightness);

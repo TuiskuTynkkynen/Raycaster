@@ -156,7 +156,8 @@ void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera)
         }
 
         m_Rays[i].Position.x = cameraX + 0.5f * m_RayWidth;
-        m_Rays[i].Position.y = glm::floorMultiple((0.5f - camera.GetPosition().z) * m_Rays[i].Scale + 0.5f * m_RayWidth, m_RayWidth);
+        const float height = (0.5f - camera.GetPosition().z) * m_Rays[i].Scale - camera.GetDirection().z;
+        m_Rays[i].Position.y = glm::floorMultiple(height + 0.5f * m_RayWidth, m_RayWidth);
         m_Rays[i].Atlasindex = hit.Material;
 
         m_Rays[i].Brightness = LightBilinear(hit.WorldPosition, map);
@@ -174,9 +175,13 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
     const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
     glm::vec3 rayDirection = camera.GetDirection() * reciprocalAspectRatio - camera.GetPlane();
 
-    float sign = (ceiling ? 1.f : -1.f);
-    float density = 1.0f + 2.0f * sign * (0.5f - camera.GetPosition().z);
-    for (uint32_t i = 0; i < m_RayCount / 2; i++) {
+    const float sign = (ceiling ? 1.f : -1.f);
+    const float offset = (0.5f - camera.GetPosition().z);
+    const float density = 1.0f + 2.0f * sign * offset;
+
+    const int32_t startIndex = static_cast<int32_t>(sign * -camera.GetDirection().z * m_RayCount / 2);
+    const int32_t endIndex = glm::min(startIndex + static_cast<int32_t>(m_RayCount), static_cast<int32_t>(m_RayCount) / 2);
+    for (int32_t i = startIndex; i < endIndex; i++) {
         float scale = density * m_RayCount / (m_RayCount - (2.0f * i + 1)) * m_AspectRatio;
         float currentHeight = 1.0f / scale;
         float prevPos = -1.0f;
@@ -297,8 +302,10 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
                 Floor& floor = m_Floors.emplace_back();
 
                 floor.Position.x = 0.5f * length + position;
-                floor.Position.y = sign * currentHeight * m_AspectRatio;
+                floor.Position.y = sign * currentHeight * m_AspectRatio + offset * 2.0f * currentHeight * m_AspectRatio - camera.GetDirection().z;
+
                 floor.Length = length;
+                floor.Scale = scale;
 
                 floor.TexturePosition = worldPosition;
                 floor.AtlasIndex = hit.Material;
@@ -347,6 +354,7 @@ void RaycastRenderer::RenderSprites(const Map& map, const Player& player, Render
     uint32_t rayIndex = m_RayCount;
     size_t space = m_Rays.size();
     const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
+    const float pitchOffset = glm::tan(glm::radians(player.GetPitch()));
 
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(player.GetYaw() + 90.0f));
 
@@ -386,7 +394,7 @@ void RaycastRenderer::RenderSprites(const Map& map, const Player& player, Render
         float distance = position.y;
         position.x *= -reciprocalAspectRatio / distance;
         scale /= distance;
-        position.y = position.z / distance;
+        position.y = position.z / distance - pitchOffset;
 
         if (m_SnappingEnabled) {
             position.y = glm::floorMultiple(position.y + 0.5f * m_RayWidth, m_RayWidth);

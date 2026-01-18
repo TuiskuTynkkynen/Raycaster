@@ -65,6 +65,7 @@ struct Item {
 struct Floor {
     glm::vec2 Position{};
     float Length = 0.0f;
+    float Scale = 0.0f;
 
     glm::vec2 TexturePosition{};
     uint16_t BottomAtlasIndex = 0;
