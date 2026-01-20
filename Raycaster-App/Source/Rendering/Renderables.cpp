@@ -34,7 +34,7 @@ void Renderables::ResetDynamic() {
     m_SpriteBack = -1;
 }
 
-Core::Model& Renderables::GetNextModel(){
+Model& Renderables::GetNextModel(){
     m_ModelBack++;
 
     if(m_ModelBack >= m_Models.size()) {

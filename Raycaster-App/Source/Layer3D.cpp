@@ -17,7 +17,7 @@ void Layer3D::OnUpdate(Core::Timestep deltaTime) {
     Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
     Core::Renderer::BeginScene(viewPerspective);
 
-    std::span<const Core::Model> models = scene.GetModels();
+    std::span<const Model> models = scene.GetModels();
 
     for (const Core::Model& model : models) {
         Core::Renderer::DrawModel(model);

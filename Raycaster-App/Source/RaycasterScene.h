@@ -26,7 +26,7 @@ public:
     inline std::span<const Floor> GetFloors() const { return m_Renderer.GetFloors(); }
     inline std::span<const Line> GetLines() const { return m_Renderer.GetLines(); }
     inline std::span<const Tile> GetTiles() const { return m_Tiles; }
-    inline std::span<const Core::Model> GetModels() const { return m_Renderables.GetModels(); }
+    inline std::span<const Model> GetModels() const { return m_Renderables.GetModels(); }
 
     inline const Player& GetPlayer() const { return m_Player; }
     inline const RaycasterCamera& GetCamera() const { return *m_Camera; }
