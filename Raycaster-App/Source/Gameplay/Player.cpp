@@ -71,8 +71,10 @@ void Player::UpdateRender(Renderables& renderables) {
     sprite.FlipTexture = false;
 
     //Update on 3D-layer
-    glm::vec2 index = glm::vec2((atlasIndex) % ATLASWIDTH, (atlasIndex) / ATLASWIDTH);
+    model.Position = sprite.Position;
+    model.Scale = sprite.Scale;
     model.Materials.front()->Parameters.back().Value = glm::vec2(0.0f, 0.0f);
+    glm::vec2 index = glm::vec2((atlasIndex) % ATLASWIDTH, (atlasIndex) / ATLASWIDTH);
     model.Materials.front()->Parameters.front().Value = index;
 }
 

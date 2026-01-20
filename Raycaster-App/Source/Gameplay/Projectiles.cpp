@@ -162,8 +162,10 @@ void Projectiles::UpdateRender(Renderables& renderables, glm::vec2 playerPositio
         sprite.FlipTexture = flipTexture;
 
         //Update on 3D-layer
-        glm::vec2 index = glm::vec2((atlasIndex) % ATLASWIDTH, (atlasIndex) / ATLASWIDTH);
+        model.Position = sprite.Position;
+        model.Scale = sprite.Scale;
         model.Materials.front()->Parameters.back().Value = glm::vec2(flipTexture, 0.0f);
+        glm::vec2 index = glm::vec2((atlasIndex) % ATLASWIDTH, (atlasIndex) / ATLASWIDTH);
         model.Materials.front()->Parameters.front().Value = index;
     }
 }

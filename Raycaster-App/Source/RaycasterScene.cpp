@@ -158,6 +158,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     m_Interactables.UpdateRender(m_Renderables);
 
     m_Renderer.Render(m_Map, *m_Camera.get(), m_Player, m_Renderables);
+    m_Renderables.UpdateDynamicRender(m_Player.GetYaw() - 90.0f);
     
     if (m_Player.GetHealth() <= 0.0f) {
         m_State = State::Dead;

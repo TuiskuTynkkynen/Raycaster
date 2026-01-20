@@ -348,7 +348,6 @@ void RaycastRenderer::RenderFloors(const Map& map, const RaycasterCamera& camera
 
 void RaycastRenderer::RenderSprites(const Map& map, const Player& player, Renderables& renderables) {
     auto spriteObjects = renderables.GetSprites();
-    auto models = renderables.GetDynamicModels();
 
     size_t count = spriteObjects.size();
     uint32_t rayIndex = m_RayCount;
@@ -359,16 +358,7 @@ void RaycastRenderer::RenderSprites(const Map& map, const Player& player, Render
     glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(player.GetYaw() + 90.0f));
 
     for (size_t index = 0; index < count; index++) {
-        auto& model = models[index];
         auto& sprite = spriteObjects[index];
-
-        //3D
-        glm::vec3 position3D(sprite.Position.x, sprite.Position.z, sprite.Position.y);
-        model.Transform = glm::translate(glm::mat4(1.0f), position3D);
-        model.Transform = glm::rotate(model.Transform, glm::radians(player.GetYaw() - 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        model.Transform = glm::scale(model.Transform, sprite.Scale);
-
-        //Transform for 2D
         sprite.Position = sprite.Position - player.GetPosition();
         sprite.Position = matrix * sprite.Position;
     }

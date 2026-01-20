@@ -87,6 +87,14 @@ void Renderables::ResetStaticModels() {
     m_StaticModelCount = 0;
 }
 
+void Renderables::UpdateDynamicRender(float billboardAngle) {
+    for (auto& model : GetDynamicModels()) {
+        model.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(model.Position.x, model.Position.z, model.Position.y));
+        model.Transform = glm::rotate(model.Transform, glm::radians(billboardAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+        model.Transform = glm::scale(model.Transform, model.Scale);
+    }
+}
+
 std::shared_ptr<Core::Mesh> Renderables::CreateBillboardMesh() {
     std::vector<float> vertices;
     std::vector<uint32_t> indices;

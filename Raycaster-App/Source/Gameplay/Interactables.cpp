@@ -268,8 +268,10 @@ void Interactables::UpdateRender(Renderables& renderables) {
         sprite.WorldPosition = sprite.Position;
 
         //Update on 3D-layer
-        glm::vec2 index = glm::vec2((interactable.AtlasIndex) % ATLASWIDTH, (interactable.AtlasIndex) / ATLASWIDTH);
+        model.Position = sprite.Position;
+        model.Scale = sprite.Scale;
         model.Materials.front()->Parameters.back().Value = glm::vec2(0.0f);
+        glm::vec2 index = glm::vec2((interactable.AtlasIndex) % ATLASWIDTH, (interactable.AtlasIndex) / ATLASWIDTH);
         model.Materials.front()->Parameters.front().Value = index;
     }
 }

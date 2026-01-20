@@ -130,8 +130,10 @@ void Enemies::UpdateRender(std::span<Tile> tiles, Renderables& renderables) {
         tiles[i].Posistion.y = enemy.Position.y;
 
         //Update on 3D-layer
-        glm::vec2 index = glm::vec2((enemy.AtlasIndex) % ATLASWIDTH, (enemy.AtlasIndex) / ATLASWIDTH);
+        model.Position = sprite.Position;
+        model.Scale = sprite.Scale;
         model.Materials.front()->Parameters.back().Value = glm::vec2((flip ? 0.0f : 1.0f), 0.0f);
+        glm::vec2 index = glm::vec2((enemy.AtlasIndex) % ATLASWIDTH, (enemy.AtlasIndex) / ATLASWIDTH);
         model.Materials.front()->Parameters.front().Value = index;
     }
 }

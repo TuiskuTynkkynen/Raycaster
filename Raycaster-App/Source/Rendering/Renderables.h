@@ -21,6 +21,7 @@ public:
     void Shutdown();
     
     void ResetDynamic();
+    void UpdateDynamicRender(float billboardAngle);
 
     Model& GetNextModel();
     Sprite& GetNextSprite();
