@@ -85,6 +85,7 @@ void RaycasterScene::Reinit() {
 
     m_Renderables.Init(shader, textureAtlas);
     m_Renderables.PushStaticModel(m_Map.CreateModel(m_Walls, textureAtlas, shader)); // Map
+    m_Renderables.PushStaticModel(); // Hand / Held Item
 }
 
 void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
@@ -159,7 +160,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
 
     m_Renderer.Render(m_Map, *m_Camera.get(), m_Player, m_Renderables);
     m_Renderables.UpdateDynamicRender(m_Player.GetYaw() - 90.0f);
-    
+
     if (m_Player.GetHealth() <= 0.0f) {
         m_State = State::Dead;
     }

@@ -4,6 +4,8 @@
 
 #include "Core/Debug/Assert.h"
 
+#include <glm/gtx/euler_angles.hpp>
+
 #include <cmath>
 #include <limits>
 #include <type_traits>
@@ -54,16 +56,14 @@ void Player::UpdateRender(Renderables& renderables) {
         return;
     }
 
-    auto& sprite = renderables.GetNextSprite();
-    auto& model = renderables.GetNextModel();
-
     uint32_t atlasIndex = heldItem.UseAnimation.GetFrame(m_AnimationProgress);
+    float epsilon = 1e-3f;
 
     // Update on Raycaster-layer
-    float epsilon = 1e-3f;
-    sprite.Position = glm::vec3(m_Position.x, m_Position.y, m_Position.z - (1.0f - heldItem.Scale) * epsilon);
-    sprite.Position.x += glm::cos(glm::radians(m_Rotation.x)) * epsilon;
-    sprite.Position.y += -glm::sin(glm::radians(m_Rotation.x)) * epsilon;
+    auto& sprite = renderables.GetNextSprite();
+    sprite.Position.x = m_Position.x + glm::cos(glm::radians(m_Rotation.x)) * epsilon;
+    sprite.Position.y = m_Position.y - glm::sin(glm::radians(m_Rotation.x)) * epsilon;
+    sprite.Position.z = m_Position.z + (glm::tan(glm::radians(m_Rotation.y)) - 1.0f + heldItem.Scale) * epsilon;
     sprite.WorldPosition = sprite.Position;
 
     sprite.Scale = glm::vec3(2.0f * heldItem.Scale * epsilon);
@@ -71,8 +71,17 @@ void Player::UpdateRender(Renderables& renderables) {
     sprite.FlipTexture = false;
 
     //Update on 3D-layer
-    model.Position = sprite.Position;
-    model.Scale = sprite.Scale;
+    RC_ASSERT(renderables.GetStaticModelCount() >= 1);
+    auto& model = renderables.GetStaticModels()[1];
+
+    glm::mat4 rotation = glm::eulerAngleYX(glm::radians(m_Rotation.x - 90.f), glm::radians(m_Rotation.y));
+    glm::vec3 position3D(m_Position.x, m_Position.z, m_Position.y);
+    glm::vec3 offset = rotation * glm::vec4(0.f, -(1.0f - heldItem.Scale) * epsilon, -epsilon, 0.0f);
+    
+    model.Transform = glm::translate(glm::mat4(1.0f), position3D + offset);
+    model.Transform *= rotation;
+    model.Transform = glm::scale(model.Transform, sprite.Scale);
+
     model.Materials.front()->Parameters.back().Value = glm::vec2(0.0f, 0.0f);
     glm::vec2 index = glm::vec2((atlasIndex) % ATLASWIDTH, (atlasIndex) / ATLASWIDTH);
     model.Materials.front()->Parameters.front().Value = index;
