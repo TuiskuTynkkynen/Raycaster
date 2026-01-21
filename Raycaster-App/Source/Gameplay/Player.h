@@ -55,7 +55,7 @@ private:
     glm::vec2 m_Rotation{};
     float m_ViewBob = 0.0f;
 
-    float m_LateralSpeed = 0.0f;
+    glm::vec2 m_LateralSpeed{};
     glm::vec2 m_RotationalSpeed{};
 
     float m_Health = MaxHealth;

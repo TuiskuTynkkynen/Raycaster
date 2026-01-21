@@ -58,7 +58,7 @@ void Player::UpdateRender(Renderables& renderables) {
 
     uint32_t atlasIndex = heldItem.UseAnimation.GetFrame(m_AnimationProgress);
     float epsilon = 1e-3f;
-
+    
     // Update on Raycaster-layer
     auto& sprite = renderables.GetNextSprite();
     sprite.Position.x = m_Position.x + glm::cos(glm::radians(m_Rotation.x)) * epsilon;
@@ -120,15 +120,21 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
     switch (action.value()) {
         using enum KeyBinds::Name;
     case Forward:
-        m_LateralSpeed = 1.0f;
+        m_LateralSpeed.x = 1.0f;
         return true;
     case Backward:
-        m_LateralSpeed = -1.0f;
+        m_LateralSpeed.x = -1.0f;
         return true;
     case Left:
-        m_RotationalSpeed.x = 1.0f;
+        m_LateralSpeed.y = -1.0f;
         return true;
     case Right:
+        m_LateralSpeed.y = 1.0f;
+        return true;
+    case LookLeft:
+        m_RotationalSpeed.x = 1.0f;
+        return true;
+    case LookRight:
         m_RotationalSpeed.x = -1.0f;
         return true;
     case LookUp:
@@ -166,10 +172,14 @@ bool Player::OnKeyEvent(Core::KeyReleased event) {
         using enum KeyBinds::Name;
     case Forward:
     case Backward:
-        m_LateralSpeed = 0.0f;
+        m_LateralSpeed.x = 0.0f;
         return true;
     case Left:
     case Right:
+        m_LateralSpeed.y = 0.0f;
+        return true;
+    case LookLeft:
+    case LookRight:
         m_RotationalSpeed.x = 0.0f;
         return true;
     case LookUp:
@@ -185,11 +195,16 @@ void Player::Move(std::span<const LineCollider> walls, std::span<const LineColli
     const float MaxLateralSpeed = 2.0f;
     const float MaxRotationalSpeed = 180.0f;
 
-    glm::vec3 front(0.0f);
-    front.x = glm::cos(glm::radians(m_Rotation.x));
-    front.y = -glm::sin(glm::radians(m_Rotation.x)); //player y is flipped (array index)
+    
+    const float speed = glm::length(m_LateralSpeed);
+    if (speed != 0.0f) {
+        const float cos = glm::cos(glm::radians(m_Rotation.x));
+        const float sin = -glm::sin(glm::radians(m_Rotation.x)); 
 
-    m_Position += front * m_LateralSpeed * MaxLateralSpeed * deltaTime.GetSeconds();
+        auto movement = m_LateralSpeed * MaxLateralSpeed * deltaTime.GetSeconds();
+        m_Position.x += movement.x * cos - movement.y * sin;
+        m_Position.y += movement.x * sin + movement.y * cos;
+    }
     m_Rotation += m_RotationalSpeed * MaxRotationalSpeed * deltaTime.GetSeconds();
     m_Rotation.y = glm::clamp(m_Rotation.y, -89.0f, 89.0f);
 
@@ -203,9 +218,9 @@ void Player::Move(std::span<const LineCollider> walls, std::span<const LineColli
 
     m_Position.x += col.x;
     m_Position.y += col.y;
-    m_ViewBob += m_LateralSpeed * MaxLateralSpeed * deltaTime.GetSeconds();
+    m_ViewBob += speed * MaxLateralSpeed * deltaTime.GetSeconds();
     constexpr float bobSpeed = 6.0f, bobAmplitude = 1.0f / 48.0f;
-    m_Position.z = 0.5f + m_LateralSpeed * bobAmplitude * glm::sin(bobSpeed * m_ViewBob);
+    m_Position.z = 0.5f + speed * bobAmplitude * glm::sin(bobSpeed * m_ViewBob);
 }
 
 void Player::UseItem(Core::Timestep deltaTime) {
