@@ -206,7 +206,7 @@ void Player::Move(std::span<const LineCollider> walls, std::span<const LineColli
         m_Position.y += movement.x * sin + movement.y * cos;
     }
     m_Rotation += m_RotationalSpeed * MaxRotationalSpeed * deltaTime.GetSeconds();
-    m_Rotation.y = glm::clamp(m_Rotation.y, -89.0f, 89.0f);
+    m_Rotation.y = glm::clamp(m_Rotation.y, -65.0f, 65.0f);
 
     glm::vec2 col = Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), walls, Width * 0.5f);
     col += Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), doors, Width * 0.5f);
