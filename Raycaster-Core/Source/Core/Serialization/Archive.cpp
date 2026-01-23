@@ -19,7 +19,7 @@ namespace Core::Serialization {
         }
 
         using ios = std::ios_base;
-        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(m_Path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
+        m_Stream = std::make_unique<std::basic_fstream<char>>(m_Path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
         m_Size = GetPosition() + 1;
         m_Stream->seekp(0);
     }
@@ -34,7 +34,7 @@ namespace Core::Serialization {
         }
 
         using ios = std::ios_base;
-        m_Stream = std::make_unique<std::basic_fstream<std::byte>>(m_Path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
+        m_Stream = std::make_unique<std::basic_fstream<char>>(m_Path.c_str(), ios::binary | ios::ate | ios::in | ios::out);
         m_Size = GetPosition() + 1;
         m_Stream->seekp(0);
     }
@@ -60,12 +60,12 @@ namespace Core::Serialization {
     }
 
     bool Archive::ReadBytes(std::span<std::byte> buffer) {
-        m_Stream->read(buffer.data(), buffer.size());
+        m_Stream->read(reinterpret_cast<char*>(buffer.data()), buffer.size());
         return m_Stream->gcount() == buffer.size();
     }
 
     bool Archive::WriteBytes(std::span<const std::byte> data) {
-        m_Stream->write(data.data(), data.size());
+        m_Stream->write(reinterpret_cast<const char*>(data.data()), data.size());
 
         if (auto size = m_Stream->tellp(); size != std::streampos(-1)) {
             m_Size = std::max(m_Size, GetPosition() + 1);

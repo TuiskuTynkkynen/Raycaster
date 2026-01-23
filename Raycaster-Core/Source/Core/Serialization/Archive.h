@@ -40,7 +40,7 @@ namespace Core::Serialization {
         void TruncateFile();
     private:
         std::filesystem::path m_Path;
-        std::unique_ptr<std::basic_fstream<std::byte>> m_Stream;
+        std::unique_ptr<std::basic_fstream<char>> m_Stream;
         size_t m_Size;
     };
 }
