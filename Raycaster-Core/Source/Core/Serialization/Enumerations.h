@@ -61,7 +61,7 @@ namespace Core::Serialization {
     }
 
     template <SerializableEnumeration Enum>
-    inline static bool Serialize(const Enum& value, Archive& archive) {
+    inline bool Serialize(const Enum& value, Archive& archive) {
         auto name = GetEnumName(value);
         if (!name || !archive.Write(name.value().size())) {
             return false;
@@ -71,7 +71,7 @@ namespace Core::Serialization {
     }
 
     template <SerializableEnumeration Enum>
-    inline static std::optional<Enum> Deserialize(Archive& archive) {
+    inline std::optional<Enum> Deserialize(Archive& archive) {
         return archive.Read<std::string>()
             .and_then(GetEnumValue<Enum>);
     }
