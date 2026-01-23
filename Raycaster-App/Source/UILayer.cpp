@@ -133,7 +133,7 @@ Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, {
     Core::UI::BeginContainer({ 0.75f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
         if (Core::UI::Button("Save", { 0.3f, 1.0f }, m_SavedKeyBinds ? deselectedColours : Core::UI::DefaultColours, m_SavedKeyBinds ? selectedColours : Core::UI::DefaultTextColours) && !m_SavedKeyBinds) {
             Core::Serialization::Archive arch(std::string_view("settings.bin"));
-            if (m_SavedKeyBinds = KeyBinds::Serialize(arch)) {
+            if ((m_SavedKeyBinds = KeyBinds::Serialize(arch))) {
                 arch.TruncateFile();
             }  else {
                 RC_INFO("Key binding deserialization wan unsuccessful");
