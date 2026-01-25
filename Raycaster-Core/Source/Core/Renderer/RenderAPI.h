@@ -22,5 +22,7 @@ namespace Core::RenderAPI {
 
     void SetScissor(bool enabed);
     void SetScissorRectangle(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height);
+
+    int32_t GetMaxMultisampleCount();
 }
 

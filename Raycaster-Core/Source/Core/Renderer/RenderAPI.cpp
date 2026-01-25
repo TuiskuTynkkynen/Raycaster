@@ -71,4 +71,11 @@ namespace Core {
     void RenderAPI::SetScissorRectangle(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height) {
         glScissor(offsetX, offsetY, width, height);
     }
+
+
+    int32_t RenderAPI::GetMaxMultisampleCount() {
+        GLint result;
+        glGetIntegerv(GL_MAX_SAMPLES, &result);
+        return result;
+    }
 }
