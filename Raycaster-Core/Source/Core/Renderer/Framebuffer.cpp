@@ -1,0 +1,121 @@
+#include "Framebuffer.h"
+
+#include "RenderAPI.h"
+#include "Core/Debug/Debug.h"
+
+#include <glad/gl.h>
+
+namespace Core {
+    static constexpr GLenum GetInternalFormat(Framebuffer::ColorFormat format) {
+        switch (format) {
+            using enum Framebuffer::ColorFormat;
+        case RGB8: return GL_RGB8;
+        case RG8: return GL_RG8;
+        case R8: return GL_R8;
+        case RGB16: return GL_RGB16;
+        case RG16: return GL_RG16;
+        case R16: return GL_R16;
+        case RGB16F: return GL_RGB16F;
+        case RG16F: return GL_RG16F;
+        case R16F: return GL_R16F;
+        case RGB32F: return GL_RGB32F;
+        case RG32F: return GL_RG32F;
+        case R32F: return GL_R32F;    
+        }
+
+        RC_ASSERT(false); // This should never be reached
+        return 0;
+    }
+
+    Framebuffer::Framebuffer(uint32_t width, uint32_t height, ColorFormat format, bool hasDepthStencil) 
+        : m_Size(width, height) {
+        glCreateFramebuffers(1, &m_Buffer);
+        
+        glCreateTextures(GL_TEXTURE_2D, 1, &m_Color);
+        glTextureStorage2D(m_Color, 1, GetInternalFormat(format), width, height);
+
+        glTextureParameteri(m_Color, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(m_Color, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(m_Color, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(m_Color, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glNamedFramebufferTexture(m_Buffer, GL_COLOR_ATTACHMENT0, m_Color, 0);
+
+        if (hasDepthStencil) {
+            glCreateRenderbuffers(1, &m_DepthStencil);
+            glNamedRenderbufferStorage(m_DepthStencil, GL_DEPTH24_STENCIL8, width, height);
+            glNamedFramebufferRenderbuffer(m_Buffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthStencil);
+        }
+
+        if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            RC_WARN("Framebuffer creation failed.");
+        }
+    }
+
+    Framebuffer::~Framebuffer() {
+        glDeleteTextures(1, &m_Color);
+        glDeleteRenderbuffers(1, &m_DepthStencil);
+        glDeleteFramebuffers(1, &m_Buffer);
+    }
+
+    void Framebuffer::Activate() {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_Buffer);
+    }
+
+    void Framebuffer::Deactivate() {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    void Framebuffer::Blit(glm::uvec2 outputOffset, glm::uvec2 outputSize) {
+        Blit({ 0, 0 }, m_Size, outputOffset, outputSize);
+    }
+
+    void Framebuffer::Blit(glm::uvec2 offset, glm::uvec2 size, glm::uvec2 outputOffset, glm::uvec2 outputSize) {
+        glBlitNamedFramebuffer(m_Buffer, 0, offset.x, offset.y, offset.x + size.x, offset.y + size.y, outputOffset.x, outputOffset.y, outputOffset.x + outputSize.x, outputOffset.y + outputSize.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    }
+
+    MultisampleFramebuffer::MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format, bool hasDepthStencil)
+        : m_Resolved(width, height, format, false) {
+        if (!sampleCount || sampleCount > RenderAPI::GetMaxMultisampleCount()) {
+            RC_ERROR("Multisample Framebuffer sample count must be greater than 0 and less than or equal to RenderAPI::GetMaxMultisampleCount");
+        }
+        glCreateFramebuffers(1, &m_Buffer);
+        
+        glCreateRenderbuffers(1, &m_Color);
+        glNamedRenderbufferStorageMultisample(m_Color, sampleCount, GetInternalFormat(format), width, height);
+        glNamedFramebufferRenderbuffer(m_Buffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_Color);
+        
+        if (hasDepthStencil) {
+            glCreateRenderbuffers(1, &m_DepthStencil);
+            glNamedRenderbufferStorageMultisample(m_DepthStencil, sampleCount, GL_DEPTH24_STENCIL8, width, height);
+            glNamedFramebufferRenderbuffer(m_Buffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthStencil);
+        }
+
+        if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            RC_WARN("Multisample Framebuffer creation failed.");
+        }
+    }
+
+    MultisampleFramebuffer::~MultisampleFramebuffer() {
+        glDeleteTextures(1, &m_Color);
+        glDeleteRenderbuffers(1, &m_DepthStencil);
+        glDeleteFramebuffers(1, &m_Buffer);
+    }
+
+    void MultisampleFramebuffer::Activate() {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_Buffer);
+    }
+
+    void MultisampleFramebuffer::Deactivate() {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    void MultisampleFramebuffer::Blit(glm::uvec2 outputOffset, glm::uvec2 outputSize) {
+        Blit({ 0, 0 }, m_Resolved.GetSize(), outputOffset, outputSize);
+    }
+
+    void MultisampleFramebuffer::Blit(glm::uvec2 offset, glm::uvec2 size, glm::uvec2 outputOffset, glm::uvec2 outputSize) {
+        glBlitNamedFramebuffer(m_Buffer, m_Resolved.GetBuffer(), offset.x, offset.y, offset.x + size.x, offset.y + size.y, offset.x, offset.y, offset.x + size.x, offset.y + size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBlitNamedFramebuffer(m_Resolved.GetBuffer(), 0, offset.x, offset.y, offset.x + size.x, offset.y + size.y, outputOffset.x, outputOffset.y, outputOffset.x + outputSize.x, outputOffset.y + outputSize.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    }
+}
