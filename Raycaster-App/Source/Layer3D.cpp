@@ -10,18 +10,23 @@ void Layer3D::OnAttach() {
 void Layer3D::OnUpdate(Core::Timestep deltaTime) {
     RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
     const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
-
+    
+    m_Framebuffer.Activate();
+    Core::RenderAPI::Clear();
+    Core::RenderAPI::SetViewPort(0, 0, 500, 500);
+    
     glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), m_ViewPortWidth / (float)m_ViewPortHeight, 5e-4f, 500.0f)
         * scene.GetCamera3D().GetViewMatrix();
-
-    Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
+    
     Core::Renderer::BeginScene(viewPerspective);
-
+    
     std::span<const Model> models = scene.GetModels();
-
     for (const Core::Model& model : models) {
         Core::Renderer::DrawModel(model);
     }
+    
+    m_Framebuffer.Deactivate();
+    m_Framebuffer.Blit(glm::uvec2(m_ViewPortWidth, 0), glm::uvec2(m_ViewPortWidth, m_ViewPortHeight));
 }
 
 void Layer3D::OnEvent(Core::Event& event) {
