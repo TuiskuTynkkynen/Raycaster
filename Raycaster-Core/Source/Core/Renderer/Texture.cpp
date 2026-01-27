@@ -1,4 +1,5 @@
 #include "Texture.h"
+#include "RenderAPI.h"
 #include "Core/Debug/Debug.h"
 #include "Platform.h"
 
@@ -20,7 +21,7 @@ namespace Core {
             return GL_CLAMP_TO_EDGE;
         }
 
-        RC_ASSERT("This should not be reached");
+        RC_ASSERT(false); // This should not be reached
         return 0;
     }
 
@@ -32,7 +33,7 @@ namespace Core {
             return GL_LINEAR;
         }
 
-        RC_ASSERT("This should not be reached");
+        RC_ASSERT(false); // This should not be reached
         return 0;
     }
 
@@ -46,7 +47,7 @@ namespace Core {
             return (texture == Texture2D::Filter::Linear) ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR;
         }
 
-        RC_ASSERT("This should not be reached");
+        RC_ASSERT(false); // This should not be reached
         return 0;
     }
 
@@ -133,7 +134,11 @@ namespace Core {
     }
 
     void Texture2D::Activate(uint32_t unitIndex) {
-        if (unitIndex > 15) { unitIndex = 0; }
+        if (std::cmp_greater_equal(unitIndex, RenderAPI::GetMaxTextureUnitCount())) {
+            RC_WARN("Texture unit index must be less than or equal to RenderAPI::GetMaxTextureUnitCount");
+            return;
+        }
+
         glActiveTexture(GL_TEXTURE0 + unitIndex);
         glBindTexture(GL_TEXTURE_2D, m_RendererID);
     }
