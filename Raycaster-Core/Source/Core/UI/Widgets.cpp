@@ -956,11 +956,11 @@ namespace Core::UI::Widgets {
         }
 
         float maxPosition = (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
-        double nextValue = (Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min);
+        double nextValue = (Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * maxPosition) / (current.Size[m_SliderDimension] * maxPosition) * (m_Max - m_Min) + m_Min;
         if constexpr (std::is_integral<T>::value) {
             nextValue = glm::round(nextValue);
         }
-    
+
         m_Value = glm::clamp<T>(static_cast<T>(nextValue), m_Min, m_Max);
     }
 
@@ -973,7 +973,7 @@ namespace Core::UI::Widgets {
 
         glm::vec3 sliderPosition(0.0f);
         float maxPosition = current.Size[m_SliderDimension] * (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
-        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + maxPosition * glm::clamp(static_cast<float>(m_Value) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
+        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + maxPosition * glm::clamp(static_cast<float>(m_Value - m_Min) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
         sliderPosition[1 - m_SliderDimension] = current.Position[1 - m_SliderDimension];
         
         glm::vec3 sliderSize(0.0f);
@@ -1002,7 +1002,7 @@ namespace Core::UI::Widgets {
             return;
         }
 
-        double nextValue = (Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min);
+        double nextValue = (Internal::Input->MouseState.Position[m_SliderDimension] - current.Position[m_SliderDimension] + current.Size[m_SliderDimension] * 0.5f * (1.0f - m_SliderSize[m_SliderDimension])) / (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * (m_Max - m_Min) + m_Min;
         if constexpr (std::is_integral<T>::value) {
             nextValue = glm::round(nextValue);
         }
@@ -1028,7 +1028,7 @@ namespace Core::UI::Widgets {
 
         //Slider
         glm::vec3 sliderPosition(0.0f);
-        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * glm::clamp(static_cast<float>(m_Value) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
+        sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * glm::clamp(static_cast<float>(m_Value + m_Min) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
         sliderPosition[1 - m_SliderDimension] = current.Position[1 - m_SliderDimension];
 
         transform = glm::translate(glm::mat4(1.0f), sliderPosition);
