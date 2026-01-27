@@ -1,11 +1,42 @@
 #include "Framebuffer.h"
 
 #include "RenderAPI.h"
+#include "VertexArray.h"
 #include "Core/Debug/Debug.h"
 
 #include <glad/gl.h>
 
+struct FullsceenQuad {
+    Core::VertexBuffer VBO;
+    Core::VertexArray VAO;
+
+    FullsceenQuad(const void* vertices, uint32_t size, Core::VertexBufferLayout layout) : VBO(vertices, size) {
+        VAO.AddBuffer(VBO, layout);
+    }
+} static* s_RenderQuad = nullptr;
+
 namespace Core {
+    void Framebuffer::InitRender() {
+        float quadVertices[] = {
+                -1.0f,  1.0f,  0.0f, 1.0f,
+                -1.0f, -1.0f,  0.0f, 0.0f,
+                 1.0f,  1.0f,  1.0f, 1.0f,
+                 1.0f, -1.0f,  1.0f, 0.0f,
+        };
+
+        VertexBufferLayout quadLayout;
+        quadLayout.Push<float>(2);
+        quadLayout.Push<float>(2);
+
+        s_RenderQuad = new FullsceenQuad(quadVertices, sizeof(quadVertices), quadLayout);
+    }
+
+    void Framebuffer::ShutdownRender() {
+        delete s_RenderQuad;
+        s_RenderQuad = nullptr;
+        return;
+    }
+
     static constexpr GLenum GetInternalFormat(Framebuffer::ColorFormat format) {
         switch (format) {
             using enum Framebuffer::ColorFormat;
@@ -74,6 +105,27 @@ namespace Core {
         glBlitNamedFramebuffer(m_Buffer, 0, offset.x, offset.y, offset.x + size.x, offset.y + size.y, outputOffset.x, outputOffset.y, outputOffset.x + outputSize.x, outputOffset.y + outputSize.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }
 
+    void Framebuffer::BindToTextureUnit(uint8_t textureUnitIndex) {
+        if (std::cmp_greater_equal(textureUnitIndex, RenderAPI::GetMaxTextureUnitCount())) {
+            RC_WARN("Texture unit index must be less than or equal to RenderAPI::GetMaxTextureUnitCount");
+            return;
+        }
+
+        glBindTextureUnit(textureUnitIndex, m_Color);
+    }
+
+    void Framebuffer::Render(Shader& shader, uint8_t textureUnitIndex) {
+        RC_ASSERT(s_RenderQuad, "Framebuffer::InitRender must be called before trying to render a Framebuffer");
+
+        shader.Bind();
+        BindToTextureUnit(textureUnitIndex);
+        s_RenderQuad->VAO.Bind();
+
+        RenderAPI::SetDepthBuffer(false);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        RenderAPI::SetDepthBuffer(true);
+    }
+
     MultisampleFramebuffer::MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format, bool hasDepthStencil)
         : m_Resolved(width, height, format, false) {
         if (!sampleCount || sampleCount > RenderAPI::GetMaxMultisampleCount()) {
@@ -117,5 +169,21 @@ namespace Core {
     void MultisampleFramebuffer::Blit(glm::uvec2 offset, glm::uvec2 size, glm::uvec2 outputOffset, glm::uvec2 outputSize) {
         glBlitNamedFramebuffer(m_Buffer, m_Resolved.GetBuffer(), offset.x, offset.y, offset.x + size.x, offset.y + size.y, offset.x, offset.y, offset.x + size.x, offset.y + size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         glBlitNamedFramebuffer(m_Resolved.GetBuffer(), 0, offset.x, offset.y, offset.x + size.x, offset.y + size.y, outputOffset.x, outputOffset.y, outputOffset.x + outputSize.x, outputOffset.y + outputSize.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    }
+
+    void MultisampleFramebuffer::BindToTextureUnit(uint8_t textureUnitIndex) {
+        auto size = m_Resolved.GetSize();
+        glBlitNamedFramebuffer(m_Buffer, m_Resolved.GetBuffer(), 0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        
+        m_Resolved.BindToTextureUnit(textureUnitIndex);
+    }
+
+    void MultisampleFramebuffer::Render(Shader& shader, uint8_t textureUnitIndex) {
+        RC_ASSERT(s_RenderQuad, "Framebuffer::InitRender must be called before trying to render a MultisampleFramebuffer");
+
+        auto size = m_Resolved.GetSize();
+        glBlitNamedFramebuffer(m_Buffer, m_Resolved.GetBuffer(), 0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        m_Resolved.Render(shader, textureUnitIndex);
     }
 }
