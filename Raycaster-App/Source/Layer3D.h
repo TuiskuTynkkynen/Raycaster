@@ -7,11 +7,12 @@
 class Layer3D : public Core::Layer {
 public:
 	void OnAttach() override;
-	void OnDetach() override {};
+	void OnDetach() override;
 	void OnUpdate(Core::Timestep deltaTime) override;
 	void OnEvent(Core::Event& event) override;
 private:
-	Core::MultisampleFramebuffer m_Framebuffer{ 500, 500, 4 };
+	Core::MultisampleFramebuffer m_Framebuffer{ 500, 500, 4, Core::Framebuffer::ColorFormat::RGB16F };
+	std::unique_ptr<Core::Shader> m_PostProcessShader;
 
 	uint32_t m_ViewPortWidth = -1;
 	uint32_t m_ViewPortHeight = -1;
