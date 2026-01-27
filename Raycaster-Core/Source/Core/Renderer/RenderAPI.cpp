@@ -5,6 +5,11 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
+struct ContextConstants {
+    int MultiSampleCount;
+    int TextureUnitCount;
+} static s_Constants;
+
 namespace Core {
     void RenderAPI::Init() {
         int32_t success = gladLoadGL(glfwGetProcAddress);
@@ -15,6 +20,10 @@ namespace Core {
 
         glEnable(GL_LINE_SMOOTH);
         glEnable(GL_LINE_WIDTH);
+
+
+        glGetIntegerv(GL_MAX_SAMPLES, &s_Constants.MultiSampleCount);
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &s_Constants.TextureUnitCount);
     }
 
     void RenderAPI::SetViewPort(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height) {
@@ -74,8 +83,10 @@ namespace Core {
 
 
     int32_t RenderAPI::GetMaxMultisampleCount() {
-        GLint result;
-        glGetIntegerv(GL_MAX_SAMPLES, &result);
-        return result;
+        return s_Constants.MultiSampleCount;
+    }
+
+    int32_t RenderAPI::GetMaxTextureUnitCount() {
+        return s_Constants.TextureUnitCount;
     }
 }
