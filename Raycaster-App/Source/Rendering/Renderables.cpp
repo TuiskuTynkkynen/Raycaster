@@ -154,7 +154,7 @@ Core::Model Renderables::CreateBillboard() {
     mat->MaterialMaps.back().TextureIndex = 0;
 
     mat->Parameters.emplace_back(glm::vec2(0.0f), "AtlasOffset");
-    mat->Parameters.emplace_back(0.0f, "FlipTexture");
+    mat->Parameters.emplace_back(glm::vec2(0.0f), "FlipTexture");
 
     model.Materials.push_back(mat);
 
