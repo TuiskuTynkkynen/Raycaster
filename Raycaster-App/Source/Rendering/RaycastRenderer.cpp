@@ -170,10 +170,8 @@ void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera)
 }
 
 void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterCamera& camera) {
-    std::vector<uint32_t> defaultRange = { m_RayCount };
-    
-    const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
-    glm::vec3 rayDirection = camera.GetDirection() * reciprocalAspectRatio - camera.GetPlane();
+    const std::array<uint32_t, 1> defaultRange = { m_RayCount };
+    const glm::vec3 rayDirection = camera.GetDirection() / m_AspectRatio - camera.GetPlane();
 
     const float sign = (ceiling ? 1.f : -1.f);
     const float offset = (0.5f - camera.GetPosition().z);
@@ -216,7 +214,7 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
         }
 
         std::span<const uint32_t> occludedRanges = defaultRange;
-        size_t occlusionIndex = occlusionIndex = static_cast<size_t>(glm::min(currentHeight * reciprocalAspectRatio, 1.0f) * m_RayCount / 2);
+        size_t occlusionIndex = occlusionIndex = static_cast<size_t>(glm::min(currentHeight * m_AspectRatio, 1.0f) * m_RayCount / 2);
         if (occlusionIndex < m_RayCount / 2 && !m_DepthMap[occlusionIndex].empty()) {
             occludedRanges = m_DepthMap[occlusionIndex];
         }
