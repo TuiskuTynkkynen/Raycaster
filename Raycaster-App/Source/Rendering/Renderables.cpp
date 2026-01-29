@@ -2,10 +2,11 @@
 
 #include "Core/Debug/Assert.h"
 
-void Renderables::Init(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Core::Texture2D> texture, size_t capacity) {
+void Renderables::Init(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Core::Texture2D> textureAtlas, std::shared_ptr<Core::Texture2D> mapTexture, size_t capacity) {
     m_BillboardMesh = CreateBillboardMesh();
     m_Shader = shader;
-    m_Texture = texture;
+    m_TextureAtlas = textureAtlas;
+    m_MapTexture = mapTexture;
 
     m_Sprites.reserve(capacity);
     m_Models.reserve(capacity);
@@ -17,7 +18,8 @@ void Renderables::Init(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Cor
 void Renderables::Shutdown(){
     m_BillboardMesh.reset(); 
     m_Shader.reset(); 
-    m_Texture.reset();
+    m_TextureAtlas.reset();
+    m_MapTexture.reset();
 
     m_Sprites.resize(0);
     m_Sprites.shrink_to_fit();
@@ -150,8 +152,12 @@ Core::Model Renderables::CreateBillboard() {
     auto mat = std::make_shared<Core::Material>();
     mat->Shader = m_Shader;
     mat->MaterialMaps.emplace_back();
-    mat->MaterialMaps.back().Texture = m_Texture;
+    mat->MaterialMaps.back().Texture = m_TextureAtlas;
     mat->MaterialMaps.back().TextureIndex = 0;
+    
+    mat->MaterialMaps.emplace_back();
+    mat->MaterialMaps.back().Texture = m_MapTexture;
+    mat->MaterialMaps.back().TextureIndex = 2;
 
     mat->Parameters.emplace_back(glm::vec2(0.0f), "AtlasOffset");
     mat->Parameters.emplace_back(glm::vec2(0.0f), "FlipTexture");

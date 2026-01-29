@@ -50,6 +50,19 @@ Map::Map() {
     }
 
     m_DoorState.resize(m_Doors.size());
+
+    m_MapTexture = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::ClampToEdge, Core::Texture2D::WrapMode::ClampToEdge, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
+    {
+        std::vector<uint8_t> data;
+        data.reserve(GetSize());
+
+        for (size_t i = 0; i < GetSize(); i++) {
+            uint8_t val = s_MapData.Map[i] <= 0 ? 0 : 255;
+            data.emplace_back(val);
+        }
+
+        m_MapTexture->BindData(data.data(), static_cast<uint32_t>(GetHeight()), static_cast<uint32_t>(GetWidth()), 1);
+    }
 }
 
 std::vector<LineCollider> Map::CreateWalls() const {
@@ -427,6 +440,11 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
             mat->MaterialMaps.emplace_back();
             mat->MaterialMaps.back().Texture = atlas;
             mat->MaterialMaps.back().TextureIndex = 0;
+            
+            mat->MaterialMaps.emplace_back();
+            mat->MaterialMaps.back().Texture = m_MapTexture;
+            mat->MaterialMaps.back().TextureIndex = 2;
+
             mat->Parameters.emplace_back(glm::vec2(index, 0), "AtlasOffset");
             mat->Parameters.emplace_back(glm::vec2(0.0f, 0.0f), "FlipTexture");
             mapModel.Materials.push_back(mat);

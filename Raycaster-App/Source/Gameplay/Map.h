@@ -170,6 +170,8 @@ private:
     std::array<uint8_t, s_MapData.Size> m_DoorIndexMap{};
     std::array<float, s_MapData.Size> m_LightMap{};
 
+    std::shared_ptr<Core::Texture2D> m_MapTexture;
+    
     struct Quad {
         uint16_t x, y;
         uint16_t Width, Height;

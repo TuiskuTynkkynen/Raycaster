@@ -64,6 +64,7 @@ void RaycasterScene::Reinit() {
     {
         shader->Bind();
         shader->setInt("Texture", 0);
+        shader->setInt("MapTexture", 2);
 
         RC_ASSERT(m_Lights.size() < std::numeric_limits<uint32_t>::max());
         const uint32_t lightCount = glm::min(static_cast<uint32_t>(m_Lights.size()), 10u);
@@ -83,7 +84,7 @@ void RaycasterScene::Reinit() {
     auto textureAtlas = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
     textureAtlas->BindImage("Assets/Textures/wolfenstein_texture_atlas.png");
 
-    m_Renderables.Init(shader, textureAtlas);
+    m_Renderables.Init(shader, textureAtlas, m_Map.GetMapTexture());
     m_Renderables.PushStaticModel(m_Map.CreateModel(m_Walls, textureAtlas, shader)); // Map
     m_Renderables.PushStaticModel(); // Hand / Held Item
 }

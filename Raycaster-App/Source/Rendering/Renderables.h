@@ -17,7 +17,7 @@ struct Model : public Core::Model {
 
 class Renderables {
 public:
-    void Init(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Core::Texture2D> texture, size_t capacity = 16);
+    void Init(std::shared_ptr<Core::Shader> shader, std::shared_ptr<Core::Texture2D> textureAtlas, std::shared_ptr<Core::Texture2D> mapTexture, size_t capacity = 16);
     void Shutdown();
     
     void ResetDynamic();
@@ -43,7 +43,8 @@ public:
 private:
     std::shared_ptr<Core::Mesh> m_BillboardMesh;
     std::shared_ptr<Core::Shader> m_Shader;
-    std::shared_ptr<Core::Texture2D> m_Texture;
+    std::shared_ptr<Core::Texture2D> m_TextureAtlas;
+    std::shared_ptr<Core::Texture2D> m_MapTexture;
     
     std::shared_ptr<Core::Mesh> CreateBillboardMesh();
     Core::Model CreateBillboard();
