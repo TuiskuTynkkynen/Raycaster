@@ -58,24 +58,36 @@ namespace Core {
         return 0;
     }
 
+    static uint32_t CreateAndAttachColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, Framebuffer::ColorFormat format) {
+        uint32_t color;
+        glCreateTextures(GL_TEXTURE_2D, 1, &color);
+        glTextureStorage2D(color, 1, GetInternalFormat(format), width, height);
+
+        glTextureParameteri(color, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(color, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(color, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(color, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glNamedFramebufferTexture(internalFramebuffer, GL_COLOR_ATTACHMENT0, color, 0);
+        return color;
+    }
+
+    static uint32_t CreateAndAttachDepthStencil(uint32_t internalFramebuffer, uint32_t width, uint32_t height) {
+        uint32_t depthStencil;
+        glCreateRenderbuffers(1, &depthStencil);
+        glNamedRenderbufferStorage(depthStencil, GL_DEPTH24_STENCIL8, width, height);
+        glNamedFramebufferRenderbuffer(internalFramebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencil);
+        return depthStencil;
+    }
+
     Framebuffer::Framebuffer(uint32_t width, uint32_t height, ColorFormat format, bool hasDepthStencil) 
-        : m_Size(width, height) {
-        glCreateFramebuffers(1, &m_Buffer);
+        : m_Size(width, height), m_Format(format) {
         
-        glCreateTextures(GL_TEXTURE_2D, 1, &m_Color);
-        glTextureStorage2D(m_Color, 1, GetInternalFormat(format), width, height);
-
-        glTextureParameteri(m_Color, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(m_Color, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(m_Color, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTextureParameteri(m_Color, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        glNamedFramebufferTexture(m_Buffer, GL_COLOR_ATTACHMENT0, m_Color, 0);
-
+        glCreateFramebuffers(1, &m_Buffer);
+        m_Color = CreateAndAttachColor(m_Buffer, width, height, format);
+        
         if (hasDepthStencil) {
-            glCreateRenderbuffers(1, &m_DepthStencil);
-            glNamedRenderbufferStorage(m_DepthStencil, GL_DEPTH24_STENCIL8, width, height);
-            glNamedFramebufferRenderbuffer(m_Buffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthStencil);
+            m_DepthStencil = CreateAndAttachDepthStencil(m_Buffer, width, height);
         }
 
         if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -87,6 +99,24 @@ namespace Core {
         glDeleteTextures(1, &m_Color);
         glDeleteRenderbuffers(1, &m_DepthStencil);
         glDeleteFramebuffers(1, &m_Buffer);
+    }
+
+    void Framebuffer::Resize(uint32_t width, uint32_t height) {
+        m_Size = glm::uvec2(width, height);
+
+        uint32_t oldColor = m_Color;
+        m_Color = CreateAndAttachColor(m_Buffer, width, height, m_Format);
+        glDeleteTextures(1, &oldColor);
+
+        if (m_DepthStencil) {
+            uint32_t oldDepthstencil = m_DepthStencil;
+            m_DepthStencil = CreateAndAttachDepthStencil(m_Buffer, width, height);
+            glDeleteRenderbuffers(1, &oldDepthstencil);
+        }
+
+        if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            RC_WARN("Framebuffer resize with width = {}, and  height = {} failed.", width, height);
+        }
     }
 
     void Framebuffer::Activate() {
@@ -126,25 +156,61 @@ namespace Core {
         RenderAPI::SetDepthBuffer(true);
     }
 
+    static uint32_t CreateAndAttachMultisampleColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format) {
+        uint32_t buffer;
+        glCreateRenderbuffers(1, &buffer);
+        glNamedRenderbufferStorageMultisample(buffer, sampleCount, GetInternalFormat(format), width, height);
+        glNamedFramebufferRenderbuffer(internalFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, buffer);
+        return buffer;
+    }
+
+    static uint32_t CreateAndAttachMultisampleDepthStencil(uint32_t internalFramebuffer, uint32_t width, uint32_t height, uint8_t sampleCount) {
+        uint32_t buffer;
+        glCreateRenderbuffers(1, &buffer);
+        glNamedRenderbufferStorageMultisample(buffer, sampleCount, GL_DEPTH24_STENCIL8, width, height);
+        glNamedFramebufferRenderbuffer(internalFramebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, buffer);
+        return buffer;
+    }
+
+
     MultisampleFramebuffer::MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format, bool hasDepthStencil)
         : m_Resolved(width, height, format, false) {
         if (!sampleCount || sampleCount > RenderAPI::GetMaxMultisampleCount()) {
             RC_ERROR("Multisample Framebuffer sample count must be greater than 0 and less than or equal to RenderAPI::GetMaxMultisampleCount");
         }
+
         glCreateFramebuffers(1, &m_Buffer);
-        
-        glCreateRenderbuffers(1, &m_Color);
-        glNamedRenderbufferStorageMultisample(m_Color, sampleCount, GetInternalFormat(format), width, height);
-        glNamedFramebufferRenderbuffer(m_Buffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_Color);
+        m_Color = CreateAndAttachMultisampleColor(m_Buffer, width, height, sampleCount, format);
         
         if (hasDepthStencil) {
-            glCreateRenderbuffers(1, &m_DepthStencil);
-            glNamedRenderbufferStorageMultisample(m_DepthStencil, sampleCount, GL_DEPTH24_STENCIL8, width, height);
-            glNamedFramebufferRenderbuffer(m_Buffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthStencil);
+            m_DepthStencil = CreateAndAttachMultisampleDepthStencil(m_Buffer, width, height, sampleCount);
         }
 
         if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             RC_WARN("Multisample Framebuffer creation failed.");
+        }
+    }
+
+    void MultisampleFramebuffer::Resize(uint32_t width, uint32_t height, uint8_t sampleCount) {
+        if (!sampleCount || sampleCount > RenderAPI::GetMaxMultisampleCount()) {
+            RC_ERROR("Multisample Framebuffer sample count must be greater than 0 and less than or equal to RenderAPI::GetMaxMultisampleCount");
+            return;
+        }
+
+        m_Resolved.Resize(width, height);
+
+        uint32_t oldColor = m_Color;
+        m_Color = CreateAndAttachMultisampleColor(m_Buffer, width, height, sampleCount, m_Resolved.GetFormat());
+        glDeleteRenderbuffers(1, &oldColor);
+
+        if (m_DepthStencil) {
+            uint32_t oldDepthStencil = m_DepthStencil;
+            m_DepthStencil = CreateAndAttachMultisampleDepthStencil(m_Buffer, width, height, sampleCount);
+            glDeleteRenderbuffers(1, &oldDepthStencil);
+        }
+
+        if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            RC_WARN("Multisample Framebuffer resize with width = {}, and  height = {} failed.", width, height);
         }
     }
 

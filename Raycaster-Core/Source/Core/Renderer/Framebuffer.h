@@ -25,6 +25,8 @@ namespace Core {
         Framebuffer(uint32_t width, uint32_t height, ColorFormat format = ColorFormat::RGB8, bool hasDepthStencil = true);
         ~Framebuffer();
 
+        void Resize(uint32_t width, uint32_t height);
+
         void Activate();
         void Deactivate();
 
@@ -41,11 +43,13 @@ namespace Core {
 
         inline uint32_t GetBuffer() const { return m_Buffer; }
         inline glm::uvec2 GetSize() const { return m_Size; }
+        inline ColorFormat GetFormat() const { return m_Format; }
     private:
         uint32_t m_Buffer;
         uint32_t m_Color;
         uint32_t m_DepthStencil = 0;
-        
+
+        ColorFormat m_Format;
         glm::uvec2 m_Size;
     };
 
@@ -54,6 +58,8 @@ namespace Core {
         MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format = Framebuffer::ColorFormat::RGB8, bool hasDepthStencil = true);
         ~MultisampleFramebuffer();
 
+        void Resize(uint32_t width, uint32_t height, uint8_t sampleCount);
+        
         void Activate();
         void Deactivate();
 
@@ -70,6 +76,7 @@ namespace Core {
 
         inline uint32_t GetBuffer() const { return m_Buffer; }
         inline glm::uvec2 GetSize() const { return m_Resolved.GetSize(); }
+        inline Framebuffer::ColorFormat GetFormat() const { return m_Resolved.GetFormat(); }
     private:
         uint32_t m_Buffer;
         uint32_t m_Color;
