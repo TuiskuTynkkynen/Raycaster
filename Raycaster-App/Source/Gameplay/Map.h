@@ -42,6 +42,7 @@ public:
     bool LineOfSight(glm::vec2 start, glm::vec2 end) const;
 
     float GetLight(size_t x, size_t y) const;
+    std::shared_ptr<Core::Texture2D> GetMapTexture() { return m_MapTexture; }
 
     static constexpr uint32_t GetHeight() { return s_MapData.Height; }
     static constexpr uint32_t GetWidth() { return s_MapData.Width; }
