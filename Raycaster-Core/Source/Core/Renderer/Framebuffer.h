@@ -22,7 +22,11 @@ namespace Core {
             RG32F,
             R32F,
         };
-        Framebuffer(uint32_t width, uint32_t height, ColorFormat format = ColorFormat::RGB8, bool hasDepthStencil = true);
+        enum class ColorFilter : uint8_t {
+            Nearest = 0,
+            Linear,
+        };
+        Framebuffer(uint32_t width, uint32_t height, ColorFormat format = ColorFormat::RGB8, ColorFilter filtering = ColorFilter::Nearest, bool hasDepthStencil = true);
         ~Framebuffer();
 
         void Resize(uint32_t width, uint32_t height);
@@ -44,18 +48,20 @@ namespace Core {
         inline uint32_t GetBuffer() const { return m_Buffer; }
         inline glm::uvec2 GetSize() const { return m_Size; }
         inline ColorFormat GetFormat() const { return m_Format; }
+        inline ColorFilter GetFiltering() const { return m_Filter; }
     private:
         uint32_t m_Buffer;
         uint32_t m_Color;
         uint32_t m_DepthStencil = 0;
 
         ColorFormat m_Format;
+        ColorFilter m_Filter;
         glm::uvec2 m_Size;
     };
 
     class MultisampleFramebuffer {
     public:
-        MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format = Framebuffer::ColorFormat::RGB8, bool hasDepthStencil = true);
+        MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format = Framebuffer::ColorFormat::RGB8, Framebuffer::ColorFilter filtering = Framebuffer::ColorFilter::Nearest, bool hasDepthStencil = true);
         ~MultisampleFramebuffer();
 
         void Resize(uint32_t width, uint32_t height, uint8_t sampleCount);
@@ -77,6 +83,7 @@ namespace Core {
         inline uint32_t GetBuffer() const { return m_Buffer; }
         inline glm::uvec2 GetSize() const { return m_Resolved.GetSize(); }
         inline Framebuffer::ColorFormat GetFormat() const { return m_Resolved.GetFormat(); }
+        inline Framebuffer::ColorFilter GetFiltering() const { return m_Resolved.GetFiltering(); }
     private:
         uint32_t m_Buffer;
         uint32_t m_Color;

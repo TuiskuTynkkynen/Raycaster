@@ -58,13 +58,13 @@ namespace Core {
         return 0;
     }
 
-    static uint32_t CreateAndAttachColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, Framebuffer::ColorFormat format) {
+    static uint32_t CreateAndAttachColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, Framebuffer::ColorFormat format, Framebuffer::ColorFilter filtering) {
         uint32_t color;
         glCreateTextures(GL_TEXTURE_2D, 1, &color);
         glTextureStorage2D(color, 1, GetInternalFormat(format), width, height);
 
-        glTextureParameteri(color, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(color, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(color, GL_TEXTURE_MIN_FILTER, filtering == Framebuffer::ColorFilter::Nearest ? GL_NEAREST : GL_LINEAR);
+        glTextureParameteri(color, GL_TEXTURE_MAG_FILTER, filtering == Framebuffer::ColorFilter::Nearest ? GL_NEAREST : GL_LINEAR);
         glTextureParameteri(color, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteri(color, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -80,11 +80,11 @@ namespace Core {
         return depthStencil;
     }
 
-    Framebuffer::Framebuffer(uint32_t width, uint32_t height, ColorFormat format, bool hasDepthStencil) 
-        : m_Size(width, height), m_Format(format) {
+    Framebuffer::Framebuffer(uint32_t width, uint32_t height, ColorFormat format, ColorFilter filtering, bool hasDepthStencil)
+        : m_Size(width, height), m_Format(format), m_Filter(filtering) {
         
         glCreateFramebuffers(1, &m_Buffer);
-        m_Color = CreateAndAttachColor(m_Buffer, width, height, format);
+        m_Color = CreateAndAttachColor(m_Buffer, width, height, format, filtering);
         
         if (hasDepthStencil) {
             m_DepthStencil = CreateAndAttachDepthStencil(m_Buffer, width, height);
@@ -105,7 +105,7 @@ namespace Core {
         m_Size = glm::uvec2(width, height);
 
         uint32_t oldColor = m_Color;
-        m_Color = CreateAndAttachColor(m_Buffer, width, height, m_Format);
+        m_Color = CreateAndAttachColor(m_Buffer, width, height, m_Format, m_Filter);
         glDeleteTextures(1, &oldColor);
 
         if (m_DepthStencil) {
@@ -173,8 +173,8 @@ namespace Core {
     }
 
 
-    MultisampleFramebuffer::MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format, bool hasDepthStencil)
-        : m_Resolved(width, height, format, false) {
+    MultisampleFramebuffer::MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format, Framebuffer::ColorFilter filtering, bool hasDepthStencil)
+        : m_Resolved(width, height, format, filtering, false) {
         if (!sampleCount || sampleCount > RenderAPI::GetMaxMultisampleCount()) {
             RC_ERROR("Multisample Framebuffer sample count must be greater than 0 and less than or equal to RenderAPI::GetMaxMultisampleCount");
         }
