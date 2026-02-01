@@ -176,12 +176,15 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         model.Materials.front()->Parameters.front().Value = index;
 
         glm::vec2 position = door.Position + door.Vector * (door.Length - 0.5f);
-        glm::vec2 offset = 0.125f * glm::sign(glm::vec2(m_Player.GetPosition()) - door.Position);
+        glm::vec2 offset = 0.125f * glm::sign(glm::vec2(m_Player.GetPosition()) - door.Position)
+            * glm::vec2(door.Vector.y, door.Vector.x);
         
-        glm::vec3 position3D(position.x + door.Vector.y * offset.x, 0.5f, position.y + door.Vector.x * offset.y);
+        glm::vec3 position3D(position.x + offset.x, 0.5f, position.y + offset.y);
         model.Transform = glm::translate(glm::mat4(1.0f), position3D);
-        float rot = door.Vector.y ? glm::radians(90.0f): glm::radians(0.0f);
-        model.Transform = glm::rotate(model.Transform, rot, glm::vec3(0.0f, 1.0f, 0.0f));
+
+        bool backSide = (offset.x + offset.y) < 0.0f;
+        float rot = backSide * 180.f + (door.Vector.y != 0) * 90.0f;
+        model.Transform = glm::rotate(model.Transform, glm::radians(rot), glm::vec3(0.0f, 1.0f, 0.0f));
     }
 }
 

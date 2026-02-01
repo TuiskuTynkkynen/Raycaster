@@ -17,7 +17,9 @@ void main()
     gl_Position = ViewProjection * ModelTransform * vec4(aPos, 1.0f);
     WorldPosition = (ModelTransform * vec4(aPos, 1.0f)).xyz;
     TexCoords = aTexPos;
-    Normal = aNormal;
+    
+    mat3 normalMatrix = transpose(inverse(mat3(ModelTransform))); // Maybe calculate these on the cpu
+    Normal = normalize(normalMatrix * aNormal);
 }
 
 
