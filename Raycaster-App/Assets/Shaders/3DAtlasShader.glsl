@@ -38,11 +38,42 @@ uniform vec3 ModelTint;
 uniform sampler2D Texture;
 uniform sampler2D MapTexture;
 
+layout(binding = 0, std430) readonly buffer SSBO {
+    struct {
+        vec2 offset;
+        vec2 vector;
+    } LineSegments[];
+};
+
 #define MAX_POINT_LIGHTS 10
 uniform vec3 PointLights[MAX_POINT_LIGHTS];
 uniform int LightCount;
 
 out vec4 FragColor;
+
+bool LineIntersection(vec2 point1, vec2 point2, vec2 point3, vec2 point4) {
+    vec2 line1 = point2 - point1;
+    vec2 line2 = point4 - point3;
+
+    float denominator = line1.x * line2.y - line2.x * line1.y;
+    if (denominator == 0) {
+        return false; // Collinear
+    }
+    bool denomPositive = denominator > 0;
+
+    vec2 segment13 = point1 - point3;
+    float check = line1.x * segment13.y - line1.y * segment13.x;
+    if ((check < 0) == denomPositive || (check > denominator) == denomPositive) {
+        return false; //hits line2 but not between point 3 and 4
+    }
+
+    float numerator = line2.x * segment13.y - line2.y * segment13.x;
+    if ((numerator < 0) == denomPositive || (numerator > denominator) == denomPositive) {
+        return false; //hits line1 but not between point 1 and 2
+    }
+
+    return true;
+}
 
 bool trace(vec2 position, vec2 target) {
     vec2 rayDirection = target - position;
@@ -60,10 +91,19 @@ bool trace(vec2 position, vec2 target) {
     
     while (mapX != int(target.x) || mapY != int(target.y)) {
         int map = int(texelFetch(MapTexture, ivec2(mapX, mapY), 0).r * 255.0);
-        if (mapX < 0 || mapX >= 24 || mapY < 0 || mapY >= 24 || map != 0) {
+        if (mapX < 0 || mapX >= 24 || mapY < 0 || mapY >= 24 || map == 255) {
             return false;
         }
 
+        if(map != 0) {
+            vec2 point1 = vec2(mapX, mapY) + LineSegments[map - 1].offset;
+            vec2 point2 = point1 + LineSegments[map - 1].vector;
+
+            if(LineIntersection(point1, point2, position, target)){
+                return false;
+            }
+        }
+        
         if (sideDistance.x < sideDistance.y) {
             sideDistance.x += deltaDistance.x;
             mapX += stepX;

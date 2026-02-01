@@ -1,8 +1,13 @@
 #include "Map.h"
 
+struct ShaderLineSegment {
+    glm::vec2 offset;
+    glm::vec2 vector;
+};
+
 Map::Map() {
     m_DoorIndexMap.fill(-1);
-
+    
     for (size_t index = 0; index < m_NeighbourMap.size(); index++)
     {
         bool NW = index - s_MapData.Width - 1 >= s_MapData.Size || s_MapData.Map[index - s_MapData.Width - 1];
@@ -55,12 +60,31 @@ Map::Map() {
     {
         std::vector<uint8_t> data;
         data.reserve(GetSize());
+        std::vector<ShaderLineSegment> segments{ {{ 0, 0 }, { 1, 1 }}, {{ 0, 1 }, { 1, -1 }} }; // Diagonal segments
+        segments.reserve(m_Doors.size() + 2);
 
         for (size_t i = 0; i < GetSize(); i++) {
-            uint8_t val = s_MapData.Map[i] <= 0 ? 0 : 255;
-            data.emplace_back(val);
-        }
+            if (s_MapData.Map[i] >= 0) {
+                data.emplace_back((s_MapData.Map[i] != 0) * 255); // 0 -> empty, 255 -> wall
+                continue;
+            }
 
+            auto adjacent = m_NeighbourMap[i];
+            bool vertical = adjacent.North && adjacent.South, horizontal = adjacent.East && adjacent.West;
+
+            if (!vertical && !horizontal) {
+                data.emplace_back(1 + (adjacent.South && adjacent.East || adjacent.North && adjacent.West)); // 1-2 -> Diagonal
+                continue;
+            }  
+
+            auto doorIndex = m_DoorIndexMap[i];
+            RC_ASSERT(doorIndex < 255 - 3);
+            segments.emplace_back(glm::vec2(vertical * 0.5f, horizontal * 0.5f), glm::vec2(horizontal, vertical));
+            data.emplace_back(3 + doorIndex); // 3 - 254 -> Door
+        }
+        
+        m_SSBO = std::make_shared<Core::ShaderStorageBuffer>(std::as_bytes(std::span(segments)));
+        m_SSBO->Bind(0);
         m_MapTexture->BindData(data.data(), static_cast<uint32_t>(GetHeight()), static_cast<uint32_t>(GetWidth()), 1);
     }
 }
@@ -448,7 +472,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
             mat->Parameters.emplace_back(glm::vec2(index, 0), "AtlasOffset");
             mat->Parameters.emplace_back(glm::vec2(0.0f, 0.0f), "FlipTexture");
             mapModel.Materials.push_back(mat);
-
+            
             meshCount++;
         }
     }
@@ -486,11 +510,18 @@ void Map::CalculateLightMap(std::span<glm::vec3> lights) {
 
 void Map::Update(Core::Timestep dt, std::span<glm::vec3> lights) {
     for (size_t i = 0; i < m_Doors.size(); i++) {
+        auto& door = m_Doors[i];
         float sign = m_DoorState[i] ? -1.0f : 1.0f;
-        float oldLength = m_Doors[i].Length;
-        m_Doors[i].Length = glm::clamp(m_Doors[i].Length + sign * dt, 0.0f, 1.0f);
+        float oldLength = door.Length;
+        door.Length = glm::clamp(door.Length + sign * dt, 0.0f, 1.0f);
 
-        if (glm::round(0.5f * sign + m_Doors[i].Length * 4.0f) != glm::round(0.5f * sign + oldLength * 4.0f)) {
+        if (door.Length != oldLength) {
+            size_t offset = (i + 2) * sizeof(ShaderLineSegment); // First 2 line segments are reserved for diagonals
+            std::array<ShaderLineSegment, 1> updated{ ShaderLineSegment(glm::fract(door.Position), door.Vector * door.Length) };
+            m_SSBO->Update(std::as_bytes<ShaderLineSegment, 1>(updated), offset);
+        }
+
+        if (glm::round(0.5f * sign + door.Length * 4.0f) != glm::round(0.5f * sign + oldLength * 4.0f)) {
             CalculateLightMap(lights); // TODO don't recalculate entire lightmap
         }
     }

@@ -4,6 +4,8 @@
 #include "Entities.h"
 #include "Algorithms.h"
 
+#include "Core/Renderer/ShaderBuffer.h"
+
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -88,9 +90,9 @@ private:
             1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,-2,2,2,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
+            1,0,0,0,0,0,-2,2,-2,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
             1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,
-            1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1,
+            1,0,0,0,0,0,-2,0,0,0,-2,0,0,0,0,3,0,0,0,3,0,0,0,1,
             1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,
             1,0,0,0,0,0,-2,2,0,2,-2,0,0,0,0,3,0,3,0,3,0,0,0,1,
             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
@@ -172,14 +174,15 @@ private:
     std::array<float, s_MapData.Size> m_LightMap{};
 
     std::shared_ptr<Core::Texture2D> m_MapTexture;
-    
+    std::shared_ptr<Core::ShaderStorageBuffer> m_SSBO;
+
     struct Quad {
         uint16_t x, y;
         uint16_t Width, Height;
         uint8_t Material;
     };
     std::vector<Quad> GreedyQuadrangulation(const std::array<uint8_t, s_MapData.Size>& map);
-
+    
     union Neighbourhood {
         struct {
             bool SouthEast : 1;
