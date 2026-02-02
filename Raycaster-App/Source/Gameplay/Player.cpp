@@ -17,7 +17,9 @@ void Player::Init(const Map& map) {
     m_Rotation = glm::vec2(90.0f, 0.0f);
 
     m_HeldItemIndex = 0;
-    m_Inventory[m_HeldItemIndex] = { .Scale = 0.0f, .Count = 0 };
+    for (auto& item : m_Inventory) {
+        item = { .Scale = 0.0f, .Count = 0 };
+    }
     
     m_Health = MaxHealth;
 
