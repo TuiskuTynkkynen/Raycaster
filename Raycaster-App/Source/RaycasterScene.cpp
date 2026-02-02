@@ -225,6 +225,7 @@ void RaycasterScene::OnEvent(Core::Event& event) {
     dispatcer.Dispatch<Core::KeyReleased>([this](Core::KeyReleased& event) { return OnKeyReleased(event); });
     dispatcer.Dispatch<Core::WindowResize>([this](Core::WindowResize& event) { return OnWindowResize(event); });
 
-    dispatcer.Dispatch<Core::KeyPressed>([this](Core::KeyPressed& event) { return m_Player.OnKeyEvent(event); });
-    dispatcer.Dispatch<Core::KeyReleased>([this](Core::KeyReleased& event) {  return m_Player.OnKeyEvent(event); });
+    if (m_State == State::Running && !event.Handled) {
+        m_Player.OnEvent(event);
+    }
 }

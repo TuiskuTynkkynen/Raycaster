@@ -26,6 +26,8 @@ void Player::Init(const Map& map) {
     m_Areas.reserve(2);
     m_Attacks.reserve(2);
     m_Projectiles.reserve(2);
+
+    m_MousePosition = glm::vec2(Core::Input::GetMouseX(), Core::Input::GetMouseY());
 }
 
 void Player::Shutdown() {
@@ -48,7 +50,9 @@ void Player::Update(std::span<const LineCollider> walls, std::span<const LineCol
     if (m_AnimationProgress >= 0.0f) {
         UseItem(deltaTime);
     }
+
     m_ShouldInteract = false;
+    m_MouseScrollCooldown -= deltaTime.GetSeconds();
 }
 
 void Player::UpdateRender(Renderables& renderables) {
@@ -104,10 +108,76 @@ void Player::PickUp(Item item) {
     m_Inventory[m_HeldItemIndex] = item;
 }
 
-void Player::SwitchItem(size_t index) {
+bool Player::SwitchItem(size_t index) {
     RC_ASSERT(index < m_Inventory.size());
     if (index == 0 || m_Inventory[index].Count > 0) {
         m_HeldItemIndex = index;
+        return true;
+    }
+    
+    return false;
+}
+
+void Player::Move(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime) {
+    const float MaxLateralSpeed = 2.0f;
+    const float MaxRotationalSpeed = 180.0f;
+
+    const float speed = glm::length(m_LateralSpeed);
+    if (speed != 0.0f) {
+        const float cos = glm::cos(glm::radians(m_Rotation.x));
+        const float sin = -glm::sin(glm::radians(m_Rotation.x)); 
+
+        auto movement = m_LateralSpeed * MaxLateralSpeed * deltaTime.GetSeconds();
+        m_Position.x += movement.x * cos - movement.y * sin;
+        m_Position.y += movement.x * sin + movement.y * cos;
+    }
+    m_Rotation += m_RotationalSpeed * MaxRotationalSpeed * deltaTime.GetSeconds();
+    m_Rotation.y = glm::clamp(m_Rotation.y, -65.0f, 65.0f);
+
+    glm::vec2 col = Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), walls, Width * 0.5f);
+    col += Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), doors, Width * 0.5f);
+
+    float length = glm::length(col);
+    if (length > MaxLateralSpeed) {
+        col *= 1.0f / length * MaxLateralSpeed;
+    }
+
+    m_Position.x += col.x;
+    m_Position.y += col.y;
+    m_ViewBob += speed * MaxLateralSpeed * deltaTime.GetSeconds();
+    constexpr float bobSpeed = 6.0f, bobAmplitude = 1.0f / 48.0f;
+    m_Position.z = 0.5f + speed * bobAmplitude * glm::sin(bobSpeed * m_ViewBob);
+}
+
+void Player::UseItem(Core::Timestep deltaTime) {
+    RC_ASSERT(m_HeldItemIndex < m_Inventory.size());
+    auto& heldItem = m_Inventory[m_HeldItemIndex];
+
+    const float relativeDeltaTime = deltaTime / heldItem.UseDuration;
+    m_AnimationProgress += relativeDeltaTime;
+
+    std::visit([&](auto& data) {
+        using T = std::decay_t<decltype(data)>;
+        glm::vec3 direction(cos(glm::radians(m_Rotation.x)), -sin(glm::radians(m_Rotation.x)), 0.0f);
+        if constexpr (std::is_same_v<T, MeleeWeaponData>) {
+            if (m_AnimationProgress >= data.AttackTiming && m_AnimationProgress - relativeDeltaTime < data.AttackTiming) {
+                m_Areas.emplace_back(m_Position, m_Position + data.AttackLength * direction);
+                m_Attacks.emplace_back(std::span{m_Areas.end() - 1, 1 }, data.AttackThickness, data.Damage);
+            }
+        }
+        else if constexpr (std::is_same_v<T, RangedWeaponData>) {
+            if (m_AnimationProgress >= data.AttackTiming && m_AnimationProgress - relativeDeltaTime < data.AttackTiming) {
+                m_Projectiles.emplace_back(data.Type, m_Position + 0.5f * Width * direction, data.ProjectileSpeed * direction);
+                heldItem.Count--;
+            }
+        } }, heldItem.AdditionalData);
+
+    if (m_AnimationProgress >= 1.0f) {
+        m_AnimationProgress = -std::numeric_limits<float>::infinity();
+
+        if (heldItem.Count == 0) {
+            m_HeldItemIndex -= m_HeldItemIndex > 0;
+        }
     }
 }
 
@@ -194,66 +264,38 @@ bool Player::OnKeyEvent(Core::KeyReleased event) {
     }
 }
 
-void Player::Move(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime) {
-    const float MaxLateralSpeed = 2.0f;
-    const float MaxRotationalSpeed = 180.0f;
-
+bool Player::OnMouseEvent(Core::MouseMoved event) {
+    auto diff = event.GetPosition() - m_MousePosition;
+    m_MousePosition = event.GetPosition();
     
-    const float speed = glm::length(m_LateralSpeed);
-    if (speed != 0.0f) {
-        const float cos = glm::cos(glm::radians(m_Rotation.x));
-        const float sin = -glm::sin(glm::radians(m_Rotation.x)); 
-
-        auto movement = m_LateralSpeed * MaxLateralSpeed * deltaTime.GetSeconds();
-        m_Position.x += movement.x * cos - movement.y * sin;
-        m_Position.y += movement.x * sin + movement.y * cos;
-    }
-    m_Rotation += m_RotationalSpeed * MaxRotationalSpeed * deltaTime.GetSeconds();
-    m_Rotation.y = glm::clamp(m_Rotation.y, -65.0f, 65.0f);
-
-    glm::vec2 col = Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), walls, Width * 0.5f);
-    col += Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), doors, Width * 0.5f);
-
-    float length = glm::length(col);
-    if (length > MaxLateralSpeed) {
-        col *= 1.0f / length * MaxLateralSpeed;
-    }
-
-    m_Position.x += col.x;
-    m_Position.y += col.y;
-    m_ViewBob += speed * MaxLateralSpeed * deltaTime.GetSeconds();
-    constexpr float bobSpeed = 6.0f, bobAmplitude = 1.0f / 48.0f;
-    m_Position.z = 0.5f + speed * bobAmplitude * glm::sin(bobSpeed * m_ViewBob);
+    constexpr float sensitivity = 0.1f;
+    m_Rotation -= diff * sensitivity;
+    
+    return false;
 }
 
-void Player::UseItem(Core::Timestep deltaTime) {
-    RC_ASSERT(m_HeldItemIndex < m_Inventory.size());
-    auto& heldItem = m_Inventory[m_HeldItemIndex];
-
-    const float relativeDeltaTime = deltaTime / heldItem.UseDuration;
-    m_AnimationProgress += relativeDeltaTime;
-
-    std::visit([&](auto& data) {
-        using T = std::decay_t<decltype(data)>;
-        glm::vec3 direction(cos(glm::radians(m_Rotation.x)), -sin(glm::radians(m_Rotation.x)), 0.0f);
-        if constexpr (std::is_same_v<T, MeleeWeaponData>) {
-            if (m_AnimationProgress >= data.AttackTiming && m_AnimationProgress - relativeDeltaTime < data.AttackTiming) {
-                m_Areas.emplace_back(m_Position, m_Position + data.AttackLength * direction);
-                m_Attacks.emplace_back(std::span{m_Areas.end() - 1, 1 }, data.AttackThickness, data.Damage);
-            }
-        }
-        else if constexpr (std::is_same_v<T, RangedWeaponData>) {
-            if (m_AnimationProgress >= data.AttackTiming && m_AnimationProgress - relativeDeltaTime < data.AttackTiming) {
-                m_Projectiles.emplace_back(data.Type, m_Position + 0.5f * Width * direction, data.ProjectileSpeed * direction);
-                heldItem.Count--;
-            }
-        } }, heldItem.AdditionalData);
-
-    if (m_AnimationProgress >= 1.0f) {
-        m_AnimationProgress = -std::numeric_limits<float>::infinity();
-
-        if (heldItem.Count == 0) {
-            m_HeldItemIndex -= m_HeldItemIndex > 0;
-        }
+bool Player::OnMouseEvent(Core::MouseScrolled event) {
+    if (m_MouseScrollCooldown > 0.0f) {
+        return false;
     }
+    m_MouseScrollCooldown = 0.25f;
+
+    size_t direction = static_cast<size_t>(glm::sign(event.GetOffsetY()));
+    size_t next = m_HeldItemIndex;
+
+    do {
+        next += direction;
+        if (next == m_Inventory.size()) next = 0;
+        if(next > m_Inventory.size()) next = m_Inventory.size() - 1;
+    } while (!SwitchItem(next));
+
+    return false;
+}
+
+void Player::OnEvent(Core::Event& event) {
+    Core::EventDispatcher dispatcer(event);
+    dispatcer.Dispatch<Core::KeyPressed>([this](auto& e) { return OnKeyEvent(e); });
+    dispatcer.Dispatch<Core::KeyReleased>([this](auto& e) { return OnKeyEvent(e); });
+    dispatcer.Dispatch<Core::MouseMoved>([this](auto& e) { return OnMouseEvent(e); });
+    dispatcer.Dispatch<Core::MouseScrolled>([this](auto& e) { return OnMouseEvent(e); });
 }

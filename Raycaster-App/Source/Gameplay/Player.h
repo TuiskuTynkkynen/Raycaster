@@ -45,10 +45,15 @@ public:
 
     bool OnKeyEvent(Core::KeyPressed event);
     bool OnKeyEvent(Core::KeyReleased event);
+
+    bool OnMouseEvent(Core::MouseMoved event);
+    bool OnMouseEvent(Core::MouseScrolled event);
+
+    void OnEvent(Core::Event& event);
 private:
     void Move(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime);
     void UseItem(Core::Timestep deltaTime);
-    void SwitchItem(size_t index);
+    bool SwitchItem(size_t index);
 
     glm::vec3 m_Position{};
     glm::vec3 m_Scale{};
@@ -57,6 +62,9 @@ private:
 
     glm::vec2 m_LateralSpeed{};
     glm::vec2 m_RotationalSpeed{};
+    
+    glm::vec2 m_MousePosition;
+    float m_MouseScrollCooldown = 0.0f;
 
     float m_Health = MaxHealth;
 
