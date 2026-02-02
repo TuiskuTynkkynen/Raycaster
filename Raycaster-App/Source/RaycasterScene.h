@@ -61,6 +61,8 @@ private:
     State m_State = State::Invalid;
 
     void Reinit();
+    void SetState(State state);
+    
     bool OnRestart(Restart& event);
     bool OnResume(Resume& event);
     bool OnKeyReleased(Core::KeyReleased& event);

@@ -25,7 +25,7 @@ void RaycasterScene::Init(){
 }
 
 void RaycasterScene::Shutdown() {
-    m_State = State::Invalid;
+    SetState(State::Invalid);
 
     m_Player.Shutdown();
     m_Interactables.Shutdown();
@@ -36,7 +36,7 @@ void RaycasterScene::Shutdown() {
 
 void RaycasterScene::Reinit() {
     Shutdown();
-    m_State = State::Running;
+    SetState(State::Running);
 
     m_Player.Init(m_Map);
     m_Projectiles.Init();
@@ -163,7 +163,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     m_Renderables.UpdateDynamicRender(m_Player.GetYaw() - 90.0f);
 
     if (m_Player.GetHealth() <= 0.0f) {
-        m_State = State::Dead;
+        SetState(State::Dead);
     }
 
     // Render door on 3D-layer
@@ -188,6 +188,14 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     }
 }
 
+void RaycasterScene::SetState(State state) {
+    m_State = state;
+
+    auto mode = m_State == State::Running ?
+        Core::Input::CursorMode::Disabled : Core::Input::CursorMode::Normal;
+    Core::Input::SetCursorMode(mode);
+}
+
 bool RaycasterScene::OnRestart(Restart& event) {
     Reinit();
 
@@ -196,7 +204,7 @@ bool RaycasterScene::OnRestart(Restart& event) {
 
 bool RaycasterScene::OnResume(Resume& event) {
     RC_ASSERT(m_State == State::Paused, "Scene must be in paused state to unpause");
-    m_State = State::Running;
+    SetState(State::Running);
 
     return true;
 }
@@ -207,7 +215,7 @@ bool RaycasterScene::OnKeyReleased(Core::KeyReleased& event) {
     }
 
     if (m_State <= State::Paused) {
-        m_State = m_State == State::Running ? State::Paused : State::Running;
+        SetState(m_State == State::Running ? State::Paused : State::Running);
     }
 
     return true;
