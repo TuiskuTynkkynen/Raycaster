@@ -42,6 +42,34 @@ namespace Core {
         return { (float)x, (float)y };
     }
 
+    void Input::SetCursorMode(CursorMode mode) {
+        void* window = Application::GetWindow().GetWindowPointer();
+
+        uint32_t glfwMode = 0;
+        switch (mode) {
+            using enum CursorMode;
+        case Normal:
+            glfwMode = GLFW_CURSOR_NORMAL;
+            break;
+        case Hidden:
+            glfwMode = GLFW_CURSOR_HIDDEN;
+            break;
+        case Captured:
+            glfwMode = GLFW_CURSOR_CAPTURED;
+            break;
+        case Disabled:
+            glfwMode = GLFW_CURSOR_DISABLED;
+            break;
+        }
+
+        if (glfwMode == 0) {
+            RC_WARN("Tried to set cursor mode to an invalid Input::CursorMode");
+            return;
+        }
+
+        glfwSetInputMode(static_cast<GLFWwindow*>(window), GLFW_CURSOR, glfwMode);
+    }
+
     std::wstring_view Input::KeyCodeToString(uint32_t keyCode) {
         static std::unordered_map<uint32_t, std::wstring> cache = [] {
             std::unordered_map<uint32_t, std::wstring> map;

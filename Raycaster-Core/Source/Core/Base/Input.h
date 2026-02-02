@@ -15,6 +15,14 @@ namespace Core::Input {
 	float GetMouseY();
 	std::pair<float, float> GetMousePos();
 
+	enum class CursorMode {
+		Normal = 0, // Show cursor
+		Hidden,     // Hide cursor
+		Captured,   // Capture cursor
+		Disabled,   // Hide and capture cursor
+	};
+	void SetCursorMode(CursorMode mode);
+
 	std::wstring_view KeyCodeToString(uint32_t keyCode);
 }
 
