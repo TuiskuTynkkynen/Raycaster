@@ -55,6 +55,7 @@ void Player::UpdateRender(Renderables& renderables) {
     auto& heldItem = GetHeldItem();
 
     if (heldItem.Count == 0) {
+        renderables.GetStaticModels()[1].Transform = glm::mat4(0.0f);
         return;
     }
 
