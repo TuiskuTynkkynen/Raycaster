@@ -225,4 +225,20 @@ namespace Core {
         RC_WARN("Tried to convert key code, {}, to string, but it is not a valid key code.", keyCode);
         return L"INVALID KEY";
     }
+
+    std::wstring_view Input::ButtonCodeToString(uint32_t mouseButtonCode) {
+        switch (mouseButtonCode) {
+        case RC_MOUSE_BUTTON_LEFT:      return L"MOUSE LEFT";
+        case RC_MOUSE_BUTTON_RIGHT:     return L"MOUSE RIGHT";
+        case RC_MOUSE_BUTTON_MIDDLE:    return L"MOUSE MIDDLE";
+        case RC_MOUSE_BUTTON_4:         return L"MOUSE 4";
+        case RC_MOUSE_BUTTON_5:         return L"MOUSE 5";
+        case RC_MOUSE_BUTTON_6:         return L"MOUSE 6";
+        case RC_MOUSE_BUTTON_7:         return L"MOUSE 7";
+        case RC_MOUSE_BUTTON_8:         return L"MOUSE 8";
+        }
+
+        RC_WARN("Tried to convert mouse button code, {}, to string, but it is not a valid button code.", mouseButtonCode);
+        return L"INVALID BUTTON";
+    }
 }

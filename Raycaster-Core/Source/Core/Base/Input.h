@@ -24,5 +24,6 @@ namespace Core::Input {
 	void SetCursorMode(CursorMode mode);
 
 	std::wstring_view KeyCodeToString(uint32_t keyCode);
+	std::wstring_view ButtonCodeToString(uint32_t mouseButtonCode);
 }
 
