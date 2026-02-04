@@ -181,12 +181,12 @@ void Player::UseItem(Core::Timestep deltaTime) {
     }
 }
 
-bool Player::OnKeyEvent(Core::KeyPressed event) {
+bool Player::OnInputPressed(Settings::KeyBinds::InputCode input, bool repeated) {
     bool HoldingItem = m_HeldItemIndex < m_Inventory.size() && m_Inventory[m_HeldItemIndex].UseDuration;
     bool UsingItem = HoldingItem && m_AnimationProgress >= 0.0f;
 
     namespace KB = Settings::KeyBinds;
-    std::optional<KB::Name> action = KB::KeyCodeToKeyBind(KB::KeyCode(event.GetKeyCode()));
+    std::optional<KB::Name> action = KB::InputCodeToKeyBind(input);
     if (!action) {
         return false;
     }
@@ -228,17 +228,16 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
         SwitchItem(action.value() - Item0);
         return true;
     case Interact:
-        m_ShouldInteract = !event.IsRepeated();
+        m_ShouldInteract = !repeated;
         return true;
     }
 
     return false;
 }
 
-
-bool Player::OnKeyEvent(Core::KeyReleased event) {
+bool Player::OnInputReleased(Settings::KeyBinds::InputCode input) {
     namespace KB = Settings::KeyBinds;
-    std::optional<KB::Name> action = KB::KeyCodeToKeyBind(KB::KeyCode(event.GetKeyCode()));
+    std::optional<KB::Name> action = KB::InputCodeToKeyBind(input);
     if (!action) {
         return false;
     }
@@ -296,8 +295,10 @@ bool Player::OnMouseEvent(Core::MouseScrolled event) {
 
 void Player::OnEvent(Core::Event& event) {
     Core::EventDispatcher dispatcer(event);
-    dispatcer.Dispatch<Core::KeyPressed>([this](auto& e) { return OnKeyEvent(e); });
-    dispatcer.Dispatch<Core::KeyReleased>([this](auto& e) { return OnKeyEvent(e); });
+    dispatcer.Dispatch<Core::KeyPressed>([this](auto& e) { return OnInputPressed(Settings::KeyBinds::InputCode(e.GetKeyCode()), e.IsRepeated()); });
+    dispatcer.Dispatch<Core::KeyReleased>([this](auto& e) { return OnInputReleased(Settings::KeyBinds::InputCode(e.GetKeyCode())); });
+    dispatcer.Dispatch<Core::MouseButtonPressed>([this](auto& e) { return OnInputPressed(Settings::KeyBinds::InputCode(e.GetButton()), false); });
+    dispatcer.Dispatch<Core::MouseButtonReleased>([this](auto& e) { return OnInputReleased(Settings::KeyBinds::InputCode(e.GetButton())); });
     dispatcer.Dispatch<Core::MouseMoved>([this](auto& e) { return OnMouseEvent(e); });
     dispatcer.Dispatch<Core::MouseScrolled>([this](auto& e) { return OnMouseEvent(e); });
 }

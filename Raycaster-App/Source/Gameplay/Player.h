@@ -4,9 +4,9 @@
 #include "Entities.h"
 #include "Renderables.h"
 #include "Projectiles.h"
+#include "InputCode.h"
 
 #include "Core/Base/Timestep.h"
-#include "Core/Events/KeyEvent.h"
 
 #include <span>
 #include <vector>
@@ -43,12 +43,12 @@ public:
 
     inline bool ShouldInteract() const { return m_ShouldInteract; }
 
-    bool OnKeyEvent(Core::KeyPressed event);
-    bool OnKeyEvent(Core::KeyReleased event);
+    bool OnInputPressed(Settings::KeyBinds::InputCode input, bool repeated);
+    bool OnInputReleased(Settings::KeyBinds::InputCode input);
 
     bool OnMouseEvent(Core::MouseMoved event);
     bool OnMouseEvent(Core::MouseScrolled event);
-
+    
     void OnEvent(Core::Event& event);
 private:
     void Move(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime);
