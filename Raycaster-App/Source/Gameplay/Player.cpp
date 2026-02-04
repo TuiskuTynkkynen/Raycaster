@@ -185,13 +185,14 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
     bool HoldingItem = m_HeldItemIndex < m_Inventory.size() && m_Inventory[m_HeldItemIndex].UseDuration;
     bool UsingItem = HoldingItem && m_AnimationProgress >= 0.0f;
 
-    std::optional<KeyBinds::Name> action = KeyBinds::KeyCodeToKeyBind(event.GetKeyCode());
+    namespace KB = Settings::KeyBinds;
+    std::optional<KB::Name> action = KB::KeyCodeToKeyBind(KB::KeyCode(event.GetKeyCode()));
     if (!action) {
         return false;
     }
 
     switch (action.value()) {
-        using enum KeyBinds::Name;
+        using enum KB::Name;
     case Forward:
         m_LateralSpeed.x = 1.0f;
         return true;
@@ -236,13 +237,14 @@ bool Player::OnKeyEvent(Core::KeyPressed event) {
 
 
 bool Player::OnKeyEvent(Core::KeyReleased event) {
-    std::optional<KeyBinds::Name> action = KeyBinds::KeyCodeToKeyBind(event.GetKeyCode());
+    namespace KB = Settings::KeyBinds;
+    std::optional<KB::Name> action = KB::KeyCodeToKeyBind(KB::KeyCode(event.GetKeyCode()));
     if (!action) {
         return false;
     }
 
     switch (action.value()) {
-        using enum KeyBinds::Name;
+        using enum KB::Name;
     case Forward:
     case Backward:
         m_LateralSpeed.x = 0.0f;

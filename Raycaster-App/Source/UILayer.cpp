@@ -8,11 +8,11 @@
 void UILayer::OnAttach() {
     {
         Core::Serialization::Archive arch(std::string_view("settings.bin"));
-        if (!KeyBinds::Deserialize(arch)) {
+        if (!Settings::KeyBinds::Deserialize(arch)) {
             RC_INFO("Key binding deserialization was unsuccessful");
             
             arch.SeekPosition(0);
-            KeyBinds::Serialize(arch);
+            Settings::KeyBinds::Serialize(arch);
         }
     }
 
@@ -109,21 +109,21 @@ Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, {
 
     static float scrollOffset = 0;
     Core::UI::BeginScrollContainer(scrollOffset, { 0.75f, 0.65f }, true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
-    for (uint32_t i = 0; i < s_KeyBinds.size(); i++) {
+    for (uint32_t i = 0; i < Settings::s_KeyBinds.size(); i++) {
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
-        Core::UI::Text(s_KeyBinds[i].GetName(), 1.f, Core::UI::TextAlignment::Left, { 0.5f, 1.0f });
+        Core::UI::Text(Settings::s_KeyBinds[i].GetName(), 1.f, Core::UI::TextAlignment::Left, { 0.5f, 1.0f });
 
         bool isSelected = m_SelectedKeyBind == i;
-        if (Core::UI::Button(Core::Input::KeyCodeToString(s_KeyBinds[i].KeyCode), { 0.2f, 1.0f }, isSelected ? selectedColours : Core::UI::DefaultColours)) {
+        if (Core::UI::Button(Settings::s_KeyBinds[i].InputCode.ToString(), { 0.2f, 1.0f }, isSelected ? selectedColours : Core::UI::DefaultColours)) {
             m_SelectedKeyBind = isSelected ? -1 : i;
         }
 
-        bool isDefault = s_KeyBinds[i].KeyCode == s_KeyBinds[i].GetDefaultKeyCode();
+        bool isDefault = Settings::s_KeyBinds[i].InputCode == Settings::s_KeyBinds[i].GetDefaultInputCode();
         allDefault &= isDefault;
 
         if (Core::UI::Button("Reset", { 0.2f, 1.0f }, isDefault ? deselectedColours : Core::UI::DefaultColours, isDefault ? selectedColours : Core::UI::DefaultTextColours)) {
             m_SavedKeyBinds &= isDefault;
-            s_KeyBinds[i].Reset();
+            Settings::s_KeyBinds[i].Reset();
         }
         Core::UI::EndContainer();
     }
@@ -133,7 +133,7 @@ Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, {
     Core::UI::BeginContainer({ 0.75f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
         if (Core::UI::Button("Save", { 0.3f, 1.0f }, m_SavedKeyBinds ? deselectedColours : Core::UI::DefaultColours, m_SavedKeyBinds ? selectedColours : Core::UI::DefaultTextColours) && !m_SavedKeyBinds) {
             Core::Serialization::Archive arch(std::string_view("settings.bin"));
-            if ((m_SavedKeyBinds = KeyBinds::Serialize(arch))) {
+            if ((m_SavedKeyBinds = Settings::KeyBinds::Serialize(arch))) {
                 arch.TruncateFile();
             }  else {
                 RC_INFO("Key binding deserialization wan unsuccessful");
@@ -142,7 +142,7 @@ Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, {
 
         if (Core::UI::Button("Reset to Defaults", { 0.3f, 1.0f }, allDefault ? deselectedColours : Core::UI::DefaultColours, allDefault ? selectedColours : Core::UI::DefaultTextColours)) {
             m_SavedKeyBinds &= allDefault;
-            for (KeyBind& bind : s_KeyBinds) {
+            for (Settings::KeyBinds::KeyBind& bind : Settings::s_KeyBinds) {
                 bind.Reset();
             }
         }
@@ -181,8 +181,8 @@ bool UILayer::OnKeyReleased(Core::KeyReleased& event) {
         return true;
     }
 
-    if (m_SelectedKeyBind != -1 && m_SelectedKeyBind < s_KeyBinds.size()) {
-        s_KeyBinds[m_SelectedKeyBind].KeyCode = event.GetKeyCode();
+    if (m_SelectedKeyBind != -1 && m_SelectedKeyBind < Settings::s_KeyBinds.size()) {
+        Settings::s_KeyBinds[m_SelectedKeyBind].InputCode.SetCode(event.GetKeyCode());
         m_SelectedKeyBind = -1;
         m_SavedKeyBinds = false;
         return true;
