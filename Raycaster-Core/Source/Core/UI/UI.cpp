@@ -930,12 +930,12 @@ namespace Core {
         TextureNumericInputField(value, from, to, validate, text, textScale, scrollOffset, selectionStart, selectionEnd, atlasProps, positioning, position, size, boxColours, textColours);
     }
 
-    void UI::Toggle(bool& enabled, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
+    void UI::Toggle(bool& enabled, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& checkColours, const std::array<glm::vec4, 3>& boxColours) {
         RC_ASSERT(Internal::System, "Tried to create a UI toggle before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI toggle before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ToggleWidget>(enabled);
+        Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ToggleWidget>(enabled, checkColours);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 

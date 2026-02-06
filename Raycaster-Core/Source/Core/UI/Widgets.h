@@ -130,12 +130,12 @@ namespace Core::UI::Widgets {
 
     class ToggleWidget : public Widget {
     public:
-        ToggleWidget(bool enabled) : m_Enabled(enabled) {}
+        ToggleWidget(bool enabled, const std::array<glm::vec4, 3>& colours) : m_Enabled(enabled), m_Colours(colours) {}
 
         void Update(Surface& current) override {}
         bool Render(Surface& current) override;
-
     private:
+        const std::array<glm::vec4, 3> m_Colours;
         bool m_Enabled;
     };
 
