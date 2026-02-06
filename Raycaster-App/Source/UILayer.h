@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RaycasterScene.h"
+#include "SettingsUI.h"
 
 #include "Core/Base/Layer.h"
 #include "Core/Events/WindowEvent.h"
@@ -15,13 +16,8 @@ private:
     uint32_t m_ViewPortWidth = -1;
     uint32_t m_ViewPortHeight = -1;
 
-    bool m_ShowKeyBinds = false;
-    bool m_SavedKeyBinds = true;
-    uint32_t m_SelectedKeyBind = -1;
+    Settings::UI m_SettingsUI{};
 
     void PauseScreen(const RaycasterScene& scene);
-    void KeyBindsScreen(const RaycasterScene& scene);
-
-    bool OnKeyReleased(Core::KeyReleased& event);
     bool OnWindowResizeEvent(Core::WindowResize& event);
 };

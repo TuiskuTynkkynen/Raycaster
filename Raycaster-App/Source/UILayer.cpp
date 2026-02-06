@@ -1,24 +1,11 @@
 #include "UILayer.h"
 
-#include "KeyBinds.h"
-
 #include "Core/UI/UI.h"
-#include "Core/Serialization/Archive.h"
 
 void UILayer::OnAttach() {
-    {
-        Core::Serialization::Archive arch(std::string_view("settings.bin"));
-        if (!Settings::KeyBinds::Deserialize(arch)) {
-            RC_INFO("Key binding deserialization was unsuccessful");
-            
-            arch.SeekPosition(0);
-            Settings::KeyBinds::Serialize(arch);
-        }
-    }
-
     m_ViewPortWidth = Core::Application::GetWindow().GetWidth();
     m_ViewPortHeight = Core::Application::GetWindow().GetHeight();
-
+    
     Core::Renderer2D::SetTextureAtlas("Assets/Textures/wolfenstein_texture_atlas.png", ATLASWIDTH, ATLASHEIGHT);
 
     std::shared_ptr<Core::Font> font = std::make_shared<Core::Font>(false);
@@ -32,9 +19,12 @@ void UILayer::OnAttach() {
     std::shared_ptr<Core::Texture2D> buttonTexture = std::make_unique<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
     buttonTexture->BindImage("Assets/Textures/Button.png");
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
+
+    m_SettingsUI.Init();
 }
 
 void UILayer::OnDetach() {
+    m_SettingsUI.Shutdown();
     Core::UI::Shutdown();
 }
 
@@ -64,11 +54,13 @@ void UILayer::OnUpdate(Core::Timestep deltaTime) {
 
     RaycasterScene::State sceneState = scene.GetState();
     if (sceneState != RaycasterScene::State::Running) {
-        if (m_ShowKeyBinds) {
-            KeyBindsScreen(scene);
+    Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f, 0.5f });
+        if (m_SettingsUI.IsEnabled) {
+            m_SettingsUI.Render();
         } else {
             PauseScreen(scene);
         }
+    Core::UI::EndContainer();
     }
 
     Core::UI::End(deltaTime);
@@ -77,7 +69,6 @@ void UILayer::OnUpdate(Core::Timestep deltaTime) {
 void UILayer::PauseScreen(const RaycasterScene& scene) {
     RaycasterScene::State sceneState = scene.GetState();
 
-    Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f, 0.5f });
     Core::UI::Text(sceneState == RaycasterScene::State::Dead ? "You died!" : "Paused", glm::vec2{ 0.5f, 0.25f }, glm::vec4(1.0f));
 
     if (sceneState >= RaycasterScene::State::Dead && Core::UI::Button("Restart", glm::vec2{ 0.5f, 0.2f })) {
@@ -88,78 +79,20 @@ void UILayer::PauseScreen(const RaycasterScene& scene) {
         Core::Application::PushEvent<Resume>();
     }
 
-    if (Core::UI::Button("Key Binds", glm::vec2{ 0.5f, 0.2f })) {
-        m_ShowKeyBinds = true;
+    if (Core::UI::Button("Settings", glm::vec2{ 0.5f, 0.2f })) {
+        m_SettingsUI.IsEnabled = true;
     }
 
     if (Core::UI::Button("Quit", glm::vec2{ 0.5f, 0.2f })) {
         Core::Application::PushEvent<Core::ApplicationClose>();
     }
-    Core::UI::EndContainer();
-}
-
-void UILayer::KeyBindsScreen(const RaycasterScene& scene) {
-    static std::array<glm::vec4, 3> deselectedColours = { Core::UI::DefaultColours[0], Core::UI::DefaultColours[0], Core::UI::DefaultColours[0] };
-    static std::array<glm::vec4, 3> selectedColours = { Core::UI::DefaultColours[2], Core::UI::DefaultColours[2], Core::UI::DefaultColours[2] };
-    bool allDefault = true;
-
-Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f, 0.5f });
-
-    Core::UI::Text("Key Binds", { 0.5f, 0.125f }, glm::vec4(1.0f));
-
-    static float scrollOffset = 0;
-    Core::UI::BeginScrollContainer(scrollOffset, { 0.75f, 0.65f }, true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
-    for (uint32_t i = 0; i < Settings::s_KeyBinds.size(); i++) {
-        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
-        Core::UI::Text(Settings::s_KeyBinds[i].GetName(), 1.f, Core::UI::TextAlignment::Left, { 0.5f, 1.0f });
-
-        bool isSelected = m_SelectedKeyBind == i;
-        if (Core::UI::Button(Settings::s_KeyBinds[i].InputCode.ToString(), { 0.2f, 1.0f }, isSelected ? selectedColours : Core::UI::DefaultColours)) {
-            m_SelectedKeyBind = isSelected ? -1 : i;
-        }
-
-        bool isDefault = Settings::s_KeyBinds[i].InputCode == Settings::s_KeyBinds[i].GetDefaultInputCode();
-        allDefault &= isDefault;
-
-        if (Core::UI::Button("Reset", { 0.2f, 1.0f }, isDefault ? deselectedColours : Core::UI::DefaultColours, isDefault ? selectedColours : Core::UI::DefaultTextColours)) {
-            m_SavedKeyBinds &= isDefault;
-            Settings::s_KeyBinds[i].Reset();
-        }
-        Core::UI::EndContainer();
-    }
-        Core::UI::ScrollBar(scrollOffset, { 0.05f, 1.0f });
-    Core::UI::EndScrollContainer();
-
-    Core::UI::BeginContainer({ 0.75f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
-        if (Core::UI::Button("Save", { 0.3f, 1.0f }, m_SavedKeyBinds ? deselectedColours : Core::UI::DefaultColours, m_SavedKeyBinds ? selectedColours : Core::UI::DefaultTextColours) && !m_SavedKeyBinds) {
-            Core::Serialization::Archive arch(std::string_view("settings.bin"));
-            if ((m_SavedKeyBinds = Settings::KeyBinds::Serialize(arch))) {
-                arch.TruncateFile();
-            }  else {
-                RC_INFO("Key binding deserialization wan unsuccessful");
-            }
-        }
-
-        if (Core::UI::Button("Reset to Defaults", { 0.3f, 1.0f }, allDefault ? deselectedColours : Core::UI::DefaultColours, allDefault ? selectedColours : Core::UI::DefaultTextColours)) {
-            m_SavedKeyBinds &= allDefault;
-            for (Settings::KeyBinds::KeyBind& bind : Settings::s_KeyBinds) {
-                bind.Reset();
-            }
-        }
-
-        if (Core::UI::Button("Back", { 0.3f, 1.0f })) {
-            m_ShowKeyBinds = false;
-        }
-    Core::UI::EndContainer();
-
-Core::UI::EndContainer();
 }
 
 void UILayer::OnEvent(Core::Event& event) {
     Core::EventDispatcher dispatcer(event);
     dispatcer.Dispatch<Core::WindowResize>(std::bind(&UILayer::OnWindowResizeEvent, this, std::placeholders::_1));
-    dispatcer.Dispatch<Core::KeyReleased>(std::bind(&UILayer::OnKeyReleased, this, std::placeholders::_1));
 
+    m_SettingsUI.OnEvent(event);
     Core::UI::OnEvent(event);
 }
 
@@ -167,26 +100,5 @@ bool UILayer::OnWindowResizeEvent(Core::WindowResize& event) {
     m_ViewPortWidth = event.GetWidth();
     m_ViewPortHeight = event.GetHeight();
 
-    return false;
-}
-
-bool UILayer::OnKeyReleased(Core::KeyReleased& event) {
-    if (!m_ShowKeyBinds) {
-        return false;
-    }
-
-    if (event.GetKeyCode() == RC_KEY_ESCAPE) {
-        m_ShowKeyBinds = m_SelectedKeyBind != -1;
-        m_SelectedKeyBind = -1;
-        return true;
-    }
-
-    if (m_SelectedKeyBind != -1 && m_SelectedKeyBind < Settings::s_KeyBinds.size()) {
-        Settings::s_KeyBinds[m_SelectedKeyBind].InputCode.SetCode(event.GetKeyCode());
-        m_SelectedKeyBind = -1;
-        m_SavedKeyBinds = false;
-        return true;
-    }
-    
     return false;
 }
