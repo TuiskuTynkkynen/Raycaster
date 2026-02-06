@@ -79,6 +79,7 @@ namespace Settings {
     void UI::OnEvent(Core::Event& event) {
         Core::EventDispatcher dispatcer(event);
         dispatcer.Dispatch<Core::KeyReleased>([&](auto& e) { return OnKeyReleased(e); });
+        dispatcer.Dispatch<Core::MouseButtonPressed>([&](auto& e) { return OnButtonPressed(e); });
     }
 
     bool UI::OnKeyReleased(Core::KeyReleased& event) {
@@ -100,5 +101,17 @@ namespace Settings {
         }
 
         return false;
+    }
+
+    bool UI::OnButtonPressed(Core::MouseButtonPressed& event) {
+        if (!IsEnabled || m_SelectedKeyBind >= s_KeyBinds.size()) {
+            return false;
+        }
+
+        s_KeyBinds[m_SelectedKeyBind].InputCode.SetCode(event.GetButton());
+        m_SelectedKeyBind = -1;
+        m_Saved = false;
+
+        return true;
     }
 }
