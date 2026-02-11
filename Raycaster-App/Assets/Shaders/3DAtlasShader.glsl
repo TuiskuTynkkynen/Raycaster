@@ -38,11 +38,13 @@ uniform vec3 ModelTint;
 uniform sampler2D Texture;
 uniform sampler2D MapTexture;
 
+struct LineSegment {
+    vec2 offset;
+    vec2 vector;
+};
+
 layout(binding = 0, std430) readonly buffer SSBO {
-    struct {
-        vec2 offset;
-        vec2 vector;
-    } LineSegments[];
+    LineSegment LineSegments[];
 };
 
 #define MAX_POINT_LIGHTS 10
