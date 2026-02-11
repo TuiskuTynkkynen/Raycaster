@@ -79,9 +79,11 @@ namespace Core::UI::Widgets {
 
     template <typename T>
     void TextDisplayWidget<T>::Update(Surface& current) {
+        current.Position.y += 0.25f * current.Size.y;
+        
         float lineHeight = static_cast<float>(Internal::Font->GetGlyphInfo(' ').Size.y);
         TextScale *= current.Size.y / lineHeight;
-        
+
         if (Align == TextAlignment::Left) {
             current.Position.x -= current.Size.x * 0.5f;
             return;
@@ -307,9 +309,6 @@ namespace Core::UI::Widgets {
         widget->ColourIndex = !m_Text.empty() + (&Internal::System->Elements[Internal::System->ActiveID] == &current);
         
         textDisplay.Size *= innerSize;
-            
-        textDisplay.Positioning = PositioningType::Offset;
-        textDisplay.Position = glm::vec2(0.0f, 0.25f);
         
         if (m_Text.empty()) {
             return;
@@ -634,9 +633,6 @@ namespace Core::UI::Widgets {
         widget->ColourIndex = !m_Text.empty() + (&Internal::System->Elements[Internal::System->ActiveID] == &current);
 
         textDisplay.Size *= innerSize;
-
-        textDisplay.Positioning = PositioningType::Offset;
-        textDisplay.Position = glm::vec2(0.0f, 0.25f);
 
         if (m_Text.empty()) {
             return;
