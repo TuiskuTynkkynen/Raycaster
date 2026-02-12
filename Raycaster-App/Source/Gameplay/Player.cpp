@@ -1,5 +1,6 @@
 #include "Player.h"
 
+#include "Settings.h"
 #include "KeyBinds.h"
 
 #include "Core/Debug/Assert.h"
@@ -132,7 +133,7 @@ void Player::Move(std::span<const LineCollider> walls, std::span<const LineColli
         m_Position.y += movement.x * sin + movement.y * cos;
     }
     m_Rotation += m_RotationalSpeed * MaxRotationalSpeed * deltaTime.GetSeconds();
-    m_Rotation.y = glm::clamp(m_Rotation.y, -65.0f, 65.0f);
+    m_Rotation.y = glm::clamp(m_Rotation.y, -65.0f * Settings::Input::s_FreeLook, 65.0f * Settings::Input::s_FreeLook);
 
     glm::vec2 col = Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), walls, Width * 0.5f);
     col += Algorithms::LineCollisions(glm::vec2(m_Position.x, m_Position.y), doors, Width * 0.5f);
@@ -266,6 +267,7 @@ bool Player::OnInputReleased(Settings::KeyBinds::InputCode input) {
 }
 
 bool Player::OnMouseEvent(Core::MouseMoved event) {
+    if (!Settings::Input::s_MouseLook) { return false; }
     auto diff = event.GetPosition() - m_MousePosition;
     m_MousePosition = event.GetPosition();
     
