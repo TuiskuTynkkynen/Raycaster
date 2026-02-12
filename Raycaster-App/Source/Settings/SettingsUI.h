@@ -21,6 +21,7 @@ namespace Settings {
 
         void OnEvent(Core::Event& event);
     private:
+        void RenderInput();
         void RenderKeyBinds();
         bool OnKeyReleased(Core::KeyReleased& event);
         bool OnButtonPressed(Core::MouseButtonPressed& event);

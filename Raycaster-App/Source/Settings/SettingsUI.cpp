@@ -1,5 +1,6 @@
 #include "SettingsUI.h"
 
+#include "Settings.h"
 #include "KeyBinds.h"
 
 #include "Core/Debug/Log.h"
@@ -25,6 +26,7 @@ namespace Settings {
 
         static float scrollOffset = 0;
         Core::UI::BeginScrollContainer(scrollOffset, { 0.75f, 0.65f }, true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f)); {
+            RenderInput();
             RenderKeyBinds();
             Core::UI::ScrollBar(scrollOffset, { 0.05f, 1.0f });
         } Core::UI::EndScrollContainer();
@@ -45,6 +47,7 @@ namespace Settings {
                 for (KeyBinds::KeyBind& bind : s_KeyBinds) {
                     bind.Reset();
                 }
+                Input::s_MouseLook = Input::s_FreeLook = true;
             }
 
             if (Core::UI::Button("Back", { 0.3f, 1.0f })) {
@@ -53,8 +56,20 @@ namespace Settings {
         } Core::UI::EndContainer();
     }
 
+    void UI::RenderInput() {
+        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
+            Core::UI::Text("Enable Mouse Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
+            Core::UI::Toggle(Input::s_MouseLook, { 0.076f, 1.0f });
+        Core::UI::EndContainer();
+
+        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
+            Core::UI::Text("Enable Free Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
+            Core::UI::Toggle(Input::s_FreeLook, { 0.076f, 1.0f });
+        Core::UI::EndContainer();
+    }
+
     void UI::RenderKeyBinds() {
-        Core::UI::Text("Key Binds", { 0.5f, 0.125f }, glm::vec4(1.0f));
+        Core::UI::Text("Key Bindings", { 0.5f, 0.125f }, glm::vec4(1.0f));
 
         for (uint32_t i = 0; i < s_KeyBinds.size(); i++) {
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
