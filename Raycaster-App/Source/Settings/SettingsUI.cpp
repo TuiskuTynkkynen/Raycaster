@@ -7,16 +7,46 @@
 #include "Core/UI/UI.h"
 #include "Core/Serialization/Archive.h"
 
+struct SavedState {
+    bool State;
+
+    SavedState(bool state) : State(state) {}
+
+    bool Update(bool state) {
+        bool result = State != state;
+        State = state;
+        return result;
+    }
+};
+
+static bool LoadSettings() {
+    Core::Serialization::Archive arch(std::string_view("settings.bin"));
+    if (Settings::Deserialize(arch)) {
+        return true;
+    }
+
+    RC_INFO("Setting deserialization was unsuccessful");
+
+    arch.SeekPosition(0);
+    Settings::Serialize(arch);
+    return false;
+}
+
+static bool SaveSettings() {
+    Core::Serialization::Archive arch(std::string_view("settings.bin"));
+    
+    if (Settings::Serialize(arch)) {
+        arch.TruncateFile();
+        return true;
+    }
+
+    RC_INFO("Settings serialization was unsuccessful");
+    return false;
+}
+
 namespace Settings {
     void UI::Init() {
-        Core::Serialization::Archive arch(std::string_view("settings.bin"));
-        if (!Settings::KeyBinds::Deserialize(arch)) {
-            RC_INFO("Key binding deserialization was unsuccessful");
-
-            arch.SeekPosition(0);
-            Settings::KeyBinds::Serialize(arch);
-        }
-
+        LoadSettings();
         m_Deselected = { Core::UI::DefaultColours[0], Core::UI::DefaultColours[0], Core::UI::DefaultColours[0] };
         m_Selected = { Core::UI::DefaultColours[2], Core::UI::DefaultColours[2], Core::UI::DefaultColours[2] };
     }
@@ -33,17 +63,12 @@ namespace Settings {
 
         Core::UI::BeginContainer({ 0.75f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal); {
             if (Core::UI::Button("Save", { 0.3f, 1.0f }, m_Saved ? m_Deselected : Core::UI::DefaultColours, m_Saved ? m_Selected : Core::UI::DefaultTextColours) && !m_Saved) {
-                Core::Serialization::Archive arch(std::string_view("settings.bin"));
-                if ((m_Saved = KeyBinds::Serialize(arch))) {
-                    arch.TruncateFile();
-                }
-                else {
-                    RC_INFO("Key binding deserialization was unsuccessful");
-                }
+                m_Saved = SaveSettings();
             }
 
             if (Core::UI::Button("Reset to Defaults", { 0.3f, 1.0f }, m_Default ? m_Deselected : Core::UI::DefaultColours, m_Default ? m_Selected : Core::UI::DefaultTextColours)) {
                 m_Saved &= m_Default;
+                m_Default = true;
                 for (KeyBinds::KeyBind& bind : s_KeyBinds) {
                     bind.Reset();
                 }
@@ -60,11 +85,19 @@ namespace Settings {
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
             Core::UI::Text("Enable Mouse Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
             Core::UI::Toggle(Input::s_MouseLook, { 0.076f, 1.0f });
+            
+            static SavedState mouseLook = Input::s_MouseLook;
+            m_Default &= Input::s_MouseLook;
+            m_Saved &= !mouseLook.Update(Input::s_MouseLook);
         Core::UI::EndContainer();
 
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
             Core::UI::Text("Enable Free Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
             Core::UI::Toggle(Input::s_FreeLook, { 0.076f, 1.0f });
+
+            static SavedState freeLook = Input::s_FreeLook;
+            m_Default &= Input::s_FreeLook;
+            m_Saved &= !freeLook.Update(Input::s_FreeLook);
         Core::UI::EndContainer();
     }
 
