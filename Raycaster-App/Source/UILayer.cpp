@@ -6,7 +6,7 @@ void UILayer::OnAttach() {
     m_ViewPortWidth = Core::Application::GetWindow().GetWidth();
     m_ViewPortHeight = Core::Application::GetWindow().GetHeight();
     
-    Core::Renderer2D::SetTextureAtlas("Assets/Textures/wolfenstein_texture_atlas.png", ATLASWIDTH, ATLASHEIGHT);
+    Core::Renderer2D::SetTextureAtlas("Assets/Textures/atlas.png", ATLASWIDTH, ATLASHEIGHT);
 
     std::shared_ptr<Core::Font> font = std::make_shared<Core::Font>(false);
     font->AddCharacterRange(' ', '~'); //Printable ASCII

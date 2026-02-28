@@ -82,7 +82,7 @@ void RaycasterScene::Reinit() {
     }
     
     auto textureAtlas = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
-    textureAtlas->BindImage("Assets/Textures/wolfenstein_texture_atlas.png");
+    textureAtlas->BindImage("Assets/Textures/atlas.png");
 
     m_Renderables.Init(shader, textureAtlas, m_Map.GetMapTexture());
     m_Renderables.PushStaticModel(m_Map.CreateModel(m_Walls, textureAtlas, shader)); // Map
