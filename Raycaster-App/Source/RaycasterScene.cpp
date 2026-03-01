@@ -1,6 +1,10 @@
 #include "RaycasterScene.h"
 
+#include "Core/Audio/Audio.h"
+
 void RaycasterScene::Init(){
+    Core::Audio::Init();
+
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));

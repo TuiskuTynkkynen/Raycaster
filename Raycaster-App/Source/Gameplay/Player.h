@@ -68,6 +68,7 @@ private:
 
     float m_Health = MaxHealth;
 
+   
     Core::Timestep m_AnimationProgress = -std::numeric_limits<float>::infinity();
     size_t m_HeldItemIndex = 0;
     std::array<Item, 3> m_Inventory;

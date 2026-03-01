@@ -4,6 +4,8 @@
 #include "KeyBinds.h"
 
 #include "Core/Debug/Assert.h"
+#include "Core/Audio/Audio.h"
+#include "Core/Audio/SoundManager.h"
 
 #include <glm/gtx/euler_angles.hpp>
 
@@ -29,6 +31,9 @@ void Player::Init(const Map& map) {
     m_Projectiles.reserve(2);
 
     m_MousePosition = glm::vec2(Core::Input::GetMouseX(), Core::Input::GetMouseY());
+
+    // Disable spatialization since player sounds should be played at the listner location
+    Core::Audio::GetSoundManager().RegisterSound("equip", "Assets/Audio/equip.wav", Core::Audio::Sound::FlagEnum::DisableSpatialization);
 }
 
 void Player::Shutdown() {
@@ -107,10 +112,24 @@ void Player::PickUp(Item item) {
     RC_ASSERT(m_HeldItemIndex < m_Inventory.size());
 
     m_Inventory[m_HeldItemIndex] = item;
+    auto sound = Core::Audio::GetSound("equip");
+    if (sound) {
+        sound->SkipTo(std::chrono::milliseconds::zero());
+        sound->Start();
+    }
 }
 
 bool Player::SwitchItem(size_t index) {
     RC_ASSERT(index < m_Inventory.size());
+
+    if (index != m_HeldItemIndex && m_Inventory[index].Count > 0) {
+        auto sound = Core::Audio::GetSound("equip");
+        if (sound) {
+            sound->SkipTo(std::chrono::milliseconds::zero());
+            sound->Start();
+        }
+    }
+
     if (index == 0 || m_Inventory[index].Count > 0) {
         m_HeldItemIndex = index;
         return true;
