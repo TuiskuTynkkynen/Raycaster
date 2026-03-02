@@ -70,7 +70,10 @@ private:
 
    
     Core::Timestep m_AnimationProgress = -std::numeric_limits<float>::infinity();
+    enum class ItemState{ None, Stow, Equip};
+    ItemState m_ItemState = ItemState::None;
     size_t m_HeldItemIndex = 0;
+    size_t m_WishItemIndex = 0;
     std::array<Item, 3> m_Inventory;
 
     std::vector<LineCollider> m_Areas;

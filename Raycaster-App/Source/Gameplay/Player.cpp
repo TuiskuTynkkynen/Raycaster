@@ -53,8 +53,41 @@ void Player::Update(std::span<const LineCollider> walls, std::span<const LineCol
     m_Projectiles.clear();
 
     Move(walls, doors, deltaTime);
-    if (m_AnimationProgress >= 0.0f) {
-        UseItem(deltaTime);
+   
+    constexpr float EquipSpeed = 4.0f;
+    switch (m_ItemState) {
+    case ItemState::None:
+        if (m_AnimationProgress >= 0.0f) {
+            UseItem(deltaTime);
+            break;
+        } 
+        if (m_HeldItemIndex != m_WishItemIndex) {
+            m_ItemState = ItemState::Stow;
+            m_AnimationProgress = 0.0f;
+        }
+        break;
+    case ItemState::Stow:
+        m_AnimationProgress += deltaTime * EquipSpeed + (m_Inventory[m_HeldItemIndex].Count == 0);
+
+        if (m_AnimationProgress >= 0.5f) {
+            if (auto sound = Core::Audio::GetSound("equip");  sound) {
+                sound->SkipTo(std::chrono::milliseconds::zero());
+                sound->Start();
+            }
+        }
+
+        if (m_AnimationProgress >= 1.0f) {
+            m_ItemState = ItemState::Equip;
+            m_HeldItemIndex = m_WishItemIndex;
+        }
+        break;
+    case ItemState::Equip:
+        m_AnimationProgress -= deltaTime * EquipSpeed + (m_Inventory[m_HeldItemIndex].Count == 0);
+
+        if (m_AnimationProgress <= 0.0f) {
+            m_AnimationProgress = -std::numeric_limits<float>::infinity();
+            m_ItemState = ItemState::None;
+        }
     }
 
     m_ShouldInteract = false;
@@ -69,14 +102,19 @@ void Player::UpdateRender(Renderables& renderables) {
         return;
     }
 
-    uint32_t atlasIndex = heldItem.UseAnimation.GetFrame(m_AnimationProgress);
+    Core::Timestep progress = (m_ItemState == ItemState::None) ? m_AnimationProgress : Core::Timestep(0.0f);
+    uint32_t atlasIndex = heldItem.UseAnimation.GetFrame(progress);
     float epsilon = 1e-3f;
     
+    float heightOffset = -1.0f + heldItem.Scale;
+    heightOffset += (m_ItemState != ItemState::None) ? -m_AnimationProgress : 0.0f; // Animate equip/stow
+    heightOffset *= epsilon;
+
     // Update on Raycaster-layer
     auto& sprite = renderables.GetNextSprite();
     sprite.Position.x = m_Position.x + glm::cos(glm::radians(m_Rotation.x)) * epsilon;
     sprite.Position.y = m_Position.y - glm::sin(glm::radians(m_Rotation.x)) * epsilon;
-    sprite.Position.z = m_Position.z + (glm::tan(glm::radians(m_Rotation.y)) - 1.0f + heldItem.Scale) * epsilon;
+    sprite.Position.z = m_Position.z + glm::tan(glm::radians(m_Rotation.y)) * epsilon + heightOffset;
     sprite.WorldPosition = sprite.Position;
 
     sprite.Scale = glm::vec3(2.0f * heldItem.Scale * epsilon);
@@ -89,7 +127,7 @@ void Player::UpdateRender(Renderables& renderables) {
 
     glm::mat4 rotation = glm::eulerAngleYX(glm::radians(m_Rotation.x - 90.f), glm::radians(m_Rotation.y));
     glm::vec3 position3D(m_Position.x, m_Position.z, m_Position.y);
-    glm::vec3 offset = rotation * glm::vec4(0.f, -(1.0f - heldItem.Scale) * epsilon, -epsilon, 0.0f);
+    glm::vec3 offset = rotation * glm::vec4(0.f, heightOffset, -epsilon, 0.0f);
     
     model.Transform = glm::translate(glm::mat4(1.0f), position3D + offset);
     model.Transform *= rotation;
@@ -108,30 +146,16 @@ bool Player::DamageAreas(std::span<const LineCollider> attack, float thickness, 
 }
 
 void Player::PickUp(Item item) {
-    m_HeldItemIndex = item.AdditionalData.index() + 1;
-    RC_ASSERT(m_HeldItemIndex < m_Inventory.size());
-
-    m_Inventory[m_HeldItemIndex] = item;
-    auto sound = Core::Audio::GetSound("equip");
-    if (sound) {
-        sound->SkipTo(std::chrono::milliseconds::zero());
-        sound->Start();
-    }
+    m_WishItemIndex = item.AdditionalData.index() + 1;
+    RC_ASSERT(m_WishItemIndex < m_Inventory.size());
+    m_Inventory[m_WishItemIndex] = item;
 }
 
 bool Player::SwitchItem(size_t index) {
     RC_ASSERT(index < m_Inventory.size());
 
-    if (index != m_HeldItemIndex && m_Inventory[index].Count > 0) {
-        auto sound = Core::Audio::GetSound("equip");
-        if (sound) {
-            sound->SkipTo(std::chrono::milliseconds::zero());
-            sound->Start();
-        }
-    }
-
     if (index == 0 || m_Inventory[index].Count > 0) {
-        m_HeldItemIndex = index;
+        m_WishItemIndex = index;
         return true;
     }
     
@@ -196,7 +220,7 @@ void Player::UseItem(Core::Timestep deltaTime) {
         m_AnimationProgress = -std::numeric_limits<float>::infinity();
 
         if (heldItem.Count == 0) {
-            m_HeldItemIndex -= m_HeldItemIndex > 0;
+            SwitchItem(m_HeldItemIndex - (m_HeldItemIndex > 0));
         }
     }
 }
