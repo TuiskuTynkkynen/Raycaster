@@ -33,7 +33,7 @@ void Player::Init(const Map& map) {
     m_MousePosition = glm::vec2(Core::Input::GetMouseX(), Core::Input::GetMouseY());
 
     // Disable spatialization since player sounds should be played at the listner location
-    Core::Audio::GetSoundManager().RegisterSound("equip", "Assets/Audio/equip.wav", Core::Audio::Sound::FlagEnum::DisableSpatialization);
+    Core::Audio::GetSoundManager().RegisterSound("equip", "Assets/Audio/equip.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
 }
 
 void Player::Shutdown() {

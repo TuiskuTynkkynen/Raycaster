@@ -6,6 +6,7 @@
 
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio/miniaudio.h"
+#include "miniaudio/extras/decoders/libopus/miniaudio_libopus.h"
 
 #include <utility>
 
@@ -69,6 +70,11 @@ namespace Core {
         managerConfig.decodedFormat = FORMAT;
         managerConfig.decodedChannels = CHANNELS;
         managerConfig.decodedSampleRate = SAMPLERATE;
+
+        ma_decoding_backend_vtable* pCustomBackendVTables[] = { ma_decoding_backend_libopus };
+        managerConfig.ppCustomDecodingBackendVTables = pCustomBackendVTables;
+        managerConfig.customDecodingBackendCount = sizeof(pCustomBackendVTables) / sizeof(pCustomBackendVTables[0]);
+        managerConfig.pCustomDecodingBackendUserData = NULL;
 
         bool success = ma_resource_manager_init(&managerConfig, &Internal::System->ResourceManager) == MA_SUCCESS;
         RC_ASSERT(success, "Failed to initialize Audio System. Could not initialize resource manager.\n");
@@ -456,7 +462,7 @@ namespace Core {
         deviceConfig.dataCallback = dataCallback;
         deviceConfig.notificationCallback = notificationCallback;
         deviceConfig.playback.pDeviceID = playbackId;
-
+        
         ma_result result = ma_device_init(&Internal::System->Context, &deviceConfig, Internal::System->Device);
         if (result != MA_SUCCESS) {
             RC_ERROR("Failed to initialize device with error {}", (int32_t)result);
@@ -484,7 +490,7 @@ namespace Core {
         engineConfig.pContext = &Internal::System->Context;
         engineConfig.pDevice = Internal::System->Device;
         engineConfig.pResourceManager = &Internal::System->ResourceManager;
-
+        
         ma_result result = ma_engine_init(&engineConfig, Internal::System->Engine);
         if (result != MA_SUCCESS) {
             RC_ERROR("Failed to initialize engine with error {}", (int32_t)result);
