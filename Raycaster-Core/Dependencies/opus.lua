@@ -1,18 +1,44 @@
-require "glm"
-require "miniaudio"
-require "stb_image"
-
-project "Raycaster-Dependencies"
+project "Opus"
     kind "StaticLib"
-    language "C++"
-    cppdialect "C++23"
+    language "C"
     targetdir "Binaries/%{cfg.buildcfg}"
     staticruntime "off"
     warnings "off"
     
-    AddGLM()
-    AddMiniaudio()
-    AddStbImage()
+    
+    files {
+		-- libogg
+		"libogg/src/*.c",
+
+		-- libopus
+		"libopus/src/*.c",
+        "libopus/celt/*.c",
+        "libopus/silk/*.c",
+        "libopus/silk/float/*.c",
+
+        -- opusfile
+        "opusfile/src/*.c"
+	}
+
+	includedirs {
+		-- libogg
+		"libogg/include",
+
+		-- libopus
+		"libopus/include",
+		"libopus/src",
+		"libopus/celt",
+		"libopus/silk",
+        "libopus/silk/float/",
+
+        -- opusfile
+		"opusfile/include"
+	}
+
+	defines {
+        "OPUS_BUILD",
+        "USE_ALLOCA"
+    }
         
     targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
@@ -34,8 +60,3 @@ project "Raycaster-Dependencies"
         runtime "Release"
         optimize "On"
         symbols "Off"
-
-include "GLFW.lua"
-include "glad.lua"
-include "FreeType.lua"
-include "opus.lua"
