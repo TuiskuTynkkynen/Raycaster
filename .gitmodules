@@ -13,3 +13,12 @@
 [submodule "Raycaster-Core/Dependencies/glm"]
 	path = Raycaster-Core/Dependencies/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "Raycaster-Core/Dependencies/libopus"]
+	path = Raycaster-Core/Dependencies/libopus
+	url = https://github.com/xiph/opus.git
+[submodule "Raycaster-Core/Dependencies/libogg"]
+	path = Raycaster-Core/Dependencies/libogg
+	url = https://github.com/xiph/ogg.git
+[submodule "Raycaster-Core/Dependencies/opusfile"]
+	path = Raycaster-Core/Dependencies/opusfile
+	url = https://github.com/xiph/opusfile.git
