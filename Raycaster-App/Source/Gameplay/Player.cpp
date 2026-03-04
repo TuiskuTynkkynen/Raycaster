@@ -34,6 +34,11 @@ void Player::Init(const Map& map) {
 
     // Disable spatialization since player sounds should be played at the listner location
     Core::Audio::GetSoundManager().RegisterSound("equip", "Assets/Audio/equip.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
+    Core::Audio::GetSoundManager().RegisterSound("footstep", "Assets/Audio/step.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
+    if (auto sound = Core::Audio::GetSound("footstep"); sound) {
+        sound->SetLooping(true);
+        sound->SetVolume(0.25f);
+    }
 }
 
 void Player::Shutdown() {
@@ -174,6 +179,15 @@ void Player::Move(std::span<const LineCollider> walls, std::span<const LineColli
         m_Position.x += movement.x * cos - movement.y * sin;
         m_Position.y += movement.x * sin + movement.y * cos;
     }
+
+    if (auto sound = Core::Audio::GetSound("footstep"); sound) {
+        if (speed != 0.0f) {
+            sound->Start();
+        }  else {
+            sound->Stop();
+        }
+    }
+
     m_Rotation += m_RotationalSpeed * MaxRotationalSpeed * deltaTime.GetSeconds();
     m_Rotation.y = glm::clamp(m_Rotation.y, -65.0f * Settings::Input::s_FreeLook, 65.0f * Settings::Input::s_FreeLook);
 
