@@ -71,7 +71,6 @@ void Player::Update(std::span<const LineCollider> walls, std::span<const LineCol
 
         if (m_AnimationProgress >= 0.5f) {
             if (auto sound = Core::Audio::GetSound("equip");  sound) {
-                sound->SkipTo(std::chrono::milliseconds::zero());
                 sound->Start();
             }
         }
