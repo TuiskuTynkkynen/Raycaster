@@ -8,6 +8,7 @@
 #include <array>
 #include <variant>
 #include <span>
+#include <string_view>
 
 struct Tile {
     glm::vec3 Posistion{};
@@ -59,6 +60,7 @@ struct Item {
     
     AtlasAnimation UseAnimation{};
     float UseDuration = 0.0f;
+    std::string_view UseAudioName = "";
     std::variant<MeleeWeaponData, RangedWeaponData> AdditionalData;
 };
 

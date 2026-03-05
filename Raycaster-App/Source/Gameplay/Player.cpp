@@ -276,6 +276,9 @@ bool Player::OnInputPressed(Settings::KeyBinds::InputCode input, bool repeated) 
         return true;
     case UseItem:
         if (HoldingItem && !UsingItem) {
+            if (auto sound = Core::Audio::GetSound(m_Inventory[m_HeldItemIndex].UseAudioName); sound) {
+                sound->Start();
+            }
             m_AnimationProgress = 0.0f;
         }
         return true;
