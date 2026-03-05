@@ -39,6 +39,7 @@ void Player::Init(const Map& map) {
         sound->SetLooping(true);
         sound->SetVolume(0.25f);
     }
+    Core::Audio::GetSoundManager().RegisterSound("Assets/Audio/attack_dagger.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
 }
 
 void Player::Shutdown() {
