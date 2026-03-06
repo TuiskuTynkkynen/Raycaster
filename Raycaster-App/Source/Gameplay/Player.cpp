@@ -32,14 +32,13 @@ void Player::Init(const Map& map) {
 
     m_MousePosition = glm::vec2(Core::Input::GetMouseX(), Core::Input::GetMouseY());
 
+    auto& manager = Core::Audio::GetSoundManager();
     // Disable spatialization since player sounds should be played at the listner location
-    Core::Audio::GetSoundManager().RegisterSound("equip", "Assets/Audio/equip.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
-    Core::Audio::GetSoundManager().RegisterSound("footstep", "Assets/Audio/step.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
-    if (auto sound = Core::Audio::GetSound("footstep"); sound) {
-        sound->SetLooping(true);
-        sound->SetVolume(0.25f);
-    }
-    Core::Audio::GetSoundManager().RegisterSound("Assets/Audio/attack_dagger.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
+    manager.RegisterSound("equip", "Assets/Audio/equip.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
+    manager.RegisterSound("Assets/Audio/attack_dagger.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
+    manager.RegisterSound("footstep", "Assets/Audio/step.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization)
+        .SetLooping(true)
+        .SetVolume(0.25f);
 }
 
 void Player::Shutdown() {
@@ -76,9 +75,7 @@ void Player::Update(std::span<const LineCollider> walls, std::span<const LineCol
         m_AnimationProgress += deltaTime * EquipSpeed + (m_Inventory[m_HeldItemIndex].Count == 0);
 
         if (m_AnimationProgress >= 0.5f) {
-            if (auto sound = Core::Audio::GetSound("equip");  sound) {
-                sound->Start();
-            }
+            Core::Audio::Play("equip");
         }
 
         if (m_AnimationProgress >= 1.0f) {
@@ -183,9 +180,10 @@ void Player::Move(std::span<const LineCollider> walls, std::span<const LineColli
 
     if (auto sound = Core::Audio::GetSound("footstep"); sound) {
         if (speed != 0.0f) {
-            sound->Start();
+            sound->SetLooping(true).
+                Start();
         }  else {
-            sound->Stop();
+            sound->SetLooping(false);
         }
     }
 
@@ -277,9 +275,7 @@ bool Player::OnInputPressed(Settings::KeyBinds::InputCode input, bool repeated) 
         return true;
     case UseItem:
         if (HoldingItem && !UsingItem) {
-            if (auto sound = Core::Audio::GetSound(m_Inventory[m_HeldItemIndex].UseAudioName); sound) {
-                sound->Start();
-            }
+            Core::Audio::Play(m_Inventory[m_HeldItemIndex].UseAudioName);
             m_AnimationProgress = 0.0f;
         }
         return true;
