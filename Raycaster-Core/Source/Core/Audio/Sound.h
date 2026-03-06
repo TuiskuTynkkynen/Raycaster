@@ -63,7 +63,7 @@ namespace Core::Audio {
         std::optional<Sound> CopyDeep() const; //Copies sound and it's parameters
 
         bool IsLooping();
-        void SetLooping(bool loops);
+        Sound& SetLooping(bool loops);
 
         bool IsPlaying();
         bool IsAtEnd();
@@ -71,45 +71,45 @@ namespace Core::Audio {
         std::chrono::milliseconds GetTime();
         std::optional<std::chrono::milliseconds> GetLength();
 
-        void Start(std::chrono::milliseconds fadeLength = std::chrono::milliseconds::zero(), float volumeMin = 0.0f, float volumeMax = 1.0f);
-        void Stop();
-        
-        void Skip(std::chrono::milliseconds duration);
-        void SkipTo(std::chrono::milliseconds timepoint);
+        Sound& Start(std::chrono::milliseconds fadeLength = std::chrono::milliseconds::zero(), float volumeMin = 0.0f, float volumeMax = 1.0f);
+        Sound& Stop();
 
-        void SetVolume(float volume);
-        void SetVolumedB(float dBVolume);
+        Sound& Skip(std::chrono::milliseconds duration);
+        Sound& SkipTo(std::chrono::milliseconds timepoint);
 
-        void SetPitch(float pitch);
-        void SetBalance(float balance);
-        void SetPan(float pan);
+        Sound& SetVolume(float volume);
+        Sound& SetVolumedB(float dBVolume);
+
+        Sound& SetPitch(float pitch);
+        Sound& SetBalance(float balance);
+        Sound& SetPan(float pan);
 
         float GetFadeVolume();
-        void SetFadeIn(std::chrono::milliseconds length, float endVolume = 1.0f, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
-        void SetFadeOut(std::chrono::milliseconds length, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
-        void SetFade(std::chrono::milliseconds length, float startVolume, float endVolume, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
+        Sound& SetFadeIn(std::chrono::milliseconds length, float endVolume = 1.0f, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
+        Sound& SetFadeOut(std::chrono::milliseconds length, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
+        Sound& SetFade(std::chrono::milliseconds length, float startVolume, float endVolume, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
         
-        void SetSpatialization(bool spatial);
-        void SetPositioning(Positioning positioning);
-        void SetAttenuation(AttenuationMode attenuation);
+        Sound& SetSpatialization(bool spatial);
+        Sound& SetPositioning(Positioning positioning);
+        Sound& SetAttenuation(AttenuationMode attenuation);
 
         glm::vec3 GetDirectionToListner();
 
-        void SetSpatialData(glm::vec3 position, glm::vec3 direction, glm::vec3 velocity);
-        void SetPosition(glm::vec3 position);
-        void SetDirection(glm::vec3 direction);
-        void SetVelocity(glm::vec3 velocity);
+        Sound& SetSpatialData(glm::vec3 position, glm::vec3 direction, glm::vec3 velocity);
+        Sound& SetPosition(glm::vec3 position);
+        Sound& SetDirection(glm::vec3 direction);
+        Sound& SetVelocity(glm::vec3 velocity);
 
-        void SetSpatialParameters(float rolloff, float gainMin, float gainMax, float distanceMin, float distanceMax, float coneInnerAngleRadians, float coneOuterAngleRadians, float coneOuterGain);
-        void SetRolloff(float rolloff);
-        void SetGainRange(float min, float max);
-        void SetDistanceRange(float min, float max);
-        void SetCone(float innerAngleRadians, float outerAngleRadians, float outerGain);
-        void SetConeDegrees(float innerAngleDegrees, float outerAngleDegrees, float outerGain);
+        Sound& SetSpatialParameters(float rolloff, float gainMin, float gainMax, float distanceMin, float distanceMax, float coneInnerAngleRadians, float coneOuterAngleRadians, float coneOuterGain);
+        Sound& SetRolloff(float rolloff);
+        Sound& SetGainRange(float min, float max);
+        Sound& SetDistanceRange(float min, float max);
+        Sound& SetCone(float innerAngleRadians, float outerAngleRadians, float outerGain);
+        Sound& SetConeDegrees(float innerAngleDegrees, float outerAngleDegrees, float outerGain);
 
-        void SetSpatialFactors(float dopplerFactor, float directionalAttenuationFactor);
-        void SetDopplerFactor(float dopplerFactor);
-        void SetDirectionalAttenuationFactor(float directionalAttenuationFactor);
+        Sound& SetSpatialFactors(float dopplerFactor, float directionalAttenuationFactor);
+        Sound& SetDopplerFactor(float dopplerFactor);
+        Sound& SetDirectionalAttenuationFactor(float directionalAttenuationFactor);
 
         void AttachParentBus(Bus& bus);
     public:

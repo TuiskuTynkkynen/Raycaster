@@ -300,8 +300,9 @@ namespace Core::Audio {
         return ma_sound_is_looping(m_InternalSound);
     }
 
-    void Sound::SetLooping(bool looping) {
+    Sound& Sound::SetLooping(bool looping) {
         ma_sound_set_looping(m_InternalSound, looping);
+        return *this;
     }
 
     bool Sound::IsPlaying() {
@@ -328,7 +329,7 @@ namespace Core::Audio {
         return std::chrono::milliseconds(length * 1000 / SAMPLERATE );
     }
 
-    void Sound::Start(std::chrono::milliseconds fadeLength, float volumeMin, float volumeMax) {
+    Sound& Sound::Start(std::chrono::milliseconds fadeLength, float volumeMin, float volumeMax) {
         using namespace std::chrono_literals;
         
         if (GetFadeVolume() == 0.0f && m_FadeSettings.EndVolume == 0.0f) {
@@ -352,17 +353,19 @@ namespace Core::Audio {
         }
 
         ma_sound_start(m_InternalSound);
+        return *this;
     }
 
-    void Sound::Stop() {
+    Sound& Sound::Stop() {
         ma_sound_stop(m_InternalSound);
+        return *this;
     }
 
-    void Sound::Skip(std::chrono::milliseconds duration) {
+    Sound& Sound::Skip(std::chrono::milliseconds duration) {
         using namespace std::chrono_literals;
         
         if (duration == 0ms) {
-            return;
+            return *this;
         }
 
         ma_uint64 skipTo = 0;
@@ -370,75 +373,84 @@ namespace Core::Audio {
         
         if (result != MA_SUCCESS) {
             RC_WARN("Skipping sound forward {} ms failed with error ", duration, (int32_t)result);
-            return;
+            return *this;
         }
 
         skipTo += (SAMPLERATE * duration / 1s);
         ma_sound_seek_to_pcm_frame(m_InternalSound, skipTo);
+        return *this;
     }
 
-    void Sound::SkipTo(std::chrono::milliseconds timepoint) {
+    Sound& Sound::SkipTo(std::chrono::milliseconds timepoint) {
         using namespace std::chrono_literals;
 
         ma_uint64 skipTo = 0;
         if (timepoint != 0ms) {
             skipTo = (SAMPLERATE * timepoint / 1s);
-        } 
+        }
 
         ma_sound_seek_to_pcm_frame(m_InternalSound, skipTo);
+        return *this;
     }
 
-    void Sound::SetVolume(float volume) {
+    Sound& Sound::SetVolume(float volume) {
         ma_sound_set_volume(m_InternalSound, volume);
+        return *this;
     }
 
-    void Sound::SetVolumedB(float dBVolume) {
+    Sound& Sound::SetVolumedB(float dBVolume) {
         ma_sound_set_volume(m_InternalSound, ma_volume_db_to_linear(dBVolume));
+        return *this;
     }
 
-    void Sound::SetPitch(float pitch) {
+    Sound& Sound::SetPitch(float pitch) {
         if (m_Flags & DisablePitch) {
             RC_WARN("Can not set pitch of Audio System sound created with DisablePitch flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_pitch(m_InternalSound, pitch);
+        return *this;
     }
 
-    void Sound::SetBalance(float balance) {
+    Sound& Sound::SetBalance(float balance) {
         ma_sound_set_pan_mode(m_InternalSound, ma_pan_mode_balance);
         ma_sound_set_pan(m_InternalSound, balance);
+        return *this;
     }
 
-    void Sound::SetPan(float pan) {
+    Sound& Sound::SetPan(float pan) {
         ma_sound_set_pan_mode(m_InternalSound, ma_pan_mode_pan);
         ma_sound_set_pan(m_InternalSound, pan);
+        return *this;
     }
-    
-    void Sound::SetSpatialization(bool spatial) {
+
+    Sound& Sound::SetSpatialization(bool spatial) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set spatialization of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_spatialization_enabled(m_InternalSound, spatial);
+        return *this;
     }
-    
-    void Sound::SetPositioning(Positioning positioning) {
+
+    Sound& Sound::SetPositioning(Positioning positioning) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set positioning of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_positioning pos = positioning == Positioning::Absolute ? ma_positioning_absolute : ma_positioning_relative;
 
         ma_sound_set_positioning(m_InternalSound, pos);
+        return *this;
     }
     
-    void Sound::SetAttenuation(AttenuationMode attenuation) {
+    Sound& Sound::SetAttenuation(AttenuationMode attenuation) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set attentuation of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_attenuation_model att;
@@ -461,6 +473,7 @@ namespace Core::Audio {
         }
 
         ma_sound_set_attenuation_model(m_InternalSound, att);
+        return *this;
     }
 
     glm::vec3 Sound::GetDirectionToListner() {
@@ -469,48 +482,52 @@ namespace Core::Audio {
         return glm::vec3(direction.x, direction.y, direction.z);
     }
 
-    void Sound::SetSpatialData(glm::vec3 position, glm::vec3 direction, glm::vec3 velocity) {
+    Sound& Sound::SetSpatialData(glm::vec3 position, glm::vec3 direction, glm::vec3 velocity) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set spatial data of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_position(m_InternalSound, position.x, position.y, position.z);
         ma_sound_set_direction(m_InternalSound, direction.x, direction.y, direction.z);
         ma_sound_set_velocity(m_InternalSound, velocity.x, velocity.y, velocity.z);
+        return *this;
     }
 
-    void Sound::SetPosition(glm::vec3 position) {
+    Sound& Sound::SetPosition(glm::vec3 position) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set position of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_position(m_InternalSound, position.x, position.y, position.z);
+        return *this;
     }
 
-    void Sound::SetDirection(glm::vec3 direction) {
+    Sound& Sound::SetDirection(glm::vec3 direction) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set direction of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_direction(m_InternalSound, direction.x, direction.y, direction.z);
+        return *this;
     }
     
-    void Sound::SetVelocity(glm::vec3 velocity) {
+    Sound& Sound::SetVelocity(glm::vec3 velocity) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set velocity of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_velocity(m_InternalSound, velocity.x, velocity.y, velocity.z);
+        return *this;
     }
     
-    void Sound::SetSpatialParameters(float rolloff, float gainMin, float gainMax, float distanceMin, float distanceMax, float coneInnerAngleRadians, float coneOuterAngleRadians, float coneOuterGain) {
+    Sound& Sound::SetSpatialParameters(float rolloff, float gainMin, float gainMax, float distanceMin, float distanceMax, float coneInnerAngleRadians, float coneOuterAngleRadians, float coneOuterGain) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set spatial parameters of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_rolloff(m_InternalSound, rolloff);
@@ -522,102 +539,113 @@ namespace Core::Audio {
         ma_sound_set_max_distance(m_InternalSound, distanceMax);
 
         ma_sound_set_cone(m_InternalSound, coneInnerAngleRadians, coneOuterAngleRadians, coneOuterGain);
+        return *this;
     }
     
-    void Sound::SetRolloff(float rolloff) {
+    Sound& Sound::SetRolloff(float rolloff) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set rolloff of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_rolloff(m_InternalSound, rolloff);
+        return *this;
     }
 
-    void Sound::SetGainRange(float min, float max) {
+    Sound& Sound::SetGainRange(float min, float max) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set gain range of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_min_gain(m_InternalSound, min);
         ma_sound_set_max_gain(m_InternalSound, max);
+        return *this;
     }
 
-    void Sound::SetDistanceRange(float min, float max) {
+    Sound& Sound::SetDistanceRange(float min, float max) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set distance range of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_min_distance(m_InternalSound, min);
         ma_sound_set_max_distance(m_InternalSound, max);
+        return *this;
     }
     
-    void Sound::SetCone(float innerAngleRadians, float outerAngleRadians, float outerGain) {
+    Sound& Sound::SetCone(float innerAngleRadians, float outerAngleRadians, float outerGain) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set cone of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_cone(m_InternalSound, innerAngleRadians, outerAngleRadians, outerGain);
+        return *this;
     }
 
-    void Sound::SetConeDegrees(float innerAngleDegrees, float outerAngleDegrees, float outerGain) {
+    Sound& Sound::SetConeDegrees(float innerAngleDegrees, float outerAngleDegrees, float outerGain) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set cone of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_cone(m_InternalSound, glm::radians(innerAngleDegrees), glm::radians(outerAngleDegrees), outerGain);
+        return *this;
     }
 
-    void Sound::SetSpatialFactors(float dopplerFactor, float directionalAttenuationFactor) {
+    Sound& Sound::SetSpatialFactors(float dopplerFactor, float directionalAttenuationFactor) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set spatial factors of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_doppler_factor(m_InternalSound, dopplerFactor);
         ma_sound_set_directional_attenuation_factor(m_InternalSound, directionalAttenuationFactor);
+        return *this;
     }
 
-    void Sound::SetDopplerFactor(float dopplerFactor) {
+    Sound& Sound::SetDopplerFactor(float dopplerFactor) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set doppler factor of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_doppler_factor(m_InternalSound, dopplerFactor);
+        return *this;
     }
 
-    void Sound::SetDirectionalAttenuationFactor(float directionalAttenuationFactor) {
+    Sound& Sound::SetDirectionalAttenuationFactor(float directionalAttenuationFactor) {
         if (m_Flags & DisableSpatialization) {
             RC_WARN("Can not set directional attenuation factor of Audio System sound created with DisableSpatialization flag");
-            return;
+            return *this;
         }
 
         ma_sound_set_directional_attenuation_factor(m_InternalSound, directionalAttenuationFactor);
+        return *this;
     }
 
     float Sound::GetFadeVolume() {
         return ma_sound_get_current_fade_volume(m_InternalSound);
     }
 
-    void Sound::SetFadeIn(std::chrono::milliseconds length, float endVolume, std::chrono::milliseconds startAfter) {
+    Sound& Sound::SetFadeIn(std::chrono::milliseconds length, float endVolume, std::chrono::milliseconds startAfter) {
         SetFade(length, 0.0f, endVolume, startAfter);
+        return *this;
     }
 
-    void Sound::SetFadeOut(std::chrono::milliseconds length, std::chrono::milliseconds startAfter) {
+    Sound& Sound::SetFadeOut(std::chrono::milliseconds length, std::chrono::milliseconds startAfter) {
         // If volume is not zero, start from the current volume
         if (GetFadeVolume()) {
             SetFade(length, -1.0f, 0.0f, startAfter);
-            return;
+            return *this;
         }
 
         SetFade(length, 1.0f, 0.0f, startAfter);
+        return *this;
     }
 
-    void Sound::SetFade(std::chrono::milliseconds length, float startVolume, float endVolume, std::chrono::milliseconds startAfter) {
+    Sound& Sound::SetFade(std::chrono::milliseconds length, float startVolume, float endVolume, std::chrono::milliseconds startAfter) {
         using namespace std::chrono_literals;
         
         ma_uint64 fadeInFrames = 0;
@@ -633,12 +661,13 @@ namespace Core::Audio {
             
             m_ScheduledFade = true;
             m_FadeSettings = { startTime, fadeInFrames, startVolume, endVolume };
-            return;
+            return *this;
         }
 
         ma_sound_set_fade_in_pcm_frames(m_InternalSound, startVolume, endVolume, fadeInFrames);
         m_ScheduledFade = false;
         m_FadeSettings = { ma_engine_get_time_in_pcm_frames(Internal::System->Engine), fadeInFrames, startVolume, endVolume };
+        return *this;
     }
 
     void Sound::AttachParentBus(Bus& parent) {
