@@ -19,13 +19,13 @@ namespace Core::Audio {
         void Init(Bus* dafaultBus = nullptr, uint32_t initialCapacity = 0);
         void Shutdown();
 
-        void RegisterSound(std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
-        void RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
+        Sound& RegisterSound(std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
+        Sound& RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
         // Different argument order to prevent unwanted implicit conversions
-        void RegisterSound(std::string_view name, Sound::Flags  flags, std::filesystem::path filePath, Bus* parent = nullptr);
+        Sound& RegisterSound(std::string_view name, Sound::Flags  flags, std::filesystem::path filePath, Bus* parent = nullptr);
         
-        void CopySound(std::string_view copyName, Index originalIndex);
-        void CopySound(std::string_view copyName, std::string_view originalName);
+        Sound* CopySound(std::string_view copyName, Index originalIndex);
+        Sound* CopySound(std::string_view copyName, std::string_view originalName);
 
         void UnregisterSound(std::string_view name);
 
