@@ -302,20 +302,28 @@ bool Player::OnInputReleased(Settings::KeyBinds::InputCode input) {
     switch (action.value()) {
         using enum KB::Name;
     case Forward:
+        m_LateralSpeed.x = glm::min(m_LateralSpeed.x, 0.0f);
+        return true;
     case Backward:
-        m_LateralSpeed.x = 0.0f;
+        m_LateralSpeed.x = glm::max(m_LateralSpeed.x, 0.0f);
         return true;
     case Left:
+        m_LateralSpeed.y = glm::max(m_LateralSpeed.y, 0.0f);
+        return true;
     case Right:
-        m_LateralSpeed.y = 0.0f;
+        m_LateralSpeed.y = glm::min(m_LateralSpeed.y, 0.0f);
         return true;
     case LookLeft:
+        m_RotationalSpeed.x = glm::min(m_RotationalSpeed.x, 0.0f);
+        return true;
     case LookRight:
-        m_RotationalSpeed.x = 0.0f;
+        m_RotationalSpeed.x = glm::max(m_RotationalSpeed.x, 0.0f);
         return true;
     case LookUp:
+        m_RotationalSpeed.y = glm::min(m_RotationalSpeed.y, 0.0f);
+        return true;
     case LookDown:
-        m_RotationalSpeed.y = 0.0f;
+        m_RotationalSpeed.y = glm::max(m_RotationalSpeed.y, 0.0f);
         return true;
     default:
         return false;
