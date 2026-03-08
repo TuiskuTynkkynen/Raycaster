@@ -14,6 +14,8 @@
 #include <type_traits>
 #include <vector>
 
+constexpr Core::Audio::Sound::FlagEnum DISABLE_SPATIALIZATION = Core::Audio::Sound::FlagEnum::DisableSpatialization;
+
 void Player::Init(const Map& map) {
     m_Position = glm::vec3((float)map.GetWidth() / 2, (float)map.GetHeight() / 2, 0.5f);
     m_Scale = glm::vec3(Width * 0.5f);
@@ -34,11 +36,9 @@ void Player::Init(const Map& map) {
 
     auto& manager = Core::Audio::GetSoundManager();
     // Disable spatialization since player sounds should be played at the listner location
-    manager.RegisterSound("equip", "Assets/Audio/equip.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
-    manager.RegisterSound("Assets/Audio/attack_dagger.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
-    manager.RegisterSound("Assets/Audio/attack_dart.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
-    manager.RegisterSound("hit", "Assets/Audio/hit.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
-    manager.RegisterSound("footstep", "Assets/Audio/step.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization)
+    manager.RegisterSound("equip", "Assets/Audio/equip.opus", DISABLE_SPATIALIZATION);
+    manager.RegisterSound("hit", "Assets/Audio/hit.opus", DISABLE_SPATIALIZATION);
+    manager.RegisterSound("footstep", "Assets/Audio/step.opus", DISABLE_SPATIALIZATION)
         .SetLooping(true)
         .SetVolume(0.25f);
 }
@@ -156,6 +156,10 @@ void Player::PickUp(Item item) {
     m_WishItemIndex = item.AdditionalData.index() + 1;
     RC_ASSERT(m_WishItemIndex < m_Inventory.size());
     m_Inventory[m_WishItemIndex] = item;
+
+    if (!item.UseAudioName.empty()) {
+        Core::Audio::GetSoundManager().RegisterSound(item.UseAudioName, DISABLE_SPATIALIZATION);
+    }
 }
 
 bool Player::SwitchItem(size_t index) {
