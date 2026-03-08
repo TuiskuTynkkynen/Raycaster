@@ -37,6 +37,7 @@ void Player::Init(const Map& map) {
     manager.RegisterSound("equip", "Assets/Audio/equip.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
     manager.RegisterSound("Assets/Audio/attack_dagger.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
     manager.RegisterSound("Assets/Audio/attack_dart.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
+    manager.RegisterSound("hit", "Assets/Audio/hit.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
     manager.RegisterSound("footstep", "Assets/Audio/step.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization)
         .SetLooping(true)
         .SetVolume(0.25f);
@@ -142,10 +143,13 @@ void Player::UpdateRender(Renderables& renderables) {
 }
 
 bool Player::DamageAreas(std::span<const LineCollider> attack, float thickness, float damage) {
-    const bool hit = Algorithms::LineCollisions(m_Position, attack, thickness + Width * 0.5f) != glm::vec2(0.0f);
-    m_Health -= damage * hit;
+    if (Algorithms::LineCollisions(m_Position, attack, thickness + Width * 0.5f) == glm::vec2(0.0f)) {
+        return false;
+    }
 
-    return hit;
+    m_Health -= damage;
+    Core::Audio::Play("hit");
+    return true;
 }
 
 void Player::PickUp(Item item) {
