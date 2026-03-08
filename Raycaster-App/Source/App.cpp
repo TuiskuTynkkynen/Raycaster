@@ -6,10 +6,12 @@
 #include "Layer3D.h"
 #include "RaycasterScene.h"
 
+#ifdef PLATFORM_WINDOWS
 extern "C" {
 	__declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
+#endif
 
 class Raycaster : public Core::Application {
 public:
