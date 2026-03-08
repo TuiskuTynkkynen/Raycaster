@@ -36,6 +36,7 @@ void Player::Init(const Map& map) {
     // Disable spatialization since player sounds should be played at the listner location
     manager.RegisterSound("equip", "Assets/Audio/equip.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
     manager.RegisterSound("Assets/Audio/attack_dagger.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
+    manager.RegisterSound("Assets/Audio/attack_dart.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization);
     manager.RegisterSound("footstep", "Assets/Audio/step.opus", Core::Audio::Sound::FlagEnum::DisableSpatialization)
         .SetLooping(true)
         .SetVolume(0.25f);
