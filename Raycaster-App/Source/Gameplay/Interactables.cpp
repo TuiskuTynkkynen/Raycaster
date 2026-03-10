@@ -3,6 +3,8 @@
 #include "Easings.h"
 #include "Projectiles.h"
 
+#include "Core/Audio/Audio.h"
+
 #include <array>
 
 static constexpr InteractionResult DebugInteraction(Interactable& interactable, size_t index) {
@@ -27,6 +29,7 @@ static constexpr InteractionResult ToggleInteraction(Interactable& interactable,
 
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
 static InteractionResult SpawnInteraction(Interactable& interactable, size_t index);
+static InteractionResult DoorInteraction(Interactable& interactable, size_t index);
 
 using InteractionPtr = InteractionResult(*)(Interactable& interactable, size_t);
 
@@ -42,6 +45,7 @@ struct InteractableParameters {
     float Scale = 0.0f;
     AtlasAnimation Animation{};
     PlacementType Placement = PlacementType::Floor;
+    std::string_view InteractAudioName = "";
 };
 
 static constinit std::array<InteractableParameters, InteractableType::ENUMERATION_MAX + 1> s_InteractableParameters = []{
@@ -62,24 +66,28 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Scale = 0.5f,
         .Animation = Animations::ChestOpen,
         .Placement = PlacementType::Floor,
+        .InteractAudioName = "Assets/Audio/chest_open.opus",
     };
     parameters[InteractableType::DoorToggle] = InteractableParameters{
-        .Interaction = ToggleInteraction,
+        .Interaction = DoorInteraction,
         .Scale = 0.0f,
         .Animation = {},
-        .Placement = PlacementType::Floor
+        .Placement = PlacementType::Centre,
+        .InteractAudioName = "Assets/Audio/door_open.opus",
     };
     parameters[InteractableType::Dagger] = InteractableParameters{
         .Interaction = PickupInteraction,
         .Scale = 0.5f,
         .Animation = {TextureIndices::Floor_Item_Dagger},
-        .Placement = PlacementType::Falling
+        .Placement = PlacementType::Falling,
+        .InteractAudioName = "Assets/Audio/item_bounce.opus",
     };
     parameters[InteractableType::Dart] = InteractableParameters{
         .Interaction = PickupInteraction,
         .Scale = 0.5f,
         .Animation = {TextureIndices::Floor_Item_Dart},
-        .Placement = PlacementType::Falling
+        .Placement = PlacementType::Falling,
+        .InteractAudioName = "Assets/Audio/item_bounce.opus",
     };
     return parameters;
     }();
@@ -136,17 +144,29 @@ static constexpr InteractionResult AnimationInteraction(Interactable& interactab
     return {};
 }
 
+inline static void PlayAtPosition(InteractableType::Enumeration type, glm::vec3 position) {
+    if (auto sound = Core::Audio::GetSound(s_InteractableParameters[type].InteractAudioName)) {
+        sound->SetPosition(position)
+            .Start();
+    }
+}
+
 static InteractionResult SpawnInteraction(Interactable& interactable, size_t index) {
     if (interactable.AnimationProgress > 0.0f) {
         return {};
     }
 
     AnimationInteraction(interactable, index);
-
+    PlayAtPosition(interactable.Type, interactable.Position);
+    
     static auto items = { InteractableType::Dagger, InteractableType::Dart };
     return InteractionResult::Create<InteractionResult::Type::Spawn>(std::span(items), index);
 }
 
+static InteractionResult DoorInteraction(Interactable& interactable, size_t index) {
+    PlayAtPosition(interactable.Type, interactable.Position);
+    return ToggleInteraction(interactable, index);
+}
 
 
 
@@ -166,6 +186,10 @@ void Interactables::Add(InteractableType::Enumeration type, glm::vec2 position) 
     
     if (s_InteractableParameters[type].Placement == PlacementType::Falling) {
         m_Interactables.back().AnimationProgress = 0.0f;
+    }
+    
+    if (auto name = s_InteractableParameters[type].InteractAudioName; !name.empty()) {
+        Core::Audio::GetSoundManager().RegisterSound(name, Core::Audio::Sound::FlagEnum::None);
     }
 }
 
@@ -253,7 +277,14 @@ void Interactables::Update(Core::Timestep deltaTime){
         interactable.AtlasIndex = GetAtlasIndex(interactable.Type, clampedProgress);
 
         if (s_InteractableParameters[interactable.Type].Placement == PlacementType::Falling) {
-            interactable.Position.z = glm::mix(0.6f, GetScale(interactable.Type) * 0.5f, Easings::EaseOutBounce(clampedProgress * 1.25f - 0.25f));
+            float eased = Easings::EaseOutBounce(clampedProgress * 1.25f - 0.25f);
+            interactable.Position.z = glm::mix(0.6f, GetScale(interactable.Type) * 0.5f, eased);
+            
+            // Animation not done (clampedProgress < 1.0f) and easing function at local maxima
+            bool shouldPlay = clampedProgress < 1.0f && eased > Easings::EaseOutBounce((clampedProgress - deltaTime) * 1.25f - 0.25f) && eased > Easings::EaseOutBounce((clampedProgress + deltaTime) * 1.25f - 0.25f);
+            if (auto name = s_InteractableParameters[interactable.Type].InteractAudioName; !name.empty() && shouldPlay) {
+                Core::Audio::PlayInlineSound(name);
+            }
 
             float x = 1.0f - 2.0f * glm::fract(i * glm::root_two<float>());
             float y = 1.0f - 2.0f * glm::fract(3 * i * glm::root_two<float>());
