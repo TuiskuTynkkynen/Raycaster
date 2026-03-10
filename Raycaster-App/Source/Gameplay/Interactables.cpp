@@ -26,6 +26,7 @@ static constexpr InteractionResult ToggleInteraction(Interactable& interactable,
 }
 
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
+static InteractionResult SpawnInteraction(Interactable& interactable, size_t index);
 
 using InteractionPtr = InteractionResult(*)(Interactable& interactable, size_t);
 
@@ -57,10 +58,10 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::Chest] = InteractableParameters{
-        .Interaction = AnimationInteraction,
+        .Interaction = SpawnInteraction,
         .Scale = 0.5f,
         .Animation = Animations::ChestOpen,
-        .Placement = PlacementType::Floor
+        .Placement = PlacementType::Floor,
     };
     parameters[InteractableType::DoorToggle] = InteractableParameters{
         .Interaction = ToggleInteraction,
@@ -131,9 +132,24 @@ static constexpr InteractionResult AnimationInteraction(Interactable& interactab
     if (interactable.AnimationProgress <= 0.0f) {
         interactable.AnimationProgress = 1.0f / s_InteractableParameters[interactable.Type].Animation.FrameCount;
     }
-
+    
     return {};
 }
+
+static InteractionResult SpawnInteraction(Interactable& interactable, size_t index) {
+    if (interactable.AnimationProgress > 0.0f) {
+        return {};
+    }
+
+    AnimationInteraction(interactable, index);
+
+    static auto items = { InteractableType::Dagger, InteractableType::Dart };
+    return InteractionResult::Create<InteractionResult::Type::Spawn>(std::span(items), index);
+}
+
+
+
+
 
 void Interactables::Init() {
     m_CachedPosition = { -1.0f, -1.0f };
@@ -206,28 +222,23 @@ std::optional<InteractableType::Enumeration> Interactables::CanInteract(glm::vec
 
 InteractionResult Interactables::Interact(glm::vec2 position, float rotation) {
     InteractionResult result{};
-    auto type = CanInteract(position, rotation);
+    auto interaction = CanInteract(position, rotation)
+        .transform(GetInteraction)
+        .value_or(nullptr);
     
-    if (!type) {
-        return result;
-    }
-    
-    auto interaction = GetInteraction(type.value());
     if (!interaction) {
         return result;
     }
     
-    if (type == InteractableType::Chest && m_Interactables[m_CachedIndex].AnimationProgress <= 0.0f) {
-        Add(InteractableType::Dagger, m_Interactables[m_CachedIndex].Position);
-        Add(InteractableType::Dart, m_Interactables[m_CachedIndex].Position);
-        interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
-        
-        return result;
-    }
-
     result = interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
     if (result.GetType() == InteractionResult::Type::Pickup) {
         Remove(result.Index);
+    }
+    // InteractionResult::Type::Spawn
+    if (auto list = std::get_if<std::span<const InteractableType::Enumeration>>(&result.Data)) {
+        for (auto type : *list) {
+            Add(type, m_Interactables[result.Index].Position);
+        }
     }
 
     return result;

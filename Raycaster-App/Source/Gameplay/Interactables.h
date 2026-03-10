@@ -32,12 +32,13 @@ struct Interactable {
 
 class InteractionResult {
 public:
-    using variant = std::variant<std::nullopt_t, std::string_view, glm::vec2 , Item, std::span<const Interactable>>;
+    using variant = std::variant<std::nullopt_t, std::string_view, glm::vec2 , Item, std::span<const InteractableType::Enumeration>>;
     enum class Type {
         None = 0,
         Debug,
         Toggle,
         Pickup,
+        Spawn,
     };
     Type GetType() const { return static_cast<Type>(Data.index()); };
 
