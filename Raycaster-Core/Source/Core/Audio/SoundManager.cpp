@@ -53,6 +53,7 @@ namespace Core::Audio {
 
     Sound& SoundManager::RegisterSound(std::string_view name, Sound::Flags flags, std::filesystem::path filePath, Bus* parent) {
         if (auto sound = GetSound(name); sound != nullptr) {
+            RC_INFO("Tried to register sound with name, {}, but it already exists", name);
             return *sound;
         }
 
@@ -98,12 +99,13 @@ namespace Core::Audio {
 
     Sound* SoundManager::CopySound(std::string_view copyName, Index originalIndex) {
         if (auto sound = GetSound(copyName); sound != nullptr) {
+            RC_INFO("Tried to create a sound copy with name = {}, but that name already exists", copyName);
             return sound;
         }
 
         Sound* original = GetSound(originalIndex);
-
         if (!original) {
+            RC_WARN("Tried to create a sound copy with name = {}, but original sound does not exist", copyName);
             return nullptr;
         }
 
@@ -115,6 +117,7 @@ namespace Core::Audio {
 
             // Check if copy succeeded
             if (!copy) {
+                RC_WARN("Failed to create a sound copy with name = {}", copyName);
                 m_Sounds.pop_back();
                 return nullptr;
             }
@@ -130,6 +133,7 @@ namespace Core::Audio {
 
             // Check if copy succeeded
             if (!copy) {
+                RC_WARN("Failed to create a sound copy with name = {}", copyName);
                 m_Sounds.pop_back();
                 return nullptr;
             }
@@ -146,6 +150,7 @@ namespace Core::Audio {
 
         // Check if copy succeeded
         if (!iter->has_value()) {
+            RC_WARN("Failed to create a sound copy with name = {}", copyName);
             return nullptr;
         }
 
@@ -160,6 +165,7 @@ namespace Core::Audio {
     Sound* SoundManager::CopySound(std::string_view copyName, std::string_view originalName) {
         auto index = GetSoundIndex(originalName);
         if (!index) {
+            RC_WARN("Tried to create a copy from sound with name = {}, but it does not exist", originalName);
             return nullptr;
         }
 
