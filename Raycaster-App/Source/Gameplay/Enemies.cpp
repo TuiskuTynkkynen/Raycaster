@@ -3,9 +3,13 @@
 #include "EnemyBehaviour.h"
 #include "Algorithms.h"
 
+#include "Core/Audio/Audio.h"
+
 void Enemies::Init(const Map& map) {
     m_SpatialPartition.Init(map);
     m_Frontier.resize(map.GetSize());
+
+    InitEnemySounds();
 }
 
 void Enemies::Shutdown() {
@@ -50,6 +54,11 @@ uint32_t Enemies::DamageAreas(std::span<const LineCollider> attack, float thickn
         
         enemy.Health -= damage * hit;
         count += hit;
+
+        if (auto sound = GetHitSound(enemy.Type); hit && sound) {
+            sound->SetPosition({ enemy.Position, 0.0f })
+                .Start();
+        }
     }
 
     return count;
@@ -60,7 +69,7 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
 
     if (shouldUpdate || m_PreviousPlayerPosition != glm::ivec2(playerPosition)) {
         m_SpatialPartition.Partition(m_Enemies);
-    UpdateApproachMap(map, playerPosition);
+        UpdateApproachMap(map, playerPosition);
         UpdateRangedApproachMap(map, playerPosition);
         shouldUpdate = false;
     }
@@ -87,23 +96,23 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
 
         auto action = GetAction(enemy.Type, enemy.State);
         if (action(context, enemy) == ActionStatus::Running) {
-                        continue;
-                    }
+            continue;
+        }
 
         auto transitionTable = GetTransitionTable(enemy.Type);
         for (auto& Transition : transitionTable) {
             if (Transition.CurrentState != enemy.State || !Transition.ShouldTransition(context, enemy)) {
-                        continue;
-                    }
+                continue;
+            }
 
             enemy.ActionTick = 0.0f;
             enemy.State = Transition.NextState;
             break;
-                }
-                }
+        }
+    }
 
     shouldUpdate |= context.UpdateDjikstraMap;
-            }   
+}   
 
 void Enemies::UpdateRender(std::span<Tile> tiles, Renderables& renderables) {
     for (size_t i = 0; i < Count(); i++) {

@@ -1,6 +1,8 @@
 #pragma once
 #include "Enemies.h"
 
+#include "Core/Audio/Audio.h"
+
 struct Context {
     Core::Timestep DeltaTime;
     bool UpdateDjikstraMap;
@@ -130,6 +132,10 @@ struct EnemyParameters {
     float AttackDuration{};
     float AttackTiming{};
     uint32_t AtlasIndex{};
+
+    std::string_view AttackAudioName = "";
+    std::string_view HitAudioName = "";
+    std::string_view IdleAudioName = "";
 };
 
 inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_EnemyParameters = [] {
@@ -145,6 +151,10 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
         .AttackDuration = 1.5f,
         .AttackTiming = 1.0f / 1.5f,
         .AtlasIndex = TextureIndices::Enemy_Basic,
+
+        .AttackAudioName = "Assets/Audio/enemy_melee_attack.opus",
+        .HitAudioName = "Assets/Audio/enemy_hit.opus",
+        .IdleAudioName = "Assets/Audio/enemy_melee_idle.opus",
     };
     params[EnemyType::Ranged] = EnemyParameters{
         .ActionTable = s_RangedActions,
@@ -157,6 +167,10 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
         .AttackDuration = 1.0f,
         .AttackTiming = 1.0f,
         .AtlasIndex = TextureIndices::Enemy_Basic,
+
+        .AttackAudioName = "Assets/Audio/enemy_ranged_attack.opus",
+        .HitAudioName = "Assets/Audio/enemy_hit.opus",
+        .IdleAudioName = "Assets/Audio/enemy_ranged_idle.opus",
     };
     return params;
     }();
@@ -217,6 +231,30 @@ constexpr uint32_t GetAtlasIndex(EnemyType::Enumeration type) {
     return s_EnemyParameters[type].AtlasIndex;
 }
 
+constexpr Core::Audio::Sound* GetAttackSound(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return nullptr;
+    }
+
+    return Core::Audio::GetSound(s_EnemyParameters[type].AttackAudioName);
+}
+
+constexpr Core::Audio::Sound* GetHitSound(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return nullptr;
+    }
+
+    return Core::Audio::GetSound(s_EnemyParameters[type].HitAudioName);
+}
+
+constexpr Core::Audio::Sound* GetIdleSound(EnemyType::Enumeration type) {
+    if (type > EnemyType::ENUMERATION_MAX) {
+        return nullptr;
+    }
+
+    return Core::Audio::GetSound(s_EnemyParameters[type].IdleAudioName);
+}
+
 constexpr Action GetAction(EnemyType::Enumeration type, EnemyState::Enumeration state) {
     if (type > EnemyType::ENUMERATION_MAX || state > EnemyState::ENUMERATION_MAX) {
         return nullptr;
@@ -231,4 +269,25 @@ constexpr std::span<const Transition> GetTransitionTable(EnemyType::Enumeration 
     }
 
     return s_EnemyParameters[type].TransitionTable;
+}
+
+inline void InitEnemySounds() {
+    auto& manager = Core::Audio::GetSoundManager();
+    for (EnemyParameters& params : s_EnemyParameters) {
+        if(!params.AttackAudioName.empty())
+            manager.RegisterSound(params.AttackAudioName, Core::Audio::Sound::FlagEnum::DisablePitch);
+        if(!params.HitAudioName.empty())
+            manager.RegisterSound(params.HitAudioName, Core::Audio::Sound::FlagEnum::DisablePitch);
+        if(!params.IdleAudioName.empty())
+            manager.RegisterSound(params.IdleAudioName, Core::Audio::Sound::FlagEnum::DisablePitch);
+    }
+}
+
+inline void DeinitEnemySounds() {
+    auto& manager = Core::Audio::GetSoundManager();
+    for (EnemyParameters& params : s_EnemyParameters) {
+        manager.UnregisterSound(params.AttackAudioName);
+        manager.UnregisterSound(params.HitAudioName);
+        manager.UnregisterSound(params.IdleAudioName);
+    }
 }

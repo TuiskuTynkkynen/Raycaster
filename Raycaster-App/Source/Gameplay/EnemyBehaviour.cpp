@@ -210,6 +210,12 @@ ActionStatus BasicAttack(Context& context, Enemy& enemy) {
     enemy.ActionTick += relativeDeltaTime;
     enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Attack;
     
+    float soundTiming = GetAttackTiming(enemy.Type) - 0.125f;
+    if (auto sound = GetAttackSound(enemy.Type); glm::abs(enemy.ActionTick - soundTiming) <= relativeDeltaTime && sound) {
+        sound->SetPosition({ enemy.Position, 0.5f })
+            .Start();
+    }
+
     if (enemy.ActionTick >= GetAttackTiming(enemy.Type) && enemy.ActionTick - relativeDeltaTime < GetAttackTiming(enemy.Type)) {
         glm::vec2 direction = glm::normalize(context.PlayerPosition - enemy.Position);
         context.Areas.emplace_back(enemy.Position, enemy.Position + GetAttackRange(enemy.Type) * direction);
@@ -252,6 +258,11 @@ ActionStatus BasicPathfind(Context& context, Enemy& enemy) {
     enemy.Position += movementVector;
     
     context.UpdateDjikstraMap |= glm::floor(oldPosition) != glm::floor(enemy.Position);
+
+    if (auto sound = GetIdleSound(enemy.Type); glm::abs(glm::fract(enemy.Tick) - 0.75f) <= context.DeltaTime / 16.f && sound) {
+        sound->SetPosition({ enemy.Position, 0.5f })
+            .Start();
+    }
 
     return ActionStatus::Done;
 }
@@ -303,5 +314,9 @@ ActionStatus RangedPathfind(Context& context, Enemy& enemy) {
     
     context.UpdateDjikstraMap |= glm::floor(oldPosition) != glm::floor(enemy.Position);
 
+    if (auto sound = GetIdleSound(enemy.Type); glm::abs(glm::fract(enemy.Tick) - 0.75f) <= context.DeltaTime / 16.f && sound) {
+        sound->SetPosition({ enemy.Position, 0.5f })
+            .Start();
+    }
     return ActionStatus::Done;
 }
