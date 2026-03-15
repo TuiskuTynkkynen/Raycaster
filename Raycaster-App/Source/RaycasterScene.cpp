@@ -4,6 +4,7 @@
 
 void RaycasterScene::Init(){
     Core::Audio::Init();
+    Core::Audio::SetWorldUp(glm::vec3(0.0f, 0.0f, 1.0f));
 
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
@@ -101,7 +102,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     
     m_Renderables.ResetDynamic();
     m_Map.Update(deltaTime, m_Lights);
-
+    
     if (m_Player.ShouldInteract()) {
         auto result = m_Interactables.Interact(m_Player.GetPosition(), m_Player.GetYaw());
 

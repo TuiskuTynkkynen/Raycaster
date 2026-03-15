@@ -178,13 +178,18 @@ void Player::Move(std::span<const LineCollider> walls, std::span<const LineColli
     const float MaxRotationalSpeed = 180.0f;
 
     const float speed = glm::length(m_LateralSpeed);
-    if (speed != 0.0f) {
-        const float cos = glm::cos(glm::radians(m_Rotation.x));
-        const float sin = -glm::sin(glm::radians(m_Rotation.x)); 
+    const float cos = glm::cos(glm::radians(m_Rotation.x));
+    const float sin = -glm::sin(glm::radians(m_Rotation.x));
 
-        auto movement = m_LateralSpeed * MaxLateralSpeed * deltaTime.GetSeconds();
-        m_Position.x += movement.x * cos - movement.y * sin;
-        m_Position.y += movement.x * sin + movement.y * cos;
+    Core::Audio::SetListnerPosition(m_Position);
+    Core::Audio::SetListnerDirection({ -cos, -sin, 0.0f });
+
+    if (speed != 0.0f) { 
+        glm::vec3 movement = { m_LateralSpeed.x * cos - m_LateralSpeed.y * sin, m_LateralSpeed.x * sin + m_LateralSpeed.y * cos, 0 };
+        movement *= MaxLateralSpeed * deltaTime.GetSeconds();
+        m_Position += movement;
+
+        Core::Audio::SetListnerVelocity(movement);
     }
 
     if (auto sound = Core::Audio::GetSound("footstep"); sound) {
