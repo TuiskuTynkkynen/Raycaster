@@ -53,7 +53,7 @@ namespace Settings {
 
     void UI::Render() {
         Core::UI::Text("Settings", { 0.5f, 0.125f }, glm::vec4(1.0f));
-
+        
         static float scrollOffset = 0;
         Core::UI::BeginScrollContainer(scrollOffset, { 0.75f, 0.65f }, true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f)); {
             RenderInput();
@@ -77,6 +77,7 @@ namespace Settings {
 
             if (Core::UI::Button("Back", { 0.3f, 1.0f })) {
                 IsEnabled = false;
+                Core::UI::ResetInteractionElement();
             }
         } Core::UI::EndContainer();
     }
@@ -136,7 +137,11 @@ namespace Settings {
         }
 
         if (event.GetKeyCode() == RC_KEY_ESCAPE) {
-            IsEnabled = m_SelectedKeyBind != -1;
+            if (m_SelectedKeyBind == -1) {
+                IsEnabled = false;
+                Core::UI::ResetInteractionElement();
+            }
+
             m_SelectedKeyBind = -1;
             return true;
         }

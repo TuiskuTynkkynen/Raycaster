@@ -72,18 +72,22 @@ void UILayer::PauseScreen(const RaycasterScene& scene) {
     Core::UI::Text(sceneState == RaycasterScene::State::Dead ? "You died!" : "Paused", glm::vec2{ 0.5f, 0.25f }, glm::vec4(1.0f));
 
     if (sceneState >= RaycasterScene::State::Dead && Core::UI::Button("Restart", glm::vec2{ 0.5f, 0.2f })) {
+        Core::UI::ResetInteractionElement();
         Core::Application::PushEvent<Restart>();
     }
 
     if (sceneState == RaycasterScene::State::Paused && Core::UI::Button("Continue", glm::vec2{ 0.5f, 0.2f })) {
+        Core::UI::ResetInteractionElement();
         Core::Application::PushEvent<Resume>();
     }
 
     if (Core::UI::Button("Settings", glm::vec2{ 0.5f, 0.2f })) {
+        Core::UI::ResetInteractionElement();
         m_SettingsUI.IsEnabled = true;
     }
 
     if (Core::UI::Button("Quit", glm::vec2{ 0.5f, 0.2f })) {
+        Core::UI::ResetInteractionElement();
         Core::Application::PushEvent<Core::ApplicationClose>();
     }
 }
