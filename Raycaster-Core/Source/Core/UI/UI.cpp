@@ -68,6 +68,31 @@ namespace Core::UI {
         return (mousePosition.x <= position.x + glm::abs(size.x) * 0.5f && mousePosition.x >= position.x - glm::abs(size.x) * 0.5f
             && mousePosition.y <= position.y + glm::abs(size.y) * 0.5f && mousePosition.y >= position.y - glm::abs(size.y) * 0.5f);
     }
+
+    static size_t NextHoverable(size_t startIndex, int64_t direction) {
+        // If keyboard interaction is not active, start testing with the last interacted element i.e. the element @ start index.
+        startIndex = startIndex - direction * (Internal::Input->InteractionState == Internal::KeyboardInteraction::Inactive);
+        
+        if (startIndex >= Internal::System->Elements.size()) { // Wrap if invalid index
+            startIndex = (direction < 0) * (Internal::System->Elements.size() - 1);
+        }
+
+        size_t currentIndex = startIndex;
+        do {
+            currentIndex += direction;
+            if (currentIndex >= Internal::System->Elements.size()) { // Wrap if invalid index
+                currentIndex = (direction < 0) * (Internal::System->Elements.size() - 1);
+            }
+        } while (currentIndex != startIndex && Internal::System->Elements[currentIndex].Type <= SurfaceType::Hoverable);
+
+        // Returns 0, if no suitable element was found.
+        return currentIndex * (Internal::System->Elements[currentIndex].Type > SurfaceType::Hoverable);
+    }
+
+    static bool WasElementInteracted(size_t index) {
+        return (Internal::Input->MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == index)
+            || Internal::Input->InteractionState == Internal::KeyboardInteraction::Released;
+    }
 }
 
 namespace Core {
@@ -101,22 +126,25 @@ namespace Core {
     void UI::Update(Timestep deltaTime) {
         RC_ASSERT(Internal::System, "Tried to update UI before initializing");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to update UI before calling UI Begin");
-        
-        Internal::System->Time = Internal::System->Time + deltaTime;
-        
-        if(Internal::System->ActiveID >= Internal::System->Elements.size()){
-            Internal::System->ActiveID = 0;
-        }
 
+        Internal::System->Time = Internal::System->Time + deltaTime;
+
+        Internal::System->ActiveID *= Internal::System->ActiveID < Internal::System->Elements.size();
+        Internal::Input->InteractionID *= Internal::Input->InteractionID < Internal::System->Elements.size();
+        
         bool isCaptured = Internal::System->Elements[Internal::System->ActiveID].Type >= SurfaceType::Capture;
 
         Internal::System->HoverID = 0;
-        if (Internal::Input->MouseState.Left == Internal::MouseButtonState::None && !isCaptured) {
+        if (Internal::Input->MouseState.Left == Internal::MouseButtonState::None && !isCaptured
+            && Internal::Input->InteractionState <= Internal::KeyboardInteraction::Hovered) {
             Internal::System->ActiveID = 0;
         }
-        
+
         Internal::Input->MouseState.Left = Internal::MouseButtonState(Internal::Input->MouseState.Left == Internal::MouseButtonState::Held);
         Internal::Input->MouseState.Right = Internal::MouseButtonState(Internal::Input->MouseState.Right == Internal::MouseButtonState::Held);
+        if (Internal::Input->InteractionState == Internal::KeyboardInteraction::Released){
+            Internal::Input->InteractionState = Internal::KeyboardInteraction::Hovered;
+        }
 
         size_t lastParentId = -1;
         std::unique_ptr<Layout> layout = std::make_unique<NoLayout>(Internal::System->Elements.front());
@@ -169,6 +197,17 @@ namespace Core {
             }
         }
 
+        if (Internal::System->Elements[Internal::System->HoverID].Type >= SurfaceType::Activatable
+            && Internal::System->HoverID != Internal::Input->InteractionID && Internal::Input->MouseState.Moved) {
+            Internal::Input->InteractionState = Internal::KeyboardInteraction::Inactive;
+            Internal::Input->InteractionID = Internal::System->HoverID;
+        }
+
+        if (Internal::Input->InteractionState != Internal::KeyboardInteraction::Inactive) {
+            Internal::System->HoverID = Internal::Input->InteractionID;
+        }
+
+        Internal::Input->MouseState.Moved = false;
         Internal::Input->MouseState.ScrollOffset = 0.0f;
 
         Internal::Input->KeyboardState.InputedText.clear();
@@ -353,7 +392,7 @@ namespace Core {
             }
         }
 
-        return Internal::Input->MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
+        return WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
 
     bool UI::TextureButton(const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
@@ -397,7 +436,7 @@ namespace Core {
             }
         }
 
-        return HoverResult((Internal::System->HoverID == currentIndex) + (Internal::Input->MouseState.Left == Internal::MouseButtonState::Released && Internal::System->ActiveID == currentIndex));
+        return HoverResult((Internal::System->HoverID == currentIndex) + (WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex));
     }
 
     template <typename T>
@@ -947,9 +986,9 @@ namespace Core {
             }
         }
 
-        enabled ^= Internal::Input->MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
+        enabled ^= WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
-    
+
     void UI::TextureToggle(bool& enabled, const AtlasProperties& boxAtlasProperties, const glm::uvec3& checkAtlasIndices, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI toggle before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI toggle before calling UI Begin");
@@ -967,7 +1006,7 @@ namespace Core {
             }
         }
 
-        enabled ^= Internal::Input->MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == currentIndex && Internal::System->ActiveID == currentIndex;
+        enabled ^= WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
 
     template <typename T>
@@ -1077,6 +1116,11 @@ namespace Core {
         Internal::AtlasSize = atlasSize;
     }
 
+    void UI::ResetInteractionElement() {
+        Internal::System->HoverID = Internal::System->ActiveID = Internal::Input->InteractionID = 0;
+        Internal::Input->InteractionState = Internal::KeyboardInteraction::Inactive;
+    }
+
     void UI::OnEvent(Event& event) {
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
 
@@ -1094,6 +1138,7 @@ namespace Core {
     bool UI::OnMouseMovedEvent(MouseMoved& event){
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
 
+        Internal::Input->MouseState.Moved = true;
         Internal::Input->MouseState.Position = event.GetPosition() / Internal::System->Size;
         Internal::Input->MouseState.Position.x *= Internal::System->AspectRatio;
 
@@ -1150,6 +1195,7 @@ namespace Core {
         switch (event.GetButton()) {
         case RC_MOUSE_BUTTON_LEFT:
             Internal::Input->MouseState.Left = Internal::MouseButtonState::Released;
+            Internal::Input->InteractionState = Internal::KeyboardInteraction::Inactive;
             break;
         case RC_MOUSE_BUTTON_RIGHT:
             Internal::Input->MouseState.Right = Internal::MouseButtonState::Released;
@@ -1170,7 +1216,29 @@ namespace Core {
     bool UI::OnKeyPressedEvent(KeyPressed& event) {
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
 
-        if (Internal::System->Elements.empty() || Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
+        if (Internal::System->Elements.empty()) {
+            return false;
+        }
+
+        if (event.GetKeyCode() == RC_KEY_UP) {
+            bool set = Internal::Input->InteractionID = NextHoverable(Internal::Input->InteractionID, -1);
+            Internal::Input->InteractionState = Internal::KeyboardInteraction(set);
+            return set;
+        }
+
+        if (event.GetKeyCode() == RC_KEY_DOWN) {
+            bool set = Internal::Input->InteractionID = NextHoverable(Internal::Input->InteractionID, 1);
+            Internal::Input->InteractionState = Internal::KeyboardInteraction(set);
+            return set;
+        }
+
+        if (Internal::System->HoverID == Internal::Input->InteractionID && event.GetKeyCode() == RC_KEY_ENTER) {
+            Internal::System->ActiveID = Internal::Input->InteractionID;
+            Internal::Input->InteractionState = Internal::KeyboardInteraction::Active;
+            return true;
+        }
+
+        if (Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
             return false;
         }
 
@@ -1192,7 +1260,16 @@ namespace Core {
     bool UI::OnKeyReleasedEvent(KeyReleased& event) {
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
 
-        if (Internal::System->Elements.empty() || Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
+        if (Internal::System->Elements.empty()) {
+            return false;
+        }
+
+        if (Internal::Input->InteractionState == Internal::KeyboardInteraction::Active && event.GetKeyCode() == RC_KEY_ENTER) {
+            Internal::Input->InteractionState = Internal::KeyboardInteraction::Released;
+            return true;
+        }
+
+        if (Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
             return false;
         }
 

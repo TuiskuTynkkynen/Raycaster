@@ -25,7 +25,7 @@ namespace Core::UI::Internal {
 		float AspectRatio = 0.0f;
 	};
 
-	enum class MouseButtonState {
+	enum class MouseButtonState : uint8_t {
 		None = 0, 
 		Held,
 		Released,
@@ -33,6 +33,8 @@ namespace Core::UI::Internal {
 
 	struct UIMouseState {
 		glm::vec2 Position{};
+		bool Moved = false;
+
 		MouseButtonState Left = MouseButtonState::None;
 		MouseButtonState Right = MouseButtonState::None;
 
@@ -73,10 +75,20 @@ namespace Core::UI::Internal {
 		std::bitset<Keys::ModCount> ModKeys;
 		std::vector<uint32_t> InputedText;
 	};
+	
+	enum class KeyboardInteraction : uint8_t {
+		Inactive = 0,
+		Hovered,
+		Active,
+		Released,
+	};
 
 	struct UIInputState {
 		UIMouseState MouseState;
 		UIKeyboardState KeyboardState;
+
+		KeyboardInteraction InteractionState;
+		size_t InteractionID = 0;
 
 		inline bool TestInputKey(Keys::InputKeys key) const { return KeyboardState.InputKeys.test(key); }
 		inline bool TestModKey(Keys::ModKeys mod) const { return KeyboardState.ModKeys.test(mod); }

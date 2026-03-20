@@ -197,6 +197,7 @@ namespace Core::UI {
 
     void SetFont(std::shared_ptr<Core::Font> font);
     void SetTextureAtlas(std::shared_ptr<Core::Texture2D> atlas, glm::uvec2 atlasSize);
+    void ResetInteractionElement();
 
     void OnEvent(Event& event);
 
