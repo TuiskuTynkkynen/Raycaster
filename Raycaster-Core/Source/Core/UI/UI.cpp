@@ -1093,8 +1093,6 @@ namespace Core {
         BeginContainer(PositioningType::Relative, position, size, glm::vec4(0.0f), LayoutType::None);
         size_t index = Internal::System->Elements.size() - 1;
 
-        Slider(offset, 0.0f, 0.0f, true, glm::vec2(1.0f, 1.0f - buttonSize * 2), highlightColours, baseColours);
-
         std::function renderTriangleButton = [highlightColours](Surface& current, float flip) -> bool {
             uint32_t colourIndex = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
             glm::vec4& colour = current.Colours[colourIndex];
@@ -1110,6 +1108,8 @@ namespace Core {
         bool downButton = Button(PositioningType::Relative, glm::vec2(0.0f, -0.5f * (1.0f - buttonSize)), glm::vec2(1.0f, buttonSize), baseColours[0], baseColours[1], baseColours[2]);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, -1.0f));
 
+        Slider(offset, 0.0f, 0.0f, true, glm::vec2(1.0f, 1.0f - buttonSize * 2), highlightColours, baseColours);
+
         bool upButton = Button(PositioningType::Relative, glm::vec2(0.0f, 0.5f * (1.0f - buttonSize)), glm::vec2(1.0f, buttonSize), baseColours[0], baseColours[1], baseColours[2]);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, 1.0f));
         
@@ -1120,11 +1120,9 @@ namespace Core {
     void UI::TextureScrollBar(float& offset, glm::vec2 buttonOffset, glm::vec2 buttonSize, const AtlasProperties& buttonAtlasProperties, glm::vec2 sliderSize, const AtlasProperties& sliderAtlasProperties, const AtlasProperties& baseAtlasProperties, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& colours) {
         BeginContainer(PositioningType::Relative, position, size, colours[0], LayoutType::None);
         size_t index = Internal::System->Elements.size() - 1;
-
-        TextureSlider<float>(offset, 0.0f, 0.0f, true, { glm::uvec3(0), glm::vec2(0.0f) }, sliderSize, sliderAtlasProperties, glm::vec2(1.0f, 1.0f - 0.5f * buttonOffset.y), colours);
         
         bool downButton = TextureButton(buttonAtlasProperties, PositioningType::Relative, glm::vec2(buttonOffset.x, -buttonOffset.y), buttonSize, colours[0], colours[1], colours[2]);
-        
+        TextureSlider<float>(offset, 0.0f, 0.0f, true, { glm::uvec3(0), glm::vec2(0.0f) }, sliderSize, sliderAtlasProperties, glm::vec2(1.0f, 1.0f - 0.5f * buttonOffset.y), colours);
         bool upButton = TextureButton(buttonAtlasProperties, PositioningType::Relative, buttonOffset, glm::vec2(buttonSize.x, -buttonSize.y), colours[0], colours[1], colours[2]);
         
         Internal::System->Elements[index].Widget = std::make_unique<Widgets::AtlasTextureScrollBarWidget>(offset, downButton, upButton, baseAtlasProperties.Indices, baseAtlasProperties.Size);

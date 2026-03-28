@@ -1124,7 +1124,7 @@ namespace Core::UI::Widgets {
                 m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, scrollSize);
             }
 
-            Surface& child = Internal::System->Elements[currentIndex + 1];
+            Surface& child = Internal::System->Elements[currentIndex + 2];
             auto sliderWidget = dynamic_cast<SliderWidget<float>*>(child.Widget.get());
             if(sliderWidget) {
                 sliderWidget->m_Max = scrollSize;
@@ -1132,7 +1132,7 @@ namespace Core::UI::Widgets {
                 uint32_t scrollDimension = scrollWidget->m_ScrollDimension;
                 sliderWidget->m_SliderSize = glm::clamp(glm::abs(parent.Size[scrollDimension] / scrollSize), 0.05f, 0.9f);
             } else {
-                RC_WARN("The first child of UI element with ScrollBarWidget should have a SliderWidget member");
+                RC_WARN("The second child of UI element with ScrollBarWidget should have a SliderWidget member");
             }
         }
     }
@@ -1166,12 +1166,12 @@ namespace Core::UI::Widgets {
                 m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, scrollSize);
             }
 
-            Surface& child = Internal::System->Elements[currentIndex + 1];
+            Surface& child = Internal::System->Elements[currentIndex + 2];
             auto sliderWidget = dynamic_cast<AtlasTextureSliderWidget<float>*>(child.Widget.get());
             if(sliderWidget) {
                 sliderWidget->m_Max = scrollSize;
             } else {
-                RC_WARN("The first child of UI element with AtlasTextureScrollBarWidget should have a AtlasTextureSliderWidget member");
+                RC_WARN("The second child of UI element with AtlasTextureScrollBarWidget should have a AtlasTextureSliderWidget member");
             }
         }
     }
