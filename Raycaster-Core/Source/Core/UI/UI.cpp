@@ -86,6 +86,13 @@ namespace Core::UI {
         return false;
     }
 
+    static bool IsHoverable(size_t index) {
+        RC_ASSERT(index < Internal::System->Elements.size());
+
+        auto& element = Internal::System->Elements[index];
+        return element.Type >= SurfaceType::Hoverable && element.Colours[0] != element.Colours[1];
+    }
+
     static size_t NextHoverable(size_t startIndex, int64_t direction) {
         // If keyboard interaction is not active, start testing with the last interacted element i.e. the element @ start index.
         startIndex = startIndex - direction * (Internal::Input->InteractionState == Internal::KeyboardInteraction::Inactive);
@@ -100,7 +107,7 @@ namespace Core::UI {
             if (currentIndex >= Internal::System->Elements.size()) { // Wrap if invalid index
                 currentIndex = (direction < 0) * (Internal::System->Elements.size() - 1);
             }
-        } while (currentIndex != startIndex && Internal::System->Elements[currentIndex].Type <= SurfaceType::Hoverable || IsCropped(currentIndex));
+        } while (currentIndex != startIndex && !IsHoverable(currentIndex) || IsCropped(currentIndex));
 
         // Returns 0, if no suitable element was found.
         return currentIndex * (Internal::System->Elements[currentIndex].Type > SurfaceType::Hoverable);
