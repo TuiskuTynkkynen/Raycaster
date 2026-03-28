@@ -1242,22 +1242,24 @@ namespace Core {
             return false;
         }
 
-        if (event.GetKeyCode() == RC_KEY_UP) {
-            bool set = Internal::Input->InteractionID = NextHoverable(Internal::Input->InteractionID, -1);
-            Internal::Input->InteractionState = Internal::KeyboardInteraction(set);
-            return set;
-        }
+        if (Internal::System->Elements[Internal::System->ActiveID].Type < SurfaceType::Capture) {
+            if (event.GetKeyCode() == RC_KEY_UP) {
+                bool set = Internal::Input->InteractionID = NextHoverable(Internal::Input->InteractionID, -1);
+                Internal::Input->InteractionState = Internal::KeyboardInteraction(set);
+                return set;
+            }
 
-        if (event.GetKeyCode() == RC_KEY_DOWN) {
-            bool set = Internal::Input->InteractionID = NextHoverable(Internal::Input->InteractionID, 1);
-            Internal::Input->InteractionState = Internal::KeyboardInteraction(set);
-            return set;
-        }
+            if (event.GetKeyCode() == RC_KEY_DOWN) {
+                bool set = Internal::Input->InteractionID = NextHoverable(Internal::Input->InteractionID, 1);
+                Internal::Input->InteractionState = Internal::KeyboardInteraction(set);
+                return set;
+            }
 
-        if (Internal::System->HoverID == Internal::Input->InteractionID && event.GetKeyCode() == RC_KEY_ENTER) {
-            Internal::System->ActiveID = Internal::Input->InteractionID;
-            Internal::Input->InteractionState = Internal::KeyboardInteraction::Active;
-            return true;
+            if (Internal::System->HoverID == Internal::Input->InteractionID && event.GetKeyCode() == RC_KEY_ENTER) {
+                Internal::System->ActiveID = Internal::Input->InteractionID;
+                Internal::Input->InteractionState = Internal::KeyboardInteraction::Active;
+                return true;
+            }
         }
 
         if (Internal::System->Elements[Internal::System->ActiveID].Type != SurfaceType::TextInput) {
@@ -1284,6 +1286,12 @@ namespace Core {
 
         if (Internal::System->Elements.empty()) {
             return false;
+        }
+
+        bool captured = Internal::System->Elements[Internal::System->ActiveID].Type >= SurfaceType::Capture;
+        if (captured && event.GetKeyCode() == RC_KEY_ESCAPE) {
+            Internal::System->ActiveID = 0;
+            return true;
         }
 
         if (Internal::Input->InteractionState == Internal::KeyboardInteraction::Active && event.GetKeyCode() == RC_KEY_ENTER) {
