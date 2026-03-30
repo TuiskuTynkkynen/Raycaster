@@ -87,6 +87,22 @@ namespace Core {
         stbi_image_free(data);
     }
 
+    void Texture2D::BindImage(std::span<const std::byte> embededImage) {
+        stbi_set_flip_vertically_on_load(true);
+
+        int textureWidth, textureHeight, textureChannelCount;
+        const stbi_uc* buffer = reinterpret_cast<const stbi_uc*>(embededImage.data());
+        unsigned char* data = stbi_load_from_memory(buffer, static_cast<int32_t>(embededImage.size()), &textureWidth, &textureHeight, &textureChannelCount, 0);
+
+        if (!data) {
+            RC_ERROR("Failed to load Texture2D image from embeded data");
+            return;
+        }
+
+        BindData(data, textureHeight, textureWidth, textureChannelCount);
+        stbi_image_free(data);
+    }
+
     void Texture2D::BindData(const unsigned char* data, uint32_t height, uint32_t width, uint32_t channelCount) {
         GLenum colourSpace = 0;
         switch (channelCount) {
