@@ -78,43 +78,23 @@ namespace Core {
         int textureWidth, textureHeight, textureChannelCount;
         unsigned char* data = stbi_load(filePath, &textureWidth, &textureHeight, &textureChannelCount, 0);
 
-        if (data) {
-            GLenum colourSpace;
-
-            switch (textureChannelCount)
-            {
-            case 1:
-                colourSpace = GL_RED;
-                break;
-            case 3:
-                colourSpace = GL_RGB;
-                break;
-            case 4:
-                colourSpace = GL_RGBA;
-                break;
-            default:
-                colourSpace = GL_RGB;
-                break;
-            }
-
-            glBindTexture(GL_TEXTURE_2D, m_RendererID);
-            glTexImage2D(GL_TEXTURE_2D, 0, colourSpace, textureWidth, textureHeight, 0, colourSpace, GL_UNSIGNED_BYTE, data);
-            if (m_UsesMipMap) {
-                glGenerateMipmap(GL_TEXTURE_2D);
-            }
+        if (!data) {
+            RC_ERROR("Failed to load Texture2D image from file = {}", fileName);
+            return;
         }
-        else {
-            RC_ERROR("FAILED TO LOAD TEXTURE {}", fileName);
-        }
+
+        BindData(data, textureHeight, textureWidth, textureChannelCount);
         stbi_image_free(data);
     }
 
     void Texture2D::BindData(const unsigned char* data, uint32_t height, uint32_t width, uint32_t channelCount) {
-        GLenum colourSpace;
-
+        GLenum colourSpace = 0;
         switch (channelCount) {
         case 1:
             colourSpace = GL_RED;
+            break;
+        case 2:
+            colourSpace = GL_RG;
             break;
         case 3:
             colourSpace = GL_RGB;
@@ -123,12 +103,13 @@ namespace Core {
             colourSpace = GL_RGBA;
             break;
         default:
-            colourSpace = GL_RGB;
-            break;
+            RC_TRACE("Texture2D only supports up to 4 channels, but channel count was {}", channelCount);
+            return;
         }
 
         glBindTexture(GL_TEXTURE_2D, m_RendererID);
         glTexImage2D(GL_TEXTURE_2D, 0, colourSpace, width, height, 0, colourSpace, GL_UNSIGNED_BYTE, data);
+
         if (m_UsesMipMap) {
             glGenerateMipmap(GL_TEXTURE_2D);
         }
