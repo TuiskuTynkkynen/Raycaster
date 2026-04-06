@@ -18,6 +18,11 @@ if [ ! -d ./Raycaster-Core/Dependencies/glad/include/ ]; then
     popd
 fi
 
+# Configure libogg
+pushd ./Raycaster-Core/Dependencies/libogg
+./autogen.sh && ./configure
+popd
+
 ./Vendor/Binaries/Premake/Linux/premake5 --cc=clang --file=Build.lua gmake
 
 popd
