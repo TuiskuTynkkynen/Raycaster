@@ -2,6 +2,8 @@
 
 #include "Event.h"
 
+#include <cstdint>
+
 namespace Core {
 	class KeyPressed : public Event {
 	public:

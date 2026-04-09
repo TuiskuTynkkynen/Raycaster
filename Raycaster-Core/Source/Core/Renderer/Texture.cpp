@@ -9,6 +9,7 @@
 
 #include <filesystem> 
 #include <string>
+#include <utility>
 
 namespace Core {
     static constexpr GLint ToGLint(Texture2D::WrapMode mode) {
