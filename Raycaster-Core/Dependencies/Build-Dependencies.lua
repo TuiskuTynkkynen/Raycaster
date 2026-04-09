@@ -13,7 +13,9 @@ project "Raycaster-Dependencies"
     AddGLM()
     AddMiniaudio()
     AddStbImage()
-        
+    
+    links { "Opus" }
+
     targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 

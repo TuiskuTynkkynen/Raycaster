@@ -25,6 +25,7 @@ project "Raycaster-Core"
         "GLFW",
         "glad",
         "FreeType",
+	"Opus",
     }
 
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")

@@ -30,6 +30,7 @@ project "Raycaster-App"
         "GLFW",
         "glad",
         "FreeType",
+	"Opus",
     }
 
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")

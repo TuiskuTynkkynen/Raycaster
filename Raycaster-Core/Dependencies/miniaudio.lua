@@ -10,7 +10,7 @@ function AddMiniaudio()
         "opusfile/include"
 	}
 
-	links { "opus" }
+	links { "Opus" }
 
 	filter { "system:linux" }
 		links { "lpthread", "lm", "ldl" }
