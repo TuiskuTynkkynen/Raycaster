@@ -116,6 +116,7 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
         case InteractionResult::Type::Pickup:
             m_Player.PickUp(std::get<Item>(result.Data));
             break;
+	case InteractionResult::Type::Spawn:
         case InteractionResult::Type::None:
             break;
         }
