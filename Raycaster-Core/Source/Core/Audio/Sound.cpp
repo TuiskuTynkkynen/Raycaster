@@ -154,7 +154,7 @@ namespace Core::Audio {
         other.SwitchParent(nullptr);
     }
 
-    bool Sound::CanReinit() {
+    bool Sound::CanReinit() const {
         return m_Flags ^ StreamData;
     }
 
@@ -296,7 +296,7 @@ namespace Core::Audio {
         return Sound(internalSoundCopy, m_Flags, m_Parent);
     }
 
-    bool Sound::IsLooping() {
+    bool Sound::IsLooping() const {
         return ma_sound_is_looping(m_InternalSound);
     }
 
@@ -305,11 +305,11 @@ namespace Core::Audio {
         return *this;
     }
 
-    bool Sound::IsPlaying() {
+    bool Sound::IsPlaying() const {
         return ma_sound_is_playing(m_InternalSound);
     }
 
-    bool Sound::IsAtEnd() {
+    bool Sound::IsAtEnd() const {
         return ma_sound_at_end(m_InternalSound);
     }
 
@@ -476,9 +476,8 @@ namespace Core::Audio {
         return *this;
     }
 
-    glm::vec3 Sound::GetDirectionToListner() {
+    glm::vec3 Sound::GetDirectionToListner() const {
         ma_vec3f direction = ma_sound_get_direction_to_listener(m_InternalSound);
-
         return glm::vec3(direction.x, direction.y, direction.z);
     }
 
@@ -625,7 +624,7 @@ namespace Core::Audio {
         return *this;
     }
 
-    float Sound::GetFadeVolume() {
+    float Sound::GetFadeVolume() const {
         return ma_sound_get_current_fade_volume(m_InternalSound);
     }
 

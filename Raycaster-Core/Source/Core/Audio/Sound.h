@@ -52,7 +52,7 @@ namespace Core::Audio {
         Sound& operator = (const Sound& other) = delete;
         Sound& operator = (const Sound&& other) = delete;
 
-        bool CanReinit();
+        bool CanReinit() const;
         void Reinit();
 
         void ReinitFromFile(const char* filePath); // Used for sound that can not reinit normally
@@ -62,11 +62,11 @@ namespace Core::Audio {
         std::optional<Sound> Copy() const; //Copies only the sound and flags
         std::optional<Sound> CopyDeep() const; //Copies sound and it's parameters
 
-        bool IsLooping();
+        bool IsLooping() const;
         Sound& SetLooping(bool loops);
 
-        bool IsPlaying();
-        bool IsAtEnd();
+        bool IsPlaying() const;
+        bool IsAtEnd() const;
 
         std::chrono::milliseconds GetTime();
         std::optional<std::chrono::milliseconds> GetLength();
@@ -84,7 +84,7 @@ namespace Core::Audio {
         Sound& SetBalance(float balance);
         Sound& SetPan(float pan);
 
-        float GetFadeVolume();
+        float GetFadeVolume() const;
         Sound& SetFadeIn(std::chrono::milliseconds length, float endVolume = 1.0f, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
         Sound& SetFadeOut(std::chrono::milliseconds length, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
         Sound& SetFade(std::chrono::milliseconds length, float startVolume, float endVolume, std::chrono::milliseconds startAfter = std::chrono::milliseconds::zero());
@@ -93,7 +93,7 @@ namespace Core::Audio {
         Sound& SetPositioning(Positioning positioning);
         Sound& SetAttenuation(AttenuationMode attenuation);
 
-        glm::vec3 GetDirectionToListner();
+        glm::vec3 GetDirectionToListner() const;
 
         Sound& SetSpatialData(glm::vec3 position, glm::vec3 direction, glm::vec3 velocity);
         Sound& SetPosition(glm::vec3 position);
