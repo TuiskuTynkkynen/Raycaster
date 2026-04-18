@@ -71,6 +71,23 @@ namespace Core::Audio {
         return iter->emplace(filePath, flags, parent);
     }
 
+    Sound& SoundManager::RegisterSound(std::string_view name, std::span<const std::byte> embededAudio, Sound::Flags flags, Bus* parent) {
+        if (auto sound = GetSound(name); sound != nullptr) {
+            RC_INFO("Tried to register sound with name, {}, but one already exists", name);
+            return *sound;
+        }
+
+        auto iter = NextSlot();
+        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), &std::optional<Sound>::has_value);
+        
+        RC_ASSERT(iter - m_Sounds.begin() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
+        uint32_t index = static_cast<int32_t>(iter - m_Sounds.begin());
+        m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
+        
+        parent = parent ? parent : m_DefaultBus;
+        return iter->emplace(embededAudio, flags, parent);
+    }
+
     Sound* SoundManager::CopySound(std::string_view copyName, Index originalIndex) {
         if (auto sound = GetSound(copyName); sound != nullptr) {
             RC_INFO("Tried to create a sound copy with name = {}, but that name already exists", copyName);

@@ -23,6 +23,7 @@ namespace Core::Audio {
         Sound& RegisterSound(std::string_view name, std::string_view filePath, Sound::Flags flags, Bus* parent = nullptr);
         // Different argument order to prevent unwanted implicit conversions
         Sound& RegisterSound(std::string_view name, Sound::Flags  flags, std::filesystem::path filePath, Bus* parent = nullptr);
+        Sound& RegisterSound(std::string_view name, std::span<const std::byte> embededAudio, Sound::Flags flags, Bus* parent = nullptr);
         
         Sound* CopySound(std::string_view copyName, Index originalIndex);
         Sound* CopySound(std::string_view copyName, std::string_view originalName);
