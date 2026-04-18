@@ -7,6 +7,8 @@
 #include <string_view>
 #include <filesystem>
 #include <optional>
+#include <span>
+#include <cstddef>
 
 #define Bit(x) (1 << x)
 
@@ -43,6 +45,7 @@ namespace Core::Audio {
         Sound(const char* filePath, Flags flags, Bus* parent = nullptr);
         Sound(const std::string_view& filePath, Flags flags, Bus* parent = nullptr);
         Sound(const std::filesystem::path& filePath, Flags flags, Bus* parent = nullptr);
+        Sound(std::span<const std::byte> embededAudio, Flags flags, Bus* parent = nullptr);
 
         ~Sound();
 
@@ -139,11 +142,13 @@ namespace Core::Audio {
                 Flags(uint8_t flags);
             };
     private:
-        Sound(Internal::SoundObject* internalSound, Flags flags, Bus* parent);
+        // Takes ownership of internalSound and decoder
+        Sound(Internal::SoundObject* internalSound, Internal::DecoderObject* decoder, Flags flags, Bus* parent);
         
         void ReinitInternalSound(Internal::SoundObject* internalSound);
 
         Internal::SoundObject* m_InternalSound;
+        Internal::DecoderObject* m_Decoder = nullptr;
         Flags m_Flags;
 
         bool m_ScheduledFade = false;

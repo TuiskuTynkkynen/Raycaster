@@ -6,6 +6,7 @@
 #include "Platform.h"
 
 #include "miniaudio/miniaudio.h"
+#include "miniaudio/extras/decoders/libopus/miniaudio_libopus.h"
 
 #include <utility>
 
@@ -22,17 +23,23 @@ namespace Core::Audio {
         return result;
     }
 
-    static Internal::SoundObject* CreateShallowCopy(const Internal::SoundObject* original, Sound::Flags flags, ma_sound_group* group) {
+    static Internal::SoundObject* CreateShallowCopy(const Internal::SoundObject* original, Sound::Flags flags, ma_sound_group* group, ma_decoder* decoder) {
         Internal::SoundObject* copy = new Internal::SoundObject;
-        ma_result result = ma_sound_init_copy(Internal::System->Engine, original, flags, group, copy);
+        ma_result result = MA_ERROR;
+        
+        if (!decoder) {
+            result = ma_sound_init_copy(Internal::System->Engine, original, ParseFlags(flags), group, copy);
+        } else {
+            result = ma_sound_init_from_data_source(Internal::System->Engine, decoder, ParseFlags(flags), group, copy);
+        }
 
-        if (result != MA_SUCCESS) {
-            RC_WARN("Cypying sound failed with error {}", (int32_t)result);
-            delete copy;
-            return nullptr;
+        if (result == MA_SUCCESS) {
+            return copy;
         }
         
-        return copy;
+        RC_WARN("Cypying sound failed with error {}", (int32_t)result);
+        delete copy;
+        return nullptr;
     }
     
     static void CopyInternalAttributes(Internal::SoundObject* copy, const Internal::SoundObject* original, Sound::Flags flags){
@@ -78,8 +85,8 @@ namespace Core::Audio {
         }
     }
 
-    static Internal::SoundObject* CreateDeepCopy(const Internal::SoundObject* original, Sound::Flags flags, ma_sound_group* group) {
-        Internal::SoundObject* copy = CreateShallowCopy(original, flags, group);
+    static Internal::SoundObject* CreateDeepCopy(const Internal::SoundObject* original, Sound::Flags flags, ma_sound_group* group, ma_decoder* decoder) {
+        Internal::SoundObject* copy = CreateShallowCopy(original, flags, group, decoder);
 
         if (!copy) {
             return nullptr;
@@ -88,6 +95,27 @@ namespace Core::Audio {
         CopyInternalAttributes(copy, original, flags);
 
         return copy;
+    }
+
+    static Internal::DecoderObject* CreateDecoder(const void* data, size_t size) {
+        Internal::DecoderObject* decoder = new Internal::DecoderObject;
+
+        ma_decoder_config config = ma_decoder_config_init(FORMAT, CHANNELS, SAMPLERATE);
+        { // Opus support
+            ma_decoding_backend_vtable* pCustomBackendVTables[] = { ma_decoding_backend_libopus };
+            config.ppCustomBackendVTables = pCustomBackendVTables;
+            config.customBackendCount = sizeof(pCustomBackendVTables) / sizeof(pCustomBackendVTables[0]);
+            config.pCustomBackendUserData = NULL;
+        }
+
+        ma_result result = ma_decoder_init_memory(data, size, &config, decoder);
+        if (result == MA_SUCCESS) {
+            return decoder;
+        }
+
+        RC_WARN("Creating a decoder for embedded audio file with error {}", (int32_t)result);
+        delete decoder;
+        return nullptr;
     }
 }
 
@@ -137,7 +165,22 @@ namespace Core::Audio {
         SwitchParent(parent);
     }
 
-    Sound::Sound(Internal::SoundObject* internalSound, Flags flags, Bus* parent) : m_Flags(flags), m_InternalSound(internalSound) {
+    Sound::Sound(std::span<const std::byte> embededAudio, Flags flags, Bus* parent) : m_Flags(flags) {
+        RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
+        const void* buffer = reinterpret_cast<const void*>(embededAudio.data());
+        m_Decoder = CreateDecoder(buffer, embededAudio.size());
+        m_InternalSound = new Internal::SoundObject;
+
+        ma_sound_group* group = parent ? parent->m_InternalBus.get() : nullptr;
+        ma_result result = ma_sound_init_from_data_source(Internal::System->Engine, m_Decoder, ParseFlags(m_Flags), group, m_InternalSound);
+        if (result != MA_SUCCESS) {
+            RC_WARN("Initializing sound from embedded audio file failed with error {}", (int32_t)result);
+        }
+
+        SwitchParent(parent);
+    }
+
+    Sound::Sound(Internal::SoundObject* internalSound, Internal::DecoderObject* decoder, Flags flags, Bus* parent) : m_Flags(flags), m_InternalSound(internalSound), m_Decoder(decoder) {
         RC_ASSERT(Internal::System, "Tried to create sound before initializing Audio System");
         SwitchParent(parent);
     }
@@ -147,25 +190,39 @@ namespace Core::Audio {
 
         ma_sound_uninit(m_InternalSound);
         delete m_InternalSound;
+
+        ma_decoder_uninit(m_Decoder);
+        delete m_Decoder;
     }
     
-    Sound::Sound(Sound&& other) noexcept : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Flags(other.m_Flags), m_ScheduledFade(other.m_ScheduledFade), m_FadeSettings(other.m_FadeSettings) {
+    Sound::Sound(Sound&& other) noexcept 
+        : m_InternalSound(std::exchange(other.m_InternalSound, nullptr)), m_Decoder(std::exchange(other.m_Decoder, nullptr)),
+        m_Flags(other.m_Flags), m_ScheduledFade(other.m_ScheduledFade), m_FadeSettings(other.m_FadeSettings) {
         SwitchParent(other.m_Parent);
         other.SwitchParent(nullptr);
     }
 
     bool Sound::CanReinit() const {
-        return m_Flags ^ StreamData;
+        return (m_Decoder) || (m_Flags ^ StreamData);
     }
 
     void Sound::Reinit() {
         if (!CanReinit()) {
-            RC_WARN("Can not reinitialize sound intialized with StreamData flag. ReinitFromFile should be called instead");
+            RC_WARN("Can not reinitialize sound intialized from file with StreamData flag. ReinitFromFile should be called instead");
             return;
         }
 
+        Internal::DecoderObject* decoderCopy = nullptr;
+        if (m_Decoder) {
+            decoderCopy = CreateDecoder(m_Decoder->data.memory.pData, m_Decoder->data.memory.dataSize);
+
+            if (!decoderCopy) {
+                RC_WARN("Reinitializing embeded sound failed. Could not successfully copy decoder");
+                return;
+            }
+        }
         ma_sound_group* group = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
-        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags, group);
+        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags, group, decoderCopy);
 
         if (!internalSoundCopy) {
             RC_WARN("Reinitializing sound failed. Could not successfully copy internal sound object");
@@ -177,8 +234,12 @@ namespace Core::Audio {
         // Clean up old ma_sound
         ma_sound_uninit(m_InternalSound);
         delete m_InternalSound;
-
         m_InternalSound = internalSoundCopy;
+
+        // Clean up old ma_decoder
+        ma_decoder_uninit(m_Decoder);
+        delete m_Decoder;
+        m_Decoder = decoderCopy;
     }
     
     void Sound::ReinitFromFile(const char* filePath) {
@@ -265,35 +326,45 @@ namespace Core::Audio {
     }
 
     std::optional<Sound> Sound::Copy() const {
-        if (m_Flags & StreamData){
-            RC_WARN("Cannot copy sound intialized with StreamData flag");
+        if (!CanReinit()) {
+            RC_WARN("Can not copy sound intialized from file with StreamData flag.");
             return std::nullopt;
         }
 
+        Internal::DecoderObject* decoderCopy = nullptr;
+        if (m_Decoder) {
+            decoderCopy = CreateDecoder(m_Decoder->data.memory.pData, m_Decoder->data.memory.dataSize);
+        }
+
         ma_sound_group* group = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
-        Internal::SoundObject* internalSoundCopy = CreateShallowCopy(m_InternalSound, m_Flags, group);
+        Internal::SoundObject* internalSoundCopy = CreateShallowCopy(m_InternalSound, m_Flags, group, decoderCopy);
 
         if (!internalSoundCopy) {
             return std::nullopt;
         }
 
-        return Sound(internalSoundCopy, m_Flags, m_Parent);
+        return Sound(internalSoundCopy, decoderCopy, m_Flags, m_Parent);
     }
     
     std::optional<Sound> Sound::CopyDeep() const {
-        if (m_Flags & StreamData){
-            RC_WARN("Cannot copy sound intialized with StreamData flag");
+        if (!CanReinit()) {
+            RC_WARN("Can not copy sound intialized from file with StreamData flag.");
             return std::nullopt;
+        }
+        
+        Internal::DecoderObject* decoderCopy = nullptr;
+        if (m_Decoder) {
+            decoderCopy = CreateDecoder(m_Decoder->data.memory.pData, m_Decoder->data.memory.dataSize);
         }
 
         ma_sound_group* group = m_Parent ? m_Parent->m_InternalBus.get() : nullptr;
-        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags, group);
+        Internal::SoundObject* internalSoundCopy = CreateDeepCopy(m_InternalSound, m_Flags, group, decoderCopy);
 
         if (!internalSoundCopy) {
             return std::nullopt;
         }
         
-        return Sound(internalSoundCopy, m_Flags, m_Parent);
+        return Sound(internalSoundCopy, decoderCopy, m_Flags, m_Parent);
     }
 
     bool Sound::IsLooping() const {

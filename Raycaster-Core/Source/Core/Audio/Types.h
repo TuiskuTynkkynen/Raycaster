@@ -7,6 +7,7 @@
 namespace Core::Audio::Internal {
     struct BusObject;
     struct SoundObject;
+    struct DecoderObject;
 
     struct Delay;
     struct Biquad;

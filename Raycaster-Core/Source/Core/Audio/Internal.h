@@ -37,6 +37,7 @@ namespace Core::Audio {
 
 namespace Core::Audio::Internal {
     struct SoundObject : ma_sound {};
+    struct DecoderObject : ma_decoder {};
 
     struct BusObject : ma_sound_group {
         ~BusObject() {
