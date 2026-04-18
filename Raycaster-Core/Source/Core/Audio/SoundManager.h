@@ -54,7 +54,8 @@ namespace Core::Audio {
 
         Bus* m_DefaultBus = nullptr;
 
-        std::string_view StoreName(std::string_view name);
+        std::vector<std::optional<Sound>>::iterator NextSlot();
+
         std::string_view StoreName(std::string_view name, uint32_t index);
 
         std::filesystem::path ConvertFilePath(std::string_view filePath);

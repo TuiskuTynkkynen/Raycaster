@@ -2,6 +2,8 @@
 
 #include "Core/Debug/Debug.h"
 
+#include <algorithm>
+
 namespace Core::Audio {
     SoundManager::~SoundManager() {
         for (size_t i = 0; i < m_SoundNames.size(); i++) {
@@ -53,48 +55,20 @@ namespace Core::Audio {
 
     Sound& SoundManager::RegisterSound(std::string_view name, Sound::Flags flags, std::filesystem::path filePath, Bus* parent) {
         if (auto sound = GetSound(name); sound != nullptr) {
-            RC_INFO("Tried to register sound with name, {}, but it already exists", name);
+            RC_INFO("Tried to register sound with name, {}, but one already exists", name);
             return *sound;
         }
 
-        parent = parent ? parent : m_DefaultBus;
-
-        if (m_IsDense) {
-            RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
-            uint32_t index = static_cast<uint32_t>(m_Sounds.size());
-
-            m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
-
-            StoreFilePath(filePath, index, flags);
-
-            return m_Sounds.emplace_back().emplace(filePath, flags, parent);
-        }
-
-        auto iter = std::find_if(m_Sounds.begin(), m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; });
-        if (iter == m_Sounds.end()) {
-            m_IsDense = true;
-
-            RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
-            uint32_t index = static_cast<uint32_t>(m_Sounds.size());
-
-            m_SoundIndices.emplace(StoreName(name), Index{ .Epoch = m_Epoch, .Value = index });
-
-            StoreFilePath(filePath, index, flags);
-
-            return m_Sounds.emplace_back().emplace(filePath, flags, parent);
-        }
-
-        auto& sound = iter->emplace(filePath, flags, parent);
+        auto iter = NextSlot();
+        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), &std::optional<Sound>::has_value);
 
         RC_ASSERT(iter - m_Sounds.begin() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
         uint32_t index = static_cast<int32_t>(iter - m_Sounds.begin());
-
         m_SoundIndices.emplace(StoreName(name, index), Index{ .Epoch = m_Epoch, .Value = index });
-
         StoreFilePath(filePath, index, flags);
 
-        m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
-        return sound;
+        parent = parent ? parent : m_DefaultBus;
+        return iter->emplace(filePath, flags, parent);
     }
 
     Sound* SoundManager::CopySound(std::string_view copyName, Index originalIndex) {
@@ -109,57 +83,20 @@ namespace Core::Audio {
             return nullptr;
         }
 
-        if (m_IsDense) {
-            RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
-            uint32_t index = static_cast<uint32_t>(m_Sounds.size());
-
-            auto& copy= m_Sounds.emplace_back(original->Copy());
-
-            // Check if copy succeeded
-            if (!copy) {
-                RC_WARN("Failed to create a sound copy with name = {}", copyName);
-                m_Sounds.pop_back();
-                return nullptr;
-            }
-
-            m_SoundIndices.emplace(StoreName(copyName), Index{ .Epoch = m_Epoch, .Value = index });
-            return &copy.value();
-        }
-
-        auto iter = std::find_if(m_Sounds.begin(), m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; });
-        if (iter == m_Sounds.end()) {
-            m_IsDense = true;
-            auto& copy = m_Sounds.emplace_back(original->Copy());
-
-            // Check if copy succeeded
-            if (!copy) {
-                RC_WARN("Failed to create a sound copy with name = {}", copyName);
-                m_Sounds.pop_back();
-                return nullptr;
-            }
-
-            RC_ASSERT(m_Sounds.size() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
-            uint32_t index = static_cast<uint32_t>(m_Sounds.size());
-
-            m_SoundIndices.emplace(StoreName(copyName), Index{ .Epoch = m_Epoch, .Value = index });
-
-            return &copy.value();
-        }
-
-        auto& copy = iter->emplace(std::move(original->Copy().value()));
-
-        // Check if copy succeeded
-        if (!iter->has_value()) {
+        auto copy = original->Copy();
+        if (!copy) {
             RC_WARN("Failed to create a sound copy with name = {}", copyName);
             return nullptr;
         }
 
+        auto iter = NextSlot();
         RC_ASSERT(iter - m_Sounds.begin() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
         uint32_t index = static_cast<int32_t>(iter - m_Sounds.begin());
-        m_SoundIndices.emplace(StoreName(copyName, index), Index{ .Epoch = m_Epoch, .Value = index });
 
-        m_IsDense = std::find_if(++iter, m_Sounds.end(), [](const std::optional<Sound>& item) { return !item; }) == m_Sounds.end();
-        return &copy;
+        m_SoundIndices.emplace(StoreName(copyName, index), Index{ .Epoch = m_Epoch, .Value = index });
+        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), &std::optional<Sound>::has_value);
+
+        return &iter->emplace(std::move(copy.value()));
     }
 
     Sound* SoundManager::CopySound(std::string_view copyName, std::string_view originalName) {
@@ -332,21 +269,28 @@ namespace Core::Audio {
         return m_SoundIndices.size();
     }
 
-    std::string_view SoundManager::StoreName(std::string_view name) {
-        char* cString = new char[name.size()];
-        name.copy(cString, name.size(), (size_t)0);
+    std::vector<std::optional<Sound>>::iterator SoundManager::NextSlot() {
+        std::vector<std::optional<Sound>>::iterator firstEmpty;
+        m_IsDense |= (firstEmpty = std::ranges::find(m_Sounds, false, &std::optional<Sound>::has_value)) == m_Sounds.end();
 
-        m_SoundNames.emplace_back(cString);
+        if (m_IsDense) {
+            m_Sounds.emplace_back();
+            firstEmpty = std::prev(m_Sounds.end());
+        }
 
-        return std::string_view(cString, name.size());
+        return firstEmpty;
     }
 
     std::string_view SoundManager::StoreName(std::string_view name, uint32_t index) {
         char* cString = new char[name.size()];
         name.copy(cString, name.size(), (size_t)0);
 
-        m_SoundNames[index] = cString;
+        RC_ASSERT(index <= m_SoundNames.size());
+        if(index == m_SoundNames.size()) {
+            m_SoundNames.emplace_back();
+        }
 
+        m_SoundNames[index] = cString;
         return std::string_view(cString, name.size());
     }
 
