@@ -60,7 +60,7 @@ namespace Core::Audio {
         }
 
         auto iter = NextSlot();
-        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), &std::optional<Sound>::has_value);
+        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), [](auto& s){ return s.has_value(); });
 
         RC_ASSERT(iter - m_Sounds.begin() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
         uint32_t index = static_cast<int32_t>(iter - m_Sounds.begin());
@@ -78,7 +78,7 @@ namespace Core::Audio {
         }
 
         auto iter = NextSlot();
-        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), &std::optional<Sound>::has_value);
+        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), [](auto& s){ return s.has_value(); });
         
         RC_ASSERT(iter - m_Sounds.begin() <= std::numeric_limits<uint32_t>::max(), "Audio System supports only up to UINT32_MAX concurrent registered sounds");
         uint32_t index = static_cast<int32_t>(iter - m_Sounds.begin());
@@ -111,7 +111,7 @@ namespace Core::Audio {
         uint32_t index = static_cast<int32_t>(iter - m_Sounds.begin());
 
         m_SoundIndices.emplace(StoreName(copyName, index), Index{ .Epoch = m_Epoch, .Value = index });
-        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), &std::optional<Sound>::has_value);
+        m_IsDense |= std::ranges::all_of(iter + 1, m_Sounds.end(), [](auto& s){ return s.has_value(); });
 
         return &iter->emplace(std::move(copy.value()));
     }
@@ -288,7 +288,7 @@ namespace Core::Audio {
 
     std::vector<std::optional<Sound>>::iterator SoundManager::NextSlot() {
         std::vector<std::optional<Sound>>::iterator firstEmpty;
-        m_IsDense |= (firstEmpty = std::ranges::find(m_Sounds, false, &std::optional<Sound>::has_value)) == m_Sounds.end();
+        m_IsDense |= (firstEmpty = std::ranges::find(m_Sounds, false, [](auto& s){ return s.has_value(); })) == m_Sounds.end();
 
         if (m_IsDense) {
             m_Sounds.emplace_back();
