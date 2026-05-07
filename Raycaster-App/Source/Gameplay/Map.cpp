@@ -1,5 +1,7 @@
 #include "Map.h"
 
+#include <algorithm>
+
 struct ShaderLineSegment {
     glm::vec2 offset;
     glm::vec2 vector;

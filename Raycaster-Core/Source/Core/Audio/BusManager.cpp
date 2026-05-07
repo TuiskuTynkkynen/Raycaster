@@ -3,6 +3,8 @@
 #include "Sound.h"
 #include "Core/Debug/Debug.h"
 
+#include <algorithm>
+
 namespace Core::Audio {
     BusManager::~BusManager() {
         for (size_t i = 0; i < m_BusNames.size(); i++) {

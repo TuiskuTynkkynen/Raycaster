@@ -4,6 +4,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_transform_2d.hpp>
 
+#include <algorithm>
+
 static glm::ivec2 GetBilinearOffset(uint8_t bitboard, bool decreaseX, bool decreaseY) {
     /*
     Bitboard        NAND(bitboard, test bitboard)    Result offsets
