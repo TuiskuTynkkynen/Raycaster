@@ -4,7 +4,6 @@
 #include "Core/Debug/Debug.h"
 #include "Platform.h"
 
-#define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio/miniaudio.h"
 #include "miniaudio/extras/decoders/libopus/miniaudio_libopus.h"
 

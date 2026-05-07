@@ -1,6 +1,6 @@
 function AddMiniaudio()
 	files {
-		"miniaudio/miniaudio/miniaudio.h",
+		"miniaudio/miniaudio/miniaudio.c",
 		"miniaudio/miniaudio/extras/decoders/libopus/*"
 	}
 
