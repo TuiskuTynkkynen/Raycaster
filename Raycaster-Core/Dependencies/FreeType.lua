@@ -69,6 +69,16 @@ project "FreeType"
             "FreeType/src/base/ftdebug.c",
         }
 
+    filter "system:emscripten"
+        systemversion "latest"
+        defines { "NO_ASM" }
+
+        files
+        {
+            "FreeType/src/base/ftsystem.c",
+            "FreeType/src/base/ftdebug.c",
+        }
+
     filter "system:windows"
         systemversion "latest"
         defines { "_CRT_SECURE_NO_WARNINGS" }

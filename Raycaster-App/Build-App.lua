@@ -2,7 +2,6 @@ project "Raycaster-App"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++23"
-    targetdir "Binaries/%{cfg.buildcfg}"
     staticruntime "off"
 
     files { 
@@ -23,20 +22,36 @@ project "Raycaster-App"
         "../Raycaster-Core/Dependencies/utils",
     }	
 
-    links
-    {
-        "Raycaster-Core",
-        "Raycaster-Dependencies",
-        "GLFW",
-        "glad",
-        "FreeType",
-	"Opus",
-    }
-
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
     postbuildcommands "{COPYDIR} Assets ../Binaries/%{OutputDir}/%{prj.name}/Assets"
+
+    filter "system:not emscripten"
+        links {
+            "Raycaster-Core",
+            "Raycaster-Dependencies",
+            "GLFW",
+            "glad",
+            "FreeType",
+            "Opusfile",
+         }
+
+    filter "system:emscripten"
+        libdirs {
+            "../Raycaster-Core/Dependencies/libogg/build/lib",
+            "../Raycaster-Core/Dependencies/libopus/build/lib",
+        }
+
+        links {
+            "Raycaster-Core",
+            "Raycaster-Dependencies",
+            "glad",
+            "FreeType",
+            "ogg",
+            "opus",
+            "Opusfile",
+         }
 
     filter "system:windows"
         systemversion "latest"

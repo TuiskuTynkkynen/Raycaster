@@ -14,7 +14,7 @@ project "Raycaster-Dependencies"
     AddMiniaudio()
     AddStbImage()
     
-    links { "Opus" }
+    links { "Opusfile" }
 
     targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
@@ -40,4 +40,4 @@ project "Raycaster-Dependencies"
 include "GLFW.lua"
 include "glad.lua"
 include "FreeType.lua"
-include "opus.lua"
+include "opusfile.lua"

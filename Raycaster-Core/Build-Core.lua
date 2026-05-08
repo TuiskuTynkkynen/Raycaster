@@ -20,13 +20,30 @@ project "Raycaster-Core"
         "Dependencies/utils",
     }
 
-    links {
-        "Raycaster-Dependencies",
-        "GLFW",
-        "glad",
-        "FreeType",
-	"Opus",
-    }
+
+    filter "system:not emscripten"
+         links {
+            "Raycaster-Dependencies",
+            "GLFW",
+            "glad",
+            "FreeType",
+            "Opusfile",
+         }
+
+    filter "system:emscripten"
+        libdirs {
+            "Dependencies/libogg/build/lib",
+            "Dependencies/libopus/build/lib",
+        }
+
+        links {
+            "Raycaster-Dependencies",
+            "glad",
+            "FreeType",
+            "ogg",
+            "opus",
+            "Opusfile",
+       }
 
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")

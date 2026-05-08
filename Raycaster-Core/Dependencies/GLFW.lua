@@ -6,26 +6,27 @@ project "GLFW"
     staticruntime "off"
     warnings "off"
 
-    files
-    {
-        "GLFW/include/GLFW/glfw3.h",
-        "GLFW/include/GLFW/glfw3native.h",
-        "GLFW/src/glfw_config.h",
-        "GLFW/src/context.c",
-        "GLFW/src/init.c",
-        "GLFW/src/input.c",
-        "GLFW/src/monitor.c",
-        "GLFW/src/null_init.c",
-        "GLFW/src/null_joystick.c",
-        "GLFW/src/null_monitor.c",
-        "GLFW/src/null_window.c",
-        "GLFW/src/platform.c",
-        "GLFW/src/vulkan.c",
-        "GLFW/src/window.c",
-    }
+    filter "system:not emscripten"
+        files
+        {
+            "GLFW/include/GLFW/glfw3.h",
+            "GLFW/include/GLFW/glfw3native.h",
+            "GLFW/src/glfw_config.h",
+            "GLFW/src/context.c",
+            "GLFW/src/init.c",
+            "GLFW/src/input.c",
+            "GLFW/src/monitor.c",
+            "GLFW/src/null_init.c",
+            "GLFW/src/null_joystick.c",
+            "GLFW/src/null_monitor.c",
+            "GLFW/src/null_window.c",
+            "GLFW/src/platform.c",
+            "GLFW/src/vulkan.c",
+            "GLFW/src/window.c",
+        }
 
-    targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
-    objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
+        targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
+        objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
     filter "system:linux"
         pic "On"
