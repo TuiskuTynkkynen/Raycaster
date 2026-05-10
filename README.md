@@ -20,7 +20,7 @@ and follow the instructions for your platform.
 ### Linux
 
 - Prerequisites  
-  - GNU Make  
+  - GNU Autotools and GNU Make  
   - Clang  
   - Python (version >= 3.3)  
   - X11 and xkbcommon development packages [for GLFW](https://www.glfw.org/docs/latest/compile_guide.html#compile_deps)  
