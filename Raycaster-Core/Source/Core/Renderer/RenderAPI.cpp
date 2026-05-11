@@ -2,6 +2,8 @@
 
 #include "Core/Debug/Debug.h"
 
+#include "Platform.h"
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -14,27 +16,28 @@ static void OpenGLDebugCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const G
 
 namespace Core {
     void RenderAPI::Init() {
-        int32_t success = gladLoadGL(glfwGetProcAddress);
-        RC_ASSERT(success, "Failed to initialize GLAD");
+        #if !defined(PLATFORM_EMSCRIPTEN)
+            int32_t success = gladLoadGL(glfwGetProcAddress);
+            RC_ASSERT(success, "Failed to initialize GLAD");
+
+            glEnable(GL_LINE_SMOOTH);
+            glEnable(GL_LINE_WIDTH);
+        #endif
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        glEnable(GL_LINE_SMOOTH);
-        glEnable(GL_LINE_WIDTH);
-
-
         glGetIntegerv(GL_MAX_SAMPLES, &s_Constants.MultiSampleCount);
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &s_Constants.TextureUnitCount);
 
-#ifdef RC_DEBUG_MODE
-    glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(OpenGLDebugCallback, nullptr);
+        #if defined(RC_DEBUG_MODE) && !defined(PLATFORM_EMSCRIPTEN)
+            glEnable(GL_DEBUG_OUTPUT);
+            glDebugMessageCallback(OpenGLDebugCallback, nullptr);
 
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
-    glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_TRUE);
-    glDebugMessageControl(GL_DEBUG_SOURCE_APPLICATION, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_TRUE);
-#endif 
+            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
+            glDebugMessageControl(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_TRUE);
+            glDebugMessageControl(GL_DEBUG_SOURCE_APPLICATION, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_TRUE);
+        #endif 
     }
 
     void RenderAPI::SetViewPort(uint32_t offsetX, uint32_t offsetY, uint32_t width, uint32_t height) {
@@ -102,6 +105,8 @@ namespace Core {
     }
 }
 
+#if defined(RC_DEBUG_MODE) && !defined(PLATFORM_EMSCRIPTEN)
+
 static constexpr std::string_view OpenGLMessageSource(GLenum source) {
     switch (source) {
     case GL_DEBUG_SOURCE_API:
@@ -165,3 +170,4 @@ static void OpenGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum se
     constexpr PrefixLevel prefix = static_cast<PrefixLevel>(std::min(static_cast<std::underlying_type_t<PrefixLevel>>(PrefixLevel::Reduced), LOG_PREFIX_LEVEL));
     Core::Logger::Log(OpenGLMessageSeverity(severity), prefix, std::source_location::current(), "(OPENGL {} {}) {}", OpenGLMessageSource(source), OpenGLMessageType(type), message);
 }
+#endif
