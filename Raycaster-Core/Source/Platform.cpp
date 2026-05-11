@@ -52,6 +52,9 @@ std::string Core::WideToUTF8(std::wstring_view string) {
 #include <unistd.h>
 
 static std::filesystem::path CreatePath() {
+#if defined(PLATFORM_EMSCRIPTEN)
+    return "./";
+#endif
     std::array<char, PATH_MAX> buffer{};
     ssize_t length = ::readlink("/proc/self/exe", buffer.data(), PATH_MAX);
 

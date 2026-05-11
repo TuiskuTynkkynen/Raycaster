@@ -9,6 +9,9 @@
     #error "Android not supported"
 #elif defined(__linux__)
     #define PLATFORM_LINUX
+#elif defined(__EMSCRIPTEN__)
+    #define PLATFORM_LINUX
+    #define PLATFORM_EMSCRIPTEN
 #else
     #error "Unknown platform"
 #endif
