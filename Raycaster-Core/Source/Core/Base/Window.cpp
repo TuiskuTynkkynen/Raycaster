@@ -7,6 +7,9 @@
 #include "Core/Debug/Debug.h"
 
 #include <GLFW/glfw3.h>
+#if defined(PLATFORM_EMSCRIPTEN)
+    #include <emscripten/html5.h>
+#endif
 
 namespace Core {
     static bool s_GLFWInitialized = false;
@@ -23,9 +26,15 @@ namespace Core {
         if (!s_GLFWInitialized) {
             int32_t success = glfwInit();
             RC_ASSERT(success, "Could not initialize GLFW");
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+            #if !defined(PLATFORM_EMSCRIPTEN)
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+            #else
+                glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+            #endif
             
             #ifdef RC_DEBUG_MODE
                 glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
@@ -138,6 +147,11 @@ namespace Core {
     }
 
     void Window::SetVSync(bool enabled) {
+        #if defined(PLATFORM_EMSCRIPTEN)
+            RC_WARN("Setting VSync in web builds is not supported");
+            return;
+        #endif
+
         if (enabled) {
             glfwSwapInterval(1);
         } else {

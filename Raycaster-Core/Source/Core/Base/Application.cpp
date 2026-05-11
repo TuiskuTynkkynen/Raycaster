@@ -4,6 +4,7 @@
 #include "Core/Renderer/RenderAPI.h"
 #include "Core/Renderer/Renderer2D.h"
 #include "Core/Debug/Debug.h"
+#include "Platform.h"
 
 #include <GLFW/glfw3.h>
 
@@ -34,28 +35,45 @@ namespace Core {
         glfwTerminate();
     }
 
+#if defined(PLATFORM_EMSCRIPTEN)
+    #include <emscripten/emscripten.h>
+
     void Application::Run() {
+        auto mainLoop = [](void* application) {
+            Application* app = (Application*)application;
+            if(!app->m_Running) { emscripten_cancel_main_loop(); }
+            app->Update();
+        };
+        emscripten_set_main_loop_arg(mainLoop, this, 0, true);
+    }
+#else
+    void Application::Run() {
+        while (m_Running) {
+            Update();
+        }
+    }
+#endif
+
+    void Application::Update() {
         RC_ASSERT(m_ActiveScene, "Active scene not has been set");
         RC_ASSERT(m_LayerStack.begin() != m_LayerStack.end(), "Layer stack is empty");
-        while (m_Running)
-        {
-            float currentFrame = static_cast<float>(glfwGetTime());
-            Timestep deltaTime = currentFrame - m_LastFrame;
-            m_LastFrame = currentFrame;
 
-            for (Event* event : m_EventQueue) {
-                OnEvent(*event);
-                delete event;
-            }
-            m_EventQueue.clear();
+        float currentFrame = static_cast<float>(glfwGetTime());
+        Timestep deltaTime = currentFrame - m_LastFrame;
+        m_LastFrame = currentFrame;
 
-            m_ActiveScene->OnUpdate(deltaTime);
-            
-            for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
-                (*iterator)->OnUpdate(deltaTime);
-            }
-            m_Window->OnUpdate();
+        for (Event* event : m_EventQueue) {
+            OnEvent(*event);
+            delete event;
         }
+        m_EventQueue.clear();
+
+        m_ActiveScene->OnUpdate(deltaTime);
+            
+        for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
+            (*iterator)->OnUpdate(deltaTime);
+        }
+        m_Window->OnUpdate();
     }
 
     void Application::OnEvent(Event& event) {

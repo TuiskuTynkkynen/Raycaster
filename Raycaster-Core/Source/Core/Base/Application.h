@@ -30,6 +30,7 @@ namespace Core {
         bool OnWindowResizeEvent(WindowResize& event);
 
         void Run();
+        void Update();
     public:
         Application();
         virtual ~Application();
