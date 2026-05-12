@@ -83,8 +83,8 @@ Map::Map() {
             data.emplace_back(3 + doorIndex); // 3 - 254 -> Door
         }
         
-        m_SSBO = std::make_shared<Core::ShaderStorageBuffer>(std::as_bytes(std::span(segments)));
-        m_SSBO->Bind(0);
+        m_UBO = std::make_shared<Core::UniformBuffer>(std::as_bytes(std::span(segments)));
+        m_UBO->Bind(0);
         m_MapTexture->BindData(data.data(), static_cast<uint32_t>(GetHeight()), static_cast<uint32_t>(GetWidth()), 1);
     }
 }
@@ -518,7 +518,7 @@ void Map::Update(Core::Timestep dt, std::span<glm::vec3> lights) {
         if (door.Length != oldLength) {
             size_t offset = (i + 2) * sizeof(ShaderLineSegment); // First 2 line segments are reserved for diagonals
             std::array<ShaderLineSegment, 1> updated{ ShaderLineSegment(glm::fract(door.Position), door.Vector * door.Length) };
-            m_SSBO->Update(std::as_bytes<ShaderLineSegment, 1>(updated), offset);
+            m_UBO->Update(std::as_bytes<ShaderLineSegment, 1>(updated), offset);
         }
 
         if (glm::round(0.5f * sign + door.Length * 4.0f) != glm::round(0.5f * sign + oldLength * 4.0f)) {

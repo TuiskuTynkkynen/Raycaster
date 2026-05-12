@@ -43,8 +43,8 @@ struct LineSegment {
     vec2 vector;
 };
 
-layout(binding = 0, std430) readonly buffer SSBO {
-    LineSegment LineSegments[];
+layout(binding = 0, std140) uniform UBO {
+    LineSegment LineSegments[256];
 };
 
 #define MAX_POINT_LIGHTS 10

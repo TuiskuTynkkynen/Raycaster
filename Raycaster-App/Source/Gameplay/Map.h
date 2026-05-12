@@ -4,7 +4,7 @@
 #include "Entities.h"
 #include "Algorithms.h"
 
-#include "Core/Renderer/ShaderBuffer.h"
+#include "Core/Renderer/UniformBuffer.h"
 
 #include <glm/glm.hpp>
 
@@ -174,7 +174,7 @@ private:
     std::array<float, s_MapData.Size> m_LightMap{};
 
     std::shared_ptr<Core::Texture2D> m_MapTexture;
-    std::shared_ptr<Core::ShaderStorageBuffer> m_SSBO;
+    std::shared_ptr<Core::UniformBuffer> m_UBO;
 
     struct Quad {
         uint16_t x, y;
