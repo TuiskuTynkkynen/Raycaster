@@ -13,7 +13,6 @@ project "Raycaster-Core"
     {
         "Source",
         "Dependencies/GLFW/include",
-        "Dependencies/glad/include",
         "Dependencies/glm",
         "Dependencies/FreeType/include",
         "Dependencies/miniaudio",
@@ -22,6 +21,10 @@ project "Raycaster-Core"
 
 
     filter "system:not emscripten"
+         includedirs {
+            "Dependencies/glad/include",
+         }
+
          links {
             "Raycaster-Dependencies",
             "GLFW",
@@ -38,7 +41,6 @@ project "Raycaster-Core"
 
         links {
             "Raycaster-Dependencies",
-            "glad",
             "FreeType",
             "ogg",
             "opus",

@@ -3,9 +3,13 @@
 #include "Core/Debug/Debug.h"
 #include "Platform.h"
 
-#include <glad/gl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#if !defined(PLATFORM_EMSCRIPTEN)
+    #include <glad/gl.h>
+#else
+    #include <GLES3/gl3.h>
+#endif
 
 #include <string>
 #include <filesystem> 

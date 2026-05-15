@@ -6,19 +6,18 @@ project "glad"
    staticruntime "off"
    warnings "off"
 
-   files 
-   {
-        "glad/include/**.h",
-        "glad/src/gl.c",
-   }
+   filter "system:not emscripten"
+       files {
+            "glad/include/**.h",
+            "glad/src/gl.c",
+       }
 
-   includedirs
-   {
-        "glad/include"
-   }
+       includedirs {
+            "glad/include"
+       }
        
-   targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
-   objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
+       targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
+       objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
    filter "system:windows"
         systemversion "latest"

@@ -20,6 +20,7 @@ workspace "Raycaster"
             "-Wno-deprecated-declarations",
         }
 
+    filter "system:emscripten"
         linkoptions {
             "-s WASM=1",
             "-s USE_GLFW=3",
@@ -31,16 +32,16 @@ workspace "Raycaster"
             "--preload-file " .. path.getabsolute("Raycaster-App") .. "/Assets@./Assets/",
         }
 
-        filter "configurations:not Dist"
-            linkoptions {
-                "-g3",
-                "-fdebug-compilation-dir=.",
-                "-fdebug-prefix-map=" .. path.getabsolute(".") .. "=.",
-                "-s ASSERTIONS=2",
-                "-s SAFE_HEAP=1",
-                "-s STACK_OVERFLOW_CHECK=2",
-                "-s GL_DEBUG=1",
-            }
+    filter { "system:emscripten", "configurations:not Dist" }
+        linkoptions {
+            "-g3",
+            "-fdebug-compilation-dir=.",
+            "-fdebug-prefix-map=" .. path.getabsolute(".") .. "=.",
+            "-s ASSERTIONS=2",
+            "-s SAFE_HEAP=1",
+            "-s STACK_OVERFLOW_CHECK=2",
+            "-s GL_DEBUG=1",
+        }
 
 OutputDir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
 

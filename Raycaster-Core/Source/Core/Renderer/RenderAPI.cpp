@@ -1,10 +1,13 @@
 #include "RenderAPI.h"
 
 #include "Core/Debug/Debug.h"
-
 #include "Platform.h"
 
-#include <glad/gl.h>
+#if !defined(PLATFORM_EMSCRIPTEN)
+    #include <glad/gl.h>
+#else
+    #include <GLES3/gl3.h>
+#endif
 #include <GLFW/glfw3.h>
 
 struct ContextConstants {

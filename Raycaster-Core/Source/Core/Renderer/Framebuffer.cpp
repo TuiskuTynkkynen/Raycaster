@@ -4,7 +4,12 @@
 #include "VertexArray.h"
 #include "Core/Debug/Debug.h"
 
-#include <glad/gl.h>
+#include "Platform.h"
+#if !defined(PLATFORM_EMSCRIPTEN)
+    #include <glad/gl.h>
+#else
+    #include <GLES3/gl3.h>
+#endif
 
 #include <utility>
 
@@ -45,15 +50,39 @@ namespace Core {
         case RGB8: return GL_RGB8;
         case RG8: return GL_RG8;
         case R8: return GL_R8;
-        case RGB16: return GL_RGB16;
-        case RG16: return GL_RG16;
-        case R16: return GL_R16;
+        case RGB16: return GL_RGB16UI;
+        case RG16: return GL_RG16UI;
+        case R16: return GL_R16UI;
         case RGB16F: return GL_RGB16F;
         case RG16F: return GL_RG16F;
         case R16F: return GL_R16F;
         case RGB32F: return GL_RGB32F;
         case RG32F: return GL_RG32F;
-        case R32F: return GL_R32F;    
+        case R32F: return GL_R32F;
+        }
+
+        RC_ASSERT(false); // This should never be reached
+        return 0;
+    }
+
+   static constexpr GLenum GetFormat(Framebuffer::ColorFormat format) {
+        switch (format) {
+            using enum Framebuffer::ColorFormat;
+        case R8:
+        case R16:
+        case R16F:
+        case R32F:
+            return GL_RED;
+        case RG8:
+        case RG16:
+        case RG16F:
+        case RG32F:
+            return GL_RG;
+        case RGB8:
+        case RGB16:
+        case RGB16F:
+        case RGB32F:
+            return GL_RGB;
         }
 
         RC_ASSERT(false); // This should never be reached
@@ -62,39 +91,55 @@ namespace Core {
 
     static uint32_t CreateAndAttachColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, Framebuffer::ColorFormat format, Framebuffer::ColorFilter filtering) {
         uint32_t color;
-        glCreateTextures(GL_TEXTURE_2D, 1, &color);
-        glTextureStorage2D(color, 1, GetInternalFormat(format), width, height);
 
-        glTextureParameteri(color, GL_TEXTURE_MIN_FILTER, filtering == Framebuffer::ColorFilter::Nearest ? GL_NEAREST : GL_LINEAR);
-        glTextureParameteri(color, GL_TEXTURE_MAG_FILTER, filtering == Framebuffer::ColorFilter::Nearest ? GL_NEAREST : GL_LINEAR);
-        glTextureParameteri(color, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTextureParameteri(color, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glGenTextures(1, &color);
+        glBindTexture(GL_TEXTURE_2D, color);
+        glTexImage2D(GL_TEXTURE_2D, 0, GetInternalFormat(format), width, height, 0, GetFormat(format), GL_UNSIGNED_BYTE, nullptr);
 
-        glNamedFramebufferTexture(internalFramebuffer, GL_COLOR_ATTACHMENT0, color, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filtering == Framebuffer::ColorFilter::Nearest ? GL_NEAREST : GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filtering == Framebuffer::ColorFilter::Nearest ? GL_NEAREST : GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, internalFramebuffer);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color, 0);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
         return color;
     }
 
     static uint32_t CreateAndAttachDepthStencil(uint32_t internalFramebuffer, uint32_t width, uint32_t height) {
         uint32_t depthStencil;
-        glCreateRenderbuffers(1, &depthStencil);
-        glNamedRenderbufferStorage(depthStencil, GL_DEPTH24_STENCIL8, width, height);
-        glNamedFramebufferRenderbuffer(internalFramebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencil);
+
+        glGenRenderbuffers(1, &depthStencil);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthStencil);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, internalFramebuffer);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencil);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
         return depthStencil;
     }
 
     Framebuffer::Framebuffer(uint32_t width, uint32_t height, ColorFormat format, ColorFilter filtering, bool hasDepthStencil)
         : m_Size(width, height), m_Format(format), m_Filter(filtering) {
-        
-        glCreateFramebuffers(1, &m_Buffer);
+        glGenFramebuffers(1, &m_Buffer);
         m_Color = CreateAndAttachColor(m_Buffer, width, height, format, filtering);
-        
+
         if (hasDepthStencil) {
             m_DepthStencil = CreateAndAttachDepthStencil(m_Buffer, width, height);
         }
 
-        if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_Buffer);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             RC_WARN("Framebuffer creation failed.");
         }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     Framebuffer::~Framebuffer() {
@@ -116,9 +161,11 @@ namespace Core {
             glDeleteRenderbuffers(1, &oldDepthstencil);
         }
 
-        if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_Buffer);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             RC_WARN("Framebuffer resize with width = {}, and  height = {} failed.", width, height);
         }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     void Framebuffer::Activate() {
@@ -134,7 +181,10 @@ namespace Core {
     }
 
     void Framebuffer::Blit(glm::uvec2 offset, glm::uvec2 size, glm::uvec2 outputOffset, glm::uvec2 outputSize) {
-        glBlitNamedFramebuffer(m_Buffer, 0, offset.x, offset.y, offset.x + size.x, offset.y + size.y, outputOffset.x, outputOffset.y, outputOffset.x + outputSize.x, outputOffset.y + outputSize.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Buffer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBlitFramebuffer(offset.x, offset.y, offset.x + size.x, offset.y + size.y, outputOffset.x, outputOffset.y, outputOffset.x + outputSize.x, outputOffset.y + outputSize.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     void Framebuffer::BindToTextureUnit(uint8_t textureUnitIndex) {
@@ -143,7 +193,8 @@ namespace Core {
             return;
         }
 
-        glBindTextureUnit(textureUnitIndex, m_Color);
+        glActiveTexture(GL_TEXTURE0 + textureUnitIndex);
+        glBindTexture(GL_TEXTURE_2D, m_Color);
     }
 
     void Framebuffer::Render(Shader& shader, uint8_t textureUnitIndex) {
@@ -160,17 +211,31 @@ namespace Core {
 
     static uint32_t CreateAndAttachMultisampleColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format) {
         uint32_t buffer;
-        glCreateRenderbuffers(1, &buffer);
-        glNamedRenderbufferStorageMultisample(buffer, sampleCount, GetInternalFormat(format), width, height);
-        glNamedFramebufferRenderbuffer(internalFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, buffer);
+        glGenRenderbuffers(1, &buffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, buffer);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, sampleCount, GetInternalFormat(format), width, height);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, internalFramebuffer);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, buffer);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
         return buffer;
     }
 
     static uint32_t CreateAndAttachMultisampleDepthStencil(uint32_t internalFramebuffer, uint32_t width, uint32_t height, uint8_t sampleCount) {
         uint32_t buffer;
-        glCreateRenderbuffers(1, &buffer);
-        glNamedRenderbufferStorageMultisample(buffer, sampleCount, GL_DEPTH24_STENCIL8, width, height);
-        glNamedFramebufferRenderbuffer(internalFramebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, buffer);
+        glGenRenderbuffers(1, &buffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, buffer);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, sampleCount, GL_DEPTH24_STENCIL8, width, height);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, internalFramebuffer);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, buffer);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
         return buffer;
     }
 
@@ -181,16 +246,18 @@ namespace Core {
             RC_ERROR("Multisample Framebuffer sample count must be greater than 0 and less than or equal to RenderAPI::GetMaxMultisampleCount");
         }
 
-        glCreateFramebuffers(1, &m_Buffer);
+        glGenFramebuffers(1, &m_Buffer);
         m_Color = CreateAndAttachMultisampleColor(m_Buffer, width, height, sampleCount, format);
-        
+
         if (hasDepthStencil) {
             m_DepthStencil = CreateAndAttachMultisampleDepthStencil(m_Buffer, width, height, sampleCount);
         }
 
-        if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_Buffer);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             RC_WARN("Multisample Framebuffer creation failed.");
         }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     void MultisampleFramebuffer::Resize(uint32_t width, uint32_t height, uint8_t sampleCount) {
@@ -211,9 +278,12 @@ namespace Core {
             glDeleteRenderbuffers(1, &oldDepthStencil);
         }
 
-        if (glCheckNamedFramebufferStatus(m_Buffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_Buffer);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            RC_WARN("Multisample Framebuffer creation failed.");
             RC_WARN("Multisample Framebuffer resize with width = {}, and  height = {} failed.", width, height);
         }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     MultisampleFramebuffer::~MultisampleFramebuffer() {
@@ -235,14 +305,22 @@ namespace Core {
     }
 
     void MultisampleFramebuffer::Blit(glm::uvec2 offset, glm::uvec2 size, glm::uvec2 outputOffset, glm::uvec2 outputSize) {
-        glBlitNamedFramebuffer(m_Buffer, m_Resolved.GetBuffer(), offset.x, offset.y, offset.x + size.x, offset.y + size.y, offset.x, offset.y, offset.x + size.x, offset.y + size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        glBlitNamedFramebuffer(m_Resolved.GetBuffer(), 0, offset.x, offset.y, offset.x + size.x, offset.y + size.y, outputOffset.x, outputOffset.y, outputOffset.x + outputSize.x, outputOffset.y + outputSize.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Buffer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Resolved.GetBuffer());
+        glBlitFramebuffer(offset.x, offset.y, offset.x + size.x, offset.y + size.y, offset.x, offset.y, offset.x + size.x, offset.y + size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Resolved.GetBuffer());
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBlitFramebuffer(offset.x, offset.y, offset.x + size.x, offset.y + size.y, outputOffset.x, outputOffset.y, outputOffset.x + outputSize.x, outputOffset.y + outputSize.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     void MultisampleFramebuffer::BindToTextureUnit(uint8_t textureUnitIndex) {
         auto size = m_Resolved.GetSize();
-        glBlitNamedFramebuffer(m_Buffer, m_Resolved.GetBuffer(), 0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Buffer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Resolved.GetBuffer());
+        glBlitFramebuffer(0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         m_Resolved.BindToTextureUnit(textureUnitIndex);
     }
 
@@ -250,7 +328,10 @@ namespace Core {
         RC_ASSERT(s_RenderQuad, "Framebuffer::InitRender must be called before trying to render a MultisampleFramebuffer");
 
         auto size = m_Resolved.GetSize();
-        glBlitNamedFramebuffer(m_Buffer, m_Resolved.GetBuffer(), 0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Buffer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Resolved.GetBuffer());
+        glBlitFramebuffer(0, 0, size.x, size.y, 0, 0, size.x, size.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         m_Resolved.Render(shader, textureUnitIndex);
     }

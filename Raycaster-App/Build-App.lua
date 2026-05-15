@@ -15,7 +15,6 @@ project "Raycaster-App"
         -- Include Core
         "../Raycaster-Core/Source",
         "../Raycaster-Core/Dependencies/GLFW/include",
-        "../Raycaster-Core/Dependencies/glad/include",
         "../Raycaster-Core/Dependencies/glm",
         "../Raycaster-Core/Dependencies/FreeType/include",
         "../Raycaster-Core/Dependencies/miniaudio",
@@ -37,6 +36,12 @@ project "Raycaster-App"
             "Opusfile",
          }
 
+         includedirs
+         {
+             "../Raycaster-Core/Dependencies/glad/include",
+         }
+
+
     filter "system:emscripten"
         libdirs {
             "../Raycaster-Core/Dependencies/libogg/build/lib",
@@ -46,7 +51,6 @@ project "Raycaster-App"
         links {
             "Raycaster-Core",
             "Raycaster-Dependencies",
-            "glad",
             "FreeType",
             "ogg",
             "opus",

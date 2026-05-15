@@ -3,9 +3,13 @@
 #include "Core/Debug/Debug.h"
 #include "Platform.h"
 
-#include <glad/gl.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
+#if !defined(PLATFORM_EMSCRIPTEN)
+    #include <glad/gl.h>
+#else
+    #include <GLES3/gl3.h>
+#endif
 
 #include <filesystem> 
 #include <string>

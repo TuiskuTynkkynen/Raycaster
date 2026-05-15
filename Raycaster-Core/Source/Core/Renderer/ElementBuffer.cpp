@@ -1,6 +1,12 @@
 #include "ElementBuffer.h"
 
-#include <glad/gl.h>
+#include "Platform.h"
+#if !defined(PLATFORM_EMSCRIPTEN)
+    #include <glad/gl.h>
+#else
+    #include <GLES3/gl3.h>
+#endif
+
 
 namespace Core {
 	ElementBuffer::ElementBuffer(const uint32_t* data, uint32_t count)

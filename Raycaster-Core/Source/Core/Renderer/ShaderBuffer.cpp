@@ -2,6 +2,8 @@
 
 #include "Core/Debug/Debug.h"
 
+#include "Platform.h"
+#if !defined(PLATFORM_EMSCRIPTEN)
 #include <glad/gl.h>
 
 namespace Core {
@@ -41,3 +43,13 @@ namespace Core {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferIndex, m_Buffer);
     }
 }
+
+#else
+
+namespace Core {
+    ShaderStorageBuffer::~ShaderStorageBuffer() {}
+    void ShaderStorageBuffer::Update(std::span<const std::byte> data, size_t offset) {}
+    void ShaderStorageBuffer::Bind(uint32_t bufferIndex) {}
+}
+
+#endif
