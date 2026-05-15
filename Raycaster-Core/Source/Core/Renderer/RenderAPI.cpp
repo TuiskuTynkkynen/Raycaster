@@ -7,6 +7,7 @@
     #include <glad/gl.h>
 #else
     #include <GLES3/gl3.h>
+    #include <emscripten/html5.h>
 #endif
 #include <GLFW/glfw3.h>
 
@@ -25,6 +26,12 @@ namespace Core {
 
             glEnable(GL_LINE_SMOOTH);
             glEnable(GL_LINE_WIDTH);
+        #else
+            // WebGL extensions -> Float 16 and 32 texture support
+            EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
+            if (emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_float") < EMSCRIPTEN_RESULT_SUCCESS) {
+                RC_ERROR("Could not enable WebGL EXT_color_buffer_float extension. Some Framebuffer formats will not be supported!");
+            }
         #endif
 
         glEnable(GL_BLEND);
