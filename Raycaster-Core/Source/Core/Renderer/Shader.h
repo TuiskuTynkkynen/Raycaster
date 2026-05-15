@@ -37,6 +37,8 @@ namespace Core {
         void setVec4(const char* name, const glm::vec4& value);
         void setMat3(const char* name, const glm::mat3& value);
         void setMat4(const char* name, const glm::mat4& value);
+
+        void SetUniformBlockBinding(const char* name, uint32_t bindingIndex);
 	};
 }
 

@@ -228,6 +228,11 @@ namespace Core {
         glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
     }
 
+    void Shader::SetUniformBlockBinding(const char* name, uint32_t bindingIndex){
+	uint32_t block = glGetUniformBlockIndex(m_RendererID, name);
+        glUniformBlockBinding(m_RendererID, block, bindingIndex);
+    }
+
     uint32_t Shader::GetUniformLocation(const char* name) {
         if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end()) {
             return m_UniformLocationCache[name];
