@@ -47,16 +47,24 @@ namespace Core {
     static constexpr GLenum GetInternalFormat(Framebuffer::ColorFormat format) {
         switch (format) {
             using enum Framebuffer::ColorFormat;
+        case HDR_F: return GL_R11F_G11F_B10F;
+    #if defined(PLATFORM_EMSCRIPTEN)
+        case RGB8: return GL_RGBA8;
+        case RGB16: return GL_RGBA16UI;
+        case RGB16F: return GL_RGBA16F;
+        case RGB32F: return GL_RGBA32F;
+    #else
         case RGB8: return GL_RGB8;
+        case RGB16: return GL_RGB16UI;
+        case RGB16F: return GL_RGB16F;
+        case RGB32F: return GL_RGB32F;
+    #endif
         case RG8: return GL_RG8;
         case R8: return GL_R8;
-        case RGB16: return GL_RGB16UI;
         case RG16: return GL_RG16UI;
         case R16: return GL_R16UI;
-        case RGB16F: return GL_RGB16F;
         case RG16F: return GL_RG16F;
         case R16F: return GL_R16F;
-        case RGB32F: return GL_RGB32F;
         case RG32F: return GL_RG32F;
         case R32F: return GL_R32F;
         }
@@ -68,6 +76,7 @@ namespace Core {
    static constexpr GLenum GetFormat(Framebuffer::ColorFormat format) {
         switch (format) {
             using enum Framebuffer::ColorFormat;
+        case HDR_F: return GL_RGB;
         case R8:
         case R16:
         case R16F:
@@ -82,19 +91,45 @@ namespace Core {
         case RGB16:
         case RGB16F:
         case RGB32F:
+    #if defined(PLATFORM_EMSCRIPTEN)
+            return GL_RGBA;
+    #else
             return GL_RGB;
+    #endif
         }
 
         RC_ASSERT(false); // This should never be reached
         return 0;
     }
 
+   static constexpr GLenum GetType(Framebuffer::ColorFormat format) {
+        switch (format) {
+            using enum Framebuffer::ColorFormat;
+        case RGB8:
+        case RG8:
+        case R8:
+            return GL_UNSIGNED_BYTE;
+        case RGB16:
+        case RG16:
+        case R16:
+            return GL_SHORT;
+        case RG16F:
+        case R16F:
+        case RGB16F:
+        case RGB32F:
+        case RG32F:
+        case R32F:
+        case HDR_F:
+            return GL_FLOAT;
+        }
+   }
+
     static uint32_t CreateAndAttachColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, Framebuffer::ColorFormat format, Framebuffer::ColorFilter filtering) {
         uint32_t color;
 
         glGenTextures(1, &color);
         glBindTexture(GL_TEXTURE_2D, color);
-        glTexImage2D(GL_TEXTURE_2D, 0, GetInternalFormat(format), width, height, 0, GetFormat(format), GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GetInternalFormat(format), width, height, 0, GetFormat(format), GetType(format), nullptr);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filtering == Framebuffer::ColorFilter::Nearest ? GL_NEAREST : GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filtering == Framebuffer::ColorFilter::Nearest ? GL_NEAREST : GL_LINEAR);
@@ -240,14 +275,14 @@ namespace Core {
     }
 
 
-    MultisampleFramebuffer::MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format, Framebuffer::ColorFilter filtering, bool hasDepthStencil)
-        : m_Resolved(width, height, format, filtering, false) {
+    MultisampleFramebuffer::MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, MultisampleFramebuffer::ColorFormat format, Framebuffer::ColorFilter filtering, bool hasDepthStencil)
+        : m_Resolved(width, height, static_cast<Framebuffer::ColorFormat>(format), filtering, false) {
         if (!sampleCount || sampleCount > RenderAPI::GetMaxMultisampleCount()) {
             RC_ERROR("Multisample Framebuffer sample count must be greater than 0 and less than or equal to RenderAPI::GetMaxMultisampleCount");
         }
 
         glGenFramebuffers(1, &m_Buffer);
-        m_Color = CreateAndAttachMultisampleColor(m_Buffer, width, height, sampleCount, format);
+        m_Color = CreateAndAttachMultisampleColor(m_Buffer, width, height, sampleCount, m_Resolved.GetFormat());
 
         if (hasDepthStencil) {
             m_DepthStencil = CreateAndAttachMultisampleDepthStencil(m_Buffer, width, height, sampleCount);

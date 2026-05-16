@@ -11,7 +11,7 @@ public:
 	void OnUpdate(Core::Timestep deltaTime) override;
 	void OnEvent(Core::Event& event) override;
 private:
-	Core::MultisampleFramebuffer m_Framebuffer{ 500, 500, 4, Core::Framebuffer::ColorFormat::RGB16F };
+	Core::MultisampleFramebuffer m_Framebuffer{ 500, 500, 4, Core::MultisampleFramebuffer::ColorFormat::HDR_F };
 	std::unique_ptr<Core::Shader> m_PostProcessShader;
 
 	uint32_t m_ViewPortWidth = -1;

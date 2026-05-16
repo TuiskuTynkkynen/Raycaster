@@ -9,6 +9,7 @@ namespace Core {
     class Framebuffer {
     public:
         enum class ColorFormat : uint8_t {
+            HDR_F = 255,
             RGB8 = 0,
             RG8,
             R8,
@@ -61,7 +62,24 @@ namespace Core {
 
     class MultisampleFramebuffer {
     public:
-        MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format = Framebuffer::ColorFormat::RGB8, Framebuffer::ColorFilter filtering = Framebuffer::ColorFilter::Nearest, bool hasDepthStencil = true);
+        enum class ColorFormat : uint8_t {
+            HDR_F = 255,
+            RGB8 = 0,
+            RG8,
+            R8,
+#if !defined(PLATFORM_EMSCRIPTEN)
+            RGB16,
+            RG16,
+            R16,
+            RGB16F,
+            RG16F,
+            R16F,
+            RGB32F,
+            RG32F,
+            R32F,
+#endif
+        };
+        MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, MultisampleFramebuffer::ColorFormat format = MultisampleFramebuffer::ColorFormat::RGB8, Framebuffer::ColorFilter filtering = Framebuffer::ColorFilter::Nearest, bool hasDepthStencil = true);
         ~MultisampleFramebuffer();
 
         void Resize(uint32_t width, uint32_t height, uint8_t sampleCount);
@@ -82,7 +100,7 @@ namespace Core {
 
         inline uint32_t GetBuffer() const { return m_Buffer; }
         inline glm::uvec2 GetSize() const { return m_Resolved.GetSize(); }
-        inline Framebuffer::ColorFormat GetFormat() const { return m_Resolved.GetFormat(); }
+        inline MultisampleFramebuffer::ColorFormat GetFormat() const { return static_cast<MultisampleFramebuffer::ColorFormat>(m_Resolved.GetFormat()); }
         inline Framebuffer::ColorFilter GetFiltering() const { return m_Resolved.GetFiltering(); }
     private:
         uint32_t m_Buffer;
