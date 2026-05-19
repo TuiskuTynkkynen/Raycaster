@@ -85,7 +85,8 @@ Map::Map() {
             data.emplace_back(3 + doorIndex); // 3 - 254 -> Door
         }
         
-        m_UBO = std::make_shared<Core::UniformBuffer>(std::as_bytes(std::span(segments)));
+        m_UBO = std::make_shared<Core::UniformBuffer>(sizeof(ShaderLineSegment) * 256);
+        m_UBO->Update(std::as_bytes(std::span(segments)));
         m_UBO->Bind(0);
         m_MapTexture->BindData(data.data(), static_cast<uint32_t>(GetHeight()), static_cast<uint32_t>(GetWidth()), 1);
     }
