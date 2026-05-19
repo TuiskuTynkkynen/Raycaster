@@ -1,6 +1,5 @@
 #shader vertex
-
-#version 460 core
+#version 300 es
 
 layout (location = 0) in vec2 aPosition;
 layout (location = 1) in vec2 aTexturePosition;
@@ -15,12 +14,12 @@ void main()
 
 
 #shader fragment
-
-#version 460 core
+#version 300 es
+precision mediump float;
 
 in vec2 TexturePosition;
 
-layout(binding = 0) uniform sampler2D Texture;
+uniform sampler2D Texture;
 
 out vec4 FragColor;
 

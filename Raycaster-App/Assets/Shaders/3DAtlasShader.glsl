@@ -1,6 +1,6 @@
 #shader vertex
+#version 300 es
 
-#version 460 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexPos;
@@ -24,8 +24,9 @@ void main()
 
 
 #shader fragment
+#version 300 es
+precision mediump float;
 
-#version 460 core
 in vec2 TexCoords;
 in vec3 WorldPosition;
 in vec3 Normal;
@@ -43,7 +44,7 @@ struct LineSegment {
     vec2 vector;
 };
 
-layout(binding = 0, std140) uniform UBO {
+layout(std140) uniform UBO {
     LineSegment LineSegments[256];
 };
 
@@ -58,19 +59,19 @@ bool LineIntersection(vec2 point1, vec2 point2, vec2 point3, vec2 point4) {
     vec2 line2 = point4 - point3;
 
     float denominator = line1.x * line2.y - line2.x * line1.y;
-    if (denominator == 0) {
+    if (denominator == 0.0f) {
         return false; // Collinear
     }
-    bool denomPositive = denominator > 0;
+    bool denomPositive = denominator >= 0.0f;
 
     vec2 segment13 = point1 - point3;
     float check = line1.x * segment13.y - line1.y * segment13.x;
-    if ((check < 0) == denomPositive || (check > denominator) == denomPositive) {
+    if ((check < 0.0f) == denomPositive || (check > denominator) == denomPositive) {
         return false; //hits line2 but not between point 3 and 4
     }
 
     float numerator = line2.x * segment13.y - line2.y * segment13.x;
-    if ((numerator < 0) == denomPositive || (numerator > denominator) == denomPositive) {
+    if ((numerator < 0.0f) == denomPositive || (numerator > denominator) == denomPositive) {
         return false; //hits line1 but not between point 1 and 2
     }
 
@@ -128,7 +129,7 @@ void main(){
 
     float brightness = 0.1;
     for(int i = 0; i < LightCount; i++) {
-        float count = 0;
+        float count = 0.0f;
 
         vec2 pos = WorldPosition.xz + vec2(0.075 * Normal.xz);
         // PCF?? 

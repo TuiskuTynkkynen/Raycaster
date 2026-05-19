@@ -1,6 +1,6 @@
 #shader vertex
+#version 300 es
 
-#version 460 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aColour;
 
@@ -16,8 +16,8 @@ void main()
 
 
 #shader fragment
-
-#version 460 core
+#version 300 es
+precision mediump float;
 
 in vec3 VertexColour;
 
