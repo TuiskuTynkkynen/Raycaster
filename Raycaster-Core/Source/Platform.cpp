@@ -53,7 +53,7 @@ std::string Core::WideToUTF8(std::wstring_view string) {
 
 static std::filesystem::path CreatePath() {
 #if defined(PLATFORM_EMSCRIPTEN)
-    return "./";
+    return "/web";
 #endif
     std::array<char, PATH_MAX> buffer{};
     ssize_t length = ::readlink("/proc/self/exe", buffer.data(), PATH_MAX);

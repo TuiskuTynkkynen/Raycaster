@@ -29,7 +29,9 @@ workspace "Raycaster"
             "-s SHARED_MEMORY=1",
             "-s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency",
             "-s ALLOW_MEMORY_GROWTH=1",
-            "--preload-file " .. path.getabsolute("Raycaster-App") .. "/Assets@./Assets/",
+            "--preload-file " .. path.getabsolute("Raycaster-App") .. "/Assets@/Assets/",
+            "--pre-js " .. path.getabsolute("Raycaster-Core/Source/Platform/Web/pre.js"),
+            "-lidbfs.js",
         }
 
     filter { "system:emscripten", "configurations:not Dist" }
