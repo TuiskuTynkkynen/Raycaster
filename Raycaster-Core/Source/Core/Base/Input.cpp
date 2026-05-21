@@ -70,7 +70,12 @@ namespace Core {
         glfwSetInputMode(static_cast<GLFWwindow*>(window), GLFW_CURSOR, glfwMode);
     }
 
-    std::wstring_view Input::KeyCodeToString(uint32_t keyCode) {
+    std::wstring_view GLFWKeyCodeToString(uint32_t keyCode){
+        // glfwGetKeyScanCode is not implemented in emscripten GLFW port
+        #if defined(PLATFORM_EMSCRIPTEN)
+            return std::wstring_view{};
+        #endif
+
         static std::unordered_map<uint32_t, std::wstring> cache = [] {
             std::unordered_map<uint32_t, std::wstring> map;
             std::string locale(std::setlocale(LC_ALL, nullptr)); // Save current locale
@@ -93,9 +98,14 @@ namespace Core {
             std::setlocale(LC_ALL, locale.c_str()); // Restore locale
             return map;
         }();
-        
-        if (auto iter = cache.find(keyCode); iter != cache.end()) {
-            return iter->second;
+
+        auto iter = cache.find(keyCode);
+        return iter != cache.end() ? iter->second : std::wstring_view{};
+    }
+
+    std::wstring_view Input::KeyCodeToString(uint32_t keyCode) {
+        if(std::wstring_view name = GLFWKeyCodeToString(keyCode); !name.empty()) {
+            return name;
         }
 
         // Default values, if GLFW doesn't have a name for the key
