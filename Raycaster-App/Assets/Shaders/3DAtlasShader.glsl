@@ -93,7 +93,7 @@ bool trace(vec2 position, vec2 target) {
     sideDistance.y *= (rayDirection.y < 0.0f) ? (position.y - float(mapY)) : (float(mapY) + 1.0f - position.y);
     
     while (mapX != int(target.x) || mapY != int(target.y)) {
-        int map = int(texelFetch(MapTexture, ivec2(mapX, mapY), 0).r * 255.0);
+        int map = int(round(texelFetch(MapTexture, ivec2(mapX, mapY), 0).r * 255.0));
         if (mapX < 0 || mapX >= 24 || mapY < 0 || mapY >= 24 || map == 255) {
             return false;
         }
