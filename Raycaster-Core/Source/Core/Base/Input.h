@@ -1,33 +1,36 @@
 #pragma once
 
 #include "InputCodes.h"
+#include "Platform.h"
 
 #include <utility>
 #include <cstdint>
 #include <string_view>
 
 namespace Core::Input {
-	bool IsKeyPressed(uint32_t key);
-	bool IsButtonPressed(uint32_t button);
-	bool IsButtonReleased(uint32_t button);
+    bool IsKeyPressed(uint32_t key);
+    bool IsButtonPressed(uint32_t button);
+    bool IsButtonReleased(uint32_t button);
 
-	float GetMouseX();
-	float GetMouseY();
-	std::pair<float, float> GetMousePos();
+    float GetMouseX();
+    float GetMouseY();
+    std::pair<float, float> GetMousePos();
 
-	enum class CursorMode {
-		Normal = 0, // Show cursor
-		Hidden,     // Hide cursor
-		Captured,   // Capture cursor
-		Disabled,   // Hide and capture cursor
-	};
-	void SetCursorMode(CursorMode mode);
+    enum class CursorMode {
+        Normal = 0, // Show cursor
+        Hidden,     // Hide cursor
+    #if !defined(PLATFORM_EMSCRIPTEN)
+        Captured,   // Capture cursor
+    #endif
+        Disabled,   // Hide and capture cursor
+    };
+    void SetCursorMode(CursorMode mode);
 
-	constexpr bool IsValidKeyCode(uint32_t keyCode);
-	constexpr bool IsValidButtonCode(uint32_t buttonCode);
+    constexpr bool IsValidKeyCode(uint32_t keyCode);
+    constexpr bool IsValidButtonCode(uint32_t buttonCode);
 
-	std::wstring_view KeyCodeToString(uint32_t keyCode);
-	std::wstring_view ButtonCodeToString(uint32_t mouseButtonCode);
+    std::wstring_view KeyCodeToString(uint32_t keyCode);
+    std::wstring_view ButtonCodeToString(uint32_t mouseButtonCode);
 }
 
 constexpr bool Core::Input::IsValidKeyCode(uint32_t keyCode) {

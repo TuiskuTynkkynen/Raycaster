@@ -54,9 +54,11 @@ namespace Core {
         case Hidden:
             glfwMode = GLFW_CURSOR_HIDDEN;
             break;
+        #if !defined(PLATFORM_EMSCRIPTEN)
         case Captured:
             glfwMode = GLFW_CURSOR_CAPTURED;
             break;
+        #endif
         case Disabled:
             glfwMode = GLFW_CURSOR_DISABLED;
             break;
