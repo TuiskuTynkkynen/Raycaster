@@ -122,6 +122,9 @@ namespace Core {
         case HDR_F:
             return GL_FLOAT;
         }
+
+        RC_ASSERT(false); // This should never be reached
+        return 0;
    }
 
     static uint32_t CreateAndAttachColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, Framebuffer::ColorFormat format, Framebuffer::ColorFilter filtering) {
