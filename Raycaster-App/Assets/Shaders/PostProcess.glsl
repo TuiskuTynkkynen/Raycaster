@@ -2,9 +2,9 @@
 #version 300 es
 
 layout (location = 0) in vec2 aPosition;
-layout (location = 1) in vec2 aTexturePosition;
+layout (location = 1) in highp vec2 aTexturePosition;
 
-out vec2 TexturePosition;
+out highp vec2 TexturePosition;
 
 void main()
 {
@@ -17,7 +17,7 @@ void main()
 #version 300 es
 precision mediump float;
 
-in vec2 TexturePosition;
+in highp vec2 TexturePosition;
 
 uniform sampler2D Texture;
 

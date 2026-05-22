@@ -3,9 +3,9 @@
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aTexPos;
+layout (location = 2) in highp vec2 aTexPos;
 
-out vec2 TexCoords;
+out highp vec2 TexCoords;
 out vec3 WorldPosition;
 out vec3 Normal;
 
@@ -27,13 +27,13 @@ void main()
 #version 300 es
 precision mediump float;
 
-in vec2 TexCoords;
+in highp vec2 TexCoords;
 in vec3 WorldPosition;
 in vec3 Normal;
 
-uniform vec2 AtlasSize;
-uniform vec2 AtlasOffset;
-uniform vec2 FlipTexture;
+uniform highp vec2 AtlasSize;
+uniform highp vec2 AtlasOffset;
+uniform highp vec2 FlipTexture;
 
 uniform vec3 ModelTint;
 uniform sampler2D Texture;
@@ -120,7 +120,7 @@ bool trace(vec2 position, vec2 target) {
 }
 
 void main(){
-    vec2 uv = (abs(FlipTexture - fract(TexCoords)) + AtlasOffset) / AtlasSize;
+    highp vec2 uv = (abs(FlipTexture - fract(TexCoords)) + AtlasOffset) / AtlasSize;
     FragColor = texture(Texture, uv);
     
     if(FragColor.a == 0.0f){

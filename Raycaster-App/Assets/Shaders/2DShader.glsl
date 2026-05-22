@@ -3,16 +3,16 @@
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec4 aColour;
-layout (location = 2) in vec2 aTexPos;
-layout (location = 3) in vec2 aAtlasOffset;
+layout (location = 2) in highp vec2 aTexPos;
+layout (location = 3) in highp vec2 aAtlasOffset;
 layout (location = 4) in float aTexIndex;
 
 uniform mat4 ViewProjection;
 
 out vec4 VertexColour;
 
-out vec2 TexCoords;
-out vec2 AtlasOffset;
+out highp vec2 TexCoords;
+out highp vec2 AtlasOffset;
 flat out int TextureIndex;
 
 void main()
@@ -34,12 +34,12 @@ precision mediump float;
 
 in vec4 VertexColour;
 
-in vec2 TexCoords;
-in vec2 AtlasOffset;
+in highp vec2 TexCoords;
+in highp vec2 AtlasOffset;
 flat in int TextureIndex;
 
 uniform sampler2D Textures[16];
-uniform vec2 AtlasSize;
+uniform highp vec2 AtlasSize;
 
 out vec4 FragColor;
 
@@ -68,7 +68,7 @@ vec4 sampleTexture(int index, vec2 uv) { // GOD I LOVE version 300 es
 
 void main(){
     if(TextureIndex == 1) {
-        vec2 uv = (fract(TexCoords) + AtlasOffset) / AtlasSize;
+        highp vec2 uv = (fract(TexCoords) + AtlasOffset) / AtlasSize;
         FragColor =  sampleTexture(TextureIndex, uv) * VertexColour;
         return;
     } else if(TextureIndex == 2) {
