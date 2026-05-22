@@ -1,43 +1,60 @@
-require "glm"
-require "miniaudio"
-require "stb_image"
+RaycasterCoreDependencies = {}
 
-project "Raycaster-Dependencies"
-    kind "StaticLib"
-    language "C++"
-    cppdialect "C++23"
-    targetdir "Binaries/%{cfg.buildcfg}"
-    staticruntime "off"
-    warnings "off"
+local base_path = path.getabsolute("./")
+local function getabsolutepath(relative_path)
+    return base_path  .. "/" .. relative_path
+end
+
+function RaycasterCoreDependencies.include()
+    includedirs {
+        getabsolutepath "glm",
+        getabsolutepath "FreeType/include",
+        getabsolutepath "miniaudio",
+        getabsolutepath "utils",
+    }
+
+    links {
+        "glm",
+        "miniaudio",
+        "FreeType",
+        "Opusfile",
+    }
+
+    filter "system:not emscripten"
+        includedirs {
+            getabsolutepath "GLFW/include",
+            getabsolutepath "glad/include",
+        }
+
+        links {
+            "GLFW",
+            "glad",
+        }
     
-    AddGLM()
-    AddMiniaudio()
-    AddStbImage()
-    
-    links { "Opusfile" }
+    filter "system:emscripten"
+        libdirs {
+            getabsolutepath "libogg/build/lib",
+            getabsolutepath "libopus/build/lib",
+        }
 
-    targetdir ("Binaries/" .. OutputDir .. "/%{prj.name}")
-    objdir ("Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
+        links {
+            "ogg",
+            "opus",
+        }
 
-    filter "system:windows"
-        systemversion "latest"
-        defines { "_CRT_SECURE_NO_WARNINGS" }
+    -- Reset filters
+    filter {}
+end
 
-    filter "configurations:Debug"
-        runtime "Debug"
-        symbols "On"
+group "Core/Dependencies"
+    include(getabsolutepath "glm.lua")
+    include(getabsolutepath "FreeType.lua")
+    include(getabsolutepath "miniaudio.lua")
+    include(getabsolutepath "opusfile.lua")
+    include(getabsolutepath "stb_image.lua")
 
-    filter "configurations:Release"
-        runtime "Release"
-        optimize "On"
-        symbols "On"
-
-    filter "configurations:Dist"
-        runtime "Release"
-        optimize "On"
-        symbols "Off"
-
-include "GLFW.lua"
-include "glad.lua"
-include "FreeType.lua"
-include "opusfile.lua"
+    if os.target() ~= "emscripten" then
+        include(getabsolutepath "GLFW.lua")
+        include(getabsolutepath "glad.lua")
+    end
+group "Core"

@@ -5,61 +5,29 @@ project "Raycaster-App"
     staticruntime "off"
 
     files { 
-        "Source/**.h", "Source/**.cpp",
+        "Source/**.h",
+        "Source/**.cpp",
     }
 
-    includedirs
-    {
+    includedirs {
         "Source/",
         "Source/*/",
-        -- Include Core
-        "../Raycaster-Core/Source",
-        "../Raycaster-Core/Dependencies/GLFW/include",
-        "../Raycaster-Core/Dependencies/glm",
-        "../Raycaster-Core/Dependencies/FreeType/include",
-        "../Raycaster-Core/Dependencies/miniaudio",
-        "../Raycaster-Core/Dependencies/utils",
-    }	
+    }
+
+    RaycasterCore.include()
 
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
     postbuildcommands "{COPYDIR} Assets ../Binaries/%{OutputDir}/%{prj.name}/Assets"
 
-    filter "system:not emscripten"
-        links {
-            "Raycaster-Core",
-            "Raycaster-Dependencies",
-            "GLFW",
-            "glad",
-            "FreeType",
-            "Opusfile",
-         }
-
-         includedirs
-         {
-             "../Raycaster-Core/Dependencies/glad/include",
-         }
-
-
-    filter "system:emscripten"
-        libdirs {
-            "../Raycaster-Core/Dependencies/libogg/build/lib",
-            "../Raycaster-Core/Dependencies/libopus/build/lib",
-        }
-
-        links {
-            "Raycaster-Core",
-            "Raycaster-Dependencies",
-            "FreeType",
-            "ogg",
-            "opus",
-            "Opusfile",
-         }
-
     filter "system:windows"
         systemversion "latest"
-        defines { "WINDOWS" }
+
+    filter "system:emscripten"
+        linkoptions {
+            "--preload-file " .. path.getabsolute("Assets") .. "@/Assets/",
+        }
 
     filter "configurations:Debug"
         defines { "DEBUG", "LOG_ENABLE" }

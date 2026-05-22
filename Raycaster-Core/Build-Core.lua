@@ -1,58 +1,52 @@
+include "Dependencies/Build-Dependencies.lua"
+
+RaycasterCore = {}
+
+local base_path = path.getabsolute("./")
+function RaycasterCore.include()
+    includedirs {
+        base_path .. "/Source",
+    }
+    
+    links "Raycaster-Core"
+
+    RaycasterCoreDependencies.include()
+
+    filter "system:emscripten"
+        linkoptions {
+            "--pre-js " .. base_path .. "/Source/Platform/Web/pre.js",
+        }
+
+    filter {}
+end
+
 project "Raycaster-Core"
     kind "StaticLib"
     language "C++"
     cppdialect "C++23"
-    targetdir "Binaries/%{cfg.buildcfg}"
     staticruntime "off"
-
-    files { 
-        "Source/**.h", "Source/**.cpp",
+    
+    files {
+        "Source/**.h",
+        "Source/**.cpp",
     }
 
-    includedirs
-    {
+    includedirs {
         "Source",
-        "Dependencies/GLFW/include",
-        "Dependencies/glm",
-        "Dependencies/FreeType/include",
-        "Dependencies/miniaudio",
-        "Dependencies/utils",
     }
 
-
-    filter "system:not emscripten"
-         includedirs {
-            "Dependencies/glad/include",
-         }
-
-         links {
-            "Raycaster-Dependencies",
-            "GLFW",
-            "glad",
-            "FreeType",
-            "Opusfile",
-         }
-
-    filter "system:emscripten"
-        libdirs {
-            "Dependencies/libogg/build/lib",
-            "Dependencies/libopus/build/lib",
-        }
-
-        links {
-            "Raycaster-Dependencies",
-            "FreeType",
-            "ogg",
-            "opus",
-            "Opusfile",
-       }
-
+    RaycasterCoreDependencies.include()
+    
     targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
     objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 
     filter "system:windows"
         systemversion "latest"
-        defines { }
+
+    filter "system:emscripten"
+        linkoptions {
+            "--pre-js " .. path.getabsolute("Source/Platform/Web/pre.js"),
+        }
 
     filter "configurations:Debug"
         defines { "DEBUG", "LOG_ENABLE"}
@@ -70,8 +64,3 @@ project "Raycaster-Core"
         runtime "Release"
         optimize "On"
         symbols "Off"
-
-
-group "Core/Dependencies"
-    include "Dependencies/Build-Dependencies.lua"
-group ""

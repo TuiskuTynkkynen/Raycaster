@@ -2,12 +2,10 @@ project "FreeType"
     kind "StaticLib"
     language "C++"
     cppdialect "C++23"
-    targetdir "Binaries/%{cfg.buildcfg}"
     staticruntime "off"
     warnings "off"
 
-    files 
-    {
+    files  {
         "FreeType/src/autofit/autofit.c",
         "FreeType/src/base/ftbase.c",
         "FreeType/src/base/ftbbox.c",
@@ -50,8 +48,7 @@ project "FreeType"
         "FreeType/src/winfonts/winfnt.c",
     }
 
-    includedirs
-    {
+    includedirs {
         "FreeType/include"
     }
 
@@ -63,8 +60,7 @@ project "FreeType"
     filter "system:linux"
         systemversion "latest"
 
-        files
-        {
+        files {
             "FreeType/src/base/ftsystem.c",
             "FreeType/src/base/ftdebug.c",
         }
@@ -73,8 +69,7 @@ project "FreeType"
         systemversion "latest"
         defines { "NO_ASM" }
 
-        files
-        {
+        files {
             "FreeType/src/base/ftsystem.c",
             "FreeType/src/base/ftdebug.c",
         }
@@ -83,8 +78,7 @@ project "FreeType"
         systemversion "latest"
         defines { "_CRT_SECURE_NO_WARNINGS" }
         
-                files
-        {
+        files {
             "FreeType/builds/windows/ftsystem.c",
             "FreeType/builds/windows/ftdebug.c",
             "FreeType/src/base/ftver.rc",

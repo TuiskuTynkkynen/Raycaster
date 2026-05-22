@@ -20,35 +20,32 @@ workspace "Raycaster"
             "-Wno-deprecated-declarations",
         }
 
-    filter "system:emscripten"
         linkoptions {
+            "-pthread",
             "-s WASM=1",
             "-s USE_GLFW=3",
             "-s FULL_ES3=1",
-            "-pthread",
             "-s SHARED_MEMORY=1",
             "-s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency",
             "-s ALLOW_MEMORY_GROWTH=1",
-            "--preload-file " .. path.getabsolute("Raycaster-App") .. "/Assets@/Assets/",
-            "--pre-js " .. path.getabsolute("Raycaster-Core/Source/Platform/Web/pre.js"),
             "-lidbfs.js",
         }
 
     filter { "system:emscripten", "configurations:not Dist" }
         linkoptions {
             "-g3",
-            "-fdebug-compilation-dir=.",
-            "-fdebug-prefix-map=" .. path.getabsolute(".") .. "=.",
+            "-s GL_DEBUG=1",
             "-s ASSERTIONS=2",
             "-s SAFE_HEAP=1",
             "-s STACK_OVERFLOW_CHECK=2",
-            "-s GL_DEBUG=1",
+            "-fdebug-compilation-dir=.",
+            "-fdebug-prefix-map=" .. path.getabsolute(".") .. "=.",
         }
 
 OutputDir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
 
 group "Core"
-	include "Raycaster-Core/Build-Core.lua"
+    include "Raycaster-Core/Build-Core.lua"
 group ""
 
 include "Raycaster-App/Build-App.lua"
