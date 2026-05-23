@@ -52,9 +52,6 @@ std::string Core::WideToUTF8(std::wstring_view string) {
 #include <unistd.h>
 
 static std::filesystem::path CreatePath() {
-#if defined(PLATFORM_EMSCRIPTEN)
-    return "/web";
-#endif
     std::array<char, PATH_MAX> buffer{};
     ssize_t length = ::readlink("/proc/self/exe", buffer.data(), PATH_MAX);
 
@@ -88,6 +85,27 @@ std::string Core::WideToUTF8(std::wstring_view string) {
 }
 
 # pragma clang diagnostic pop
+
+#elif defined(PLATFORM_EMSCRIPTEN)
+
+static std::filesystem::path CreatePath() {
+    return "/web";
+}
+
+#include <codecvt>
+#include <locale>
+
+std::wstring Core::UTF8ToWide(const char* string) {
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(string);
+}
+
+std::wstring Core::UTF8ToWide(std::string_view string) {
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(string.data(), string.data() + string.size());
+}
+
+std::string Core::WideToUTF8(std::wstring_view string) {
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(string.data());
+}
 
 #endif
 
