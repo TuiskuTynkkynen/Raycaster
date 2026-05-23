@@ -6,7 +6,7 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in highp vec2 aTexPos;
 
 out highp vec2 TexCoords;
-out vec3 WorldPosition;
+out highp vec3 WorldPosition;
 out vec3 Normal;
 
 uniform mat4 ViewProjection;
@@ -28,7 +28,7 @@ void main()
 precision mediump float;
 
 in highp vec2 TexCoords;
-in vec3 WorldPosition;
+in highp vec3 WorldPosition;
 in vec3 Normal;
 
 uniform highp vec2 AtlasSize;
@@ -54,11 +54,11 @@ uniform int LightCount;
 
 out vec4 FragColor;
 
-bool LineIntersection(vec2 point1, vec2 point2, vec2 point3, vec2 point4) {
-    vec2 line1 = point2 - point1;
-    vec2 line2 = point4 - point3;
+bool LineIntersection(highp vec2 point1, highp vec2 point2, highp vec2 point3, highp vec2 point4) {
+    highp vec2 line1 = point2 - point1;
+    highp vec2 line2 = point4 - point3;
 
-    float denominator = line1.x * line2.y - line2.x * line1.y;
+    highp float denominator = line1.x * line2.y - line2.x * line1.y;
     if (denominator == 0.0f) {
         return false; // Collinear
     }
@@ -78,7 +78,7 @@ bool LineIntersection(vec2 point1, vec2 point2, vec2 point3, vec2 point4) {
     return true;
 }
 
-bool trace(vec2 position, vec2 target) {
+bool trace(highp vec2 position, highp vec2 target) {
     vec2 rayDirection = target - position;
     vec2 deltaDistance = abs(1.0f / normalize(rayDirection));
 
@@ -131,7 +131,7 @@ void main(){
     for(int i = 0; i < LightCount; i++) {
         float count = 0.0f;
 
-        vec2 pos = WorldPosition.xz + vec2(0.075 * Normal.xz);
+        highp vec2 pos = WorldPosition.xz + vec2(0.075 * Normal.xz);
         // PCF?? 
         for(int j = 0; j < 4; j++) {
             vec2 offset = vec2(float(j < 2) * 0.05, float(j >= 2) * 0.05);
