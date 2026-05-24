@@ -228,7 +228,9 @@ bool RaycasterScene::OnKeyReleased(Core::KeyReleased& event) {
 }
 
 bool RaycasterScene::OnWindowResize(Core::WindowResize& event) {
+    if (event.GetHeight()) {
     m_Renderer.SetAspecRatio(event.GetWidth() * 0.5f / event.GetHeight());
+    }
     return false;
 }
 

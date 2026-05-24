@@ -15,6 +15,10 @@ void Layer3D::OnDetach() {
 };
 
 void Layer3D::OnUpdate(Core::Timestep deltaTime) {
+    if (m_ViewPortWidth * m_ViewPortHeight == 0) {
+        return;
+    }
+
     RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
     const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
     
