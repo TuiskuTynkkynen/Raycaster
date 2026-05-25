@@ -9,11 +9,35 @@
 #include <GLFW/glfw3.h>
 #if defined(PLATFORM_EMSCRIPTEN)
     #include <emscripten/html5.h>
+    static EM_BOOL WebCanvasResized(int, const void*, void* window) {
+        double cssWidth, cssHeight;
+        if (int32_t result = emscripten_get_element_css_size("#canvas", &cssWidth, &cssHeight); result < 0) {
+            RC_WARN("Getting canvas size failed with error = {}, canvas and Window resolution may differ", result);
+        }
 
-    inline static void WebEnterSoftFullscreen(void*) {
+        double pixelRatio = emscripten_get_device_pixel_ratio();
+        glfwSetWindowSize(static_cast<GLFWwindow*>(window), static_cast<int32_t>(cssWidth * pixelRatio), static_cast<int32_t>(cssHeight * pixelRatio));
+        return EM_TRUE;
+    }
+
+    struct WebWindowedData {
+        void* Window;
+        glm::uvec2 Size;
+    };
+
+    inline static void WebEnterWindowed(void* windowedData) {
+        RC_ASSERT(windowedData);
+        WebWindowedData* data = static_cast<WebWindowedData*>(windowedData);
+        glfwSetWindowSize(static_cast<GLFWwindow*>(data->Window), static_cast<int32_t>(data->Size.x), static_cast<int32_t>(data->Size.y));
+        delete data;
+    }
+
+    inline static void WebEnterSoftFullscreen(void* window) {
         EmscriptenFullscreenStrategy strategy{
             .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH,
             .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_HIDEF,
+            .canvasResizedCallback = WebCanvasResized,
+            .canvasResizedCallbackUserData = window,
         };
 
         if (int32_t result = emscripten_enter_soft_fullscreen("#canvas", &strategy); result < 0) {
@@ -21,10 +45,12 @@
         }
     }
 
-    inline static void WebEnterHardFullscreen() {
+    inline static void WebEnterHardFullscreen(void* window) {
         EmscriptenFullscreenStrategy strategy{
-                 .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH,
-                 .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_HIDEF,
+            .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH,
+            .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_HIDEF,
+            .canvasResizedCallback = WebCanvasResized,
+            .canvasResizedCallbackUserData = window,
         };
 
         if (int32_t result = emscripten_request_fullscreen_strategy("#canvas", EM_TRUE, &strategy); result < 0) {
@@ -32,7 +58,9 @@
         }
     }
 
-    static void WebSwitchWindowMode(Core::WindowMode previous, Core::WindowMode next) {
+    static void WebSwitchWindowMode(Core::WindowMode previous, Core::WindowMode next, void* window, glm::uvec2 windowedSize = {}) {
+        RC_ASSERT(window);
+
         using enum Core::WindowMode;
         switch (previous) {
         case Windowed:
@@ -51,11 +79,11 @@
 
         switch (next) {
         case Windowed:
-            return;
+            return emscripten_async_call(WebEnterWindowed, new WebWindowedData(window, windowedSize), 1); // Async call to ensure previous WindowMode has exited
         case Borderless:
-            return emscripten_async_call(WebEnterSoftFullscreen, nullptr, 1); // Async call to ensure previous WindowMode has exited
+            return emscripten_async_call(WebEnterSoftFullscreen, window, 1); // Async call to ensure previous WindowMode has exited
         case Fullscreen:
-            return WebEnterHardFullscreen();
+            return WebEnterHardFullscreen(window);
         }
     }
 #endif
@@ -102,7 +130,7 @@ namespace Core {
             glfwGetWindowPos(window, &position.x, &position.y);
 
             #if defined(PLATFORM_EMSCRIPTEN)
-                WebSwitchWindowMode(WindowMode::Windowed, properties.Mode);
+                WebSwitchWindowMode(WindowMode::Windowed, properties.Mode, window);
             #endif
 
             return {
@@ -293,7 +321,7 @@ namespace Core {
 
     void Window::SetMode(WindowMode mode) {
         #if defined(PLATFORM_EMSCRIPTEN)
-            return WebSwitchWindowMode(m_Data.Mode, (m_Data.Mode = mode));
+            return WebSwitchWindowMode(m_Data.Mode, (m_Data.Mode = mode), m_Data.Window, m_Data.WindowedSize);
         #endif
         if (m_Data.Mode == mode) {
             return;
