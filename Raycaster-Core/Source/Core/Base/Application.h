@@ -32,7 +32,7 @@ namespace Core {
         void Run();
         void Update();
     public:
-        Application();
+        Application(const WindowProperties& properties = {});
         virtual ~Application();
         
         void OnEvent(Event& event);

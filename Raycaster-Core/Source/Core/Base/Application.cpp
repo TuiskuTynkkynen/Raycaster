@@ -11,11 +11,11 @@
 namespace Core {
     Application* Application::s_Instance = nullptr;
 
-    Application::Application() {
+    Application::Application(const WindowProperties& props) {
         RC_ASSERT(!s_Instance, "Application already created");
         s_Instance = this;
 
-        m_Window = std::make_unique<Window>(WindowProperties());
+        m_Window = std::make_unique<Window>(props);
         m_Window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
         m_ActiveScene = nullptr;
