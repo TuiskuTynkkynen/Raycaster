@@ -2,18 +2,25 @@
 
 #include "Core/Events/Event.h"
 
+#include <glm/glm.hpp>
+
 #include <string>
 #include <functional>
 #include <cstdint>
 
 namespace Core {
-    struct WindowProperties {
-        std::string Tittle;
-        uint32_t Width;
-        uint32_t Height;
+    // WindowMode support is best effort and may differ based on platform.
+    enum class WindowMode : uint8_t {
+        Windowed = 0, // Resizable Window with decorations.
+        Borderless,   // Window with no decorations and size = monitor size.
+        Fullscreen,   // True fullscreen Window.
+    };
 
-        WindowProperties(const std::string& tittle = "Application", uint32_t width = 1200, uint32_t height = 600)
-            : Tittle(tittle), Width(width), Height(height) {}
+    struct WindowProperties {
+        std::string Title = "Application";
+        WindowMode Mode = WindowMode::Windowed;
+        uint32_t Width = 1200;
+        uint32_t Height = 600;
     };
 
     class Window {
@@ -29,20 +36,25 @@ namespace Core {
         
         inline void SetEventCallback(const EventCallbackFunction& callback) { m_Data.EventCallback = callback; }
         void SetVSync(bool enbled);
+        void SetMode(WindowMode mode);
 
-        inline void* GetWindowPointer() { return m_Window;  }
+        inline void* GetWindowPointer() { return m_Data.Window;  }
     private:
-        void* m_Window;
-
         struct WindowData {
-            std::string Tittle;
+            void* Window = nullptr;
+
+            std::string Title;
             uint32_t Width = 0;
             uint32_t Height = 0;
 
-            bool VSyncEnabled = false;
+            WindowMode Mode = WindowMode::Windowed;
+            glm::uvec2 WindowedSize = {};
+            glm::ivec2 WindowedPosition = {};
+
             EventCallbackFunction EventCallback;
         };
-
         WindowData m_Data;
+
+        static WindowData CreateWindow(const WindowProperties& properties);
     };
 }
