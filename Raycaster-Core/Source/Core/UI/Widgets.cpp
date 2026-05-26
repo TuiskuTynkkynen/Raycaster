@@ -69,7 +69,7 @@ namespace Core::UI::Widgets {
     bool TextWidget<T>::Render(Surface& current) {
         uint32_t colourIndex = UI::Internal::System->ActiveID == current.ParentID ? 2 : UI::Internal::System->HoverID == current.ParentID ? 1 : 0;
 
-        Renderer2D::DrawShapeString(m_Text, current.Position.x, current.Position.y, m_Scale, current.Colours[colourIndex], true);
+        Renderer2D::DrawShapeString(m_Text, { current.Position.x, current.Position.y, 0.0f }, m_Scale, current.Colours[colourIndex], true);
         
         return true;
     }
@@ -107,7 +107,7 @@ namespace Core::UI::Widgets {
 
     template <typename T>
     bool TextDisplayWidget<T>::Render(Surface& current) {
-        Renderer2D::DrawShapeString(Text, current.Position.x, current.Position.y, TextScale, current.Colours[ColourIndex], true);
+        Renderer2D::DrawShapeString(Text, { current.Position.x, current.Position.y, 0.0f }, TextScale, current.Colours[ColourIndex], true);
 
         return true;
     }

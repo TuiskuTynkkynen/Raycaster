@@ -414,10 +414,9 @@ namespace Core {
     }
 
     template <typename T>
-    void Renderer2D::DrawString(const T& text, float x, float y, float scale, const glm::vec4& colour, bool flipHorizontal) {
-        glm::vec3 position(0.0f);
+    void Renderer2D::DrawString(const T& text, const glm::vec3& textPosition, float scale, const glm::vec4& colour, bool flipHorizontal) {
         glm::vec3 size(1.0f);
-        float startX = x;
+        float x = textPosition.x, y = textPosition.y;
         float horizontalMultiplier = 1.0f - 2.0f * flipHorizontal;
 
         for (auto c = text.begin(); c != text.end(); c++) {
@@ -425,7 +424,7 @@ namespace Core {
                 continue;
             }
             if (*c == '\n') {
-                x = startX;
+                x = textPosition.x;
                 y -= s_Data.Font->GetGlyphInfo(' ').Size.y * scale * horizontalMultiplier;
                 continue;
             }
@@ -443,6 +442,7 @@ namespace Core {
             size.x = glyph.Size.x * scale;
             size.y = -glyph.Size.y * scale * horizontalMultiplier;
 
+            glm::vec3 position(0.0f, 0.0f, textPosition.z);
             position.x = x + glyph.Bearing.x * scale + size.x * 0.5f;
             position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale * horizontalMultiplier - size.y * 0.5f;
 
@@ -464,10 +464,10 @@ namespace Core {
         s_Data.Font = font;
     }
 
-    template void Renderer2D::DrawString<std::string>(const std::string&, float, float, float, const glm::vec4&, bool);
-    template void Renderer2D::DrawString<std::wstring>(const std::wstring&, float, float, float, const glm::vec4&, bool);
-    template void Renderer2D::DrawString<std::string_view>(const std::string_view&, float, float, float, const glm::vec4&, bool);
-    template void Renderer2D::DrawString<std::wstring_view>(const std::wstring_view&, float, float, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawString<std::string>(const std::string&, const glm::vec3&, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawString<std::wstring>(const std::wstring&, const glm::vec3&, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawString<std::string_view>(const std::string_view&, const glm::vec3&, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawString<std::wstring_view>(const std::wstring_view&, const glm::vec3&, float, const glm::vec4&, bool);
 
     inline static void DrawShape(std::function<Shapes::ShapeError()> shapeFunction, uint32_t textureIndex, const glm::vec4& colour, const glm::vec3& position, const glm::vec3& scale, const glm::vec2& textureOffset = glm::vec2(1.0f), const glm::vec2& textureScale = glm::vec2(1.0f), const glm::vec2& atlasIndex = glm::vec2(0.0f), float textureRotate = 0.0f) {
         size_t vertexOffset = s_Data.ShapeVertices.size();
@@ -740,10 +740,9 @@ namespace Core {
     }
 
     template <typename T>
-    void Renderer2D::DrawShapeString(const T& text, float x, float y, float scale, const glm::vec4& colour, bool flipHorizontal) {
-        glm::vec3 position(0.0f);
+    void Renderer2D::DrawShapeString(const T& text, const glm::vec3& textPosition, float scale, const glm::vec4& colour, bool flipHorizontal) {
         glm::vec3 size(1.0f);
-        float startX = x;
+        float x = textPosition.x, y = textPosition.y;
         float horizontalMultiplier = 1.0f - 2.0f * flipHorizontal;
 
         for (auto c = text.begin(); c != text.end(); c++) {
@@ -751,7 +750,7 @@ namespace Core {
                 continue;
             }
             if (*c == '\n') {
-                x = startX;
+                x = textPosition.x;
                 y -= s_Data.Font->GetGlyphInfo(' ').Size.y * scale * horizontalMultiplier;
                 continue;
             }
@@ -769,6 +768,7 @@ namespace Core {
             size.x = glyph.Size.x * scale;
             size.y = -glyph.Size.y * scale * horizontalMultiplier;
 
+            glm::vec3 position(0.0f, 0.0f, textPosition.z);
             position.x = x + glyph.Bearing.x * scale + size.x * 0.5f;
             position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale * horizontalMultiplier - size.y * 0.5f;
 
@@ -777,9 +777,9 @@ namespace Core {
         }
     }
 
-    template void Renderer2D::DrawShapeString<std::string>(const std::string&, float, float, float, const glm::vec4&, bool);
-    template void Renderer2D::DrawShapeString<std::wstring>(const std::wstring&, float, float, float, const glm::vec4&, bool);
-    template void Renderer2D::DrawShapeString<std::string_view>(const std::string_view&, float, float, float, const glm::vec4&, bool);
-    template void Renderer2D::DrawShapeString<std::wstring_view>(const std::wstring_view&, float, float, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawShapeString<std::string>(const std::string&, const glm::vec3&, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawShapeString<std::wstring>(const std::wstring&, const glm::vec3&, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawShapeString<std::string_view>(const std::string_view&, const glm::vec3&, float, const glm::vec4&, bool);
+    template void Renderer2D::DrawShapeString<std::wstring_view>(const std::wstring_view&, const glm::vec3&, float, const glm::vec4&, bool);
 }
 
