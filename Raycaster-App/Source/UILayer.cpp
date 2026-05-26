@@ -54,7 +54,7 @@ void UILayer::OnUpdate(Core::Timestep deltaTime) {
 
     RaycasterScene::State sceneState = scene.GetState();
     if (sceneState != RaycasterScene::State::Running) {
-    Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f, 0.5f });
+    Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f , 0.0f }, { 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f, 0.5f });
         if (m_SettingsUI.IsEnabled) {
             m_SettingsUI.Render();
         } else {

@@ -175,7 +175,7 @@ namespace Core {
         for (size_t i = 1; i < Internal::System->Elements.size(); i++) {
             Surface& current = Internal::System->Elements[i];
             const Surface& parent = Internal::System->Elements[current.ParentID];
-            
+
             if (current.ParentID != lastParentId) { 
                 switch (parent.Layout) {
                 case LayoutType::None:
@@ -246,7 +246,7 @@ namespace Core {
             static_cast<uint32_t>(Internal::System->Position.x + Internal::System->Size.x), static_cast<uint32_t>(Internal::System->Position.y + Internal::System->Size.y));
         RenderAPI::SetDepthFunction(RenderAPI::DepthFunction::LessEqual);
         Renderer2D::BeginScene(glm::ortho(0.0f, Internal::System->AspectRatio, 1.0f, 0.0f), true);
-        
+
         if(Internal::Font) { Internal::Font->ActivateAtlas(2); }
         if(Internal::TextureAtlas) { Internal::TextureAtlas->Activate(3); }
         
@@ -319,7 +319,7 @@ namespace Core {
         Render();
     }
 
-    void UI::BeginContainer(PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, LayoutType layout) {
+    void UI::BeginContainer(PositioningType positioning, glm::vec3 position, glm::vec2 size, const glm::vec4& primaryColour, LayoutType layout) {
         RC_ASSERT(Internal::System, "Tried to begin a UI container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
@@ -345,7 +345,7 @@ namespace Core {
         Internal::System->OpenElement = parentId;
     }
 
-    void UI::BeginScrollContainer(float& offset, PositioningType positioning, glm::vec2 position, glm::vec2 size, bool vertical, float speed, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
+    void UI::BeginScrollContainer(float& offset, PositioningType positioning, glm::vec3 position, glm::vec2 size, bool vertical, float speed, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
         RC_ASSERT(Internal::System, "Tried to begin a UI scroll container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI scroll container before calling UI Begin");
 
@@ -366,7 +366,7 @@ namespace Core {
         Internal::System->OpenElement = currentIndex;
     }
 
-    void UI::BeginHoverContainer(PositioningType positioning, glm::vec2 position, glm::vec2 size, LayoutType layout, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
+    void UI::BeginHoverContainer(PositioningType positioning, glm::vec3 position, glm::vec2 size, LayoutType layout, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
         RC_ASSERT(Internal::System, "Tried to begin a UI container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
@@ -1092,7 +1092,7 @@ namespace Core {
     template void UI::TextureSlider<double>(double&, double, double, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
 
     void UI::ScrollBar(float& offset, float buttonSize, glm::vec2 position, glm::vec2 size, std::array<glm::vec4, 3>& baseColours, std::array<glm::vec4, 3>& highlightColours) {
-        BeginContainer(PositioningType::Relative, position, size, glm::vec4(0.0f), LayoutType::None);
+        BeginContainer(PositioningType::Relative, glm::vec3(position, 0.0f), size, glm::vec4(0.0f), LayoutType::None);
         size_t index = Internal::System->Elements.size() - 1;
 
         std::function renderTriangleButton = [highlightColours](Surface& current, float flip) -> bool {
@@ -1120,7 +1120,7 @@ namespace Core {
     }
     
     void UI::TextureScrollBar(float& offset, glm::vec2 buttonOffset, glm::vec2 buttonSize, const AtlasProperties& buttonAtlasProperties, glm::vec2 sliderSize, const AtlasProperties& sliderAtlasProperties, const AtlasProperties& baseAtlasProperties, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& colours) {
-        BeginContainer(PositioningType::Relative, position, size, colours[0], LayoutType::None);
+        BeginContainer(PositioningType::Relative, glm::vec3(position, 0.0f), size, colours[0], LayoutType::None);
         size_t index = Internal::System->Elements.size() - 1;
         
         bool downButton = TextureButton(buttonAtlasProperties, PositioningType::Relative, glm::vec2(buttonOffset.x, -buttonOffset.y), buttonSize, colours[0], colours[1], colours[2]);

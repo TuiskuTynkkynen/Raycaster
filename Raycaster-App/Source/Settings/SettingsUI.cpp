@@ -83,7 +83,7 @@ namespace Settings {
     }
 
     void UI::RenderInput() {
-        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
+        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
             Core::UI::Text("Enable Mouse Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
             Core::UI::Toggle(Input::s_MouseLook, { 0.076f, 1.0f });
             
@@ -92,7 +92,7 @@ namespace Settings {
             m_Saved &= !mouseLook.Update(Input::s_MouseLook);
         Core::UI::EndContainer();
 
-        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
+        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
             Core::UI::Text("Enable Free Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
             Core::UI::Toggle(Input::s_FreeLook, { 0.076f, 1.0f });
 
@@ -106,7 +106,7 @@ namespace Settings {
         Core::UI::Text("Key Bindings", { 0.5f, 0.125f }, glm::vec4(1.0f));
 
         for (uint32_t i = 0; i < s_KeyBinds.size(); i++) {
-        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
+        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
             Core::UI::Text(s_KeyBinds[i].GetName(), 1.f, Core::UI::TextAlignment::Left, { 0.5f, 1.0f });
 
             bool isSelected = m_SelectedKeyBind == i;

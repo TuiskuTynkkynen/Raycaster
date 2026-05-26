@@ -20,16 +20,16 @@ namespace Core::UI {
     void Render();
     void End(Timestep deltaTime);
 
-    void BeginContainer(PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& colour = DefaultBackgroundColours[0], LayoutType layout = LayoutType::Vertical);
-    inline void BeginContainer(glm::vec2 relativeSize, const glm::vec4& colour = DefaultColours[0], LayoutType layout = LayoutType::Vertical) { return BeginContainer(PositioningType::Auto, glm::vec2(0.0f), relativeSize, colour, layout); }
+    void BeginContainer(PositioningType positioning, glm::vec3 position, glm::vec2 relativeSize, const glm::vec4& colour = DefaultBackgroundColours[0], LayoutType layout = LayoutType::Vertical);
+    inline void BeginContainer(glm::vec2 relativeSize, const glm::vec4& colour = DefaultColours[0], LayoutType layout = LayoutType::Vertical) { return BeginContainer(PositioningType::Auto, glm::vec3(0.0f), relativeSize, colour, layout); }
     void EndContainer();
 
-    void BeginScrollContainer(float& offset, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, bool vertical = true, float speed = 1.0f, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]);
-    inline void BeginScrollContainer(float& offset, glm::vec2 relativeSize, bool vertical = true, float speed = 1.0f, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]) { BeginScrollContainer(offset, PositioningType::Auto, glm::vec2(0.0f), relativeSize, vertical, speed, primaryColour, hoverColour); }
+    void BeginScrollContainer(float& offset, PositioningType positioning, glm::vec3 position, glm::vec2 relativeSize, bool vertical = true, float speed = 1.0f, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]);
+    inline void BeginScrollContainer(float& offset, glm::vec2 relativeSize, bool vertical = true, float speed = 1.0f, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]) { BeginScrollContainer(offset, PositioningType::Auto, glm::vec3(0.0f), relativeSize, vertical, speed, primaryColour, hoverColour); }
     inline void EndScrollContainer() { EndContainer(); }
     
-    void BeginHoverContainer(PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, LayoutType layout = LayoutType::Vertical, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]);
-    inline void BeginHoverContainer(glm::vec2 position, glm::vec2 relativeSize, LayoutType layout = LayoutType::Vertical, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]) { BeginHoverContainer(PositioningType::Relative, position, relativeSize, layout, primaryColour, hoverColour); }
+    void BeginHoverContainer(PositioningType positioning, glm::vec3 position, glm::vec2 relativeSize, LayoutType layout = LayoutType::Vertical, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]);
+    inline void BeginHoverContainer(glm::vec2 relativeSize, LayoutType layout = LayoutType::Vertical, const glm::vec4& primaryColour = DefaultBackgroundColours[0], const glm::vec4& hoverColour = DefaultBackgroundColours[1]) { BeginHoverContainer(PositioningType::Relative, glm::vec3(0.0f), relativeSize, layout, primaryColour, hoverColour); }
     inline void EndHoverContainer() { EndContainer(); }
 
     template <typename T>
