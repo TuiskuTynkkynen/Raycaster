@@ -64,7 +64,7 @@ namespace Core::UI {
         }
     }
 
-    bool AABB(glm::vec2 mousePosition, glm::vec2 position, glm::vec2 size) {
+    bool AABB(glm::vec2 mousePosition, glm::vec3 position, glm::vec2 size) {
         return (mousePosition.x <= position.x + glm::abs(size.x) * 0.5f && mousePosition.x >= position.x - glm::abs(size.x) * 0.5f
             && mousePosition.y <= position.y + glm::abs(size.y) * 0.5f && mousePosition.y >= position.y - glm::abs(size.y) * 0.5f);
     }
@@ -143,7 +143,7 @@ namespace Core {
 
         float aspectRatio = Internal::System->Size.x / Internal::System->Size.y;
         Internal::System->AspectRatio = aspectRatio;
-        Internal::System->Elements.emplace_back(SurfaceType::None, layout, PositioningType::Auto, glm::vec2(0.5f * aspectRatio, 0.5f), glm::vec2(aspectRatio, 1.0f), std::array<glm::vec4, 3>{colour, colour, colour});
+        Internal::System->Elements.emplace_back(SurfaceType::None, layout, PositioningType::Auto, glm::vec3(0.5f * aspectRatio, 0.5f, 0.0f), glm::vec2(aspectRatio, 1.0f), std::array<glm::vec4, 3>{colour, colour, colour});
         Internal::System->OpenElement = 0;
     }
 
@@ -244,7 +244,8 @@ namespace Core {
 
         RenderAPI::SetViewPort(static_cast<uint32_t>(Internal::System->Position.x), static_cast<uint32_t>(Internal::System->Position.y),
             static_cast<uint32_t>(Internal::System->Position.x + Internal::System->Size.x), static_cast<uint32_t>(Internal::System->Position.y + Internal::System->Size.y));
-        Renderer2D::BeginScene(glm::ortho(0.0f, Internal::System->AspectRatio, 1.0f, 0.0f));
+        RenderAPI::SetDepthFunction(RenderAPI::DepthFunction::LessEqual);
+        Renderer2D::BeginScene(glm::ortho(0.0f, Internal::System->AspectRatio, 1.0f, 0.0f), true);
         
         if(Internal::Font) { Internal::Font->ActivateAtlas(2); }
         if(Internal::TextureAtlas) { Internal::TextureAtlas->Activate(3); }
@@ -300,15 +301,16 @@ namespace Core {
             if (s.Size.x * s.Size.y == 0.0f || colour.a == 0.0f) { continue; }
 
             if (s.Type == SurfaceType::None) {
-                Renderer2D::DrawFlatShapeQuad({ s.Position.x, s.Position.y, 0.0f }, { s.Size.x, s.Size.y, 0.0f },  colour);
+                Renderer2D::DrawFlatShapeQuad(s.Position, { s.Size.x, s.Size.y, 0.0f },  colour);
                 continue;
             } 
             
-            Renderer2D::DrawFlatRoundedQuad(s.Size * 0.99f, 0.2f, 2, { s.Position.x, s.Position.y, 0.0f }, glm::vec3(1.0f), colour);
-            Renderer2D::DrawFlatRoundedQuadEdge(s.Size, 0.075f, 0.2f, 5, { s.Position.x, s.Position.y, 0.0f }, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });
+            Renderer2D::DrawFlatRoundedQuad(s.Size * 0.99f, 0.2f, 2, s.Position, glm::vec3(1.0f), colour);
+            Renderer2D::DrawFlatRoundedQuadEdge(s.Size, 0.075f, 0.2f, 5, s.Position, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });
         }
 
         Renderer2D::EndScene();
+        RenderAPI::SetDepthFunction();
         RenderAPI::SetScissor(false);
     }
 
@@ -1097,10 +1099,10 @@ namespace Core {
             uint32_t colourIndex = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
             glm::vec4& colour = current.Colours[colourIndex];
 
-            Renderer2D::DrawFlatRoundedQuad(current.Size * 0.99f, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), colour);
-            Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });
+            Renderer2D::DrawFlatRoundedQuad(current.Size * 0.99f, 0.2f, 2, current.Position, glm::vec3(1.0f), colour);
+            Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, current.Position, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });
 
-            Renderer2D::DrawFlatTriangle(glm::vec3(60.0f), { current.Position.x, current.Position.y, 0.0f }, { current.Size.x * 0.5f, flip * current.Size.y * 0.5f, 0.0f }, highlightColours[colourIndex]);
+            Renderer2D::DrawFlatTriangle(glm::vec3(60.0f), current.Position, { current.Size.x * 0.5f, flip * current.Size.y * 0.5f, 0.0f }, highlightColours[colourIndex]);
 
             return true;
         };

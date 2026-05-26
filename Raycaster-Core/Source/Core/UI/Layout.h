@@ -17,7 +17,7 @@ namespace Core::UI {
 
 		void Next(Surface& s) override;
 	private:
-		glm::vec2 m_Position;
+		glm::vec3 m_Position;
 	};
 
 	class LinearLayout : public Layout {

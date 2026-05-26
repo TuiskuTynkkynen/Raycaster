@@ -17,7 +17,7 @@ namespace Core::UI::Widgets {
 
         uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), current.Position);
         transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
 
         glm::vec2 atlasOffset(m_AtlasIndices[index] % (uint32_t)Internal::AtlasSize.x, m_AtlasIndices[index] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -62,14 +62,15 @@ namespace Core::UI::Widgets {
         }
 
         size *= m_Scale * glm::vec2(-0.5f, 0.75f - lineCount * 0.5f);
-        current.Position += size;
+        current.Position.x += size.x;
+        current.Position.y += size.y;
     }
 
     template <typename T>
     bool TextWidget<T>::Render(Surface& current) {
         uint32_t colourIndex = UI::Internal::System->ActiveID == current.ParentID ? 2 : UI::Internal::System->HoverID == current.ParentID ? 1 : 0;
 
-        Renderer2D::DrawShapeString(m_Text, { current.Position.x, current.Position.y, 0.0f }, m_Scale, current.Colours[colourIndex], true);
+        Renderer2D::DrawShapeString(m_Text, current.Position, m_Scale, current.Colours[colourIndex], true);
         
         return true;
     }
@@ -107,7 +108,7 @@ namespace Core::UI::Widgets {
 
     template <typename T>
     bool TextDisplayWidget<T>::Render(Surface& current) {
-        Renderer2D::DrawShapeString(Text, { current.Position.x, current.Position.y, 0.0f }, TextScale, current.Colours[ColourIndex], true);
+        Renderer2D::DrawShapeString(Text, current.Position, TextScale, current.Colours[ColourIndex], true);
 
         return true;
     }
@@ -376,7 +377,7 @@ namespace Core::UI::Widgets {
         }
         //Mouse selection
 
-        glm::vec2 relativeMousePosition = (Internal::Input->MouseState.Position - current.Position);
+        glm::vec2 relativeMousePosition = (Internal::Input->MouseState.Position - glm::vec2(current.Position));
         bool inside = glm::abs(relativeMousePosition.x) < current.Size.x * innerSize.x * 0.5f && glm::abs(relativeMousePosition.y) < current.Size.y * innerSize.y * 0.5f;
             
         if (!inside) {
@@ -424,11 +425,11 @@ namespace Core::UI::Widgets {
     bool TextInputWidget<T>::Render(Surface& current) {
         uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
         
-        Renderer2D::DrawFlatRoundedQuad(current.Size * 0.99f, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), current.Colours[index]);
-        Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), m_HighlightColours[index]);
+        Renderer2D::DrawFlatRoundedQuad(current.Size * 0.99f, 0.2f, 2, current.Position, glm::vec3(1.0f), current.Colours[index]);
+        Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, current.Position, glm::vec3(1.0f), m_HighlightColours[index]);
         
         if (index == 2 && uint32_t(Internal::System->Time) % 2 == 0 && m_CaretSize.x * m_CaretSize.y) {
-            glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition, current.Position.y, 0.0f });
+            glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition, current.Position.y, current.Position.z });
             transform = glm::scale(transform, { m_CaretSize.x, m_CaretSize.y, 0.0f });
 
             Renderer2D::DrawShapeQuad(0, m_HighlightColours[index], transform);
@@ -716,7 +717,7 @@ namespace Core::UI::Widgets {
         }
         //Mouse selection
 
-        glm::vec2 relativeMousePosition = (Internal::Input->MouseState.Position - current.Position);
+        glm::vec2 relativeMousePosition = (Internal::Input->MouseState.Position - glm::vec2(current.Position));
         bool inside = glm::abs(relativeMousePosition.x) < current.Size.x * innerSize.x * 0.5f && glm::abs(relativeMousePosition.y) < current.Size.y * innerSize.y * 0.5f;
 
         if (!inside) {
@@ -765,7 +766,7 @@ namespace Core::UI::Widgets {
     bool TextureTextInputWidget<T>::Render(Surface& current) {
         uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), current.Position);
         transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
 
         glm::vec2 atlasOffset(m_BoxAtlasIndices[index] % (uint32_t)Internal::AtlasSize.x, m_BoxAtlasIndices[index] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -811,7 +812,7 @@ namespace Core::UI::Widgets {
 
         if (glm::abs(m_CaretSize.x) > selectionEndsWidth) {
             //Selection middle
-            transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition, current.Position.y, 0.0f });
+            transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition, current.Position.y, current.Position.z });
             transform = glm::scale(transform, { glm::abs(m_CaretSize.x) - 2.0f * selectionEndsWidth, m_CaretSize.y, 0.0f });
 
             atlasOffset = glm::vec2(m_SelectionAtlasIndices[1] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[1] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -822,7 +823,7 @@ namespace Core::UI::Widgets {
             Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
         
             //Selection rigth
-            transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition + 0.5f * (glm::abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, 0.0f });
+            transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition + 0.5f * (glm::abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, current.Position.z });
             transform = glm::scale(transform, { selectionEndsWidth, m_CaretSize.y, 0.0f });
 
             atlasOffset = glm::vec2(m_SelectionAtlasIndices[2] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[2] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -834,7 +835,7 @@ namespace Core::UI::Widgets {
         }
 
         //Selection left
-        transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition - 0.5f * (glm::abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, 0.0f });
+        transform = glm::translate(glm::mat4(1.0f), { current.Position.x + m_CaretPosition - 0.5f * (glm::abs(m_CaretSize.x) - selectionEndsWidth), current.Position.y, current.Position.z });
         transform = glm::scale(transform, { selectionEndsWidth, m_CaretSize.y, 0.0f });
 
         atlasOffset = glm::vec2(m_SelectionAtlasIndices[0] % (uint32_t)Internal::AtlasSize.x, m_SelectionAtlasIndices[0] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -906,13 +907,13 @@ namespace Core::UI::Widgets {
 
         uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
 
-        Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.125f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), current.Colours[index]);
+        Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.125f, 0.2f, 5, current.Position, glm::vec3(1.0f), current.Colours[index]);
 
         if (m_Enabled) {
             const glm::vec4& colour = m_Colours[index];
             const glm::vec2 size(glm::min(current.Size.x * 0.2f, current.Size.y * 0.25f), current.Size.y * 0.8f);
-            Renderer2D::DrawRotatedFlatRoundedQuad(size, 0.5f, 5, { current.Position.x, current.Position.y, 0.0f }, 45.0f, AxisZ, glm::vec3(1.0f), colour);
-            Renderer2D::DrawRotatedFlatRoundedQuad(size, 0.5f, 5, { current.Position.x, current.Position.y, 0.0f }, -45.0f, AxisZ, glm::vec3(1.0f), colour);
+            Renderer2D::DrawRotatedFlatRoundedQuad(size, 0.5f, 5, current.Position, 45.0f, AxisZ, glm::vec3(1.0f), colour);
+            Renderer2D::DrawRotatedFlatRoundedQuad(size, 0.5f, 5, current.Position, -45.0f, AxisZ, glm::vec3(1.0f), colour);
         }
 
         return true;
@@ -924,7 +925,7 @@ namespace Core::UI::Widgets {
         uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
         glm::vec4& colour = current.Colours[index];
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), current.Position);
         transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
 
         glm::vec2 atlasOffset(m_BoxAtlasIndices[index] % (uint32_t)Internal::AtlasSize.x, m_BoxAtlasIndices[index] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -966,20 +967,20 @@ namespace Core::UI::Widgets {
         uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
         const glm::vec4& colour = current.Colours[index];
 
-        Renderer2D::DrawFlatRoundedQuad(current.Size, 0.2f, 2, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), colour * 0.8f);
+        Renderer2D::DrawFlatRoundedQuad(current.Size, 0.2f, 2, current.Position, glm::vec3(1.0f), colour * 0.8f);
 
         glm::vec3 sliderPosition(0.0f);
         float maxPosition = current.Size[m_SliderDimension] * (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
         sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + maxPosition * glm::clamp(static_cast<float>(m_Value - m_Min) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
         sliderPosition[1 - m_SliderDimension] = current.Position[1 - m_SliderDimension];
-        
+
         glm::vec3 sliderSize(0.0f);
         sliderSize[m_SliderDimension] = current.Size[m_SliderDimension] * m_SliderSize;
         sliderSize[1 - m_SliderDimension] = current.Size[1 - m_SliderDimension] * 0.85f;
-        
+
         Renderer2D::DrawFlatShapeQuad(sliderPosition, sliderSize, m_SliderColours[index]);
-        
-        Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, { current.Position.x, current.Position.y, 0.0f }, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });
+
+        Renderer2D::DrawFlatRoundedQuadEdge(current.Size, 0.075f, 0.2f, 5, current.Position, glm::vec3(1.0f), { colour.r * 1.2f, colour.g * 1.2f, colour.b * 1.2f, colour.a });
 
         return true;
     }
@@ -1013,7 +1014,7 @@ namespace Core::UI::Widgets {
         glm::vec4& colour = current.Colours[index];
 
         //Box
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), current.Position);
         transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
 
         glm::vec2 atlasOffset(m_BoxAtlasIndices[index] % (uint32_t)Internal::AtlasSize.x, m_BoxAtlasIndices[index] / (uint32_t)Internal::AtlasSize.x * -1.0f);
@@ -1087,9 +1088,8 @@ namespace Core::UI::Widgets {
         uint32_t index = &Internal::System->Elements[Internal::System->ActiveID] == &current ? 2 : &Internal::System->Elements[Internal::System->HoverID] == &current ? 1 : 0;
         const glm::vec4& colour = current.Colours[index];
 
-        
-        if (current.Size.x * current.Size.y != 0.0f || colour.a != 0.0f) { 
-            Renderer2D::DrawFlatShapeQuad({ current.Position.x, current.Position.y, 0.0f }, { current.Size.x, current.Size.y, 0.0f }, colour);
+        if (current.Size.x * current.Size.y != 0.0f && colour.a != 0.0f) { 
+            Renderer2D::DrawFlatShapeQuad(current.Position, { current.Size.x, current.Size.y, 0.0f }, colour);
         }
 
         return true;
@@ -1196,7 +1196,7 @@ namespace Core::UI::Widgets {
             hovered |= Internal::System->ActiveID == i;
         }
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), { current.Position.x, current.Position.y, 0.0f });
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), current.Position);
         transform = glm::scale(transform, { current.Size.x, current.Size.y, 0.0f });
 
         glm::vec2 atlasOffset(m_AtlasIndices[(size_t)hovered] % (uint32_t)Internal::AtlasSize.x, m_AtlasIndices[(size_t)hovered] / (uint32_t)Internal::AtlasSize.x * -1.0f);

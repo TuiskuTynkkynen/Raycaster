@@ -88,7 +88,7 @@ namespace Core::UI {
         LayoutType Layout;
         PositioningType Positioning;
 
-        glm::vec2 Position;
+        glm::vec3 Position;
         glm::vec2 Size;
 
         std::array<glm::vec4, 3> Colours; // [0] = primary, [1] = hover, [2] = clicked
@@ -100,7 +100,11 @@ namespace Core::UI {
         std::unique_ptr<Widget> Widget;
 
         Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None, PositioningType positioning = PositioningType::Auto,
-                glm::vec2 position = glm::vec2(1.0f), glm::vec2 size = glm::vec2(1.0f),
+                glm::vec3 position = glm::vec3(0.0f), glm::vec2 size = glm::vec2(1.0f),
+                std::array<glm::vec4, 3> colours = DefaultColours, size_t parentID = 0); 
+        
+        Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None, PositioningType positioning = PositioningType::Auto,
+                glm::vec2 position = glm::vec2(0.0f), glm::vec2 size = glm::vec2(1.0f),
                 std::array<glm::vec4, 3> colours = DefaultColours, size_t parentID = 0); 
     };
 
@@ -112,9 +116,15 @@ namespace Core::UI {
         virtual bool Render(Surface& current) = 0;
     };
 
+    inline Surface::Surface(SurfaceType type, LayoutType layout, PositioningType positioning, glm::vec3 position, glm::vec2 size, 
+            std::array<glm::vec4, 3> colours, size_t parentID) 
+        : Type(type), Layout(layout), Positioning(positioning), Position(position), Size(size), Colours(colours), ParentID(parentID) {
+    }
+
     inline Surface::Surface(SurfaceType type, LayoutType layout, PositioningType positioning, glm::vec2 position, glm::vec2 size, 
             std::array<glm::vec4, 3> colours, size_t parentID) 
-        : Type(type), Layout(layout), Positioning(positioning), Position(position), Size(size), Colours(colours), ParentID(parentID) {}
+        : Type(type), Layout(layout), Positioning(positioning), Position(glm::vec3(position, 0.0f)), Size(size), Colours(colours), ParentID(parentID) {
+    }
 
     struct AtlasProperties {
         glm::uvec3 Indices{};
