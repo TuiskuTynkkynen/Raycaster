@@ -93,6 +93,28 @@ namespace Core {
         }
     }
 
+    void RenderAPI::SetDepthFunction(DepthFunction function) {
+        switch (function) {
+            using enum  DepthFunction;
+        case Less:
+            return glDepthFunc(GL_LESS);
+        case LessEqual:
+            return glDepthFunc(GL_LEQUAL);
+        case Greater:
+            return glDepthFunc(GL_GREATER);
+        case GreaterEqual:
+            return glDepthFunc(GL_GEQUAL);
+        case NotEqual:
+            return glDepthFunc(GL_NOTEQUAL);
+        case Equal:
+            return glDepthFunc(GL_EQUAL);
+        case Never:
+            return glDepthFunc(GL_NEVER);
+        case Always:
+            return glDepthFunc(GL_ALWAYS);
+        }
+    }
+
     void RenderAPI::SetScissor(bool enabled) {
         if (enabled) {
             glEnable(GL_SCISSOR_TEST);
