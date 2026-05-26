@@ -6,8 +6,8 @@
 namespace Core::Renderer2D {
         void Init();
          
-        void BeginScene(const Camera& camera);
-        void BeginScene(const glm::mat4& transform);
+        void BeginScene(const Camera& camera, bool enableDepthTest = false);
+        void BeginScene(const glm::mat4& transform, bool enableDepthTest = false);
         void EndScene();
         void Flush();
  

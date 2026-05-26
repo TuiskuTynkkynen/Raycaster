@@ -78,6 +78,8 @@ struct Renderer2DDAta {
 
     uint32_t atlasWidth = 0;
     uint32_t atlasHeight = 0;
+
+    bool EnableDepth = false;
 };
 
 static Renderer2DDAta s_Data;
@@ -179,11 +181,11 @@ namespace Core {
         s_Data.ViewProjection = glm::mat4(1.0f);
     }
 
-    void Renderer2D::BeginScene(const Camera& camera) {
+    void Renderer2D::BeginScene(const Camera& camera, bool enableDepthTest) {
         BeginScene(camera.GetViewMatrix());
     }
 
-    void Renderer2D::BeginScene(const glm::mat4& transform) {
+    void Renderer2D::BeginScene(const glm::mat4& transform, bool enableDepthTest) {
         s_Data.ViewProjection = transform;
 
         s_Data.TextureShader->Bind();
@@ -192,6 +194,8 @@ namespace Core {
         s_Data.SimpleShader->Bind();
         s_Data.SimpleShader->setMat4("ViewProjection", s_Data.ViewProjection);
         s_Data.TextureShader->Bind();
+
+        s_Data.EnableDepth = enableDepthTest;
     }
 
     void Renderer2D::EndScene() {
@@ -199,7 +203,7 @@ namespace Core {
     }
     
     void Renderer2D::Flush() {
-        RenderAPI::SetDepthBuffer(false);
+        RenderAPI::SetDepthBuffer(s_Data.EnableDepth);
 
         if (s_Data.LineVertexCount != 0) {
             s_Data.LineVertexBuffer->SetData(s_Data.LineVertices.data(), sizeof(SimpleVertex) * s_Data.LineVertexCount);
