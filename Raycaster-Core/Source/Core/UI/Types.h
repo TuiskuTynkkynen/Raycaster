@@ -7,41 +7,46 @@
 
 namespace Core::UI {
     namespace {
-        std::array<glm::vec4, 3> DefaultColours = {
+        inline std::array<glm::vec4, 3> DefaultColours = {
             glm::vec4(0.1f, 0.1f, 0.125f, 1.0f),
             glm::vec4(0.15f, 0.15f, 0.175f, 1.0f),
             glm::vec4(0.2f, 0.2f, 0.25f, 1.0f),
         };
 
-        std::array<glm::vec4, 3> DefaultTextColours = {
+        inline std::array<glm::vec4, 3> DefaultTextColours = {
             glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
             glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
             glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
         };
         
-
-        std::array<glm::vec4, 3> DefaultInputTextColours = {
+        inline std::array<glm::vec4, 3> DefaultInputTextColours = {
             glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
             glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
             glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
         };
 
-        std::array<glm::vec4, 3> DefaultTextureColours = {
+        inline std::array<glm::vec4, 3> DefaultTextureColours = {
             glm::vec4(1.0f),
             glm::vec4(1.0f),
             glm::vec4(1.0f)
         };
 
-        std::array<glm::vec4, 3> DefaultHighlightColours = {
+        inline std::array<glm::vec4, 3> DefaultHighlightColours = {
             glm::vec4(0.2f, 0.25f, 0.4f, 1.0f),
             glm::vec4(0.2f, 0.35f, 0.6f, 1.0f),
             glm::vec4(0.3f, 0.3f, 0.7f, 1.0f),
         };
 
-        std::array<glm::vec4, 3> DefaultBackgroundColours = {
+        inline std::array<glm::vec4, 3> DefaultBackgroundColours = {
             glm::vec4(0.05f, 0.05f, 0.06f, 1.0f),
             glm::vec4(0.05f, 0.05f, 0.06f, 1.0f),
             glm::vec4(0.05f, 0.05f, 0.06f, 1.0f),
+        };
+
+        inline constexpr std::array<glm::vec4, 3> Transparent = {
+            glm::vec4(0.0f),
+            glm::vec4(0.0f),
+            glm::vec4(0.0f)
         };
     }
 
