@@ -969,7 +969,7 @@ namespace Core::UI::Widgets {
 
         Renderer2D::DrawFlatRoundedQuad(current.Size, 0.2f, 2, current.Position, glm::vec3(1.0f), colour * 0.8f);
 
-        glm::vec3 sliderPosition(0.0f);
+        glm::vec3 sliderPosition(current.Position.z);
         float maxPosition = current.Size[m_SliderDimension] * (1.0f - m_SliderSize) - 0.125f * glm::min(glm::abs(current.Size.x), glm::abs(current.Size.y));
         sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + maxPosition * glm::clamp(static_cast<float>(m_Value - m_Min) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
         sliderPosition[1 - m_SliderDimension] = current.Position[1 - m_SliderDimension];
@@ -1081,6 +1081,7 @@ namespace Core::UI::Widgets {
         if (currentIndex == Internal::System->HoverID && Internal::Input->MouseState.ScrollOffset) {
             m_ScrollOffset -= SCROLLSTEP * Internal::Input->MouseState.ScrollOffset;
             m_ScrollOffset = glm::clamp(m_ScrollOffset, 0.0f, m_ScrollSize);
+            Internal::Input->MouseState.ScrollOffset = 0.0f;
         }
     }
 
