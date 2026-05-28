@@ -64,6 +64,34 @@ namespace Core::UI {
         }
     }
 
+    struct Rectangle {
+        glm::vec2 MinCorner;
+        glm::vec2 MaxCorner;
+
+        [[nodiscard]] inline Rectangle Intersection(Rectangle other) const {
+            const glm::vec2 min = glm::max(MinCorner, other.MinCorner);
+            const glm::vec2 max = glm::max(glm::min(MaxCorner, other.MaxCorner), min); // Max prevents negative size
+            return { min, max };
+        }
+
+        [[nodiscard]] inline glm::vec2 Size() const {
+            return MaxCorner - MinCorner;
+        }
+
+        [[nodiscard]] inline bool Degenerate() const {
+            return glm::any(glm::epsilonEqual(MinCorner, MaxCorner, glm::epsilon<float>()));
+        }
+
+        [[nodiscard]] inline bool Inside(glm::vec2 point) const {
+            return glm::all(glm::lessThanEqual(MinCorner, point) & glm::lessThan(point, MaxCorner));
+        }
+
+        [[nodiscard]] static inline Rectangle FromPositionSize(glm::vec2 position, glm::vec2 size) {
+            glm::vec2 halfSize = glm::abs(size) / 2.0f;
+            return { position - halfSize, position + halfSize };
+        }
+    };
+
     bool AABB(glm::vec2 mousePosition, glm::vec3 position, glm::vec2 size) {
         return (mousePosition.x <= position.x + glm::abs(size.x) * 0.5f && mousePosition.x >= position.x - glm::abs(size.x) * 0.5f
             && mousePosition.y <= position.y + glm::abs(size.y) * 0.5f && mousePosition.y >= position.y - glm::abs(size.y) * 0.5f);
@@ -238,6 +266,21 @@ namespace Core {
         Internal::Input->KeyboardState.InputKeys.reset();
     }
 
+    inline static void SetScissor(bool enabled, UI::Rectangle area, glm::vec2 screenSize) {
+        Renderer2D::Flush();
+        RenderAPI::SetScissor(enabled);
+        if (!enabled) { 
+            return; 
+        }
+
+        const glm::uvec2 offset = glm::round(screenSize * area.MinCorner);
+        const glm::uvec2 size = glm::round(screenSize * area.Size());
+        // Y axis needs to be flipped
+        const uint32_t flipped = static_cast<uint32_t>(glm::round(screenSize.y)) - (offset.y + size.y); 
+        
+        RenderAPI::SetScissorRectangle(offset.x, flipped, size.x, size.y);
+    }
+   
     void UI::Render() {
         RC_ASSERT(Internal::System, "Tried to render UI before initializing");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to render UI before calling UI Begin");
@@ -250,44 +293,41 @@ namespace Core {
         if(Internal::Font) { Internal::Font->ActivateAtlas(2); }
         if(Internal::TextureAtlas) { Internal::TextureAtlas->Activate(3); }
         
-        size_t scissorID = 0;
         std::vector<size_t> scissorIDs;
+        Rectangle scissorRect{ { 0.0f, 0.0f }, { Internal::System->AspectRatio, 1.0f } };
         for (size_t i = 0; i < Internal::System->Elements.size(); i++) {
             Surface& s = Internal::System->Elements[i];
 
             {
-                //Remove unneeded elments
-                while (!scissorIDs.empty() && scissorIDs.back() >= s.ParentID) {
-                    scissorIDs.pop_back();
+                if (!scissorIDs.empty() && scissorIDs.back() > s.ParentID) {
+                    // Remove unneeded elements
+                    size_t newSize = std::ranges::lower_bound(scissorIDs, s.ParentID, std::less_equal{}) - scissorIDs.begin();
+                    scissorIDs.resize(newSize);
+
+                    // Reconstruct scissorRect
+                    scissorRect = { { 0.0f, 0.0f }, { Internal::System->AspectRatio, 1.0f } };
+                    for (size_t id : scissorIDs) {
+                        const Surface& clip = Internal::System->Elements[id];
+                        scissorRect = scissorRect.Intersection(Rectangle::FromPositionSize(clip.Position, clip.Size));
                 }
 
-                //Insert current elements parent if a scissor test based on it is needed
-                if (Internal::System->Elements[s.ParentID].Layout >= LayoutType::Crop) {
+                    glm::vec2 correction(1.0f / Internal::System->AspectRatio, 1.0f);
+                    SetScissor(!scissorIDs.empty(), scissorRect, Internal::System->Size * correction);
+                }
+
+                // Clip with current elements parent, if a scissor test based on it is needed
+                if (Internal::System->Elements[s.ParentID].Layout >= LayoutType::Crop && (scissorIDs.empty() || scissorIDs.back() != s.ParentID)) {
                     scissorIDs.push_back(s.ParentID);
+                    const Surface& clip = Internal::System->Elements[s.ParentID];
+                    scissorRect = scissorRect.Intersection(Rectangle::FromPositionSize(clip.Position, clip.Size));
+
+                    glm::vec2 correction(1.0f / Internal::System->AspectRatio, 1.0f);
+                    SetScissor(true, scissorRect, Internal::System->Size * correction);
                 }
 
-                //Set scissor test parameters to scissorIDs.back() position and size if not already set
-                if (!scissorIDs.empty() && scissorIDs.back() != scissorID) {
-                    scissorID = scissorIDs.back();
-                    Surface& parent = Internal::System->Elements[scissorID];
-
-                    uint32_t offsetX = static_cast<uint32_t>(glm::round(Internal::System->Size.x * (parent.Position.x - parent.Size.x * 0.5f) / Internal::System->AspectRatio));
-                    uint32_t offsetY = static_cast<uint32_t>(glm::round(Internal::System->Size.y * (1.0f - parent.Position.y - parent.Size.y * 0.5f)));
-                    uint32_t sizeX = static_cast<uint32_t>(glm::round(Internal::System->Size.x * parent.Size.x  / Internal::System->AspectRatio));
-                    uint32_t sizeY = static_cast<uint32_t>(glm::round(Internal::System->Size.y * parent.Size.y));
-
-                    Renderer2D::Flush();
-
-                    RenderAPI::SetScissor(true);
-                    RenderAPI::SetScissorRectangle(offsetX, offsetY, sizeX, sizeY);
-                }
-
-                //Remove scissor test if it is not needed
-                if (scissorIDs.empty() && scissorID) {
-                    scissorID = 0;
-
-                    Renderer2D::Flush();
-                    RenderAPI::SetScissor(false);
+                // Completely hidden -> skip
+                if (scissorRect.Intersection(Rectangle::FromPositionSize(s.Position, s.Size)).Degenerate()) {
+                    continue; 
                 }
             }
 
