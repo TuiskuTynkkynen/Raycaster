@@ -92,26 +92,29 @@ namespace Core::UI {
         }
     };
 
-    bool AABB(glm::vec2 mousePosition, glm::vec3 position, glm::vec2 size) {
-        return (mousePosition.x <= position.x + glm::abs(size.x) * 0.5f && mousePosition.x >= position.x - glm::abs(size.x) * 0.5f
-            && mousePosition.y <= position.y + glm::abs(size.y) * 0.5f && mousePosition.y >= position.y - glm::abs(size.y) * 0.5f);
-    }
+    static Rectangle CalculateClippedRect(const Surface& current) {
+        Rectangle clipped = Rectangle::FromPositionSize(current.Position, current.Size);
 
-    static bool IsCropped(size_t index) {
-        RC_ASSERT(index < Internal::System->Elements.size());
-
-        size_t parentIndex = Internal::System->Elements[index].ParentID;
+        size_t parentIndex = current.ParentID;
         while (parentIndex < Internal::System->Elements.size() && parentIndex) {
             auto& parent = Internal::System->Elements[parentIndex];
-
-            if (parent.Layout >= LayoutType::Crop && !AABB(Internal::System->Elements[index].Position, parent.Position, parent.Size)) {
-                return true;
+            if (parent.Layout >= LayoutType::Crop) {
+                clipped = clipped.Intersection(Rectangle::FromPositionSize(parent.Position, parent.Size));
             }
 
             parentIndex = parent.ParentID;
         }
 
-        return false;
+        return clipped.Intersection({ { 0.0f, 0.0f }, { Internal::System->AspectRatio, 1.0f }});
+    }
+
+    // Considers elements clipped, if less than 25% is visible in either axis.
+    static bool IsClipped(size_t index) {
+        RC_ASSERT(index < Internal::System->Elements.size());
+
+        const glm::vec2 quarterSize = 0.25f * glm::abs(Internal::System->Elements[index].Size);
+        const Rectangle clipped = CalculateClippedRect(Internal::System->Elements[index]);
+        return clipped.Degenerate() || glm::any(glm::lessThan(clipped.Size(), quarterSize));
     }
 
     static bool IsHoverable(size_t index) {
@@ -135,7 +138,7 @@ namespace Core::UI {
             if (currentIndex >= Internal::System->Elements.size()) { // Wrap if invalid index
                 currentIndex = (direction < 0) * (Internal::System->Elements.size() - 1);
             }
-        } while (currentIndex != startIndex && !IsHoverable(currentIndex) || IsCropped(currentIndex));
+        } while (currentIndex != startIndex && !IsHoverable(currentIndex) || IsClipped(currentIndex));
 
         // Returns 0, if no suitable element was found.
         return currentIndex * (Internal::System->Elements[currentIndex].Type > SurfaceType::Hoverable);
@@ -230,16 +233,10 @@ namespace Core {
             layout->Next(current);
 
             if (current.Type >= SurfaceType::Hoverable && (!Internal::System->ActiveID || Internal::System->ActiveID == i || isCaptured)) {
-                bool skip = false;
-                if (parent.Type >= SurfaceType::Capture && current.ParentID == Internal::System->HoverID) {
-                    skip = true;
-                }
+                bool skip = current.Position.z < Internal::System->Elements[Internal::System->HoverID].Position.z;
+                skip |= parent.Type >= SurfaceType::Capture && current.ParentID == Internal::System->HoverID;
                 
-                if (!skip && parent.Layout >= LayoutType::Crop && !AABB(Internal::Input->MouseState.Position, parent.Position, parent.Size)) {
-                    skip = true;
-                }
-
-                if (!skip && AABB(Internal::Input->MouseState.Position, current.Position, current.Size)) {
+                if (!skip && CalculateClippedRect(current).Inside(Internal::Input->MouseState.Position)) {
                     Internal::System->HoverID = i;
                 }
             }
@@ -1237,11 +1234,7 @@ namespace Core {
             const Surface& current = Internal::System->Elements[Internal::System->HoverID];
             const Surface& parent = Internal::System->Elements[current.ParentID];
 
-            if (parent.Layout >= LayoutType::Crop && !AABB(Internal::Input->MouseState.Position, parent.Position, parent.Size)) {
-                return false;
-            }
-
-            if (AABB(Internal::Input->MouseState.Position, current.Position, current.Size)) {
+            if (CalculateClippedRect(current).Inside(Internal::Input->MouseState.Position)) {
                 if (current.Type >= SurfaceType::Activatable) {
                     Internal::System->ActiveID = Internal::System->HoverID;
                 }
