@@ -37,7 +37,17 @@ namespace Core::UI {
 
         m_PaddingDimension = parent.Layout == LayoutType::Vertical || parent.Layout == LayoutType::CropVertical;
         m_Padding = parent.Size[m_PaddingDimension];
-        
+
+        if (!IsUninitialized(parent.ChildGap)) {
+            m_Padding *= parent.ChildGap;
+            m_RelativePosition = m_Padding;
+            for (size_t i = Internal::System->Elements[currentIndex].ParentID + 1; i && i < currentIndex; i = Internal::System->Elements[i].SiblingID) {
+                const Surface& current = Internal::System->Elements[i];
+                m_RelativePosition += (current.Positioning < PositioningType::Relative) * (current.Size[m_PaddingDimension] + m_Padding);
+            }
+            return;
+        }
+
         uint32_t paddingCount = 1;
         uint32_t paddedChildCount = 1;
         for (size_t i = Internal::System->Elements[currentIndex].ParentID + 1; i && i < Internal::System->Elements.size(); i = Internal::System->Elements[i].SiblingID) {

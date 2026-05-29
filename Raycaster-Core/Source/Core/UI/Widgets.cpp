@@ -1075,8 +1075,9 @@ namespace Core::UI::Widgets {
             }
         }
 
-        m_ScrollSize += 0.025f * current.Size[m_ScrollDimension] * (childCount + 2) - current.Size[m_ScrollDimension];
-        m_ScrollSize = glm::abs(m_ScrollSize / (current.Size[m_ScrollDimension] * m_ScrollSpeed));
+        float gapSize = IsUninitialized(current.ChildGap) ? 0.025f : current.ChildGap;
+        m_ScrollSize += gapSize * current.Size[m_ScrollDimension] * (childCount + 2) - current.Size[m_ScrollDimension];
+        m_ScrollSize = glm::max(m_ScrollSize / (current.Size[m_ScrollDimension] * m_ScrollSpeed), glm::epsilon<float>());
 
         if (currentIndex == Internal::System->HoverID && Internal::Input->MouseState.ScrollOffset) {
             m_ScrollOffset -= SCROLLSTEP * Internal::Input->MouseState.ScrollOffset;

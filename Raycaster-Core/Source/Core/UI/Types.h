@@ -4,6 +4,7 @@
 
 #include <array>
 #include <memory>
+#include <limits>
 
 namespace Core::UI {
     namespace {
@@ -48,9 +49,19 @@ namespace Core::UI {
             glm::vec4(0.0f),
             glm::vec4(0.0f)
         };
+
+        template<typename T>
+        inline consteval T Uninitialized() requires std::is_same_v<T, float> {
+            return std::numeric_limits<float>::quiet_NaN();
+        }
+
+        template<typename T>
+        inline constexpr bool IsUninitialized(T value) requires std::is_same_v<T, float> {
+            return glm::isnan(value);
+        }
     }
 
-    enum class LayoutType {
+    enum class LayoutType : uint8_t {
         None = 0,
         Vertical,
         Horizontal,
@@ -59,7 +70,7 @@ namespace Core::UI {
         CropHorizontal,
     };
     
-    enum class SurfaceType {
+    enum class SurfaceType : uint8_t {
         None = 0,
         Hoverable,
         Activatable,
@@ -68,7 +79,7 @@ namespace Core::UI {
         TextInput,
     };
 
-    enum class PositioningType {
+    enum class PositioningType : uint8_t {
         Auto = 0,
         Offset,
         Relative,
@@ -98,19 +109,20 @@ namespace Core::UI {
 
         std::array<glm::vec4, 3> Colours; // [0] = primary, [1] = hover, [2] = clicked
 
+        float ChildGap;
+        uint32_t ChildCount = 0;
         size_t ParentID = 0;
         size_t SiblingID = 0;
-        uint32_t ChildCount = 0;
 
         std::unique_ptr<Widget> Widget;
 
         Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None, PositioningType positioning = PositioningType::Auto,
-                glm::vec3 position = glm::vec3(0.0f), glm::vec2 size = glm::vec2(1.0f),
-                std::array<glm::vec4, 3> colours = DefaultColours, size_t parentID = 0); 
-        
+            glm::vec3 position = glm::vec3(0.0f), glm::vec2 size = glm::vec2(1.0f), std::array<glm::vec4, 3> colours = DefaultColours,
+            size_t parentID = 0, float childGap = Uninitialized<float>());
+
         Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None, PositioningType positioning = PositioningType::Auto,
-                glm::vec2 position = glm::vec2(0.0f), glm::vec2 size = glm::vec2(1.0f),
-                std::array<glm::vec4, 3> colours = DefaultColours, size_t parentID = 0); 
+            glm::vec2 position = glm::vec2(0.0f), glm::vec2 size = glm::vec2(1.0f), std::array<glm::vec4, 3> colours = DefaultColours,
+            size_t parentID = 0, float childGap = Uninitialized<float>());
     };
 
     class Widget {
@@ -122,13 +134,13 @@ namespace Core::UI {
     };
 
     inline Surface::Surface(SurfaceType type, LayoutType layout, PositioningType positioning, glm::vec3 position, glm::vec2 size, 
-            std::array<glm::vec4, 3> colours, size_t parentID) 
-        : Type(type), Layout(layout), Positioning(positioning), Position(position), Size(size), Colours(colours), ParentID(parentID) {
+            std::array<glm::vec4, 3> colours, size_t parentID, float childGap)
+        : Type(type), Layout(layout), Positioning(positioning), Position(position), Size(size), Colours(colours), ParentID(parentID), ChildGap(childGap) {
     }
 
-    inline Surface::Surface(SurfaceType type, LayoutType layout, PositioningType positioning, glm::vec2 position, glm::vec2 size, 
-            std::array<glm::vec4, 3> colours, size_t parentID) 
-        : Type(type), Layout(layout), Positioning(positioning), Position(glm::vec3(position, 0.0f)), Size(size), Colours(colours), ParentID(parentID) {
+    inline Surface::Surface(SurfaceType type, LayoutType layout, PositioningType positioning, glm::vec2 position, glm::vec2 size,
+        std::array<glm::vec4, 3> colours, size_t parentID, float childGap)
+        : Type(type), Layout(layout), Positioning(positioning), Position(glm::vec3(position, 0.0f)), Size(size), Colours(colours), ParentID(parentID), ChildGap(childGap) {
     }
 
     struct AtlasProperties {

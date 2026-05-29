@@ -356,12 +356,11 @@ namespace Core {
         Render();
     }
 
-    void UI::BeginContainer(PositioningType positioning, glm::vec3 position, glm::vec2 size, const glm::vec4& primaryColour, LayoutType layout) {
+    void UI::BeginContainer(float childGap, PositioningType positioning, glm::vec3 position, glm::vec2 size, const glm::vec4& primaryColour, LayoutType layout) {
         RC_ASSERT(Internal::System, "Tried to begin a UI container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, primaryColour, primaryColour }, Internal::System->OpenElement);
-
+        Internal::System->Elements.emplace_back(SurfaceType::None, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, primaryColour, primaryColour }, Internal::System->OpenElement, childGap);
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
 
         size_t currentIndex = Internal::System->Elements.size() - 1;
@@ -382,12 +381,12 @@ namespace Core {
         Internal::System->OpenElement = parentId;
     }
 
-    void UI::BeginScrollContainer(float& offset, PositioningType positioning, glm::vec3 position, glm::vec2 size, bool vertical, float speed, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
+    void UI::BeginScrollContainer(float& offset, float childGap, PositioningType positioning, glm::vec3 position, glm::vec2 size, bool vertical, float speed, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
         RC_ASSERT(Internal::System, "Tried to begin a UI scroll container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI scroll container before calling UI Begin");
 
         LayoutType layout = vertical ? LayoutType::CropVertical : LayoutType::CropHorizontal;
-        Internal::System->Elements.emplace_back(SurfaceType::Hoverable, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{primaryColour, hoverColour}, Internal::System->OpenElement);
+        Internal::System->Elements.emplace_back(SurfaceType::Hoverable, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{primaryColour, hoverColour}, Internal::System->OpenElement, childGap);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::ScrollWidget>(offset, vertical, speed);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
@@ -403,11 +402,11 @@ namespace Core {
         Internal::System->OpenElement = currentIndex;
     }
 
-    void UI::BeginHoverContainer(PositioningType positioning, glm::vec3 position, glm::vec2 size, LayoutType layout, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
+    void UI::BeginHoverContainer(float childGap, PositioningType positioning, glm::vec3 position, glm::vec2 size, LayoutType layout, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
         RC_ASSERT(Internal::System, "Tried to begin a UI container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Hoverable, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, hoverColour }, Internal::System->OpenElement);
+        Internal::System->Elements.emplace_back(SurfaceType::Hoverable, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, hoverColour }, Internal::System->OpenElement, childGap);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::HoverWidget>(Internal::System->HoverID);
 
         Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
