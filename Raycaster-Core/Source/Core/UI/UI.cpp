@@ -9,6 +9,8 @@
 #include "Core/Renderer/RenderAPI.h"
 #include "Core/Renderer/Renderer2D.h"
 
+#include <algorithm>
+
 namespace Core::UI {
     static constexpr Internal::Keys::InputKeys KeyCodeToInputKey(int32_t keyCode) {
         switch (keyCode) {
