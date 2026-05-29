@@ -1,6 +1,6 @@
 # Raycaster
 
-A small framework for creating interactive applications and raycaster demo application written in in C++.
+A small framework for creating interactive applications and raycaster demo application written in C++.
 
 ## Building
 
@@ -23,7 +23,18 @@ and follow the instructions for your platform.
   - GNU Autotools and GNU Make  
   - Clang  
   - Python (version >= 3.3)  
-  - X11 and xkbcommon development packages [for GLFW](https://www.glfw.org/docs/latest/compile_guide.html#compile_deps)  
+  - X11 and xkbcommon development packages for [GLFW](https://www.glfw.org/docs/latest/compile_guide.html#compile_deps)  
   - OpenGL development package  
 - Run [Scripts/Setup-Linux.sh](Scripts/Setup-Linux.sh)  
 - Run `make` in the project root directory  
+
+### Web
+
+- Web builds are supported only on Linux  
+- Prerequisites  
+  - GNU Autotools and GNU Make  
+  - Python (version >= 3.3)  
+  - [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html)  
+- Source the Emscripten SDK
+- Run [Scripts/Setup-Web.sh](Scripts/Setup-Web.sh)  
+- Run `emmake make` in the project root directory  
