@@ -11,6 +11,15 @@
 
 constexpr float SCROLLSTEP = 0.125f;
 
+namespace Core::UI {
+    // Returns 0 on failure.
+    inline static size_t GetElementIndex(const Surface& element) {
+        static_assert(std::ranges::contiguous_range<decltype(Internal::System->Elements)>);
+        size_t result = &element - Internal::System->Elements.data();
+        return result * (result < Internal::System->Elements.size());
+    }
+}
+
 namespace Core::UI::Widgets {
     bool AtlasTextureWidget::Render(Surface& current) {
         RC_ASSERT(Internal::TextureAtlas, "Tried to render UI element with texture before UI setting TextureAtlas")
@@ -272,18 +281,7 @@ namespace Core::UI::Widgets {
             }
         }
 
-        //Get the index of the current element
-        size_t currentIndex = current.ParentID + 1;
-        for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
-            if (currentIndex >= UI::Internal::System->Elements.size()) {
-                currentIndex = 0;
-            }
-
-            if (&UI::Internal::System->Elements[currentIndex] == &current) {
-                break;
-            }
-        }
-
+        size_t currentIndex = GetElementIndex(current);
         if (!currentIndex || currentIndex + 2 >= UI::Internal::System->Elements.size()) {
             RC_WARN("UI element with TextInputWidget should have two descendants");
             return;
@@ -596,18 +594,7 @@ namespace Core::UI::Widgets {
             }
         }
 
-        //Get the index of the current element
-        size_t currentIndex = current.ParentID + 1;
-        for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
-            if (currentIndex >= UI::Internal::System->Elements.size()) {
-                currentIndex = 0;
-            }
-
-            if (&UI::Internal::System->Elements[currentIndex] == &current) {
-                break;
-            }
-        }
-
+        size_t currentIndex = GetElementIndex(current);
         if (!currentIndex || currentIndex + 3 >= UI::Internal::System->Elements.size()) {
             RC_WARN("UI element with TextureTextInputWidget should have three descendants");
             return;
@@ -781,18 +768,7 @@ namespace Core::UI::Widgets {
         }
 
         if (m_SelectionStart == m_SelectionEnd) {
-            //Get the index of the current element
-            size_t currentIndex = current.ParentID + 1;
-            for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
-                if (currentIndex >= UI::Internal::System->Elements.size()) {
-                    currentIndex = 0;
-                }
-
-                if (&UI::Internal::System->Elements[currentIndex] == &current) {
-                    break;
-                }
-            }
-
+            size_t currentIndex = GetElementIndex(current);
             if (!currentIndex || currentIndex + 3 >= UI::Internal::System->Elements.size()) {
                 RC_WARN("UI element with TextureTextInputWidget should have three descendants");
                 return true;
@@ -1052,14 +1028,7 @@ namespace Core::UI::Widgets {
     
     void ScrollWidget::Update(Surface& current) {
         size_t parentIndex = current.ParentID;
-        size_t currentIndex = parentIndex + 1;
-        
-        //Get the index of the current element
-        for (; currentIndex && currentIndex < UI::Internal::System->Elements.size(); currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
-            if (&UI::Internal::System->Elements[currentIndex] == &current) {
-                break;
-            }
-        }
+        size_t currentIndex = GetElementIndex(current);
         
         //Update the positions of the current element's children
         uint32_t childCount = 0;
@@ -1098,18 +1067,7 @@ namespace Core::UI::Widgets {
     }
 
     void ScrollBarWidget::Update(Surface& current) {
-        //Get the index of the current element
-        size_t currentIndex = current.ParentID + 1;
-        for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
-            if (currentIndex >= UI::Internal::System->Elements.size()) {
-                currentIndex = 0;
-            }
-
-            if (&UI::Internal::System->Elements[currentIndex] == &current) {
-                break;
-            }
-        }
-
+        size_t currentIndex = GetElementIndex(current);
         if(!currentIndex || current.ChildCount != 3 || currentIndex + 3 >= UI::Internal::System->Elements.size()){
             RC_WARN("UI element with ScrollBarWidget should have three children");
             return;
@@ -1140,18 +1098,7 @@ namespace Core::UI::Widgets {
     }
 
     void AtlasTextureScrollBarWidget::Update(Surface& current) {
-        //Get the index of the current element
-        size_t currentIndex = current.ParentID + 1;
-        for (; currentIndex; currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
-            if (currentIndex >= UI::Internal::System->Elements.size()) {
-                currentIndex = 0;
-            }
-
-            if (&UI::Internal::System->Elements[currentIndex] == &current) {
-                break;
-            }
-        }
-
+        size_t currentIndex = GetElementIndex(current);
         if(!currentIndex || current.ChildCount != 3 || currentIndex + 3 >= UI::Internal::System->Elements.size()){
             RC_WARN("UI element with ScrollBarWidget should have three children");
             return;
@@ -1182,14 +1129,7 @@ namespace Core::UI::Widgets {
         RC_ASSERT(Internal::TextureAtlas, "Tried to render UI TextureScrollBar element before UI setting TextureAtlas")
     
         size_t parentIndex = current.ParentID;
-        size_t currentIndex = parentIndex + 1;
-
-        //Get the index of the current element
-        for (; currentIndex && currentIndex < UI::Internal::System->Elements.size(); currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
-            if (&UI::Internal::System->Elements[currentIndex] == &current) {
-                break;
-            }
-        }
+        size_t currentIndex = GetElementIndex(current);
 
         //Update the positions of the current element's children
         bool hovered = false;
@@ -1213,14 +1153,7 @@ namespace Core::UI::Widgets {
 
     void HoverWidget::Update(Surface& current) {
         size_t parentIndex = current.ParentID;
-        size_t currentIndex = parentIndex + 1;
-        
-        //Get the index of the current element
-        for (; currentIndex && currentIndex < UI::Internal::System->Elements.size(); currentIndex = UI::Internal::System->Elements[currentIndex].SiblingID) {
-            if (&UI::Internal::System->Elements[currentIndex] == &current) {
-                break;
-            }
-        }
+        size_t currentIndex = GetElementIndex(current);
 
         if (Internal::System->HoverID > parentIndex) {
             if (Internal::System->HoverID != currentIndex || (m_PreviousHoverID >= parentIndex && m_PreviousHoverID <= currentIndex)) {
