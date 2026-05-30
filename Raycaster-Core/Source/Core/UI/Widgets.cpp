@@ -923,6 +923,54 @@ namespace Core::UI::Widgets {
         return true;
     }
 
+    void ComboWidget::Update(Surface& current) {
+        const size_t currentIndex = GetElementIndex(current);
+        RC_ASSERT(current.ChildCount >= 2 && currentIndex && currentIndex + 2 < UI::Internal::System->Elements.size(), "UI element with ComboWidget should have two children");
+        const size_t buttonID = currentIndex + 1;
+        RC_ASSERT(Internal::System->Elements[buttonID].Type == SurfaceType::Button, "The first child of UI element with ComboWidget should have a SurfaceType of Button");
+        const size_t scrollContainerID = Internal::System->Elements[buttonID].SiblingID;
+        RC_ASSERT(currentIndex < scrollContainerID && scrollContainerID <= Internal::System->Elements.size());
+        ScrollWidget* scrollWidget = dynamic_cast<ScrollWidget*>(Internal::System->Elements[scrollContainerID].Widget.get());
+        RC_ASSERT(scrollWidget != nullptr, "The second child of UI element with ComboWidget should have a ScrollWidget<T> member");
+
+        m_Selected = glm::min(m_Selected, m_ItemCount - 1);
+
+        if (!m_Open) {
+            Internal::System->Elements[scrollContainerID].Size = glm::vec2(0.0f);
+            return;
+        }
+        Internal::System->Elements[buttonID].Size = glm::vec2(0.0f);
+        
+        size_t nextID = current.SiblingID;
+        for (size_t parentID = current.ParentID; !nextID && parentID;) {
+            nextID = Internal::System->Elements[parentID].SiblingID;
+            parentID = Internal::System->Elements[parentID].ParentID;
+        }
+        nextID += (nextID == 0) * Internal::System->Elements.size();
+        RC_ASSERT(currentIndex < nextID);
+
+        if (Internal::Input->InteractionID != buttonID) {
+            // Close, if focus outside.
+            m_Open = scrollContainerID < Internal::Input->InteractionID && Internal::Input->InteractionID < nextID;
+            return;
+        }
+
+        // Just opened, try to scroll to selected element
+        size_t selectedID = Internal::Input->InteractionID = scrollContainerID + 1;
+        if (Internal::System->Elements[selectedID].SiblingID) {
+            // Assume all children have equal number of elments => constant stride.
+            size_t stride = Internal::System->Elements[selectedID].SiblingID - selectedID;
+            RC_ASSERT(stride < Internal::System->Elements.size());
+            selectedID += stride * m_Selected;
+        }
+        RC_ASSERT(scrollContainerID < selectedID && selectedID < nextID);
+        Internal::Input->InteractionID = selectedID;
+
+        float offset = m_Selected - 0.5f * (m_VisibleChildren - 1.0f); 
+        offset = glm::clamp(offset, 0.0f, (float)(m_ItemCount - m_VisibleChildren)); // Clamp both ends
+        scrollWidget->m_ScrollOffset = offset / m_VisibleChildren;
+    }
+
     template <typename T>
     void SliderWidget<T>::Update(Surface& current) {
         if (&Internal::System->Elements[Internal::System->ActiveID] != &current) {
@@ -1029,7 +1077,7 @@ namespace Core::UI::Widgets {
     void ScrollWidget::Update(Surface& current) {
         size_t parentIndex = current.ParentID;
         size_t currentIndex = GetElementIndex(current);
-        
+
         //Update the positions of the current element's children
         uint32_t childCount = 0;
         for (size_t i = currentIndex + 1; i < UI::Internal::System->Elements.size() && UI::Internal::System->Elements[i].ParentID == currentIndex; i = UI::Internal::System->Elements[i].SiblingID) {

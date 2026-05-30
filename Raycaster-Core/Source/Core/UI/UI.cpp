@@ -306,7 +306,7 @@ namespace Core {
                     for (size_t id : scissorIDs) {
                         const Surface& clip = Internal::System->Elements[id];
                         scissorRect = scissorRect.Intersection(Rectangle::FromPositionSize(clip.Position, clip.Size));
-                }
+                    }
 
                     glm::vec2 correction(1.0f / Internal::System->AspectRatio, 1.0f);
                     SetScissor(!scissorIDs.empty(), scissorRect, Internal::System->Size * correction);
@@ -317,7 +317,7 @@ namespace Core {
                     scissorIDs.push_back(s.ParentID);
                     const Surface& clip = Internal::System->Elements[s.ParentID];
                     scissorRect = scissorRect.Intersection(Rectangle::FromPositionSize(clip.Position, clip.Size));
-
+                    
                     glm::vec2 correction(1.0f / Internal::System->AspectRatio, 1.0f);
                     SetScissor(true, scissorRect, Internal::System->Size * correction);
                 }
@@ -327,7 +327,7 @@ namespace Core {
                     continue; 
                 }
             }
-
+            
             if (s.Widget && s.Widget->Render(s)) {
                 continue;
             }
@@ -1070,6 +1070,55 @@ namespace Core {
 
         enabled ^= WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
+
+    template<typename T>
+    void UI::Combo(std::span<const T> items, ComboState& state, uint8_t maxHeight, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& selectedColours, const std::array<glm::vec4, 3>& boxColours) {
+        RC_ASSERT(Internal::System, "Tried to create a UI combo before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI combo before calling UI Begin");
+        RC_ASSERT(!items.empty(), "Tried to create a UI combo with no items");
+
+        state.SelectedItemIndex = glm::min(state.SelectedItemIndex, items.size() - 1);
+        const uint8_t visibleItems = glm::min(maxHeight, static_cast<uint8_t>(items.size()));
+        Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, Transparent, Internal::System->OpenElement);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ComboWidget>(state.SelectedItemIndex, state.Open, visibleItems, items.size());
+        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
+
+        const size_t currentIndex = Internal::System->Elements.size() - 1;
+        const size_t parentIndex = Internal::System->OpenElement;
+        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
+            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
+                Internal::System->Elements[i].SiblingID = currentIndex;
+                break;
+            }
+        }
+
+        Internal::System->OpenElement = currentIndex;
+
+        state.Open |= Button(items[state.SelectedItemIndex], glm::vec2(!state.Open), boxColours);
+        const bool scrollBar = maxHeight <= items.size();
+        const glm::vec2 buttonSize(1.0f - 0.1f * scrollBar, 1.0f / visibleItems);
+        
+        BeginScrollContainer(state.ScrollOffset, 0.0f, PositioningType::Relative, glm::vec3(0.0f, (visibleItems - 1.0f) / 2.0f, glm::epsilon<float>()), glm::vec2(1.0f, visibleItems), true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
+        for (size_t i = 0; i < items.size(); i++) {
+            if (Button(items[i], PositioningType::Offset, glm::vec2(-0.05f * scrollBar, -0.025f * (1 + i) * 0), buttonSize, (i == state.SelectedItemIndex) ? selectedColours : boxColours)) {
+                Internal::Input->InteractionID = currentIndex + 1;
+                state.SelectedItemIndex = i;
+                state.Open = false;
+            }
+        }
+
+        if (scrollBar) {
+            ScrollBar(state.ScrollOffset, { 0.1f, 1.0f });
+        }
+        EndScrollContainer();
+
+        Internal::System->OpenElement = parentIndex;
+    }
+
+    template void UI::Combo(std::span<const std::string>, ComboState&, uint8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Combo(std::span<const std::string_view>, ComboState&, uint8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Combo(std::span<const std::wstring>, ComboState&, uint8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::Combo(std::span<const std::wstring_view>, ComboState&, uint8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
 
     template <typename T>
     void UI::Slider(T& value, T min, T max, bool vertical, float sliderSize, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& sliderColours, const std::array<glm::vec4, 3>& boxColours) {

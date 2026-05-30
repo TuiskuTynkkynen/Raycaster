@@ -155,6 +155,20 @@ namespace Core::UI::Widgets {
         glm::vec2 m_Scale;
     };
 
+    class ComboWidget : public Widget {
+    public:
+        ComboWidget(size_t& selected, bool& open, uint8_t visibleChildren, size_t itemCount)
+            : m_VisibleChildren(visibleChildren), m_ItemCount(itemCount), m_Selected(selected), m_Open(open) {}
+
+        void Update(Surface& current) override;
+        bool Render(Surface& current) override { return true; };
+    private:
+        uint8_t m_VisibleChildren;
+        size_t m_ItemCount;
+        bool& m_Open;
+        size_t& m_Selected;
+    };
+
     class ScrollBarWidget : public Widget {
     public:
         ScrollBarWidget(float& offset, bool moveDown, bool moveUp)
@@ -252,6 +266,7 @@ namespace Core::UI::Widgets {
         friend void TextInputWidget<wchar_t>::Update(Surface&);
         friend void TextureTextInputWidget<char>::Update(Surface&);
         friend void TextureTextInputWidget<wchar_t>::Update(Surface&);
+        friend void ComboWidget::Update(Surface&);
     };
 
     class HoverWidget : public Widget {
