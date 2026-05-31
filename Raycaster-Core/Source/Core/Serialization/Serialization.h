@@ -16,6 +16,7 @@ namespace Core::Serialization {
 
 // Specialisations for commonly used types
 
+#include "Enumerations.h"
 #include "Core/Debug/Assert.h"
 
 #include <array>
@@ -122,5 +123,22 @@ namespace Core::Serialization {
         ArrT array{};
         return archive.ReadBytes(std::as_writable_bytes(std::span{ array }))
             ? std::optional(array) : std::nullopt;
+    }
+
+    // Enumerations
+    template <SerializableEnumeration Enum>
+    inline bool Serialize(const Enum& value, Archive& archive) {
+        auto name = GetEnumName(value);
+        if (!name || !archive.Write(name.value().size())) {
+            return false;
+        }
+
+        return archive.WriteBytes(std::as_bytes(std::span{ name.value() }));
+    }
+
+    template <SerializableEnumeration Enum>
+    inline std::optional<Enum> Deserialize(Archive& archive) {
+        return archive.Read<std::string>()
+            .and_then(GetEnumValue<Enum>);
     }
 }

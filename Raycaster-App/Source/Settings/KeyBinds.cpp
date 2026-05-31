@@ -1,11 +1,12 @@
 #include "KeyBinds.h"
 
+#include "Core/Serialization/Serialization.h"
 #include "Core/Serialization/Enumerations.h"
 
 template <>
 struct Core::Serialization::Mapping<Settings::KeyBinds::Name> {
     using enum Settings::KeyBinds::Name;
-    static inline EnumMapType<Settings::KeyBinds::Name> Value = {
+    static inline EnumMapType < Settings::KeyBinds::Name, Settings::KeyBinds::Name::ENUMERATION_MAX + 1> Value = {
         { Forward,  "Forward" },
         { Backward, "Backward" },
         { Left,     "Left" },

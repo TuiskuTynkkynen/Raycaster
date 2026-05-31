@@ -2,6 +2,7 @@
 
 #include "KeyBinds.h"
 
+#include "Core/Serialization/Serialization.h"
 #include "Core/Serialization/Enumerations.h"
 
 enum class SettingType : uint8_t {
@@ -13,7 +14,7 @@ enum class SettingType : uint8_t {
 template <>
 struct Core::Serialization::Mapping<SettingType> {
     using enum SettingType;
-    static inline EnumMapType<SettingType> Value = {
+    static inline EnumMapType<SettingType, 2> Value = {
         { Input,    "Input" },
         { KeyBinds,  "KeyBinds" },
     };
