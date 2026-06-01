@@ -212,18 +212,14 @@ namespace Core {
             if (current.ParentID != lastParentId) { 
                 switch (parent.Layout) {
                 case LayoutType::None:
+                case LayoutType::Crop:
                     layout = std::make_unique<NoLayout>(parent);
                     break;
                 case LayoutType::Vertical:
                 case LayoutType::Horizontal:
-                    layout = std::make_unique<LinearLayout>(i);
-                    break;
-                case LayoutType::Crop:
-                    layout = std::make_unique<CropLayout<NoLayout>>(NoLayout(parent));
-                    break;
                 case LayoutType::CropVertical:
                 case LayoutType::CropHorizontal:
-                    layout = std::make_unique<CropLayout<LinearLayout>>(LinearLayout(i));
+                    layout = std::make_unique<LinearLayout>(i);
                     break;
                 default:
                     RC_WARN("Invalid LayoutType");
