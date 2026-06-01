@@ -6,7 +6,7 @@
 
 
 namespace Core::UI {
-    void NoLayout::Next(Surface& s) {
+    void NoLayout::Next(Surface& s) const {
         glm::vec3& position = s.Position;
 
         switch (s.Positioning){
@@ -31,6 +31,7 @@ namespace Core::UI {
     LinearLayout::LinearLayout(size_t currentIndex) {
         RC_ASSERT(UI::Internal::System, "Tried to create a UI layout before initializing UI system");
         RC_ASSERT(currentIndex < Internal::System->Elements.size(), "currentIndex supplied to LinearLayout constructor must be smaller than UI element count");
+        RC_ASSERT(currentIndex == Internal::System->Elements[currentIndex].ParentID + 1, "currentIndex supplied to LinearLayout constructor must be first child of Parent element");
         
         const Surface& parent = Internal::System->Elements[Internal::System->Elements[currentIndex].ParentID];
         RC_ASSERT(parent.Layout == LayoutType::Vertical || parent.Layout == LayoutType::Horizontal || parent.Layout == LayoutType::CropVertical || parent.Layout == LayoutType::CropHorizontal, "Parent of current element supplied to LinearLayout constructor must have a Vertical or Horizontal layout");
@@ -48,25 +49,17 @@ namespace Core::UI {
             return;
         }
 
-        uint32_t paddingCount = 1;
         uint32_t paddedChildCount = 1;
         for (size_t i = Internal::System->Elements[currentIndex].ParentID + 1; i && i < Internal::System->Elements.size(); i = Internal::System->Elements[i].SiblingID) {
             const Surface& current = Internal::System->Elements[i];
-            
-            if (current.Positioning >= PositioningType::Relative) {
-                continue;
+            if (current.Positioning < PositioningType::Relative) {
+                m_Padding -= current.Size[m_PaddingDimension];
+                paddedChildCount++;
             }
-            
-            if (i < currentIndex) {
-                m_RelativePosition += current.Size[m_PaddingDimension];
-                paddingCount++;
-            }
-            m_Padding -= current.Size[m_PaddingDimension];
-            paddedChildCount++;
         }
 
         m_Padding = std::max(0.025f * parent.Size[m_PaddingDimension], m_Padding / paddedChildCount);
-        m_RelativePosition += paddingCount * m_Padding;
+        m_RelativePosition += m_Padding; // Start is padded
     }
 
     void LinearLayout::Next(Surface& s) {

@@ -10,6 +10,7 @@
 #include "Core/Renderer/Renderer2D.h"
 
 #include <algorithm>
+#include <variant>
 
 namespace Core::UI {
     static constexpr Internal::Keys::InputKeys KeyCodeToInputKey(int32_t keyCode) {
@@ -203,32 +204,38 @@ namespace Core {
             Internal::Input->InteractionState = Internal::KeyboardInteraction::Hovered;
         }
 
-        size_t lastParentId = -1;
-        std::unique_ptr<Layout> layout = std::make_unique<NoLayout>(Internal::System->Elements.front());
+        struct LayoutElement {
+            size_t ParentID;
+            std::variant<NoLayout, LinearLayout> Layout;
+        };
+        std::vector<LayoutElement> layoutStack;
         for (size_t i = 1; i < Internal::System->Elements.size(); i++) {
             Surface& current = Internal::System->Elements[i];
             const Surface& parent = Internal::System->Elements[current.ParentID];
 
-            if (current.ParentID != lastParentId) { 
+            if (layoutStack.empty() || current.ParentID > layoutStack.back().ParentID) {
                 switch (parent.Layout) {
                 case LayoutType::None:
                 case LayoutType::Crop:
-                    layout = std::make_unique<NoLayout>(parent);
+                    layoutStack.emplace_back(current.ParentID, NoLayout(parent));
                     break;
                 case LayoutType::Vertical:
                 case LayoutType::Horizontal:
                 case LayoutType::CropVertical:
                 case LayoutType::CropHorizontal:
-                    layout = std::make_unique<LinearLayout>(i);
+                    layoutStack.emplace_back(current.ParentID, LinearLayout(i));
                     break;
                 default:
                     RC_WARN("Invalid LayoutType");
                 }
-
-                lastParentId = current.ParentID;
             }
 
-            layout->Next(current);
+            while (current.ParentID < layoutStack.back().ParentID) {
+                layoutStack.pop_back();
+            }
+
+            RC_ASSERT(current.ParentID == layoutStack.back().ParentID);
+            std::visit([&current](auto& v) { v.Next(current); }, layoutStack.back().Layout);
 
             if (current.Type >= SurfaceType::Hoverable && (!Internal::System->ActiveID || Internal::System->ActiveID == i || isCaptured)) {
                 bool skip = current.Position.z < Internal::System->Elements[Internal::System->HoverID].Position.z;
