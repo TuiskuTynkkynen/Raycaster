@@ -206,6 +206,7 @@ namespace Core {
 
         struct LayoutElement {
             size_t ParentID;
+            Rectangle Clipped;
             std::variant<NoLayout, LinearLayout> Layout;
         };
         std::vector<LayoutElement> layoutStack;
@@ -213,35 +214,52 @@ namespace Core {
             Surface& current = Internal::System->Elements[i];
             const Surface& parent = Internal::System->Elements[current.ParentID];
 
+            while (!layoutStack.empty() && current.ParentID < layoutStack.back().ParentID) {
+                layoutStack.pop_back();
+            }
+
             if (layoutStack.empty() || current.ParentID > layoutStack.back().ParentID) {
+                Rectangle next = layoutStack.empty() ? Rectangle{ { 0.0f, 0.0f }, { Internal::System->AspectRatio, 1.0f } } : layoutStack.back().Clipped;
+                if (parent.Layout >= LayoutType::Crop) {
+                    next = next.Intersection(Rectangle::FromPositionSize(parent.Position, parent.Size));
+
+                    // All children completely hidden -> skip child elements
+                    if (next.Degenerate()) {
+                        size_t nextID = NextNonDecendant(parent);
+                        i = nextID - (nextID == 0) - 1;
+                        continue;
+                    }
+                }
+
                 switch (parent.Layout) {
                 case LayoutType::None:
                 case LayoutType::Crop:
-                    layoutStack.emplace_back(current.ParentID, NoLayout(parent));
+                    layoutStack.emplace_back(current.ParentID, next, NoLayout(parent));
                     break;
                 case LayoutType::Vertical:
                 case LayoutType::Horizontal:
                 case LayoutType::CropVertical:
                 case LayoutType::CropHorizontal:
-                    layoutStack.emplace_back(current.ParentID, LinearLayout(i));
+                    layoutStack.emplace_back(current.ParentID, next, LinearLayout(i));
                     break;
                 default:
                     RC_WARN("Invalid LayoutType");
                 }
             }
 
-            while (current.ParentID < layoutStack.back().ParentID) {
-                layoutStack.pop_back();
-            }
-
             RC_ASSERT(current.ParentID == layoutStack.back().ParentID);
             std::visit([&current](auto& v) { v.Next(current); }, layoutStack.back().Layout);
+
+            const Rectangle clipped = layoutStack.back().Clipped.Intersection(Rectangle::FromPositionSize(current.Position, current.Size));
+            if (clipped.Degenerate()) {
+                continue;
+            }
 
             if (current.Type >= SurfaceType::Hoverable && (!Internal::System->ActiveID || Internal::System->ActiveID == i || isCaptured)) {
                 bool skip = current.Position.z < Internal::System->Elements[Internal::System->HoverID].Position.z;
                 skip |= parent.Type >= SurfaceType::Capture && current.ParentID == Internal::System->HoverID;
-                
-                if (!skip && CalculateClippedRect(current).Inside(Internal::Input->MouseState.Position)) {
+
+                if (!skip && clipped.Inside(Internal::Input->MouseState.Position)) {
                     Internal::System->HoverID = i;
                 }
             }
@@ -323,11 +341,18 @@ namespace Core {
                     const Surface& clip = Internal::System->Elements[s.ParentID];
                     scissorRect = scissorRect.Intersection(Rectangle::FromPositionSize(clip.Position, clip.Size));
                     
+                    // All children completely hidden -> skip all child elements
+                    if (scissorRect.Degenerate()) {
+                        size_t nextID = NextNonDecendant(Internal::System->Elements[s.ParentID]);
+                        i = nextID - (nextID == 0) - 1;
+                        continue; 
+                    }
+                    
                     glm::vec2 correction(1.0f / Internal::System->AspectRatio, 1.0f);
                     SetScissor(true, scissorRect, Internal::System->Size * correction);
                 }
 
-                // Completely hidden -> skip
+                // Element hidden -> skip
                 if (scissorRect.Intersection(Rectangle::FromPositionSize(s.Position, s.Size)).Degenerate()) {
                     continue; 
                 }

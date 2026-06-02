@@ -100,3 +100,15 @@ namespace Core::UI::Internal {
 	inline glm::vec2 AtlasSize;
 	inline std::unique_ptr<UIInputState> Input;
 }
+
+namespace Core::UI {
+	// Returns 0, if there is no non-decendant element after provided element
+	inline size_t NextNonDecendant(const Surface& element) {
+		size_t nextID = element.SiblingID;
+		for (size_t parentID = element.ParentID; !nextID && parentID;) {
+			nextID = Internal::System->Elements[parentID].SiblingID;
+			parentID = Internal::System->Elements[parentID].ParentID;
+		}
+		return nextID;
+	}
+}
