@@ -9,8 +9,32 @@
 #include FT_OUTLINE_H
 
 #include <filesystem>
+#include <algorithm>
 
 namespace Core {
+    // Returns number of characters included in processed ranges
+    static uint32_t PreprocessCharacterRanges(std::vector<Font::CharacterRange>& characterRanges) {
+        if (characterRanges.size() == 0) { return 0; }
+
+        std::ranges::sort(characterRanges, std::ranges::less{}, &Font::CharacterRange::Start);
+
+        size_t back = 0;
+        uint32_t characterCount = 0;
+        for (size_t i = 1; i < characterRanges.size(); i++) { // Merge touching and overlapping ranges -> reduce look up times
+            Font::CharacterRange& current = characterRanges[back];
+            if (current.End >= characterRanges[i].Start) {
+                current.End = glm::max(characterRanges[back].End, characterRanges[i].End);
+                continue;
+            }
+
+            characterCount += current.End - current.Start + 1; //Both start and end are inclusive
+            characterRanges[++back] = characterRanges[i];
+        }
+
+        characterRanges.resize(back + 1);
+        return characterCount + characterRanges[back].End - characterRanges[back].Start + 1;
+    }
+
     static std::optional<std::pair<FT_Library, FT_Face>> InitFreeType(const char* filePath, uint32_t height, uint32_t width) {
         std::string fileString = ApplicationDirectory().append(filePath).string();
 
@@ -51,16 +75,12 @@ namespace Core {
         return std::make_pair(library, face);
     }
 
-    static void GenerateAtlasInternal(FT_Face& face, std::span<const Font::CharacterRange> characterRanges, std::unordered_map<uint32_t, GlyphInfo>& glyphs, Texture2D& textureAtlas) {
-        uint32_t characterCount = 0;
-        for (Font::CharacterRange range : characterRanges) {
-            characterCount += range.End - range.Start + 1; //Both start and end are inclusive
-        }
-
+    static void GenerateAtlasInternal(FT_Face& face, std::span<Font::CharacterRange> characterRanges, uint32_t characterCount, std::vector<GlyphInfo>& glyphs, Texture2D& textureAtlas) {        
         if (characterCount <= 0) {
             RC_WARN("Can not generate Font atlas. No character ranges have been added to Font.");
             return;
         }
+        glyphs.reserve(characterCount);
 
         uint32_t textureDimensions = 1;
         uint32_t maxDimensions = (1 + (face->size->metrics.height >> 6)) * static_cast<uint32_t>(glm::ceil(glm::sqrt(characterCount)));
@@ -72,7 +92,9 @@ namespace Core {
 
         std::vector<unsigned char>textureData(textureDimensions * textureDimensions);
         uint32_t x = 0, y = 0;
-        for (Font::CharacterRange range : characterRanges) {
+        for (Font::CharacterRange& range : characterRanges) {
+            range.Offset = static_cast<uint32_t>(glyphs.size());
+
             for (uint32_t c = range.Start; c <= range.End; c++) {
                 if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
                     RC_WARN("Failed to load glyph, {}, while generating Font atlas", c);
@@ -96,46 +118,31 @@ namespace Core {
                     }
                 }
 
-                glyphs[c] = {
+                glyphs.emplace_back(
                     glm::vec2(x * pixelDimensions, y * pixelDimensions),
                     glm::vec2(face->glyph->bitmap.width * pixelDimensions, face->glyph->bitmap.rows * pixelDimensions),
                     glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
                     glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
                     static_cast<uint32_t>(face->glyph->advance.x >> 6)
-                };
+                );
                 x += face->glyph->bitmap.width + 1;
+
+                // Store font height in space glyph
+                if (c == ' ') { glyphs.back().Size.y = (face->size->metrics.height >> 6); }
             }
         }
 
         textureAtlas.BindData(textureData.data(), textureDimensions, textureDimensions, 1);
-
-        //Store font height in space glyph
-        if (!glyphs.contains(' ')) {
-            FT_Load_Char(face, ' ', FT_LOAD_RENDER);
-            glyphs[' '] = {
-                glm::vec2(0.0f, 0.0f),
-                glm::vec2(0, (face->size->metrics.height >> 6)),
-                glm::ivec2(0, 0),
-                glm::ivec2(0, 0),
-                static_cast<uint32_t>(face->glyph->advance.x)
-            };
-        }
-
-        glyphs[' '].Size.y = (face->size->metrics.height >> 6);
     }
 
-    static void GenerateSDFAtlasInternal(FT_Face& face, std::span<const Font::CharacterRange> characterRanges, std::unordered_map<uint32_t, GlyphInfo>& glyphs, Texture2D& textureAtlas) {
-        uint32_t characterCount = 0;
-        for (Font::CharacterRange range : characterRanges) {
-            characterCount += range.End - range.Start + 1; //Both start and end are inclusive
-        }
-
+    static void GenerateSDFAtlasInternal(FT_Face& face, std::span<Font::CharacterRange> characterRanges, uint32_t characterCount, std::vector<GlyphInfo>& glyphs, Texture2D& textureAtlas) {
         if (characterCount <= 0) {
             RC_WARN("Can not generate SDF Font atlas. No character ranges have been added to Font.");
             return;
         }
 
         RC_INFO("Generating SDF Font with {} characters", characterCount);
+        glyphs.reserve(characterCount);
 
         uint32_t textureDimensions = 1;
         uint32_t maxDimensions = (1 + ((2 + face->size->metrics.height) >> 6)) * static_cast<uint32_t>(glm::ceil(glm::sqrt(characterCount)));
@@ -148,7 +155,9 @@ namespace Core {
         Core::SDF::Outline glyph;
         std::vector<unsigned char>textureData(textureDimensions * textureDimensions);
         uint32_t x = 0, y = 0;
-        for (Font::CharacterRange range : characterRanges) {
+        for (Font::CharacterRange& range : characterRanges) {
+            range.Offset = static_cast<uint32_t>(glyphs.size());
+
             for (uint32_t c = range.Start; c <= range.End; c++) {
                 if (FT_Load_Char(face, c, FT_LOAD_NO_HINTING)) {
                     RC_WARN("Failed to load glyph, {}, while generating SDF Font atlas", c);
@@ -160,7 +169,10 @@ namespace Core {
                 FT_Outline_Get_CBox(&outline, &box);
 
                 if ((box.xMax - box.xMin) * (box.yMax - box.yMin) == 0) {
-                    glyphs[c].Advance = face->glyph->advance.x >> 6;
+                    glyphs.emplace_back();
+                    glyphs.back().Advance = face->glyph->advance.x >> 6;
+                    // Store font height in space glyph
+                    if (c == ' ') { glyphs.back().Size.y = (face->size->metrics.height >> 6); }
                     continue;
                 }
 
@@ -191,36 +203,21 @@ namespace Core {
                         if (index < textureDimensions * textureDimensions) {
                             textureData[index] = static_cast<unsigned char>(len * std::numeric_limits<unsigned char>::max());
                         }
-
                     }
                 }
 
-                glyphs[c] = {
+                glyphs.emplace_back(
                     glm::vec2(x * pixelDimensions, y * pixelDimensions),
                     glm::vec2(width * pixelDimensions, rows * pixelDimensions),
                     glm::ivec2(width, rows),
                     glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
                     static_cast<uint32_t>(face->glyph->advance.x >> 6)
-                };
+                );
                 x += width + 1;
             }
         }
 
         textureAtlas.BindData(textureData.data(), textureDimensions, textureDimensions, 1);
-
-        //Store font height in space glyph
-        if (!glyphs.contains(' ')) {
-            FT_Load_Char(face, ' ', FT_LOAD_NO_HINTING);
-            glyphs[' '] = {
-                glm::vec2(0.0f, 0.0f),
-                glm::vec2(0, (face->size->metrics.height >> 6)),
-                glm::ivec2(0, 0),
-                glm::ivec2(0, 0),
-                static_cast<uint32_t>(face->glyph->advance.x)
-            };
-        }
-
-        glyphs[' '].Size.y = (face->size->metrics.height >> 6);
     }
 
     Font::Font(bool interpolation) {
@@ -247,8 +244,10 @@ namespace Core {
         }
 
         auto& [library, face] = freetype.value();
-        GenerateAtlasInternal(face, m_CharacterRanges, m_Glyphs, *m_TextureAtlas.get());
-        
+        uint32_t characterCount = PreprocessCharacterRanges(m_CharacterRanges);
+        GenerateAtlasInternal(face, m_CharacterRanges, characterCount, m_Glyphs, *m_TextureAtlas.get());
+        m_GeneratedRangeCount = static_cast<uint32_t>(m_CharacterRanges.size());
+
         FT_Done_Face(face);
         FT_Done_FreeType(library);
     }
@@ -262,8 +261,10 @@ namespace Core {
         }
 
         auto& [library, face] = freetype.value();
-        GenerateAtlasInternal(face, m_CharacterRanges, m_Glyphs, *m_TextureAtlas.get());
-        
+        uint32_t characterCount = PreprocessCharacterRanges(m_CharacterRanges);
+        GenerateAtlasInternal(face, m_CharacterRanges, characterCount, m_Glyphs, *m_TextureAtlas.get());
+        m_GeneratedRangeCount = static_cast<uint32_t>(m_CharacterRanges.size());
+
         FT_Done_Face(face);
         FT_Done_FreeType(library);
     }
@@ -277,8 +278,10 @@ namespace Core {
         }
 
         auto& [library, face] = freetype.value();
-        GenerateSDFAtlasInternal(face, m_CharacterRanges, m_Glyphs, *m_TextureAtlas.get());
-
+        uint32_t characterCount = PreprocessCharacterRanges(m_CharacterRanges);
+        GenerateSDFAtlasInternal(face, m_CharacterRanges, characterCount, m_Glyphs, *m_TextureAtlas.get());
+        m_GeneratedRangeCount = static_cast<uint32_t>(m_CharacterRanges.size());
+        
         FT_Done_Face(face);
         FT_Done_FreeType(library);
     }
@@ -292,7 +295,9 @@ namespace Core {
         }
 
         auto& [library, face] = freetype.value();
-        GenerateSDFAtlasInternal(face, m_CharacterRanges, m_Glyphs, *m_TextureAtlas.get());
+        uint32_t characterCount = PreprocessCharacterRanges(m_CharacterRanges);
+        GenerateSDFAtlasInternal(face, m_CharacterRanges, characterCount, m_Glyphs, *m_TextureAtlas.get());
+        m_GeneratedRangeCount = static_cast<uint32_t>(m_CharacterRanges.size());
 
         FT_Done_Face(face);
         FT_Done_FreeType(library);
