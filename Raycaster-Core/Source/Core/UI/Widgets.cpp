@@ -934,18 +934,11 @@ namespace Core::UI::Widgets {
         RC_ASSERT(scrollWidget != nullptr, "The second child of UI element with ComboWidget should have a ScrollWidget<T> member");
 
         m_Selected = glm::min(m_Selected, m_ItemCount - 1);
-
         if (!m_Open) {
-            Internal::System->Elements[scrollContainerID].Size = glm::vec2(0.0f);
             return;
         }
-        Internal::System->Elements[buttonID].Size = glm::vec2(0.0f);
         
-        size_t nextID = current.SiblingID;
-        for (size_t parentID = current.ParentID; !nextID && parentID;) {
-            nextID = Internal::System->Elements[parentID].SiblingID;
-            parentID = Internal::System->Elements[parentID].ParentID;
-        }
+        size_t nextID = NextNonDecendant(current);
         nextID += (nextID == 0) * Internal::System->Elements.size();
         RC_ASSERT(currentIndex < nextID);
 

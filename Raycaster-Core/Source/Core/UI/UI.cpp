@@ -1128,7 +1128,7 @@ namespace Core {
         const bool scrollBar = maxHeight <= items.size();
         const glm::vec2 buttonSize(1.0f - 0.1f * scrollBar, 1.0f / visibleItems);
         
-        BeginScrollContainer(state.ScrollOffset, 0.0f, PositioningType::Relative, glm::vec3(0.0f, (visibleItems - 1.0f) / 2.0f, glm::epsilon<float>()), glm::vec2(1.0f, visibleItems), true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
+        BeginScrollContainer(state.ScrollOffset, 0.0f, PositioningType::Relative, glm::vec3(0.0f, (visibleItems - 1.0f) / 2.0f, glm::epsilon<float>()), glm::vec2(state.Open, visibleItems), true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         for (size_t i = 0; i < items.size(); i++) {
             if (Button(items[i], PositioningType::Offset, glm::vec2(-0.05f * scrollBar, -0.025f * (1 + i) * 0), buttonSize, (i == state.SelectedItemIndex) ? selectedColours : boxColours)) {
                 Internal::Input->InteractionID = currentIndex + 1;
