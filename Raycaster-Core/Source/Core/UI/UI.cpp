@@ -151,6 +151,37 @@ namespace Core::UI {
         return (Internal::Input->MouseState.Left == Internal::MouseButtonState::Released && Internal::System->HoverID == index)
             || Internal::Input->InteractionState == Internal::KeyboardInteraction::Released;
     }
+
+    inline static void PushElement(SurfaceType type, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& colours) {
+        const size_t currentID = Internal::System->Elements.size();
+        const size_t parentID = Internal::System->OpenElement;
+
+        Internal::System->Elements.emplace_back(type, LayoutType::None, positioning, position, size * Internal::System->Elements[parentID].Size, colours, parentID);
+        Internal::System->Elements[parentID].ChildCount++;
+
+        for (size_t i = currentID - 1; i > parentID; i--) {
+            if (Internal::System->Elements[i].ParentID == parentID) {
+                Internal::System->Elements[i].SiblingID = currentID;
+                return;
+            }
+        }
+    }
+
+    inline static void PushContainerElement(SurfaceType type, LayoutType layout, float childGap, PositioningType positioning, glm::vec3 position, glm::vec2 size, const std::array<glm::vec4, 3>& colours) {
+        const size_t currentID = Internal::System->Elements.size();
+        const size_t parentID = Internal::System->OpenElement;
+
+        Internal::System->Elements.emplace_back(type, layout, positioning, position, size * Internal::System->Elements[parentID].Size, colours, parentID, childGap);
+        Internal::System->Elements[parentID].ChildCount++;
+        Internal::System->OpenElement = currentID;
+
+        for (size_t i = currentID - 1; i > parentID; i--) {
+            if (Internal::System->Elements[i].ParentID == parentID) {
+                Internal::System->Elements[i].SiblingID = currentID;
+                return;
+            }
+        }
+    }
 }
 
 namespace Core {
@@ -390,18 +421,7 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to begin a UI container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, primaryColour, primaryColour }, Internal::System->OpenElement, childGap);
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
-        Internal::System->OpenElement = currentIndex;
+        PushContainerElement(SurfaceType::None, layout, childGap, positioning, position, size, std::array<glm::vec4, 3>{ primaryColour, primaryColour, primaryColour });
     }
 
     void UI::EndContainer() {
@@ -415,41 +435,17 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to begin a UI scroll container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI scroll container before calling UI Begin");
 
-        LayoutType layout = vertical ? LayoutType::CropVertical : LayoutType::CropHorizontal;
-        Internal::System->Elements.emplace_back(SurfaceType::Hoverable, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{primaryColour, hoverColour}, Internal::System->OpenElement, childGap);
+        const LayoutType layout = vertical ? LayoutType::CropVertical : LayoutType::CropHorizontal;
+        PushContainerElement(SurfaceType::Hoverable, layout, childGap, positioning, position, size, std::array<glm::vec4, 3>{primaryColour, hoverColour});
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::ScrollWidget>(offset, vertical, speed);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
-        Internal::System->OpenElement = currentIndex;
     }
 
     void UI::BeginHoverContainer(float childGap, PositioningType positioning, glm::vec3 position, glm::vec2 size, LayoutType layout, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
         RC_ASSERT(Internal::System, "Tried to begin a UI container before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Hoverable, layout, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, hoverColour }, Internal::System->OpenElement, childGap);
+        PushContainerElement(SurfaceType::Hoverable, layout, childGap, positioning, position, size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, hoverColour });
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::HoverWidget>(Internal::System->HoverID);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
-        Internal::System->OpenElement = currentIndex;
     }
 
     template <typename T>
@@ -472,18 +468,9 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to create a UI button before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI button before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Button, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
+        const size_t currentIndex = Internal::System->Elements.size();
+        PushElement(SurfaceType::Button, positioning, position, size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
         
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
         return WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
 
@@ -516,17 +503,8 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to create a UI button before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI button before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Button, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
+        const size_t currentIndex = Internal::System->Elements.size();
+        PushElement(SurfaceType::Button, positioning, position, size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
 
         return HoverResult((Internal::System->HoverID == currentIndex) + (WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex));
     }
@@ -576,91 +554,40 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to create a UI texture before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI texture before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ colour, colour, colour }, Internal::System->OpenElement);
+        PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ colour, colour, colour });
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
     }
     
     void UI::Text(std::string_view text, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI text before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
+        PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
         Internal::System->Elements.back().Widget = std::make_unique < Widgets::TextWidget<char>>(text);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
     }
 
     void UI::Text(std::wstring_view text, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI text before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ glm::vec4(1.0f), glm::vec4(0.8f), glm::vec4(0.5f) }, Internal::System->OpenElement);
+        PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
         Internal::System->Elements.back().Widget = std::make_unique < Widgets::TextWidget<wchar_t>>(text);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
     }
 
     void UI::Text(std::string_view text, float textScale, TextAlignment alignment, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI text before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
+        PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(text, textScale, alignment);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
     }
 
     void UI::Text(std::wstring_view text, float textScale, TextAlignment alignment, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         RC_ASSERT(Internal::System, "Tried to create a UI text before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, relativeSize * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
+        PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(text, textScale, alignment);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
     }
 
     void UI::TextInputField(std::vector<char>& text, std::string_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
@@ -668,36 +595,15 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
         RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
         
-        Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        const size_t parentIndex = Internal::System->OpenElement;
+
+        PushContainerElement(SurfaceType::TextInput, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<char>>(text, selectionStart, selectionEnd, highlightColours);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        size_t parentIndex = Internal::System->OpenElement;
-
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
-        Internal::System->OpenElement = currentIndex;
 
         BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         {
-            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Auto, glm::vec2(0.0f), Internal::System->Elements[Internal::System->OpenElement].Size, textColours, Internal::System->OpenElement);
+            PushElement(SurfaceType::None, PositioningType::Auto, glm::vec2(0.0f), glm::vec2(1.0f), textColours);
             Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(label, textScale);
-            Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-            size_t currentIndex = Internal::System->Elements.size() - 1;
-            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                    Internal::System->Elements[i].SiblingID = currentIndex;
-                    break;
-                }
-            }
         }
         EndScrollContainer();
         
@@ -709,36 +615,15 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
         RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
         
-        Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        const size_t parentIndex = Internal::System->OpenElement;
+
+        PushContainerElement(SurfaceType::TextInput, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, highlightColours);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        size_t parentIndex = Internal::System->OpenElement;
-
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
-        Internal::System->OpenElement = currentIndex;
 
         BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         {
-            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Auto, glm::vec2(0.0f), Internal::System->Elements[Internal::System->OpenElement].Size, textColours, Internal::System->OpenElement);
+            PushElement(SurfaceType::None, PositioningType::Auto, glm::vec2(0.0f), glm::vec2(1.0f), textColours);
             Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(label, textScale);
-            Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-            size_t currentIndex = Internal::System->Elements.size() - 1;
-            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                    Internal::System->Elements[i].SiblingID = currentIndex;
-                    break;
-                }
-            }
         }
         EndScrollContainer();
         
@@ -750,51 +635,21 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
         RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
 
-        Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        const size_t parentIndex = Internal::System->OpenElement;
+
+        PushContainerElement(SurfaceType::TextInput, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextureTextInputWidget<char>>(text, selectionStart, selectionEnd, atlasProps.BoxSize, atlasProps.BoxAtlasIndices, atlasProps.CaretSize, atlasProps.SelectionMiddleSize, atlasProps.SelectionEndsSize, glm::uvec3(atlasProps.SelectionLeftEndIndex, atlasProps.SelectionMiddleIndex, atlasProps.SelectionRightEndIndex));
         
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        size_t parentIndex = Internal::System->OpenElement;
-
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
-        Internal::System->OpenElement = currentIndex;
-
         BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         {
-            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Auto, glm::vec2(0.0f), Internal::System->Elements[Internal::System->OpenElement].Size, textColours, Internal::System->OpenElement);
+            PushElement(SurfaceType::None, PositioningType::Auto, glm::vec2(0.0f), glm::vec2(1.0f), textColours);
             Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(label, textScale);
-            Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-            size_t currentIndex = Internal::System->Elements.size() - 1;
-            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                    Internal::System->Elements[i].SiblingID = currentIndex;
-                    break;
-                }
-            }
         }
         EndScrollContainer();
-        
-        {
-            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Offset, glm::vec2(0.0f), glm::vec2(0.0f), boxColours, Internal::System->OpenElement);
-            Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
 
-            size_t currentIndex = Internal::System->Elements.size() - 1;
-            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                    Internal::System->Elements[i].SiblingID = currentIndex;
-                    break;
-                }
-            }
-        }
+        // Caret
+        PushElement(SurfaceType::None, PositioningType::Offset, glm::vec2(0.0f), glm::vec2(0.0f), boxColours);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
 
         Internal::System->OpenElement = parentIndex;
     }
@@ -804,51 +659,21 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
         RC_ASSERT(Internal::Font, "Tried to create a UI text input field before setting UI font");
 
-        Internal::System->Elements.emplace_back(SurfaceType::TextInput, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        const size_t parentIndex = Internal::System->OpenElement;
+
+        PushContainerElement(SurfaceType::TextInput, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextureTextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, atlasProps.BoxSize, atlasProps.BoxAtlasIndices, atlasProps.CaretSize, atlasProps.SelectionMiddleSize, atlasProps.SelectionEndsSize, glm::uvec3(atlasProps.SelectionLeftEndIndex, atlasProps.SelectionMiddleIndex, atlasProps.SelectionRightEndIndex));
         
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        size_t parentIndex = Internal::System->OpenElement;
-
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
-        Internal::System->OpenElement = currentIndex;
-
         BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         {
-            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Auto, glm::vec2(0.0f), Internal::System->Elements[Internal::System->OpenElement].Size, textColours, Internal::System->OpenElement);
+            PushElement(SurfaceType::None, PositioningType::Auto, glm::vec2(0.0f), glm::vec2(1.0f), textColours);
             Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(label, textScale);
-            Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-            size_t currentIndex = Internal::System->Elements.size() - 1;
-            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                    Internal::System->Elements[i].SiblingID = currentIndex;
-                    break;
-                }
-            }
         }
         EndScrollContainer();
-        
-        {
-            Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, PositioningType::Relative, glm::vec2(0.0f), glm::vec2(0.0f), boxColours, Internal::System->OpenElement);
-            Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
 
-            size_t currentIndex = Internal::System->Elements.size() - 1;
-            for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-                if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                    Internal::System->Elements[i].SiblingID = currentIndex;
-                    break;
-                }
-            }
-        }
+        // Caret
+        PushElement(SurfaceType::None, PositioningType::Relative, glm::vec2(0.0f), glm::vec2(0.0f), boxColours);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
 
         Internal::System->OpenElement = parentIndex;
     }
@@ -859,22 +684,11 @@ namespace Core {
         RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI text input field before calling UI Begin");
         RC_ASSERT(UI::Internal::Font, "Tried to create a UI text input field before setting UI font");
 
-        size_t currentIndex = UI::Internal::System->Elements.size();
-        size_t parentIndex = UI::Internal::System->OpenElement;
+        const size_t parentIndex = UI::Internal::System->OpenElement;
 
-        UI::Internal::System->Elements.emplace_back(UI::SurfaceType::None, UI::LayoutType::None, positioning, position, size * UI::Internal::System->Elements[parentIndex].Size, boxColours, parentIndex);
-        UI::Internal::System->Elements.back().Widget = std::make_unique<UI::Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, currentIndex + 1);
-
-        UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
-
-        for (size_t i = currentIndex - 1; i > UI::Internal::System->OpenElement; i--) {
-            if (UI::Internal::System->Elements[i].ParentID == UI::Internal::System->OpenElement) {
-                UI::Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-        
-        UI::Internal::System->OpenElement = currentIndex;
+        PushContainerElement(SurfaceType::None, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
+        const size_t childIndex = UI::Internal::System->Elements.size();
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, childIndex);
 
         UI::TextInputField(text, std::basic_string<CharType>(), textScale, scrollOffset, selectionStart, selectionEnd, glm::vec2(1.0f), boxColours, highlightColours, textColours);
         
@@ -963,22 +777,11 @@ namespace Core {
         RC_ASSERT(!UI::Internal::System->Elements.empty(), "Tried to create a UI numeric input field before calling UI Begin");
         RC_ASSERT(UI::Internal::Font, "Tried to create a UI numeric input field before setting UI font");
 
-        size_t currentIndex = UI::Internal::System->Elements.size();
-        size_t parentIndex = UI::Internal::System->OpenElement;
+        const size_t parentIndex = UI::Internal::System->OpenElement;
 
-        UI::Internal::System->Elements.emplace_back(UI::SurfaceType::None, UI::LayoutType::None, positioning, position, size * UI::Internal::System->Elements[parentIndex].Size, boxColours, parentIndex);
-        UI::Internal::System->Elements.back().Widget = std::make_unique<UI::Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, currentIndex + 1);
-
-        UI::Internal::System->Elements[UI::Internal::System->OpenElement].ChildCount++;
-
-        for (size_t i = currentIndex - 1; i > UI::Internal::System->OpenElement; i--) {
-            if (UI::Internal::System->Elements[i].ParentID == UI::Internal::System->OpenElement) {
-                UI::Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
-
-        UI::Internal::System->OpenElement = currentIndex;
+        PushContainerElement(SurfaceType::None, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
+        const size_t childIndex = UI::Internal::System->Elements.size();
+        UI::Internal::System->Elements.back().Widget = std::make_unique<UI::Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, childIndex);
 
         UI::TextureTextInputField(text, std::basic_string<CharType>(), textScale, scrollOffset, selectionStart, selectionEnd, atlasProps, glm::vec2(1.0f), boxColours, textColours);
 
@@ -1065,18 +868,9 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to create a UI toggle before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI toggle before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        const size_t currentIndex = Internal::System->Elements.size();
+        PushElement(SurfaceType::Activatable, positioning, position, size, boxColours);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::ToggleWidget>(enabled, checkColours);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
 
         enabled ^= WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
@@ -1085,18 +879,9 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to create a UI toggle before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI toggle before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour }, Internal::System->OpenElement);
+        const size_t currentIndex = Internal::System->Elements.size();
+        PushElement(SurfaceType::Activatable, positioning, position, size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureToggleWidget>(enabled, boxAtlasProperties.Indices, checkAtlasIndices, boxAtlasProperties.Size);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
 
         enabled ^= WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
@@ -1109,20 +894,11 @@ namespace Core {
 
         state.SelectedItemIndex = glm::min(state.SelectedItemIndex, items.size() - 1);
         const uint8_t visibleItems = glm::min(maxHeight, static_cast<uint8_t>(items.size()));
-        Internal::System->Elements.emplace_back(SurfaceType::None, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, Transparent, Internal::System->OpenElement);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ComboWidget>(state.SelectedItemIndex, state.Open, visibleItems, items.size());
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        const size_t currentIndex = Internal::System->Elements.size() - 1;
+        const size_t currentIndex = Internal::System->Elements.size();
         const size_t parentIndex = Internal::System->OpenElement;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
 
-        Internal::System->OpenElement = currentIndex;
+        PushContainerElement(SurfaceType::None, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, Transparent);
+        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ComboWidget>(state.SelectedItemIndex, state.Open, visibleItems, items.size());
 
         state.Open |= Button(items[state.SelectedItemIndex], glm::vec2(!state.Open), boxColours);
         const bool scrollBar = maxHeight <= items.size();
@@ -1155,18 +931,8 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to create a UI slider before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        PushElement(SurfaceType::Activatable, positioning, position, size, boxColours);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::SliderWidget<T>>(value, min, max, vertical, sliderSize, sliderColours);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
     }
 
     template void UI::Slider<int8_t>(int8_t&, int8_t, int8_t, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
@@ -1183,18 +949,8 @@ namespace Core {
         RC_ASSERT(Internal::System, "Tried to create a UI slider before initializing UI");
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
-        Internal::System->Elements.emplace_back(SurfaceType::Activatable, LayoutType::None, positioning, position, size * Internal::System->Elements[Internal::System->OpenElement].Size, boxColours, Internal::System->OpenElement);
+        PushElement(SurfaceType::Activatable, positioning, position, size, boxColours);
         Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, vertical, boxAtlasProperties.Size, boxAtlasProperties.Indices, sliderSize, sliderAtlasProperties.Size, sliderAtlasProperties.Indices);
-
-        Internal::System->Elements[Internal::System->OpenElement].ChildCount++;
-
-        size_t currentIndex = Internal::System->Elements.size() - 1;
-        for (size_t i = currentIndex - 1; i > Internal::System->OpenElement; i--) {
-            if (Internal::System->Elements[i].ParentID == Internal::System->OpenElement) {
-                Internal::System->Elements[i].SiblingID = currentIndex;
-                break;
-            }
-        }
     }
     
     template void UI::TextureSlider<int8_t>(int8_t&, int8_t, int8_t, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
