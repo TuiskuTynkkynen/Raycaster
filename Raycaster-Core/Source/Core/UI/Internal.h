@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "Surface.h"
+#include "DynamicArena.h"
 #include "Core/Base/Timestep.h"
 #include "Core/Font/Font.h"
 #include "Core/Renderer/Texture.h"
@@ -100,6 +101,18 @@ namespace Core::UI::Internal {
 	inline std::shared_ptr<Core::Texture2D> TextureAtlas;
 	inline glm::vec2 AtlasSize;
 	inline std::unique_ptr<UIInputState> Input;
+	inline DynamicArena WidgetAllocator;
+
+	template <typename T, typename... Args>
+	inline std::unique_ptr<Widget, WidgetDeleter> make_widget(Args&&... args) {
+		T* ptr = std::construct_at(WidgetAllocator.Allocate<T>(), std::forward<Args>(args)...);
+		return std::unique_ptr<Widget, WidgetDeleter>(ptr);
+	}
+
+	inline void WidgetDeleter::operator()(Widget* w) {
+		std::destroy_at(w);
+		WidgetAllocator.Deallocate(w);
+	}
 }
 
 namespace Core::UI {

@@ -198,12 +198,15 @@ namespace Core {
 
         Internal::System.reset();
         Internal::Input.reset();
+        Internal::WidgetAllocator.ReleaseAll();
     }
 
     void UI::Begin(glm::uvec2 screenPosition, glm::uvec2 screenSize, LayoutType layout, const glm::vec4& colour) {
         RC_ASSERT(Internal::System, "UI has not been initialized");
         Internal::System->Elements.clear();
-
+        Internal::WidgetAllocator.ReleaseUnused();
+        Internal::WidgetAllocator.DeallocateAll();
+        
         Internal::System->Position = screenPosition;
         Internal::System->Size = screenSize;
 
@@ -438,7 +441,7 @@ namespace Core {
 
         const LayoutType layout = vertical ? LayoutType::CropVertical : LayoutType::CropHorizontal;
         PushContainerElement(SurfaceType::Hoverable, layout, childGap, positioning, position, size, std::array<glm::vec4, 3>{primaryColour, hoverColour});
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ScrollWidget>(offset, vertical, speed);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::ScrollWidget>(offset, vertical, speed);
     }
 
     void UI::BeginHoverContainer(float childGap, PositioningType positioning, glm::vec3 position, glm::vec2 size, LayoutType layout, const glm::vec4& primaryColour, const glm::vec4& hoverColour) {
@@ -446,7 +449,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to begin a UI container before calling UI Begin");
 
         PushContainerElement(SurfaceType::Hoverable, layout, childGap, positioning, position, size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, hoverColour });
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::HoverWidget>(Internal::System->HoverID);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::HoverWidget>(Internal::System->HoverID);
     }
 
     template <typename T>
@@ -478,7 +481,7 @@ namespace Core {
     bool UI::TextureButton(const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         bool result = Button(positioning, position, size, primaryColour, hoverColour, activeColour);
 
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
 
         return result;
     }
@@ -486,7 +489,7 @@ namespace Core {
     template <typename T>
     bool UI::TextureButton(std::basic_string_view<T> text, const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
         bool result = Button(positioning, position, size, buttonColours[0], buttonColours[1], buttonColours[2]);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
 
         size_t open = Internal::System->OpenElement;
         Internal::System->OpenElement = Internal::System->Elements.size() - 1;
@@ -529,7 +532,7 @@ namespace Core {
     UI::HoverResult UI::HoverTextureButton(const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
         HoverResult result = HoverButton(positioning, position, size, primaryColour, hoverColour, activeColour);
 
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
 
         return result;
     }
@@ -537,7 +540,7 @@ namespace Core {
     template <typename T>
     UI::HoverResult UI::HoverTextureButton(std::basic_string_view<T> text, const AtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& buttonColours, const std::array<glm::vec4, 3>& textColours) {
         HoverResult result = HoverButton(positioning, position, size, buttonColours[0], buttonColours[1], buttonColours[2]);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
 
         size_t open = Internal::System->OpenElement;
         Internal::System->OpenElement = Internal::System->Elements.size() - 1;
@@ -556,7 +559,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI texture before calling UI Begin");
 
         PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ colour, colour, colour });
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureWidget>(atlasProperties.Indices, atlasProperties.Size);
     }
     
     void UI::Text(std::string_view text, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
@@ -564,7 +567,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
         PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
-        Internal::System->Elements.back().Widget = std::make_unique < Widgets::TextWidget<char>>(text);
+        Internal::System->Elements.back().Widget = Internal::make_widget < Widgets::TextWidget<char>>(text);
     }
 
     void UI::Text(std::wstring_view text, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
@@ -572,7 +575,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
         PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
-        Internal::System->Elements.back().Widget = std::make_unique < Widgets::TextWidget<wchar_t>>(text);
+        Internal::System->Elements.back().Widget = Internal::make_widget < Widgets::TextWidget<wchar_t>>(text);
     }
 
     void UI::Text(std::string_view text, float textScale, TextAlignment alignment, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
@@ -580,7 +583,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
         PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(text, textScale, alignment);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextDisplayWidget<char>>(text, textScale, alignment);
     }
 
     void UI::Text(std::wstring_view text, float textScale, TextAlignment alignment, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const glm::vec4& primaryColour, const glm::vec4& hoverColour, const glm::vec4& activeColour) {
@@ -588,7 +591,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI text before calling UI Begin");
 
         PushElement(SurfaceType::None, positioning, position, relativeSize, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(text, textScale, alignment);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextDisplayWidget<wchar_t>>(text, textScale, alignment);
     }
 
     void UI::TextInputField(std::vector<char>& text, std::string_view label, float textScale, float& scrollOffset, size_t& selectionStart, size_t& selectionEnd, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& boxColours, const std::array<glm::vec4, 3>& highlightColours, const std::array<glm::vec4, 3>& textColours) {
@@ -599,12 +602,12 @@ namespace Core {
         const size_t parentIndex = Internal::System->OpenElement;
 
         PushContainerElement(SurfaceType::TextInput, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<char>>(text, selectionStart, selectionEnd, highlightColours);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextInputWidget<char>>(text, selectionStart, selectionEnd, highlightColours);
 
         BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         {
             PushElement(SurfaceType::None, PositioningType::Auto, glm::vec2(0.0f), glm::vec2(1.0f), textColours);
-            Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(label, textScale);
+            Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextDisplayWidget<char>>(label, textScale);
         }
         EndScrollContainer();
         
@@ -619,12 +622,12 @@ namespace Core {
         const size_t parentIndex = Internal::System->OpenElement;
 
         PushContainerElement(SurfaceType::TextInput, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, highlightColours);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, highlightColours);
 
         BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         {
             PushElement(SurfaceType::None, PositioningType::Auto, glm::vec2(0.0f), glm::vec2(1.0f), textColours);
-            Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(label, textScale);
+            Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextDisplayWidget<wchar_t>>(label, textScale);
         }
         EndScrollContainer();
         
@@ -639,18 +642,18 @@ namespace Core {
         const size_t parentIndex = Internal::System->OpenElement;
 
         PushContainerElement(SurfaceType::TextInput, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextureTextInputWidget<char>>(text, selectionStart, selectionEnd, atlasProps.BoxSize, atlasProps.BoxAtlasIndices, atlasProps.CaretSize, atlasProps.SelectionMiddleSize, atlasProps.SelectionEndsSize, glm::uvec3(atlasProps.SelectionLeftEndIndex, atlasProps.SelectionMiddleIndex, atlasProps.SelectionRightEndIndex));
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextureTextInputWidget<char>>(text, selectionStart, selectionEnd, atlasProps.BoxSize, atlasProps.BoxAtlasIndices, atlasProps.CaretSize, atlasProps.SelectionMiddleSize, atlasProps.SelectionEndsSize, glm::uvec3(atlasProps.SelectionLeftEndIndex, atlasProps.SelectionMiddleIndex, atlasProps.SelectionRightEndIndex));
         
         BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         {
             PushElement(SurfaceType::None, PositioningType::Auto, glm::vec2(0.0f), glm::vec2(1.0f), textColours);
-            Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<char>>(label, textScale);
+            Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextDisplayWidget<char>>(label, textScale);
         }
         EndScrollContainer();
 
         // Caret
         PushElement(SurfaceType::None, PositioningType::Offset, glm::vec2(0.0f), glm::vec2(0.0f), boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
 
         Internal::System->OpenElement = parentIndex;
     }
@@ -663,18 +666,18 @@ namespace Core {
         const size_t parentIndex = Internal::System->OpenElement;
 
         PushContainerElement(SurfaceType::TextInput, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextureTextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, atlasProps.BoxSize, atlasProps.BoxAtlasIndices, atlasProps.CaretSize, atlasProps.SelectionMiddleSize, atlasProps.SelectionEndsSize, glm::uvec3(atlasProps.SelectionLeftEndIndex, atlasProps.SelectionMiddleIndex, atlasProps.SelectionRightEndIndex));
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextureTextInputWidget<wchar_t>>(text, selectionStart, selectionEnd, atlasProps.BoxSize, atlasProps.BoxAtlasIndices, atlasProps.CaretSize, atlasProps.SelectionMiddleSize, atlasProps.SelectionEndsSize, glm::uvec3(atlasProps.SelectionLeftEndIndex, atlasProps.SelectionMiddleIndex, atlasProps.SelectionRightEndIndex));
         
         BeginScrollContainer(scrollOffset, glm::vec2(1.0f), false, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
         {
             PushElement(SurfaceType::None, PositioningType::Auto, glm::vec2(0.0f), glm::vec2(1.0f), textColours);
-            Internal::System->Elements.back().Widget = std::make_unique<Widgets::TextDisplayWidget<wchar_t>>(label, textScale);
+            Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::TextDisplayWidget<wchar_t>>(label, textScale);
         }
         EndScrollContainer();
 
         // Caret
         PushElement(SurfaceType::None, PositioningType::Relative, glm::vec2(0.0f), glm::vec2(0.0f), boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureWidget>(glm::uvec3(atlasProps.CaretIndex), atlasProps.CaretSize);
 
         Internal::System->OpenElement = parentIndex;
     }
@@ -689,7 +692,7 @@ namespace Core {
 
         PushContainerElement(SurfaceType::None, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
         const size_t childIndex = UI::Internal::System->Elements.size();
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, childIndex);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, childIndex);
 
         UI::TextInputField(text, std::basic_string<CharType>(), textScale, scrollOffset, selectionStart, selectionEnd, glm::vec2(1.0f), boxColours, highlightColours, textColours);
         
@@ -782,7 +785,7 @@ namespace Core {
 
         PushContainerElement(SurfaceType::None, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, boxColours);
         const size_t childIndex = UI::Internal::System->Elements.size();
-        UI::Internal::System->Elements.back().Widget = std::make_unique<UI::Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, childIndex);
+        UI::Internal::System->Elements.back().Widget = Internal::make_widget<UI::Widgets::NumericInputWidget<ValueType, CharType>>(value, text, valueFromString, valueToString, validate, childIndex);
 
         UI::TextureTextInputField(text, std::basic_string<CharType>(), textScale, scrollOffset, selectionStart, selectionEnd, atlasProps, glm::vec2(1.0f), boxColours, textColours);
 
@@ -871,7 +874,7 @@ namespace Core {
 
         const size_t currentIndex = Internal::System->Elements.size();
         PushElement(SurfaceType::Activatable, positioning, position, size, boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ToggleWidget>(enabled, checkColours);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::ToggleWidget>(enabled, checkColours);
 
         enabled ^= WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
@@ -882,7 +885,7 @@ namespace Core {
 
         const size_t currentIndex = Internal::System->Elements.size();
         PushElement(SurfaceType::Activatable, positioning, position, size, std::array<glm::vec4, 3>{ primaryColour, hoverColour, activeColour });
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureToggleWidget>(enabled, boxAtlasProperties.Indices, checkAtlasIndices, boxAtlasProperties.Size);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureToggleWidget>(enabled, boxAtlasProperties.Indices, checkAtlasIndices, boxAtlasProperties.Size);
 
         enabled ^= WasElementInteracted(currentIndex) && Internal::System->ActiveID == currentIndex;
     }
@@ -899,7 +902,7 @@ namespace Core {
         const size_t parentIndex = Internal::System->OpenElement;
 
         PushContainerElement(SurfaceType::None, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, Transparent);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::ComboWidget>(state.SelectedItemIndex, state.Open, visibleItems, items.size());
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::ComboWidget>(state.SelectedItemIndex, state.Open, visibleItems, items.size());
 
         state.Open |= Button(items[state.SelectedItemIndex], glm::vec2(!state.Open), boxColours);
         const bool scrollBar = maxHeight <= items.size();
@@ -933,7 +936,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
         PushElement(SurfaceType::Activatable, positioning, position, size, boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::SliderWidget<T>>(value, min, max, vertical, sliderSize, sliderColours);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::SliderWidget<T>>(value, min, max, vertical, sliderSize, sliderColours);
     }
 
     template void UI::Slider<int8_t>(int8_t&, int8_t, int8_t, bool, float, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
@@ -951,7 +954,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI slider before calling UI Begin");
 
         PushElement(SurfaceType::Activatable, positioning, position, size, boxColours);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, vertical, boxAtlasProperties.Size, boxAtlasProperties.Indices, sliderSize, sliderAtlasProperties.Size, sliderAtlasProperties.Indices);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::AtlasTextureSliderWidget<T>>(value, min, max, vertical, boxAtlasProperties.Size, boxAtlasProperties.Indices, sliderSize, sliderAtlasProperties.Size, sliderAtlasProperties.Indices);
     }
     
     template void UI::TextureSlider<int8_t>(int8_t&, int8_t, int8_t, bool, const AtlasProperties&, glm::vec2, const AtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&);
@@ -980,14 +983,14 @@ namespace Core {
         };
 
         bool downButton = Button(PositioningType::Relative, glm::vec2(0.0f, -0.5f * (1.0f - buttonSize)), glm::vec2(1.0f, buttonSize), baseColours[0], baseColours[1], baseColours[2]);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, -1.0f));
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, -1.0f));
 
         Slider(offset, 0.0f, 0.0f, true, glm::vec2(1.0f, 1.0f - buttonSize * 2), highlightColours, baseColours);
 
         bool upButton = Button(PositioningType::Relative, glm::vec2(0.0f, 0.5f * (1.0f - buttonSize)), glm::vec2(1.0f, buttonSize), baseColours[0], baseColours[1], baseColours[2]);
-        Internal::System->Elements.back().Widget = std::make_unique<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, 1.0f));
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::CustomRenderWidget>(std::bind(renderTriangleButton, std::placeholders::_1, 1.0f));
         
-        Internal::System->Elements[index].Widget = std::make_unique<Widgets::ScrollBarWidget>(offset, downButton, upButton);
+        Internal::System->Elements[index].Widget = Internal::make_widget<Widgets::ScrollBarWidget>(offset, downButton, upButton);
         EndContainer();
     }
     
@@ -999,7 +1002,7 @@ namespace Core {
         TextureSlider<float>(offset, 0.0f, 0.0f, true, { glm::uvec3(0), glm::vec2(0.0f) }, sliderSize, sliderAtlasProperties, glm::vec2(1.0f, 1.0f - 0.5f * buttonOffset.y), colours);
         bool upButton = TextureButton(buttonAtlasProperties, PositioningType::Relative, buttonOffset, glm::vec2(buttonSize.x, -buttonSize.y), colours[0], colours[1], colours[2]);
         
-        Internal::System->Elements[index].Widget = std::make_unique<Widgets::AtlasTextureScrollBarWidget>(offset, downButton, upButton, baseAtlasProperties.Indices, baseAtlasProperties.Size);
+        Internal::System->Elements[index].Widget = Internal::make_widget<Widgets::AtlasTextureScrollBarWidget>(offset, downButton, upButton, baseAtlasProperties.Indices, baseAtlasProperties.Size);
         EndContainer();
     }
 

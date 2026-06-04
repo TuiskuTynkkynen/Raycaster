@@ -7,6 +7,12 @@
 namespace Core::UI {
     class Widget;
 
+    namespace Internal {
+        struct WidgetDeleter {
+            void operator()(Widget* w);
+        };
+    }
+
     enum class SurfaceType : uint8_t {
         None = 0,
         Hoverable,
@@ -31,7 +37,7 @@ namespace Core::UI {
         size_t ParentID = 0;
         size_t SiblingID = 0;
 
-        std::unique_ptr<Widget> Widget;
+        std::unique_ptr<Widget, Internal::WidgetDeleter> Widget;
 
         Surface(SurfaceType type = SurfaceType::None, LayoutType layout = LayoutType::None, PositioningType positioning = PositioningType::Auto,
             glm::vec3 position = glm::vec3(0.0f), glm::vec2 size = glm::vec2(1.0f), std::array<glm::vec4, 3> colours = DefaultColours,
