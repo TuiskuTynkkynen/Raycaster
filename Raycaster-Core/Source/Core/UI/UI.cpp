@@ -1,5 +1,6 @@
 #include "UI.h"
 
+#include "Surface.h"
 #include "Layout.h"
 #include "Internal.h"
 #include "Widgets.h"

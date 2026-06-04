@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.h"
+#include "Surface.h"
 #include "Core/Base/Timestep.h"
 #include "Core/Font/Font.h"
 #include "Core/Renderer/Texture.h"

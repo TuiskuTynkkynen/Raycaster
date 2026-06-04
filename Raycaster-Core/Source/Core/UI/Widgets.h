@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.h"
+#include "Surface.h"
 
 #include <string>
 #include <functional>
