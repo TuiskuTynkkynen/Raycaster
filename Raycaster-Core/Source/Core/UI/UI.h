@@ -191,12 +191,14 @@ namespace Core::UI {
     
     template<Serialization::SerializableEnumeration Enum>
     struct EnumComboState : ComboState {
-        inline constexpr EnumComboState(Enum startValue) { const auto& array = Serialization::Mapping<Enum>::Value.GetMappedValues(); for (size_t i = 0; i < array.size(); i++) { if (array[i] == startValue) { SelectedItemIndex = i; return; }} RC_ERROR("Tried to intialize EnumComboState<Enum> with Enum value not present in Serialization::Mapping<Enum>!"); }
+        inline constexpr EnumComboState(Enum startValue) { SetValue(startValue); }
+        inline constexpr void SetValue(Enum value) { const auto& array = Serialization::Mapping<Enum>::Value.GetMappedValues(); for (size_t i = 0; i < array.size(); i++) { if (array[i] == value) { SelectedItemIndex = i; return; }} RC_ERROR("Tried to intialize EnumComboState<Enum> with Enum value not present in Serialization::Mapping<Enum>!"); }
+        inline constexpr Enum GetValue() { return Serialization::Mapping<Enum>::Value.GetMappedValues()[SelectedItemIndex]; }
     };
     template<Serialization::SerializableEnumeration Enum>
-    inline Enum EnumCombo(EnumComboState<Enum>& state, uint8_t maxHeight, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& selectedColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours) { Combo<std::string_view>(Serialization::Mapping<Enum>::Value.GetMappedNames(), state, maxHeight, positioning, position, relativeSize, selectedColours, boxColours); return Serialization::Mapping<Enum>::Value.GetMappedValues()[state.SelectedItemIndex]; }
+    inline Enum EnumCombo(EnumComboState<Enum>& state, uint8_t maxHeight, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& selectedColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours) { Combo<std::string_view>(Serialization::Mapping<Enum>::Value.GetMappedNames(), state, maxHeight, positioning, position, relativeSize, selectedColours, boxColours); return state.GetValue(); }
     template<Serialization::SerializableEnumeration Enum>
-    inline Enum EnumCombo(EnumComboState<Enum>& state, uint8_t maxHeight, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& selectedColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours) { Combo<std::string_view>(Serialization::Mapping<Enum>::Value.GetMappedNames(), state, maxHeight, PositioningType::Auto, glm::vec2(0.0f), relativeSize, selectedColours, boxColours); return Serialization::Mapping<Enum>::Value.GetMappedValues()[state.SelectedItemIndex]; }
+    inline Enum EnumCombo(EnumComboState<Enum>& state, uint8_t maxHeight, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& selectedColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours) { Combo<std::string_view>(Serialization::Mapping<Enum>::Value.GetMappedNames(), state, maxHeight, PositioningType::Auto, glm::vec2(0.0f), relativeSize, selectedColours, boxColours); return state.GetValue(); }
 
     template <typename T>
     void Slider(T& value, T min, T max, bool vertical, float sliderSize, PositioningType positioning, glm::vec2 position, glm::vec2 relativeSize, const std::array<glm::vec4, 3>& sliderColours = DefaultHighlightColours, const std::array<glm::vec4, 3>& boxColours = DefaultColours);
