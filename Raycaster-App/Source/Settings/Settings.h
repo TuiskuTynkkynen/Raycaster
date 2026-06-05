@@ -1,10 +1,12 @@
 #pragma once
 
+#include "SavedState.h"
+
 #include "Core/Serialization/Archive.h"
 
 namespace Settings::Input {
-    inline bool s_FreeLook = true;
-    inline bool s_MouseLook = true;
+    inline SavedState<bool> s_FreeLook = true;
+    inline SavedState<bool> s_MouseLook = true;
 }
 
 namespace Settings {

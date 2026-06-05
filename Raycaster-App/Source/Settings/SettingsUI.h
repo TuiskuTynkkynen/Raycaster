@@ -21,13 +21,19 @@ namespace Settings {
 
         void OnEvent(Core::Event& event);
     private:
-        void RenderInput();
-        void RenderKeyBinds();
+        union SettingState {
+            struct {
+                bool Saved;
+                bool Default;
+            };
+            glm::bvec2 State{ true };
+        };
+
+        SettingState RenderInput();
+        SettingState RenderKeyBinds();
         bool OnKeyReleased(Core::KeyReleased& event);
         bool OnButtonPressed(Core::MouseButtonPressed& event);
 
-        bool m_Saved = true;
-        bool m_Default = true;
         uint32_t m_SelectedKeyBind = -1;
 
         std::array<glm::vec4, 3> m_Deselected{};

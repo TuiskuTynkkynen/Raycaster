@@ -7,18 +7,6 @@
 #include "Core/UI/UI.h"
 #include "Core/Serialization/Archive.h"
 
-struct SavedState {
-    bool State;
-
-    SavedState(bool state) : State(state) {}
-
-    bool Update(bool state) {
-        bool result = State != state;
-        State = state;
-        return result;
-    }
-};
-
 static bool LoadSettings() {
     Core::Serialization::Archive arch(std::string_view("settings.bin"));
     if (Settings::Deserialize(arch)) {
@@ -52,27 +40,27 @@ namespace Settings {
     }
 
     void UI::Render() {
+        SettingState state;
         Core::UI::Text("Settings", { 0.5f, 0.125f }, glm::vec4(1.0f));
-        
+
         static float scrollOffset = 0;
         Core::UI::BeginScrollContainer(scrollOffset, { 0.75f, 0.65f }, true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f)); {
-            RenderInput();
-            RenderKeyBinds();
+            state.State &= RenderInput().State;
+            state.State &= RenderKeyBinds().State;
             Core::UI::ScrollBar(scrollOffset, { 0.05f, 1.0f });
         } Core::UI::EndScrollContainer();
 
         Core::UI::BeginContainer({ 0.75f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal); {
-            if (Core::UI::Button("Save", { 0.3f, 1.0f }, m_Saved ? m_Deselected : Core::UI::DefaultColours, m_Saved ? m_Selected : Core::UI::DefaultTextColours) && !m_Saved) {
-                m_Saved = SaveSettings();
+            if (Core::UI::Button("Save", { 0.3f, 1.0f }, state.Saved ? m_Deselected : Core::UI::DefaultColours, state.Saved ? m_Selected : Core::UI::DefaultTextColours) && !state.Saved) {
+                SaveSettings();
             }
 
-            if (Core::UI::Button("Reset to Defaults", { 0.3f, 1.0f }, m_Default ? m_Deselected : Core::UI::DefaultColours, m_Default ? m_Selected : Core::UI::DefaultTextColours)) {
-                m_Saved &= m_Default;
-                m_Default = true;
+            if (Core::UI::Button("Reset to Defaults", { 0.3f, 1.0f }, state.Default ? m_Deselected : Core::UI::DefaultColours, state.Default ? m_Selected : Core::UI::DefaultTextColours)) {
                 for (KeyBinds::KeyBind& bind : s_KeyBinds) {
                     bind.Reset();
                 }
-                Input::s_MouseLook = Input::s_FreeLook = true;
+                Input::s_MouseLook.Reset();
+                Input::s_FreeLook.Reset();
             }
 
             if (Core::UI::Button("Back", { 0.3f, 1.0f })) {
@@ -82,27 +70,32 @@ namespace Settings {
         } Core::UI::EndContainer();
     }
 
-    void UI::RenderInput() {
+    UI::SettingState UI::RenderInput() {
+        SettingState result{};
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
             Core::UI::Text("Enable Mouse Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
-            Core::UI::Toggle(Input::s_MouseLook, { 0.076f, 1.0f });
-            
-            static SavedState mouseLook = Input::s_MouseLook;
-            m_Default &= Input::s_MouseLook;
-            m_Saved &= !mouseLook.Update(Input::s_MouseLook);
+           
+            bool mouseLook = Input::s_MouseLook;
+            Core::UI::Toggle(mouseLook, { 0.076f, 1.0f });
+
+            result.Saved &= Input::s_MouseLook.Update(mouseLook);
+            result.Default &= Input::s_MouseLook.Default();
         Core::UI::EndContainer();
 
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
             Core::UI::Text("Enable Free Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
-            Core::UI::Toggle(Input::s_FreeLook, { 0.076f, 1.0f });
 
-            static SavedState freeLook = Input::s_FreeLook;
-            m_Default &= Input::s_FreeLook;
-            m_Saved &= !freeLook.Update(Input::s_FreeLook);
+            bool freeLook = Input::s_FreeLook;
+            Core::UI::Toggle(freeLook, { 0.076f, 1.0f });
+
+            result.Saved &= Input::s_FreeLook.Update(freeLook);
+            result.Default &= Input::s_FreeLook.Default();
         Core::UI::EndContainer();
+        return result;
     }
 
-    void UI::RenderKeyBinds() {
+    UI::SettingState UI::RenderKeyBinds() {
+        SettingState result{};
         Core::UI::Text("Key Bindings", { 0.5f, 0.125f }, glm::vec4(1.0f));
 
         for (uint32_t i = 0; i < s_KeyBinds.size(); i++) {
@@ -115,14 +108,15 @@ namespace Settings {
             }
 
             bool isDefault = s_KeyBinds[i].Default();
-            m_Default &= isDefault;
+            result.Default &= isDefault;
+            result.Saved &= s_KeyBinds[i].Saved();
 
             if (Core::UI::Button("Reset", { 0.2f, 1.0f }, isDefault ? m_Deselected : Core::UI::DefaultColours, isDefault ? m_Selected : Core::UI::DefaultTextColours)) {
-                m_Saved &= isDefault;
                 s_KeyBinds[i].Reset();
             }
         Core::UI::EndContainer();
         }
+        return result;
     }
 
     void UI::OnEvent(Core::Event& event) {
@@ -149,7 +143,6 @@ namespace Settings {
         if (m_SelectedKeyBind != -1 && m_SelectedKeyBind < Settings::s_KeyBinds.size()) {
             Settings::s_KeyBinds[m_SelectedKeyBind].Update(event.GetKeyCode());
             m_SelectedKeyBind = -1;
-            m_Saved = false;
             return true;
         }
 
@@ -163,8 +156,6 @@ namespace Settings {
 
         s_KeyBinds[m_SelectedKeyBind].Update(event.GetButton());
         m_SelectedKeyBind = -1;
-        m_Saved = false;
-
         return true;
     }
 }

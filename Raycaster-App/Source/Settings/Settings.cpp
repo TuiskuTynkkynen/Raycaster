@@ -21,17 +21,17 @@ struct Core::Serialization::Mapping<SettingType> {
 };
 
 namespace Settings {
-    bool SerializeInput(Core::Serialization::Archive& archive) {
+    static bool SerializeInput(Core::Serialization::Archive& archive) {
         constexpr size_t count = 2;
 
         bool success = archive.Write<size_t>(count);
-        success &= archive.Write(Input::s_FreeLook);
-        success &= archive.Write(Input::s_MouseLook);
+        success &= Input::s_FreeLook.Serialize(archive);
+        success &= Input::s_MouseLook.Serialize(archive);
 
         return success;
     }
 
-    bool DeserializeInput(Core::Serialization::Archive& archive) {
+    static bool DeserializeInput(Core::Serialization::Archive& archive) {
         auto count = archive.Read<size_t>();
         size_t position = archive.GetPosition();
 
@@ -39,14 +39,9 @@ namespace Settings {
             return false;
         }
 
-        bool success = archive.Read<bool>().and_then([&archive](auto value) {
-                Input::s_FreeLook = value;
-                return archive.Read<bool>(); })
-            .transform([](auto value) {
-                return (Input::s_MouseLook = value); })
-            .has_value();
+        bool success = Input::s_FreeLook.Deserialize(archive);
+        success &= Input::s_MouseLook.Deserialize(archive);
 
-        size_t cposition = archive.GetPosition();
         position += count.value() * sizeof(bool);
         archive.SeekPosition(position);
 
