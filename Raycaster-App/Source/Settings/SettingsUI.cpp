@@ -110,11 +110,11 @@ namespace Settings {
             Core::UI::Text(s_KeyBinds[i].GetName(), 1.f, Core::UI::TextAlignment::Left, { 0.5f, 1.0f });
 
             bool isSelected = m_SelectedKeyBind == i;
-            if (Core::UI::Button(s_KeyBinds[i].InputCode.ToString(), { 0.2f, 1.0f }, isSelected ? m_Selected : Core::UI::DefaultColours)) {
+            if (Core::UI::Button(s_KeyBinds[i].GetValue().ToString(), {0.2f, 1.0f}, isSelected ? m_Selected : Core::UI::DefaultColours)) {
                 m_SelectedKeyBind = isSelected ? -1 : i;
             }
 
-            bool isDefault = s_KeyBinds[i].InputCode == s_KeyBinds[i].GetDefaultInputCode();
+            bool isDefault = s_KeyBinds[i].Default();
             m_Default &= isDefault;
 
             if (Core::UI::Button("Reset", { 0.2f, 1.0f }, isDefault ? m_Deselected : Core::UI::DefaultColours, isDefault ? m_Selected : Core::UI::DefaultTextColours)) {
@@ -147,7 +147,7 @@ namespace Settings {
         }
 
         if (m_SelectedKeyBind != -1 && m_SelectedKeyBind < Settings::s_KeyBinds.size()) {
-            Settings::s_KeyBinds[m_SelectedKeyBind].InputCode.SetCode(event.GetKeyCode());
+            Settings::s_KeyBinds[m_SelectedKeyBind].Update(event.GetKeyCode());
             m_SelectedKeyBind = -1;
             m_Saved = false;
             return true;
@@ -161,7 +161,7 @@ namespace Settings {
             return false;
         }
 
-        s_KeyBinds[m_SelectedKeyBind].InputCode.SetCode(event.GetButton());
+        s_KeyBinds[m_SelectedKeyBind].Update(event.GetButton());
         m_SelectedKeyBind = -1;
         m_Saved = false;
 

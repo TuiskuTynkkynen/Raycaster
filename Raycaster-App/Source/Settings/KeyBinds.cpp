@@ -50,7 +50,7 @@ namespace Settings {
 
     std::optional<KeyBinds::Name> KeyBinds::InputCodeToKeyBind(InputCode code) {
         for (uint8_t i = KeyBinds::ENUMERATION_MIN; i <= KeyBinds::ENUMERATION_MAX; i++) {
-            if (s_KeyBinds[i].InputCode == code) {
+            if (s_KeyBinds[i].GetValue() == code) {
                 return static_cast<Name>(i);
             }
         }
@@ -64,8 +64,9 @@ namespace Settings {
         bool success = archive.Write<size_t>(0);
 
         for (uint8_t i = KeyBinds::ENUMERATION_MIN; success && i <= KeyBinds::ENUMERATION_MAX; i++) {
-            success &= archive.Write(static_cast<KeyBinds::Name>(i));
-            success &= archive.Write(s_KeyBinds[i].InputCode);
+            bool saved = archive.Write(static_cast<KeyBinds::Name>(i));
+            success &= saved &= archive.Write(s_KeyBinds[i].m_InputCode);
+            if (saved) s_KeyBinds[i].m_Saved = s_KeyBinds[i].m_InputCode;
             count++;
         }
 
@@ -92,7 +93,7 @@ namespace Settings {
             }
 
             if (auto key = archive.Read<InputCode>()) {
-                s_KeyBinds[index.value()].InputCode = key.value();
+                s_KeyBinds[index.value()].m_InputCode = s_KeyBinds[index.value()].m_Saved = key.value();
                 successCount++;
             }
         }

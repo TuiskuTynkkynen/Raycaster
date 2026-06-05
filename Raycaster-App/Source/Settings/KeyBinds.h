@@ -13,19 +13,25 @@ namespace Settings::KeyBinds {
     class KeyBind {
     public:
         KeyBind() = default;
-        constexpr KeyBind(std::string_view name, KeyBinds::InputCode defaultInput)
-            : Name(name), InputCode(defaultInput), DefaultInputCode(defaultInput) {
-        }
+        constexpr KeyBind(std::string_view name, InputCode defaultInput)
+            : m_Name(name), m_InputCode(defaultInput), m_Default(defaultInput), m_Saved(defaultInput) {}
 
-        void Reset() { InputCode = DefaultInputCode; }
+        inline void Update(KeyBinds::InputCode value) { m_InputCode = value; }
+        inline void Reset() { m_InputCode = m_Default; }
 
-        KeyBinds::InputCode InputCode{};
+        inline std::string_view GetName() const { return m_Name; }
+        inline KeyBinds::InputCode GetValue() const { return m_InputCode; }
 
-        inline std::string_view GetName() { return Name; }
-        inline KeyBinds::InputCode GetDefaultInputCode() { return DefaultInputCode; }
+        inline bool Default() const { return m_InputCode == m_Default;}
+        inline bool Saved() const { return m_InputCode == m_Saved;}
     private:
-        std::string_view Name = "";
-        KeyBinds::InputCode DefaultInputCode{};
+        std::string_view m_Name = "";
+        InputCode m_Default{};
+        InputCode m_Saved{};
+        InputCode m_InputCode{};
+
+        friend bool Serialize(Core::Serialization::Archive& archive);
+        friend bool Deserialize(Core::Serialization::Archive& archive);
     };
 
     enum Name : uint8_t {
