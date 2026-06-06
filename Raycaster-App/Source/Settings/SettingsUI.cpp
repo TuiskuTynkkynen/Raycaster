@@ -2,10 +2,22 @@
 
 #include "Settings.h"
 #include "KeyBinds.h"
+#include "Video.h"
 
 #include "Core/Debug/Log.h"
 #include "Core/UI/UI.h"
 #include "Core/Serialization/Archive.h"
+
+template <>
+struct Core::Serialization::Mapping<Core::WindowMode> {
+    using enum Core::WindowMode;
+    static inline EnumMapType<Core::WindowMode, 3> Value = {
+        { Windowed,   "Windowed"   },
+        { Borderless, "Borderless" },
+        { Fullscreen, "Fullscreen" },
+    };
+};
+
 
 static bool LoadSettings() {
     Core::Serialization::Archive arch(std::string_view("settings.bin"));
@@ -32,6 +44,22 @@ static bool SaveSettings() {
     return false;
 }
 
+static bool AddToggleBlock(std::string_view name, bool value) {
+    Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
+        Core::UI::Text(name, 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
+        Core::UI::Toggle(value, { 0.076f, 1.0f });
+    Core::UI::EndContainer();
+    return value;
+}
+
+static void ResetVideoSetting() {
+    Settings::Video::WindowMode.Reset();
+    Settings::Video::VSync.Reset();
+    Settings::Video::LayerRaycaster.Reset();
+    Settings::Video::Layer3D.Reset();
+    Settings::Video::Layer2D.Reset();
+}
+
 namespace Settings {
     void UI::Init() {
         LoadSettings();
@@ -45,6 +73,7 @@ namespace Settings {
 
         static float scrollOffset = 0;
         Core::UI::BeginScrollContainer(scrollOffset, { 0.75f, 0.65f }, true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f)); {
+            state.State &= RenderVideo().State;
             state.State &= RenderInput().State;
             state.State &= RenderKeyBinds().State;
             Core::UI::ScrollBar(scrollOffset, { 0.05f, 1.0f });
@@ -61,6 +90,7 @@ namespace Settings {
                 }
                 Input::s_MouseLook.Reset();
                 Input::s_FreeLook.Reset();
+                ResetVideoSetting();
             }
 
             if (Core::UI::Button("Back", { 0.3f, 1.0f })) {
@@ -70,8 +100,42 @@ namespace Settings {
         } Core::UI::EndContainer();
     }
 
+    UI::SettingState UI::RenderVideo() {
+        SettingState result{};
+        Core::UI::Text("Video", { 0.5f, 0.125f }, glm::vec4(1.0f));
+
+        Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
+            Core::UI::Text("Window Mode", 1.f, Core::UI::TextAlignment::Left, { 0.463f, 1.0f });
+            static Core::UI::EnumComboState state{ Video::WindowMode.GetValue() };
+            state.SetValue(Video::WindowMode.GetValue());
+            Core::WindowMode selected = Core::UI::EnumCombo(state, 5, { 0.463f, 1.0f });
+
+            result.Saved &= Video::WindowMode.Update(selected);
+            result.Default &= Video::WindowMode.Default();
+        Core::UI::EndContainer();
+
+        bool vSync = AddToggleBlock("Enable VSync", Video::VSync);
+        result.Saved &= Video::VSync.Update(vSync);
+        result.Default &= Video::VSync.Default();
+
+        bool raycaster = AddToggleBlock("Enable Raycaster View", Video::LayerRaycaster);
+        result.Saved &= Video::LayerRaycaster.Update(raycaster);
+        result.Default &= Video::LayerRaycaster.Default();
+
+        bool layer3D = AddToggleBlock("Enable 3D View", Video::Layer3D);
+        result.Saved &= Video::Layer3D.Update(layer3D);
+        result.Default &= Video::Layer3D.Default();
+
+        bool layer2D = AddToggleBlock("Enable 2D View", Video::Layer2D);
+        result.Saved &= Video::Layer2D.Update(layer2D);
+        result.Default &= Video::Layer2D.Default();
+        return result;
+    }
+
     UI::SettingState UI::RenderInput() {
         SettingState result{};
+        Core::UI::Text("Input", { 0.5f, 0.125f }, glm::vec4(1.0f));
+
         Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f, 0.0f }, { 0.95f, 0.125f }, glm::vec4(0.0f), Core::UI::LayoutType::Horizontal);
             Core::UI::Text("Enable Mouse Look", 1.f, Core::UI::TextAlignment::Left, { 0.85f, 1.0f });
            

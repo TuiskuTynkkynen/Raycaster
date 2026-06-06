@@ -29,6 +29,7 @@ namespace Settings {
             glm::bvec2 State{ true };
         };
 
+        SettingState RenderVideo();
         SettingState RenderInput();
         SettingState RenderKeyBinds();
         bool OnKeyReleased(Core::KeyReleased& event);
