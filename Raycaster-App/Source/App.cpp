@@ -16,15 +16,13 @@ extern "C" {
 class Raycaster : public Core::Application {
 public:
 	Raycaster() {
-		RaycasterScene* scene = new RaycasterScene();
-		SetActiveScene(scene);
-		
-		auto f = new UILayer;
-		PushOverlay(f);
-		RaycasterLayer* layer0 = new RaycasterLayer();
-		PushLayer(layer0);
-		Layer3D* layer1 = new Layer3D();
-		PushLayer(layer1);
+		SetActiveScene(new RaycasterScene);
+
+		PushOverlay(new UILayer);
+		PushLayer(new RaycasterLayer);
+		PushLayer(new Layer3D);
+		PushLayer(new Layer2D);
+
 		GetWindow().SetVSync(false);
 	}
 

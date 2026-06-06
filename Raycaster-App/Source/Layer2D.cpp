@@ -1,18 +1,22 @@
 #include "Layer2D.h"
 
 #include "RaycasterScene.h"
+#include "Settings/Video.h"
 
-void Layer2D::OnAttach() {
-    m_ViewPortWidth = Core::Application::GetWindow().GetWidth() / 2;
-    m_ViewPortHeight = Core::Application::GetWindow().GetHeight();
-}
+void Layer2D::OnAttach() {}
 
 void Layer2D::OnUpdate(Core::Timestep deltaTime) {
+    const glm::uvec2 viewSize = Settings::Video::ViewPortSize(Settings::Video::LayerType::Layer2D);
+    if (viewSize.x * viewSize.y == 0) {
+        return;
+    }
+
     RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
     const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
     constexpr glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
 
-    Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
+    const uint32_t viewOffset = Settings::Video::ViewPortOffset(Settings::Video::LayerType::Layer2D);
+    Core::RenderAPI::SetViewPort(viewOffset, 0, viewSize.x, viewSize.y);
     Core::Renderer2D::BeginScene(scene.GetCamera());
 
     std::span<const Tile> tiles = scene.GetTiles();
@@ -40,16 +44,4 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     }
 
     Core::Renderer2D::EndScene();
-}
-
-void Layer2D::OnEvent(Core::Event& event) {
-    Core::EventDispatcher dispatcer(event);
-    dispatcer.Dispatch<Core::WindowResize>(std::bind(&Layer2D::OnWindowResizeEvent, this, std::placeholders::_1));
-}
-
-bool Layer2D::OnWindowResizeEvent(Core::WindowResize& event) {
-    m_ViewPortWidth = event.GetWidth() / 2;
-    m_ViewPortHeight = event.GetHeight();
-
-    return false;
 }

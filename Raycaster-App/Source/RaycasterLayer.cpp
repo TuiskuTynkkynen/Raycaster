@@ -1,16 +1,22 @@
 #include "RaycasterLayer.h"
 
 #include "RaycasterScene.h"
+#include "Settings/Video.h"
 
 void RaycasterLayer::OnAttach() {}
 void RaycasterLayer::OnDetach() {}
 
 void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
+    const glm::uvec2 viewSize = Settings::Video::ViewPortSize(Settings::Video::LayerType::Raycaster);
+    if (viewSize.x * viewSize.y == 0) {
+        return;
+    }
     RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
     const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
     constexpr glm::mat4 identity(1.0f);
 
-    Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
+    const uint32_t viewOffset = Settings::Video::ViewPortOffset(Settings::Video::LayerType::Raycaster);
+    Core::RenderAPI::SetViewPort(viewOffset, 0, viewSize.x, viewSize.y);
     Core::Renderer2D::BeginScene(identity);
 
     glm::vec4 colour, colour1;
@@ -48,16 +54,4 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     }
 
     Core::Renderer2D::EndScene();
-}
-
-void RaycasterLayer::OnEvent(Core::Event& event) {
-    Core::EventDispatcher dispatcer(event);
-    dispatcer.Dispatch<Core::WindowResize>(std::bind(&RaycasterLayer::OnWindowResizeEvent, this, std::placeholders::_1));
-}
-
-bool RaycasterLayer::OnWindowResizeEvent(Core::WindowResize& event) {
-    m_ViewPortWidth = event.GetWidth() / 2;
-    m_ViewPortHeight = event.GetHeight();
-
-    return false;
 }

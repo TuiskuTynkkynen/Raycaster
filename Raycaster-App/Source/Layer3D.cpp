@@ -1,11 +1,9 @@
 #include "Layer3D.h"
 
 #include "RaycasterScene.h"
+#include "Settings/Video.h"
 
 void Layer3D::OnAttach() {
-    m_ViewPortWidth = Core::Application::GetWindow().GetWidth() / 2;
-    m_ViewPortHeight = Core::Application::GetWindow().GetHeight();
-
     m_Framebuffer.InitRender();
     m_PostProcessShader = std::make_unique<Core::Shader>("Assets/Shaders/PostProcess.glsl");
 }
@@ -15,7 +13,8 @@ void Layer3D::OnDetach() {
 };
 
 void Layer3D::OnUpdate(Core::Timestep deltaTime) {
-    if (m_ViewPortWidth * m_ViewPortHeight == 0) {
+    const glm::uvec2 viewSize = Settings::Video::ViewPortSize(Settings::Video::LayerType::Layer3D);
+    if (viewSize.x * viewSize.y == 0) {
         return;
     }
 
@@ -26,7 +25,7 @@ void Layer3D::OnUpdate(Core::Timestep deltaTime) {
     Core::RenderAPI::Clear();
     Core::RenderAPI::SetViewPort(0, 0, 500, 500);
     
-    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), m_ViewPortWidth / (float)m_ViewPortHeight, 5e-4f, 500.0f)
+    glm::mat4 viewPerspective = glm::perspective(glm::radians(90.0f), viewSize.x / (float)viewSize.y, 5e-4f, 500.0f)
         * scene.GetCamera3D().GetViewMatrix();
     
     Core::Renderer::BeginScene(viewPerspective);
@@ -38,18 +37,7 @@ void Layer3D::OnUpdate(Core::Timestep deltaTime) {
     
     m_Framebuffer.Deactivate();
     
-    Core::RenderAPI::SetViewPort(m_ViewPortWidth, 0, m_ViewPortWidth, m_ViewPortHeight);
+    const uint32_t viewOffset = Settings::Video::ViewPortOffset(Settings::Video::LayerType::Layer3D);
+    Core::RenderAPI::SetViewPort(viewOffset, 0, viewSize.x, viewSize.y);
     m_Framebuffer.Render(*m_PostProcessShader, 0);
-}
-
-void Layer3D::OnEvent(Core::Event& event) {
-    Core::EventDispatcher dispatcer(event);
-    dispatcer.Dispatch<Core::WindowResize>(std::bind(&Layer3D::OnWindowResizeEvent, this, std::placeholders::_1));
-}
-
-bool Layer3D::OnWindowResizeEvent(Core::WindowResize& event) {
-    m_ViewPortWidth = event.GetWidth() / 2;
-    m_ViewPortHeight = event.GetHeight();
-
-    return false;
 }
