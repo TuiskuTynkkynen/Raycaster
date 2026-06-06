@@ -32,19 +32,18 @@ namespace Settings {
     }
 
     static bool DeserializeInput(Core::Serialization::Archive& archive) {
-        auto count = archive.Read<size_t>();
-        size_t position = archive.GetPosition();
+        const size_t count = archive.Read<size_t>().value_or(0);
+        const size_t position = archive.GetPosition() + count * sizeof(bool);
 
-        if (!count || count.value() < 2) {
+        if (count < 2) {
+            archive.SeekPosition(position);
             return false;
         }
 
         bool success = Input::s_FreeLook.Deserialize(archive);
         success &= Input::s_MouseLook.Deserialize(archive);
 
-        position += count.value() * sizeof(bool);
         archive.SeekPosition(position);
-
         return success;
     }
 
