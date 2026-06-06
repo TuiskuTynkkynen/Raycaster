@@ -1,11 +1,13 @@
 #include "Settings.h"
 
 #include "KeyBinds.h"
+#include "Video.h"
 
 #include "Core/Serialization/Serialization.h"
 #include "Core/Serialization/Enumerations.h"
 
 enum class SettingType : uint8_t {
+    Video,
     Input,
     KeyBinds,
     ENUMERATION_MAX = KeyBinds
@@ -14,7 +16,8 @@ enum class SettingType : uint8_t {
 template <>
 struct Core::Serialization::Mapping<SettingType> {
     using enum SettingType;
-    static inline EnumMapType<SettingType, 2> Value = {
+    static inline EnumMapType<SettingType, 3> Value = {
+        { Video,    "Video" },
         { Input,    "Input" },
         { KeyBinds,  "KeyBinds" },
     };
@@ -47,17 +50,19 @@ namespace Settings {
         return success;
     }
 
-	bool Serialize(Core::Serialization::Archive& archive) {
+    bool Serialize(Core::Serialization::Archive& archive) {
         constexpr size_t count = static_cast<size_t>(SettingType::ENUMERATION_MAX);
 
         bool success = archive.Write<size_t>(count);
+        success &= archive.Write(SettingType::Video);
+        success &= Video::Serialize(archive);
         success &= archive.Write(SettingType::Input);
         success &= SerializeInput(archive);
         success &= archive.Write(SettingType::KeyBinds);
         success &= KeyBinds::Serialize(archive);
 
         return success;
-	}
+    }
 
     bool Deserialize(Core::Serialization::Archive& archive) {
         auto count = archive.Read<size_t>();
@@ -71,6 +76,9 @@ namespace Settings {
             deserializedCount++;
 
             switch (nextType.value()) {
+            case SettingType::Video:
+                success &= Video::Deserialize(archive);
+                break;
             case SettingType::Input:
                 success &= DeserializeInput(archive);
                 break;
