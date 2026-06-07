@@ -227,19 +227,11 @@ bool RaycasterScene::OnKeyReleased(Core::KeyReleased& event) {
     return true;
 }
 
-bool RaycasterScene::OnWindowResize(Core::WindowResize& event) {
-    if (event.GetHeight()) {
-    m_Renderer.SetAspecRatio(event.GetWidth() * 0.5f / event.GetHeight());
-    }
-    return false;
-}
-
 void RaycasterScene::OnEvent(Core::Event& event) {
     Core::EventDispatcher dispatcer(event);
     dispatcer.Dispatch<Restart>([this](Restart& event) { return OnRestart(event); });
     dispatcer.Dispatch<Resume>([this](Resume& event) { return OnResume(event); });
     dispatcer.Dispatch<Core::KeyReleased>([this](Core::KeyReleased& event) { return OnKeyReleased(event); });
-    dispatcer.Dispatch<Core::WindowResize>([this](Core::WindowResize& event) { return OnWindowResize(event); });
 
     if (m_State == State::Running && !event.Handled) {
         m_Player.OnEvent(event);

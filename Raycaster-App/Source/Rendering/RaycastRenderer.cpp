@@ -1,5 +1,7 @@
 #include "RaycastRenderer.h"
 
+#include "Settings/Video.h"
+
 #include <glm/gtc/round.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_transform_2d.hpp>
@@ -114,13 +116,19 @@ static float LightBilinear(glm::vec2 position, const Map& map) {
 }
 
 void RaycastRenderer::Render(const Map& map, const RaycasterCamera& camera, const Player& player, Renderables& renderables) {
-    for (auto& vec : m_DepthMap) vec.clear();
+    const glm::uvec2 viewSize = Settings::Video::ViewPortSize(Settings::Video::LayerType::Raycaster);
+    if (viewSize.x * viewSize.y <= m_RayWidth) { return; }
+
+    SetAspectRatio(viewSize.x / static_cast<float>(viewSize.y));
+
     RenderWalls(map, camera);
     RenderFloors(map, camera);
     RenderSprites(map, player, renderables);
 }
 
 void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera) {
+    for (auto& vec : m_DepthMap) { vec.clear(); }
+
     glm::vec2 rotation{ camera.GetDirection().x, -camera.GetDirection().y };
     int64_t previousOcclusionIndex = -1;
 

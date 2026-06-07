@@ -29,7 +29,7 @@ public:
     inline static constexpr size_t GetRayCount() { return m_RayCount; }
     inline static constexpr float GetRayWidth() { return m_RayWidth; }
 
-    inline void SetAspecRatio(float aspectRatio) { m_AspectRatio = aspectRatio; m_ReciprocalAspectRatio = 1.0f / aspectRatio; };
+    inline void SetAspectRatio(float aspectRatio) { m_AspectRatio = aspectRatio; m_ReciprocalAspectRatio = 1.0f / aspectRatio; };
 private:
     void RenderFloor(bool ceiling, const Map& map, const RaycasterCamera& camera);
     static constexpr size_t m_RayCount = 500;

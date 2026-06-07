@@ -66,5 +66,4 @@ private:
     bool OnRestart(Restart& event);
     bool OnResume(Resume& event);
     bool OnKeyReleased(Core::KeyReleased& event);
-    bool OnWindowResize(Core::WindowResize& event);
 };
