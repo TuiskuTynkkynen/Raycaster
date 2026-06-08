@@ -75,7 +75,7 @@ static float LightBilinear(glm::vec2 position, const Map& map) {
 
     // Prevent sampling light map inside a wall by shifting min and max 
     {
-        size_t index = map.GetIndex(position);
+        size_t index = glm::min(map.GetIndex(position), (size_t)map.GetSize() - 1);
         bool decreaseX = (glm::fract(position.x) < 0.5f);
         bool decreaseY = (glm::fract(position.y) < 0.5f);
 
@@ -129,6 +129,9 @@ void RaycastRenderer::Render(const Map& map, const RaycasterCamera& camera, cons
 void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera) {
     for (auto& vec : m_DepthMap) { vec.clear(); }
 
+    const float heightSign = (camera.GetPosition().z < 0.5f) ? 1.0f : -1.0f;
+    const float cameraPan = m_SnappingEnabled ? glm::ceilMultiple(camera.GetDirection().z, m_RayWidth) : camera.GetDirection().z;
+    
     glm::vec2 rotation{ camera.GetDirection().x, -camera.GetDirection().y };
     int64_t previousOcclusionIndex = -1;
 
@@ -151,10 +154,11 @@ void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera)
         m_Rays[i].Scale = 1.0f / wallDistance;
         if constexpr (m_SnappingEnabled) {
             // The center of a wall is @ y = 0, so scale needs to be even multiple of m_RayWidth -> round to 2.0f * m_RayWidth
-            m_Rays[i].Scale = glm::ceilMultiple(m_Rays[i].Scale + m_RayWidth, 2.0f * m_RayWidth);
+            m_Rays[i].Scale = glm::ceilMultiple(m_Rays[i].Scale, 2.0f * m_RayWidth);
         }
 
-        int64_t occlusionIndex = occlusionIndex = static_cast<int64_t>(glm::min(m_Rays[i].Scale * 0.5f, 1.0f) * m_RayCount / 2 - 1);
+        int64_t occlusionIndex = static_cast<int64_t>(glm::round(m_Rays[i].Scale * m_RayCount / 4.0f));
+        occlusionIndex = glm::min(occlusionIndex, static_cast<int64_t>(m_RayCount / 2) - 1);
         if (occlusionIndex != previousOcclusionIndex) {
             int64_t max = glm::max(previousOcclusionIndex, occlusionIndex);
             bool offset = (previousOcclusionIndex < occlusionIndex) || (m_DepthMap[occlusionIndex].size() % 2 == 1);
@@ -166,8 +170,11 @@ void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera)
         }
 
         m_Rays[i].Position.x = cameraX + 0.5f * m_RayWidth;
-        const float height = (0.5f - camera.GetPosition().z) * m_Rays[i].Scale - camera.GetDirection().z;
-        m_Rays[i].Position.y = glm::floorMultiple(height + 0.5f * m_RayWidth, m_RayWidth);
+        float height = (0.5f - camera.GetPosition().z) * (m_Rays[i].Scale - m_RayWidth);
+        if constexpr (m_SnappingEnabled) {
+            height = heightSign * glm::ceilMultiple(heightSign * height, m_RayWidth);
+        }
+        m_Rays[i].Position.y = height - cameraPan;
         m_Rays[i].Atlasindex = hit.Material;
 
         m_Rays[i].Brightness = LightBilinear(hit.WorldPosition, map);
@@ -186,12 +193,14 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
     const float sign = (ceiling ? 1.f : -1.f);
     const float offset = (0.5f - camera.GetPosition().z);
     const float density = 1.0f + 2.0f * sign * offset;
+    const float cameraPan = m_SnappingEnabled ? glm::ceilMultiple(camera.GetDirection().z, m_RayWidth) : camera.GetDirection().z;
+    const size_t occlusionOffset = 1 + (glm::sign(-offset) == sign);
 
-    const int32_t startIndex = static_cast<int32_t>(sign * -camera.GetDirection().z * m_RayCount / 2);
+    const int32_t startIndex = static_cast<int32_t>(glm::floor(sign * -cameraPan * m_RayCount / 2));
     const int32_t endIndex = glm::min(startIndex + static_cast<int32_t>(m_RayCount), static_cast<int32_t>(m_RayCount) / 2);
     for (int32_t i = startIndex; i < endIndex; i++) {
-        float scale = density * m_RayCount / (m_RayCount - (2.0f * i + 1)) * m_AspectRatio;
-        float currentHeight = 1.0f / scale;
+        const float scale = density * m_RayCount / (m_RayCount - (2.0f * i + 1)) * m_AspectRatio;
+        const float currentHeight = 1.0f / scale;
         float prevPos = -1.0f;
 
         glm::vec2 worldPosition(scale * 0.5f * rayDirection.x + camera.GetPosition().x, scale * 0.5f * -rayDirection.y + camera.GetPosition().y);
@@ -224,7 +233,7 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
         }
 
         std::span<const uint32_t> occludedRanges = defaultRange;
-        size_t occlusionIndex = occlusionIndex = static_cast<size_t>(glm::min(currentHeight * m_AspectRatio, 1.0f) * m_RayCount / 2);
+        const size_t occlusionIndex = static_cast<size_t>(glm::floor(currentHeight * m_AspectRatio * (m_RayCount / 2))) + occlusionOffset;
         if (occlusionIndex < m_RayCount / 2 && !m_DepthMap[occlusionIndex].empty()) {
             occludedRanges = m_DepthMap[occlusionIndex];
         }
@@ -259,7 +268,7 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
 
             // NDC
             float rayLength = 2.0f * hit.Distance * currentHeight;
-            if (m_SnappingEnabled) {
+            if constexpr (m_SnappingEnabled) {
                 rayLength = glm::floorMultiple(rayLength + 0.5f * m_RayWidth, m_RayWidth);
             }
             float maxX = glm::min(rayLength + prevPos, maxPos);
@@ -299,7 +308,7 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
                     }
                 }
 
-                if (m_SnappingEnabled) {
+                if constexpr (m_SnappingEnabled) {
                     length = glm::floorMultiple(length + 0.5f * m_RayWidth, m_RayWidth);
                 }
 
@@ -310,8 +319,7 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
                 Floor& floor = m_Floors.emplace_back();
 
                 floor.Position.x = 0.5f * length + position;
-                floor.Position.y = sign * currentHeight * m_AspectRatio + offset * 2.0f * currentHeight * m_AspectRatio - camera.GetDirection().z;
-
+                floor.Position.y = sign * currentHeight * m_AspectRatio + offset * 2.0f * currentHeight * m_AspectRatio - cameraPan;
                 floor.Length = length;
                 floor.Scale = scale;
 
