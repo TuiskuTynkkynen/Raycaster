@@ -29,6 +29,8 @@ void Enemies::Shutdown() {
     m_Areas.shrink_to_fit();
     m_Attacks.clear();
     m_Attacks.shrink_to_fit();
+    m_Projectiles.clear();
+    m_Projectiles.shrink_to_fit();
 
     m_Frontier.clear(); 
     m_Frontier.shrink_to_fit();
@@ -77,6 +79,7 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
 
     m_Areas.clear();
     m_Attacks.clear();
+    m_Projectiles.clear();
 
     Context context{
         .DeltaTime = deltaTime,
@@ -85,6 +88,7 @@ void Enemies::Update(Core::Timestep deltaTime, const Map& map, glm::vec2 playerP
         .Map = map,
         .Areas = m_Areas,
         .Attacks = m_Attacks,
+        .Projectiles = m_Projectiles,
         .AproachMap = m_ApproachMap,
         .RangedApproachMap = m_RangedApproachMap,
         .Enemies = m_Enemies,

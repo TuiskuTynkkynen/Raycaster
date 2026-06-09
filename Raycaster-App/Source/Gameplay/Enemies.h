@@ -3,8 +3,7 @@
 #include "Entities.h"
 #include "SpatialPartition.h"
 #include "Renderables.h"
-
-#include "Core.h"
+#include "Projectiles.h"
 
 #include <vector>
 #include <span>
@@ -63,6 +62,7 @@ public:
         return m_Enemies[index];
     }
     inline const std::span<const Attack> GetAttacks() const { return m_Attacks;  };
+    inline const std::span<const Projectile> GetProjectiles() const { return m_Projectiles;  };
 private:
     void UpdateApproachMap(const Map& map, glm::ivec2 playerPosition);
     void UpdateRangedApproachMap(const Map& map, glm::vec2 playerPosition);
@@ -79,6 +79,7 @@ private:
 
     std::vector<LineCollider> m_Areas;
     std::vector<Attack> m_Attacks;
+    std::vector<Projectile> m_Projectiles;
 
     std::vector<std::pair<glm::ivec3, float>> m_Frontier;
 };

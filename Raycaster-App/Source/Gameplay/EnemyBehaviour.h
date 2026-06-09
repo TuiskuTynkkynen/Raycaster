@@ -10,6 +10,7 @@ struct Context {
     const Map& Map;
     std::vector<LineCollider>& Areas;
     std::vector<Attack>& Attacks;
+    std::vector<Projectile>& Projectiles;
     const std::vector<float>& AproachMap;
     const std::vector<float>& RangedApproachMap;
     const std::vector<Enemy>& Enemies;
@@ -45,12 +46,12 @@ bool And(const Context& context, Enemy& enemy){
 
 template<Condition A, Condition... B>
 bool Or(const Context& context, Enemy& enemy){
-    return (A(context, enemy) || And<B...>(context, enemy));
+    return (A(context, enemy) || Or<B...>(context, enemy));
 }
 
 template<typename=void>
 bool Or(const Context& context, Enemy& enemy){
-    return true;
+    return false;
 }
 
 bool LineOfSight(const Context& context, glm::vec2 start, glm::vec2 end);
@@ -82,6 +83,7 @@ bool HealthCondition(const Context& context, Enemy& enemy) {
 ActionStatus BasicAttack(Context& context, Enemy& enemy);
 ActionStatus BasicPathfind(Context& context, Enemy& enemy);
 ActionStatus BasicDead(Context& context, Enemy& enemy);
+ActionStatus RangedAttack(Context& context, Enemy& enemy);
 ActionStatus RangedPathfind(Context& context, Enemy& enemy);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -105,14 +107,14 @@ inline constexpr std::array s_BasicTransitions{
 inline constinit std::array<Action, EnemyState::ENUMERATION_MAX + 1> s_RangedActions = [] {
     std::array<Action, EnemyState::ENUMERATION_MAX + 1> actions;
     actions[EnemyState::Pathfind] = RangedPathfind;
-    actions[EnemyState::Attack] = BasicAttack;
+    actions[EnemyState::Attack] = RangedAttack;
     actions[EnemyState::Dead] = BasicDead;
     return actions;
     }();
 
 inline constexpr std::array s_RangedTransitions{
     Transition { EnemyState::Pathfind,  EnemyState::Attack,     And<RangeCondition<3.25f, 4.75f>, LineOfSightCondtion> },
-    Transition { EnemyState::Attack,    EnemyState::Pathfind,   Or<RangeCondition<3.25f, 4.75f, true>, LineOfSightCondtion<true>> },
+    Transition { EnemyState::Attack,    EnemyState::Pathfind,   Or<RangeCondition<2.25f, 4.75f, true>, LineOfSightCondtion<true>> },
     Transition { EnemyState::Pathfind,  EnemyState::Dead,     HealthCondition<0.0f> },
     Transition { EnemyState::Attack,    EnemyState::Dead,   HealthCondition<0.0f> },
 };
@@ -161,11 +163,9 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
         .TransitionTable = s_RangedTransitions,
 
         .Scale = glm::vec3(0.8f),
-        .Speed = 1.0f,
-        .AttackDamage = 1.0f,
-        .AttackRange = 0.0f,
-        .AttackDuration = 1.0f,
-        .AttackTiming = 1.0f,
+        .Speed = 1.25f,
+        .AttackDuration = 1.75f,
+        .AttackTiming = 0.75f,
         .AtlasIndex = TextureIndices::Enemy_Ranged,
 
         .AttackAudioName = "Assets/Audio/enemy_ranged_attack.opus",

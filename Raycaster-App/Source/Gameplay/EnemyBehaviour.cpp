@@ -235,6 +235,31 @@ ActionStatus BasicAttack(Context& context, Enemy& enemy) {
     return ActionStatus::Running;
 }
 
+ActionStatus RangedAttack(Context& context, Enemy& enemy) {
+    Core::Timestep relativeDeltaTime = context.DeltaTime / GetAttackDuration(enemy.Type);
+    enemy.ActionTick += relativeDeltaTime;
+    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Attack;
+
+    float soundTiming = GetAttackTiming(enemy.Type) - 0.125f;
+    if (auto sound = GetAttackSound(enemy.Type); glm::abs(enemy.ActionTick - soundTiming) <= relativeDeltaTime && sound) {
+        sound->SetPosition({ enemy.Position, 0.5f })
+            .Start();
+    }
+
+    if (enemy.ActionTick >= GetAttackTiming(enemy.Type) && enemy.ActionTick - relativeDeltaTime < GetAttackTiming(enemy.Type)) {
+        glm::vec2 direction = glm::normalize(context.PlayerPosition - enemy.Position);
+        context.Projectiles.emplace_back(ProjectileType::Dart, enemy.Position + 0.5f * GetScale(enemy.Type).x * direction, 5.0f * direction);
+        enemy.Tick++;
+    }
+
+    if (enemy.ActionTick >= 1.0f || enemy.Health <= 0.0f) {
+        enemy.ActionTick = 0.0f;
+        return ActionStatus::Done;
+    }
+
+    return ActionStatus::Running;
+}
+
 ActionStatus BasicPathfind(Context& context, Enemy& enemy) {
     enemy.Tick += context.DeltaTime * 2.0f;
     enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Walk;

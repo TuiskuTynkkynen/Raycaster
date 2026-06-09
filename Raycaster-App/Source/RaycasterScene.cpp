@@ -156,9 +156,16 @@ void RaycasterScene::OnUpdate(Core::Timestep deltaTime) {
     m_Projectiles.UpdateRender(m_Renderables, m_Player.GetPosition());
 
     m_Enemies.Update(deltaTime, m_Map, m_Player.GetPosition());
+    {
     auto attacks = m_Enemies.GetAttacks();
     for (auto& attack : attacks) {
         m_Player.DamageAreas(attack.Areas, attack.Thickness, attack.Damage);
+    }
+
+        auto projectiles = m_Enemies.GetProjectiles();
+        for (auto& projectile : projectiles) {
+            m_Projectiles.Add(projectile.Type, projectile.Position, projectile.Velocity);
+        }
     }
     m_Enemies.UpdateRender({ m_Tiles.end() - m_Enemies.Count(), m_Tiles.end()}, m_Renderables);
 
