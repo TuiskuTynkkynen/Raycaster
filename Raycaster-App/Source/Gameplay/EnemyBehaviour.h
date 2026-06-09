@@ -166,7 +166,7 @@ inline constinit std::array<EnemyParameters, EnemyType::ENUMERATION_MAX + 1> s_E
         .AttackRange = 0.0f,
         .AttackDuration = 1.0f,
         .AttackTiming = 1.0f,
-        .AtlasIndex = TextureIndices::Enemy_Basic,
+        .AtlasIndex = TextureIndices::Enemy_Ranged,
 
         .AttackAudioName = "Assets/Audio/enemy_ranged_attack.opus",
         .HitAudioName = "Assets/Audio/enemy_hit.opus",

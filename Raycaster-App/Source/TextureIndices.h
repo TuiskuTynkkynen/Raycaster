@@ -19,16 +19,16 @@ namespace TextureIndices {
         Wall_6                         = 6,
         Wall_7                         = 7,
         Barrel                         = 8,
-        Pilar                          = 9,
-        Light                          = 10,
-        Enemy_Basic                    = 11,
-        Floor_Item_Dagger              = 14,
-        Floor_Item_Dart                = 15,
+        Light                          = 9,
+        Enemy_Basic                    = 10,
+        Enemy_Ranged                   = 13,
+        Floor_Item_Dagger              = 15,
         Chest_Animation_Start          = 16,
         Attack_Animation_Dagger_Start  = 18,
         Attack_Animation_Dart_Start    = 23,
         Projectile_Dart_First          = 27,
         Projectile_Dart_Last           = 30,
+        Floor_Item_Dart                = 31,
     };
 }
 

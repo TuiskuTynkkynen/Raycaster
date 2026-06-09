@@ -268,7 +268,7 @@ ActionStatus BasicPathfind(Context& context, Enemy& enemy) {
 }
 
 ActionStatus BasicDead(Context& context, Enemy& enemy) {
-    enemy.AtlasIndex = GetAtlasIndex(enemy.Type) + TextureOffsets::Enemy_Corpse;
+    enemy.AtlasIndex = GetAtlasIndex(EnemyType::Basic) + TextureOffsets::Enemy_Corpse;
     return ActionStatus::Done;
 }
 
