@@ -13,6 +13,12 @@ namespace Core {
 		s_ViewProjectionMatrix = transform;
 	}
 
+	void Renderer::DrawModel(const Model& model, const glm::vec3& tint) {
+		for (auto& indexedMesh : model.Meshes) {
+			DrawMesh(*indexedMesh.Mesh, *model.Materials[indexedMesh.MaterialIndex], model.Transform, tint);
+		}
+	}
+
 	void Renderer::DrawModel(const Model& model, const glm::mat4& transform, const glm::vec3& tint) {
 		glm::mat4 modelTransform = transform * model.Transform;
 
