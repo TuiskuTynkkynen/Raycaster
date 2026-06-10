@@ -50,7 +50,7 @@ static glm::ivec2 GetBilinearOffset(uint8_t bitboard, bool decreaseX, bool decre
         glm::ivec2{  1.0f,  0.0f },
         glm::ivec2{  0.0f,  1.0f },
     };
-    
+
     for (size_t i = 0; i < 8; i++) {
         // First check all 2x2 areas, then 2x1/1x2
         size_t index = (i >= 4) * 4;
@@ -129,10 +129,8 @@ void RaycastRenderer::Render(const Map& map, const RaycasterCamera& camera, cons
 void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera) {
     for (auto& vec : m_DepthMap) { vec.clear(); }
 
-    const float heightSign = (camera.GetPosition().z < 0.5f) ? 1.0f : -1.0f;
     const float cameraPan = m_SnappingEnabled ? glm::ceilMultiple(camera.GetDirection().z, m_RayWidth) : camera.GetDirection().z;
-    
-    glm::vec2 rotation{ camera.GetDirection().x, -camera.GetDirection().y };
+    const glm::vec2 rotation{ camera.GetDirection().x, -camera.GetDirection().y };
     int64_t previousOcclusionIndex = -1;
 
     //Wall casting
@@ -157,8 +155,7 @@ void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera)
             m_Rays[i].Scale = glm::ceilMultiple(m_Rays[i].Scale, 2.0f * m_RayWidth);
         }
 
-        int64_t occlusionIndex = static_cast<int64_t>(glm::round(m_Rays[i].Scale * m_RayCount / 4.0f));
-        occlusionIndex = glm::min(occlusionIndex, static_cast<int64_t>(m_RayCount / 2) - 1);
+        const int64_t occlusionIndex = static_cast<int64_t>(glm::min(m_Rays[i].Scale, 2.0f) * m_RayCount / 4.0f - 1.0f);
         if (occlusionIndex != previousOcclusionIndex) {
             int64_t max = glm::max(previousOcclusionIndex, occlusionIndex);
             bool offset = (previousOcclusionIndex < occlusionIndex) || (m_DepthMap[occlusionIndex].size() % 2 == 1);
@@ -170,9 +167,9 @@ void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera)
         }
 
         m_Rays[i].Position.x = cameraX + 0.5f * m_RayWidth;
-        float height = (0.5f - camera.GetPosition().z) * (m_Rays[i].Scale - m_RayWidth);
+        float height = (0.5f - camera.GetPosition().z) * m_Rays[i].Scale;
         if constexpr (m_SnappingEnabled) {
-            height = heightSign * glm::ceilMultiple(heightSign * height, m_RayWidth);
+            height = glm::floorMultiple(height + 0.5f * m_RayWidth, m_RayWidth);
         }
         m_Rays[i].Position.y = height - cameraPan;
         m_Rays[i].Atlasindex = hit.Material;
@@ -194,7 +191,6 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
     const float offset = (0.5f - camera.GetPosition().z);
     const float density = 1.0f + 2.0f * sign * offset;
     const float cameraPan = m_SnappingEnabled ? glm::ceilMultiple(camera.GetDirection().z, m_RayWidth) : camera.GetDirection().z;
-    const size_t occlusionOffset = 1 + (glm::sign(-offset) == sign);
 
     const int32_t startIndex = static_cast<int32_t>(glm::floor(sign * -cameraPan * m_RayCount / 2));
     const int32_t endIndex = glm::min(startIndex + static_cast<int32_t>(m_RayCount), static_cast<int32_t>(m_RayCount) / 2);
@@ -233,7 +229,7 @@ void RaycastRenderer::RenderFloor(bool ceiling, const Map& map, const RaycasterC
         }
 
         std::span<const uint32_t> occludedRanges = defaultRange;
-        const size_t occlusionIndex = static_cast<size_t>(glm::floor(currentHeight * m_AspectRatio * (m_RayCount / 2))) + occlusionOffset;
+        const size_t occlusionIndex = static_cast<size_t>(currentHeight * m_AspectRatio * m_RayCount / 2.0f);
         if (occlusionIndex < m_RayCount / 2 && !m_DepthMap[occlusionIndex].empty()) {
             occludedRanges = m_DepthMap[occlusionIndex];
         }
