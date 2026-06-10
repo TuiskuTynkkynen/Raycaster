@@ -61,37 +61,23 @@ namespace Core {
 
 
 template <glm::length_t D, typename T, glm::qualifier Q>
-struct std::formatter<glm::vec<D, T, Q>>
-{
+struct std::formatter<glm::vec<D, T, Q>> : std::formatter<std::string_view> {
     auto format(const glm::vec<D, T, Q>& value, std::format_context& context) const {
-        return format_to(context.out(), "{}", glm::to_string(value));
-    }
-
-    constexpr auto parse(std::format_parse_context& context){
-        return context.end();
+        return std::formatter<std::string_view>::format(glm::to_string(value), context);
     }
 };
 
 template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q>
-struct std::formatter<glm::mat<C, R, T, Q>> 
-{
-    auto format(const glm::mat<C, R, T, Q>& value, std::format_context& context) const{
-        return format_to(context.out(), "{}", glm::to_string(value));
-    }
-
-    constexpr auto parse(std::format_parse_context& context){
-        return context.end();
+struct std::formatter<glm::mat<C, R, T, Q>> : std::formatter<std::string_view> {
+    auto format(const glm::mat<C, R, T, Q>& value, std::format_context& context) const {
+        return std::formatter<std::string_view>::format(glm::to_string(value), context);
     }
 };
 
 template<>
-struct std::formatter<std::source_location> {
+struct std::formatter<std::source_location> : std::formatter<std::string_view> {
     auto format(const std::source_location& value, std::format_context& context) const {
         std::filesystem::path temp = value.file_name();
-        return format_to(context.out(), "{}:{}", temp.filename().string(), value.line());
-    }
-
-    constexpr auto parse(std::format_parse_context& context) {
-        return context.end();
+        return std::formatter<std::string_view>::format(std::format("{}:{}", temp.filename().string(), value.line()), context);
     }
 };
