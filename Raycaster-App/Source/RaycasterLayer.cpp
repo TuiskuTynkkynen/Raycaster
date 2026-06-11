@@ -11,8 +11,10 @@ void RaycasterLayer::OnUpdate(Core::Timestep deltaTime) {
     if (viewSize.x * viewSize.y == 0) {
         return;
     }
-    RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
-    const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
+
+    const auto lock = m_Scene.lock();
+    RC_ASSERT(dynamic_cast<const RaycasterScene*>(lock.get()));
+    const RaycasterScene& scene = static_cast<const RaycasterScene&>(*lock);
     constexpr glm::mat4 identity(1.0f);
 
     const uint32_t viewOffset = Settings::Video::ViewPortOffset(Settings::Video::LayerType::Raycaster);

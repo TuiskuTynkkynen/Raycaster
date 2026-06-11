@@ -29,8 +29,9 @@ void UILayer::OnDetach() {
 }
 
 void UILayer::OnUpdate(Core::Timestep deltaTime) {
-    RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
-    const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
+    const auto lock = m_Scene.lock();
+    RC_ASSERT(dynamic_cast<const RaycasterScene*>(lock.get()));
+    const RaycasterScene& scene = static_cast<const RaycasterScene&>(*lock);
 
     Core::UI::Begin({ 0.0f, 0.0f }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Horizontal, glm::vec4(0.0f));
     static float timeDelta = 0;

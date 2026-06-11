@@ -18,9 +18,9 @@ void Layer3D::OnUpdate(Core::Timestep deltaTime) {
         return;
     }
 
-    RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
-    const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
-    
+    const auto lock = m_Scene.lock();
+    RC_ASSERT(dynamic_cast<const RaycasterScene*>(lock.get()));
+    const RaycasterScene& scene = static_cast<const RaycasterScene&>(*lock);
     m_Framebuffer.Activate();
     Core::RenderAPI::Clear();
     Core::RenderAPI::SetViewPort(0, 0, 500, 500);

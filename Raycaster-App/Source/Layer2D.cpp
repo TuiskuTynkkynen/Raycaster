@@ -11,8 +11,9 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
         return;
     }
 
-    RC_ASSERT(dynamic_cast<RaycasterScene*>(m_Scene.get()));
-    const RaycasterScene& scene = static_cast<RaycasterScene&>(*m_Scene);
+    auto lock = m_Scene.lock();
+    RC_ASSERT(dynamic_cast<const RaycasterScene*>(lock.get()) != nullptr);
+    const RaycasterScene& scene = static_cast<const RaycasterScene&>(*lock);
     constexpr glm::vec3 AxisZ(0.0f, 0.0f, 1.0f);
 
     const uint32_t viewOffset = Settings::Video::ViewPortOffset(Settings::Video::LayerType::Layer2D);

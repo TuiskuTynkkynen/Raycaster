@@ -8,8 +8,6 @@
 
 namespace Core {
     class Layer {
-    protected:
-        std::shared_ptr<Core::Scene> m_Scene;
     public: 
         virtual ~Layer() {}
 
@@ -19,6 +17,7 @@ namespace Core {
         virtual void OnEvent(Event& event) = 0;
 
         inline void SetScene(std::weak_ptr<const Core::Scene> scene) { m_Scene = scene; }
-        inline void SetScene(std::shared_ptr<Core::Scene> scene) { m_Scene = scene; }
+    protected:
+        std::weak_ptr<const Core::Scene> m_Scene;
     };
 }
