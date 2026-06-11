@@ -3,22 +3,30 @@
 #include "Layer.h"
 
 #include <vector>
+#include <span>
+#include <memory>
 
 namespace Core {
-	class LayerStack {
-	private:
-		std::vector<Layer*> m_Layers;
-		size_t m_InsertIndex;
-	public:
-		LayerStack();
-		~LayerStack();
+    class LayerStack {
+    public:
+        LayerStack() = default;
+        ~LayerStack();
 
-		void PushLayer(Layer* layer);
-		void PopLayer(Layer* layer);
-		void PushOverlay(Layer* overlay);
-		void PopOverlay(Layer* overlay);
+        LayerStack(const LayerStack&) = delete;
+        LayerStack& operator=(const LayerStack&) = delete;
+        LayerStack(LayerStack&&) noexcept = default;
+        LayerStack& operator=(LayerStack&&) noexcept = default;
 
-		std::vector<Layer*>::iterator begin() { return m_Layers.begin(); }
-		std::vector<Layer*>::iterator end() { return m_Layers.end(); }
-	};
+        void PushLayer(std::unique_ptr<Layer> layer, std::weak_ptr<Scene> active);
+        void PushOverlay(std::unique_ptr<Layer> overlay, std::weak_ptr<Scene> active);
+        bool PopLayer(Layer* layer);
+        bool PopOverlay(Layer* overlay);
+
+        std::span<Layer*> Layers() { return m_Layers; }
+        inline size_t Size() const { return m_Layers.size(); }
+        void Clear();
+    private:
+        std::vector<Layer*> m_Layers;
+        size_t m_OverlayOffset = 0;
+    };
 }

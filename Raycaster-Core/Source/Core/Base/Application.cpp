@@ -8,6 +8,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include <ranges>
+
 namespace Core {
     Application* Application::s_Instance = nullptr;
 
@@ -25,9 +27,7 @@ namespace Core {
     }
     
     Application::~Application() {
-        for (auto iterator = m_LayerStack.end(); iterator != m_LayerStack.begin();) {
-            (*--iterator)->OnDetach();
-        }
+        m_LayerStack.Clear();
         m_ActiveScene->Shutdown();
         
         m_Window.reset();
@@ -56,7 +56,7 @@ namespace Core {
 
     void Application::Update() {
         RC_ASSERT(m_ActiveScene, "Active scene not has been set");
-        RC_ASSERT(m_LayerStack.begin() != m_LayerStack.end(), "Layer stack is empty");
+        RC_ASSERT(m_LayerStack.Size(), "Layer stack is empty");
 
         float currentFrame = static_cast<float>(glfwGetTime());
         Timestep deltaTime = currentFrame - m_LastFrame;
@@ -70,8 +70,9 @@ namespace Core {
 
         m_ActiveScene->OnUpdate(deltaTime);
             
-        for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
-            (*iterator)->OnUpdate(deltaTime);
+        for (Layer* layer : m_LayerStack.Layers()) {
+            RC_ASSERT(layer != nullptr);
+            layer->OnUpdate(deltaTime);
         }
         m_Window->OnUpdate();
     }
@@ -82,12 +83,13 @@ namespace Core {
         dispatcer.Dispatch<WindowClose>(std::bind(&Application::OnWindowCloseEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowResize>(std::bind(&Application::OnWindowResizeEvent, this, std::placeholders::_1));
 
-        for (auto iterator = m_LayerStack.end(); iterator != m_LayerStack.begin();) {
+        for (Layer* layer : m_LayerStack.Layers() | std::ranges::views::reverse) {
+            RC_ASSERT(layer != nullptr);
             if (event.Handled) {
                 break;
             }
 
-            (*--iterator)->OnEvent(event);
+            layer->OnEvent(event);
         }
         
         m_ActiveScene->OnEvent(event);
@@ -97,18 +99,14 @@ namespace Core {
         m_Running = false;
     }
 
-    void Application::PushLayer(Layer* layer) {
+    void Application::PushLayer(std::unique_ptr<Layer> layer) {
         RC_ASSERT(layer, "Attempted to push invalid layer");
-        m_LayerStack.PushLayer(layer);
-        layer->SetScene(m_ActiveScene);
-        layer->OnAttach();
+        m_LayerStack.PushLayer(std::move(layer), m_ActiveScene);
     }
 
-    void Application::PushOverlay(Layer* overlay) {
+    void Application::PushOverlay(std::unique_ptr<Layer> overlay) {
         RC_ASSERT(overlay, "Attempted to push invalid overlay");
-        m_LayerStack.PushOverlay(overlay);
-        overlay->SetScene(m_ActiveScene);
-        overlay->OnAttach();
+        m_LayerStack.PushOverlay(std::move(overlay), m_ActiveScene);
     }
 
     void Application::SetActiveScene(Scene* scene) {
@@ -116,8 +114,9 @@ namespace Core {
         m_ActiveScene = std::shared_ptr<Scene>(scene);
         m_ActiveScene->Init();
 
-        for (auto iterator = m_LayerStack.begin(); iterator != m_LayerStack.end(); iterator++) {
-            (*iterator)->SetScene(m_ActiveScene);
+        for (Layer* layer : m_LayerStack.Layers()) {
+            RC_ASSERT(layer != nullptr);
+            layer->SetScene(m_ActiveScene);
         }
     }
 

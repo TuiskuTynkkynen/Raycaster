@@ -8,29 +8,29 @@
 
 #ifdef PLATFORM_WINDOWS
 extern "C" {
-	__declspec(dllexport) unsigned long NvOptimusEnablement = 1;
-	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+    __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 #endif
 
 class Raycaster : public Core::Application {
 public:
-	Raycaster() {
-		SetActiveScene(new RaycasterScene);
+    Raycaster() {
+        SetActiveScene(new RaycasterScene);
 
-		PushOverlay(new UILayer);
-		PushLayer(new RaycasterLayer);
-		PushLayer(new Layer3D);
-		PushLayer(new Layer2D);
+        PushOverlay(std::make_unique<UILayer>());
+        PushLayer(std::make_unique<RaycasterLayer>());
+        PushLayer(std::make_unique<Layer3D>());
+        PushLayer(std::make_unique<Layer2D>());
 
-		GetWindow().SetVSync(false);
-	}
+        GetWindow().SetVSync(false);
+    }
 
-	~Raycaster(){}
+    ~Raycaster(){}
 };
 
 Core::Application* Core::CreateApplication() {
-	return new Raycaster();
+    return new Raycaster();
 }
 
 int main() {
