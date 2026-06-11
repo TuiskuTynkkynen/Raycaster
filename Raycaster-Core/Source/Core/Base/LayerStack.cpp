@@ -21,7 +21,6 @@ namespace Core {
 	void LayerStack::PopLayer(Layer* layer){
 		std::vector<Layer*>::iterator iterator = std::find(m_Layers.begin(), m_Layers.end(), layer);
 		if (iterator != m_Layers.end()) {
-			layer->SetEnabled(false);
 			m_Layers.erase(iterator);
 			m_InsertIndex--;
 		}
@@ -35,7 +34,6 @@ namespace Core {
 	void LayerStack::PopOverlay(Layer* overlay){
 		std::vector<Layer*>::iterator iterator = std::find(m_Layers.begin(), m_Layers.end(), overlay);
 		if (iterator != m_Layers.end()) {
-			overlay->SetEnabled(false);
 			m_Layers.erase(iterator);
 			m_InsertIndex--;
 		}
