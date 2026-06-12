@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <ranges>
+#include <utility>
 
 namespace Core {
     LayerStack::~LayerStack() {
@@ -19,6 +20,24 @@ namespace Core {
 
         m_Layers.clear();
         m_OverlayOffset = 0;
+    }
+
+    bool LayerStack::PushCachedLayer(const std::type_info& layerType, LayerCache& cache, std::weak_ptr<Scene> active) {
+        if (auto layer = cache.TryPop(layerType)) {
+            PushLayer(std::move(layer), active);
+            return true;
+        }
+
+        return false;
+    }
+
+    bool LayerStack::PushCachedOverlay(const std::type_info& overlayType, LayerCache& cache, std::weak_ptr<Scene> active) {
+        if (auto overlay = cache.TryPop(overlayType)) {
+            PushOverlay(std::move(overlay), active);
+            return true;
+        }
+        
+        return false;
     }
 
     void LayerStack::PushLayer(std::unique_ptr<Layer> layer, std::weak_ptr<Scene> active) {
@@ -58,5 +77,32 @@ namespace Core {
         m_Layers.erase(iter);
 
         return true;
+    }
+    
+    void LayerCache::Append(LayerStack&& previous) {
+        m_Cached.reserve(m_Cached.size() + previous.m_Layers.size());
+
+        for (Layer* layer : previous.m_Layers | std::ranges::views::reverse) {
+            RC_ASSERT(layer != nullptr);
+            layer->OnDetach();
+            m_Cached.emplace_back(layer);
+        }
+
+        previous.m_Layers.clear();
+    }
+
+    std::unique_ptr<Layer> LayerCache::TryPop(const std::type_info& type) {
+        for (size_t i = 0; i < m_Cached.size(); i++) {
+            RC_ASSERT(m_Cached[i]);
+            Layer& layer = *m_Cached[i];
+            if (type != typeid(layer)) { continue; }
+           
+            // Swap and pop
+            std::unique_ptr result = std::exchange(m_Cached[i], std::move(m_Cached.back()));
+            m_Cached.pop_back();
+            return result;
+        }
+
+        return std::unique_ptr<Layer>{ nullptr };
     }
 }
