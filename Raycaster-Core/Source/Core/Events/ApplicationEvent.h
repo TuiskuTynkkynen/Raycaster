@@ -11,4 +11,11 @@ namespace Core {
 		EventType GetType() const override { return GetStaticType(); }
 		int GetCategory() const override { return EventCategoryApplication; }
 	};
+	
+	class ApplicationScenePop : public Event {
+	public:
+		static EventType GetStaticType() { return EventType::ApplicationScenePop; }
+		EventType GetType() const override { return GetStaticType(); }
+		int GetCategory() const override { return EventCategoryApplication; }
+	};
 }

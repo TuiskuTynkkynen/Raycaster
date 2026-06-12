@@ -12,7 +12,7 @@ extern "C" {
 class Raycaster : public Core::Application {
 public:
     Raycaster() {
-        SetActiveScene(new RaycasterScene);
+        PushScene<RaycasterScene>();
         GetWindow().SetVSync(false);
     }
 

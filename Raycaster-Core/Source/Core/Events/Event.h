@@ -11,7 +11,7 @@ namespace Core {
         KeyPressed, KeyReleased,
         MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
         TextInput,
-        ApplicationClose,
+        ApplicationClose, ApplicationScenePop,
         Custom,
     };
 

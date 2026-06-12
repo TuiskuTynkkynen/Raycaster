@@ -9,7 +9,6 @@
 #include <GLFW/glfw3.h>
 
 #include <ranges>
-#include <utility>
 
 namespace Core {
     Application::Application(const WindowProperties& props) {
@@ -19,16 +18,16 @@ namespace Core {
         m_Window = std::make_unique<Window>(props);
         m_Window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
-        m_ActiveScene = nullptr;
-
         RenderAPI::Init();
         Renderer2D::Init();
     }
     
     Application::~Application() {
-        m_ActiveScene->OnDetach(*this);
+        for (auto& scene : m_SceneStack) {
+            scene->OnDetach(*this);
+        }
         m_LayerStack.Clear();
-        
+
         m_Window.reset();
 
         glfwTerminate();
@@ -54,7 +53,7 @@ namespace Core {
 #endif
 
     void Application::Update() {
-        RC_ASSERT(m_ActiveScene, "Active scene not has been set");
+        RC_ASSERT(!m_SceneStack.empty(), "Scene stack is empty");
         RC_ASSERT(m_LayerStack.Size(), "Layer stack is empty");
 
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -66,10 +65,12 @@ namespace Core {
             delete m_EventQueue[i];
         }
         m_EventQueue.clear();
-
+        
         if (!m_Running) { 
             return; // Recieved Application Close event
         }
+
+        m_SceneStack.back()->OnUpdate(deltaTime);
             
         for (Layer* layer : m_LayerStack.Layers()) {
             RC_ASSERT(layer != nullptr);
@@ -81,6 +82,7 @@ namespace Core {
     void Application::OnEvent(Event& event) {
         EventDispatcher dispatcer(event);
         dispatcer.Dispatch<ApplicationClose>(std::bind(&Application::OnApplicationCloseEvent, this, std::placeholders::_1));
+        dispatcer.Dispatch<ApplicationScenePop>(std::bind(&Application::OnApplicationScenePopEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowClose>(std::bind(&Application::OnWindowCloseEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowResize>(std::bind(&Application::OnWindowResizeEvent, this, std::placeholders::_1));
 
@@ -95,7 +97,8 @@ namespace Core {
             layer->OnEvent(event);
         }
         
-        m_ActiveScene->OnEvent(event);
+        RC_ASSERT(!m_SceneStack.empty());
+        m_SceneStack.back()->OnEvent(event);
     }
 
     void Application::Close() {
@@ -104,27 +107,54 @@ namespace Core {
 
     void Application::PushLayer(std::unique_ptr<Layer> layer) {
         RC_ASSERT(layer, "Attempted to push invalid layer");
-        m_LayerStack.PushLayer(std::move(layer), m_ActiveScene);
+        m_LayerStack.PushLayer(std::move(layer), GetActiveScene());
     }
 
     void Application::PushOverlay(std::unique_ptr<Layer> overlay) {
         RC_ASSERT(overlay, "Attempted to push invalid overlay");
-        m_LayerStack.PushOverlay(std::move(overlay), m_ActiveScene);
+        m_LayerStack.PushOverlay(std::move(overlay), GetActiveScene());
     }
 
-    void Application::SetActiveScene(Scene* scene) {
-        RC_ASSERT(scene, "Attempted to set active scene to nullptr");
-        
-        if (m_ActiveScene) { m_ActiveScene->OnDetach(*this); }
+    void Application::PushScene(std::shared_ptr<Scene> scene) {
+        if (!m_SceneStack.empty()) { 
+            m_SceneStack.back()->OnDetach(*this); 
+        }
+
+        RC_ASSERT(scene);
+        m_SceneStack.push_back(scene);
+        AttachScene(scene);
+    }
+
+    void Application::PopScene() {
+        RC_ASSERT(s_Instance);
+        RC_ASSERT(!s_Instance->m_SceneStack.empty(), "Tried to pop more Scenes than have been pushed");
+
+        s_Instance->PushEvent<ApplicationScenePop>();
+        if (s_Instance->m_SceneStack.size() <= 1) {
+            s_Instance->PushEvent<ApplicationClose>();
+        }
+    }
+
+    void Application::AttachScene(std::weak_ptr<Scene> scene) {
         m_LayerCache.Append(std::exchange(m_LayerStack, LayerStack{}));
 
-        m_ActiveScene = std::shared_ptr<Scene>(scene);
-        m_ActiveScene->OnAttach(*this);
-
+        if (auto lock = scene.lock()) { 
+            lock->OnAttach(*this);
+        }
+        
         for (Layer* layer : m_LayerStack.Layers()) {
             RC_ASSERT(layer != nullptr);
-            layer->SetScene(m_ActiveScene);
+            layer->SetScene(scene);
         }
+    }
+
+    bool Application::OnApplicationScenePopEvent(ApplicationScenePop& event) {
+        RC_ASSERT(!m_SceneStack.empty());
+
+        m_SceneStack.back()->OnDetach(*this);
+        m_SceneStack.pop_back();
+        AttachScene(s_Instance->GetActiveScene());
+        return true;
     }
 
     bool Application::OnApplicationCloseEvent(ApplicationClose& event) {
