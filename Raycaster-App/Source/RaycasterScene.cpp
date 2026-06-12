@@ -7,15 +7,7 @@
 
 #include "Core/Audio/Audio.h"
 
-void RaycasterScene::OnAttach(Core::Application& app) {
-    app.RequestOverlay<UILayer>();
-    app.RequestLayer<RaycasterLayer>();
-    app.RequestLayer<Layer3D>();
-    app.RequestLayer<Layer2D>();
-    
-    Core::Audio::Init();
-    Core::Audio::SetWorldUp(glm::vec3(0.0f, 0.0f, 1.0f));
-
+RaycasterScene::RaycasterScene() {
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
     m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));
@@ -25,8 +17,6 @@ void RaycasterScene::OnAttach(Core::Application& app) {
     m_Tiles = m_Map.CreateTiles();
     m_Walls = m_Map.CreateWalls();
     
-    Reinit();
-
     Tile tile;
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
     tile.Scale = m_Player.GetScale();
@@ -34,9 +24,20 @@ void RaycasterScene::OnAttach(Core::Application& app) {
     m_Tiles.push_back(tile);
 
     m_Camera = std::make_unique<RaycasterCamera>(m_Player.GetPosition(), glm::sqrt(2.0f) / glm::sqrt((float)m_Map.GetSize()), m_Player.GetYaw(), m_Player.GetPitch());
-    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.GetYaw()-m_Player.GetPitch());
+    m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.GetYaw() - m_Player.GetPitch());
+}
 
+void RaycasterScene::OnAttach(Core::Application& app) {
+    app.RequestOverlay<UILayer>();
+    app.RequestLayer<RaycasterLayer>();
+    app.RequestLayer<Layer3D>();
+    app.RequestLayer<Layer2D>();
+
+    Core::Audio::Init();
+    Core::Audio::SetWorldUp(glm::vec3(0.0f, 0.0f, 1.0f));
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
+
+    Reinit();
 }
 
 void RaycasterScene::OnDetach(Core::Application&) {

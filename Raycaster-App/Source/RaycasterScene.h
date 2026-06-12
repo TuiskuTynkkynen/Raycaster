@@ -17,6 +17,8 @@
 
 class RaycasterScene : public Core::Scene {
 public: 
+    RaycasterScene();
+
     void OnAttach(Core::Application& app) override;
     void OnDetach(Core::Application& app) override;
 
