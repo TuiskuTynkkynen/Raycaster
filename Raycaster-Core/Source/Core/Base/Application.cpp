@@ -9,10 +9,9 @@
 #include <GLFW/glfw3.h>
 
 #include <ranges>
+#include <utility>
 
 namespace Core {
-    Application* Application::s_Instance = nullptr;
-
     Application::Application(const WindowProperties& props) {
         RC_ASSERT(!s_Instance, "Application already created");
         s_Instance = this;
@@ -111,6 +110,10 @@ namespace Core {
 
     void Application::SetActiveScene(Scene* scene) {
         RC_ASSERT(scene, "Attempted to set active scene to nullptr");
+        
+        m_LayerCache.Append(std::exchange(m_LayerStack, LayerStack{}));
+        if (m_ActiveScene) { m_ActiveScene->Shutdown(); }
+
         m_ActiveScene = std::shared_ptr<Scene>(scene);
         m_ActiveScene->Init();
 

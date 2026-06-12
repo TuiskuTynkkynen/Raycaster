@@ -18,10 +18,11 @@ public:
     Raycaster() {
         SetActiveScene(new RaycasterScene);
 
-        PushOverlay(std::make_unique<UILayer>());
-        PushLayer(std::make_unique<RaycasterLayer>());
-        PushLayer(std::make_unique<Layer3D>());
-        PushLayer(std::make_unique<Layer2D>());
+        RequestOverlay<UILayer>();
+        RequestLayer<RaycasterLayer>();
+        RequestLayer<Layer3D>();
+        RequestLayer<Layer2D>();
+        RequestOverlay<Layer2D>();
 
         GetWindow().SetVSync(false);
     }
