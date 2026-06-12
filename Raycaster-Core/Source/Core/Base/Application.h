@@ -67,7 +67,5 @@ namespace Core {
         void AttachScene(std::weak_ptr<Scene> newActiveScene);
         friend int ::main();
     };
-
-    Application* CreateApplication();
 }
 

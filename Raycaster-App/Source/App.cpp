@@ -9,22 +9,11 @@ extern "C" {
 }
 #endif
 
-class Raycaster : public Core::Application {
-public:
-    Raycaster() {
-        PushScene<RaycasterScene>();
-        GetWindow().SetVSync(false);
-    }
-
-    ~Raycaster(){}
-};
-
-Core::Application* Core::CreateApplication() {
-    return new Raycaster();
-}
-
 int main() {
-    Core::Application* app = Core::CreateApplication();
-    app->Run();
-    delete app;
+    Core::Application app;
+
+    app.PushScene<RaycasterScene>();
+    app.GetWindow().SetVSync(false);
+
+    app.Run();
 }
