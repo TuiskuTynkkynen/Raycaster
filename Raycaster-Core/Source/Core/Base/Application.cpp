@@ -61,13 +61,15 @@ namespace Core {
         Timestep deltaTime = currentFrame - m_LastFrame;
         m_LastFrame = currentFrame;
 
-        for (Event* event : m_EventQueue) {
-            OnEvent(*event);
-            delete event;
+        for (size_t i = 0; i < m_EventQueue.size(); i++) {
+            OnEvent(*m_EventQueue[i]);
+            delete m_EventQueue[i];
         }
         m_EventQueue.clear();
 
-        m_ActiveScene->OnUpdate(deltaTime);
+        if (!m_Running) { 
+            return; // Recieved Application Close event
+        }
             
         for (Layer* layer : m_LayerStack.Layers()) {
             RC_ASSERT(layer != nullptr);
@@ -81,6 +83,8 @@ namespace Core {
         dispatcer.Dispatch<ApplicationClose>(std::bind(&Application::OnApplicationCloseEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowClose>(std::bind(&Application::OnWindowCloseEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowResize>(std::bind(&Application::OnWindowResizeEvent, this, std::placeholders::_1));
+
+        if (!m_Running || event.Handled) { return; }
 
         for (Layer* layer : m_LayerStack.Layers() | std::ranges::views::reverse) {
             RC_ASSERT(layer != nullptr);
