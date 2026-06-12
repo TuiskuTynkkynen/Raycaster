@@ -1,9 +1,5 @@
 #include "Core.h"
 
-#include "UILayer.h"
-#include "RaycasterLayer.h"
-#include "Layer2D.h"
-#include "Layer3D.h"
 #include "RaycasterScene.h"
 
 #ifdef PLATFORM_WINDOWS
@@ -17,13 +13,6 @@ class Raycaster : public Core::Application {
 public:
     Raycaster() {
         SetActiveScene(new RaycasterScene);
-
-        RequestOverlay<UILayer>();
-        RequestLayer<RaycasterLayer>();
-        RequestLayer<Layer3D>();
-        RequestLayer<Layer2D>();
-        RequestOverlay<Layer2D>();
-
         GetWindow().SetVSync(false);
     }
 

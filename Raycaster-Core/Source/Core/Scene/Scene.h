@@ -8,8 +8,8 @@ namespace Core {
     public:
         virtual ~Scene() {}
 
-        virtual void Init() = 0;
-        virtual void Shutdown() = 0;
+        virtual void OnAttach(class Application& application) = 0;
+        virtual void OnDetach(class Application& application) = 0;
 
         virtual void OnUpdate(Timestep deltaTime) = 0;
         virtual void OnEvent(Event& event) = 0;

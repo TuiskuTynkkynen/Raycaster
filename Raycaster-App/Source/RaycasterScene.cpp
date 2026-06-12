@@ -1,8 +1,18 @@
 #include "RaycasterScene.h"
 
+#include "UILayer.h"
+#include "RaycasterLayer.h"
+#include "Layer2D.h"
+#include "Layer3D.h"
+
 #include "Core/Audio/Audio.h"
 
-void RaycasterScene::Init(){
+void RaycasterScene::OnAttach(Core::Application& app) {
+    app.RequestOverlay<UILayer>();
+    app.RequestLayer<RaycasterLayer>();
+    app.RequestLayer<Layer3D>();
+    app.RequestLayer<Layer2D>();
+    
     Core::Audio::Init();
     Core::Audio::SetWorldUp(glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -29,9 +39,14 @@ void RaycasterScene::Init(){
     Core::RenderAPI::SetClearColour(glm::vec3(0.05f, 0.075f, 0.1f));
 }
 
-void RaycasterScene::Shutdown() {
+void RaycasterScene::OnDetach(Core::Application&) {
+    ShutdownSystems();
     SetState(State::Invalid);
 
+    Core::Audio::Shutdown();
+}
+
+void RaycasterScene::ShutdownSystems() {
     m_Player.Shutdown();
     m_Interactables.Shutdown();
     m_Enemies.Shutdown();
@@ -40,7 +55,7 @@ void RaycasterScene::Shutdown() {
 }
 
 void RaycasterScene::Reinit() {
-    Shutdown();
+    ShutdownSystems();
     SetState(State::Running);
 
     m_Player.Init(m_Map);

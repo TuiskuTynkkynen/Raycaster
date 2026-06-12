@@ -26,8 +26,8 @@ namespace Core {
     }
     
     Application::~Application() {
+        m_ActiveScene->OnDetach(*this);
         m_LayerStack.Clear();
-        m_ActiveScene->Shutdown();
         
         m_Window.reset();
 
@@ -111,11 +111,11 @@ namespace Core {
     void Application::SetActiveScene(Scene* scene) {
         RC_ASSERT(scene, "Attempted to set active scene to nullptr");
         
+        if (m_ActiveScene) { m_ActiveScene->OnDetach(*this); }
         m_LayerCache.Append(std::exchange(m_LayerStack, LayerStack{}));
-        if (m_ActiveScene) { m_ActiveScene->Shutdown(); }
 
         m_ActiveScene = std::shared_ptr<Scene>(scene);
-        m_ActiveScene->Init();
+        m_ActiveScene->OnAttach(*this);
 
         for (Layer* layer : m_LayerStack.Layers()) {
             RC_ASSERT(layer != nullptr);

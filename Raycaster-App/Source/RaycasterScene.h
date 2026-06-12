@@ -10,14 +10,15 @@
 #include "RaycasterEvents.h"
 #include "RaycastRenderer.h"
 
+#include "Core/Base/Application.h"
 #include "Core/Events/WindowEvent.h"
 
 #include <memory>
 
 class RaycasterScene : public Core::Scene {
 public: 
-    void Init() override;
-    void Shutdown() override;
+    void OnAttach(Core::Application& app) override;
+    void OnDetach(Core::Application& app) override;
 
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override;
@@ -60,6 +61,7 @@ private:
 
     State m_State = State::Invalid;
 
+    void ShutdownSystems();
     void Reinit();
     void SetState(State state);
     
