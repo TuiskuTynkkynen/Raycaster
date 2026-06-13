@@ -110,32 +110,39 @@ void Projectiles::Update(Core::Timestep deltaTime, const Map& map) {
         size_t mapIndex = map.GetIndex(projectile.Position);
         auto tile = map[mapIndex];
         
-        if (!tile) {
-            // Didn't collide with a wall
+        if (!tile) { // Empty tile
             continue;
         }
 
-        // Check collision with diagonal wall
-        if (tile < 0) {
-            glm::vec2 wallPoint1 = glm::floor(projectile.Position);
-            glm::vec2 wallPoint2(wallPoint1);
-
-            auto adjacent = map.GetNeighbours(mapIndex);
-            if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
-                wallPoint1.x++;
-                wallPoint2.y++;
-            } else {
-                wallPoint2.x++;
-                wallPoint2.y++;
-            }
-
-            if (!Algorithms::LineIntersection(wallPoint1, wallPoint2, projectile.Position, previousPosition)) {
-                // Didn't collide with a wall
-                continue;
-            }
+        if (tile > 0) { // Full wall tile
+            Remove(i--);
+            continue;
         }
 
-        Remove(i--);
+        if(auto door = map.GetDoor(mapIndex)){ // Door tile
+            const glm::vec2 doorPoint1 = door.value().Position;
+            const glm::vec2 doorPoint2 = doorPoint1 + door.value().Vector * door.value().Length;
+            if (Algorithms::LineIntersection(doorPoint1, doorPoint2, projectile.Position, previousPosition)) {
+                Remove(i--);
+            }
+            
+            continue;
+        }
+
+        // Diagonal wall tile
+        glm::vec2 wallPoint1 = glm::floor(projectile.Position);
+        glm::vec2 wallPoint2{ wallPoint1.x, wallPoint1.y + 1.0f };
+
+        const auto adjacent = map.GetNeighbours(mapIndex);
+        if (adjacent.South && adjacent.East || adjacent.North && adjacent.West) {
+            wallPoint1.x++;
+        } else {
+            wallPoint2.x++;
+        }
+
+        if (Algorithms::LineIntersection(wallPoint1, wallPoint2, projectile.Position, previousPosition)) {
+            Remove(i--);
+        }
     }
 }
 

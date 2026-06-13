@@ -54,13 +54,22 @@ public:
     inline static constexpr size_t GetIndex(glm::ivec2 position) { return GetIndex(position.x, position.y); }
     inline static constexpr size_t GetIndex(glm::vec2 position) { return GetIndex(static_cast<size_t>(position.x), static_cast<size_t>(position.y)); }
     
-    inline constexpr std::span<const LineCollider> GetDoors() const { return m_Doors; }
-    inline constexpr bool HasDoor(size_t index) const {
+    inline std::span<const LineCollider> GetDoors() const { return m_Doors; }
+    inline bool HasDoor(size_t index) const {
         if (index < s_MapData.Size) {
             return m_DoorIndexMap[index] != (uint8_t)-1;
         }
 
         return false;
+    }
+    inline std::optional<LineCollider> GetDoor(size_t index) const {
+        if (index >= s_MapData.Size) { return std::nullopt; }
+
+        if (const uint8_t doorIndex = m_DoorIndexMap[index]; doorIndex != (uint8_t)-1) {
+            return std::optional<LineCollider>(m_Doors[doorIndex]);
+        }
+
+        return std::nullopt;
     }
 
     bool IsPassable(size_t index) const {
