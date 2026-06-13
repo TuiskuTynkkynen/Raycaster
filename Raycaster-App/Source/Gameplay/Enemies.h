@@ -5,6 +5,8 @@
 #include "Renderables.h"
 #include "Projectiles.h"
 
+#include "Core/Debug/Assert.h"
+
 #include <vector>
 #include <span>
 

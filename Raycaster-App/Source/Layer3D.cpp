@@ -3,6 +3,9 @@
 #include "RaycasterScene.h"
 #include "Settings/Video.h"
 
+#include "Core/Renderer/RenderAPI.h"
+#include "Core/Renderer/Renderer.h"
+
 void Layer3D::OnAttach() {
     m_Framebuffer.InitRender();
     m_PostProcessShader = std::make_unique<Core::Shader>("Assets/Shaders/PostProcess.glsl");

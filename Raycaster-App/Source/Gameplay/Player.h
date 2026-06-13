@@ -7,6 +7,8 @@
 #include "InputCode.h"
 
 #include "Core/Base/Timestep.h"
+#include "Core/Events/KeyEvent.h"
+#include "Core/Events/MouseEvent.h"
 
 #include <span>
 #include <vector>

@@ -1,6 +1,7 @@
 #include "UILayer.h"
 
 #include "Core/UI/UI.h"
+#include "Core/Renderer/Renderer2D.h"
 
 void UILayer::OnAttach() {
     m_ViewPortWidth = Core::Application::GetWindow().GetWidth();

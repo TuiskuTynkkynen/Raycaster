@@ -1,6 +1,6 @@
-#include "Core.h"
-
 #include "RaycasterScene.h"
+
+#include "Core/Base/Application.h"
 
 #ifdef PLATFORM_WINDOWS
 extern "C" {

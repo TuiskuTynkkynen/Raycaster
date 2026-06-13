@@ -3,6 +3,9 @@
 #include "RaycasterScene.h"
 #include "Settings/Video.h"
 
+#include "Core/Renderer/RenderAPI.h"
+#include "Core/Renderer/Renderer2D.h"
+
 void Layer2D::OnAttach() {}
 
 void Layer2D::OnUpdate(Core::Timestep deltaTime) {

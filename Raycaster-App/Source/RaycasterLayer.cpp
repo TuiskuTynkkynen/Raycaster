@@ -3,6 +3,9 @@
 #include "RaycasterScene.h"
 #include "Settings/Video.h"
 
+#include "Core/Renderer/RenderAPI.h"
+#include "Core/Renderer/Renderer2D.h"
+
 void RaycasterLayer::OnAttach() {}
 void RaycasterLayer::OnDetach() {}
 

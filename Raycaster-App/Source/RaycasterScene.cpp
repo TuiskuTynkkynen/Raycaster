@@ -6,6 +6,7 @@
 #include "Layer3D.h"
 
 #include "Core/Audio/Audio.h"
+#include "Core/Renderer/RenderAPI.h"
 
 RaycasterScene::RaycasterScene() {
     m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));

@@ -1,10 +1,12 @@
 #pragma once
-#include "Core.h"
 
 #include "Entities.h"
 #include "Algorithms.h"
 
+#include "Core/Renderer/Texture.h"
+#include "Core/Renderer/Model.h"
 #include "Core/Renderer/UniformBuffer.h"
+#include "Core/Debug/Assert.h"
 
 #include <glm/glm.hpp>
 
