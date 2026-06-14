@@ -483,7 +483,7 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
     return mapModel;
 }
 
-void Map::CalculateLightMap(std::span<glm::vec3> lights) {
+void Map::CalculateLightMap(std::span<const glm::vec3> lights) {
     for (size_t i = 0; i < Map::GetSize(); i++) {
         size_t y = i / Map::GetWidth();
         size_t x = i % Map::GetWidth();
@@ -538,6 +538,27 @@ void Map::ToggleDoor(glm::vec2 position) {
     if (doorIndex == (uint8_t)-1) return;
 
     m_DoorState[doorIndex] = !m_DoorState[doorIndex];
+}
+
+void Map::Reinit(std::span<const glm::vec3> lights) {
+    std::vector<ShaderLineSegment> segments;
+    segments.reserve(m_Doors.size());
+
+    bool updated = false;
+    for (auto& door : m_Doors) {
+        updated |= door.Length != 1.0f;
+        door.Length = 1.0f;
+        segments.emplace_back(glm::fract(door.Position), door.Vector);
+    }
+
+    if (!updated) {
+        return;
+    }
+
+    CalculateLightMap(lights);
+    std::ranges::fill(m_DoorState, false);
+    const size_t diagonalCount = 2; // Diagonal segments stored before doors
+    m_UBO->Update(std::as_bytes(std::span(segments)), diagonalCount * sizeof(ShaderLineSegment));
 }
 
 Map::HitInfo Map::CastRay(glm::vec3 origin, glm::vec3 direction) const {
