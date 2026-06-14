@@ -20,8 +20,10 @@ void Player::Init(const Map& map) {
     m_Position = glm::vec3((float)map.GetWidth() / 2, (float)map.GetHeight() / 2, 0.5f);
     m_Scale = glm::vec3(Width * 0.5f);
     m_Rotation = glm::vec2(90.0f, 0.0f);
-
+    m_LateralSpeed = {};
+    m_RotationalSpeed = {};
     m_HeldItemIndex = 0;
+
     for (auto& item : m_Inventory) {
         item = { .Scale = 0.0f, .Count = 0 };
     }
