@@ -254,7 +254,9 @@ void Player::UseItem(Core::Timestep deltaTime) {
 }
 
 bool Player::OnInputPressed(Settings::KeyBinds::InputCode input, bool repeated) {
-    bool HoldingItem = m_HeldItemIndex < m_Inventory.size() && m_Inventory[m_HeldItemIndex].UseDuration;
+    bool HoldingItem = m_HeldItemIndex < m_Inventory.size()
+            && m_Inventory[m_HeldItemIndex].Count != 0
+            && m_Inventory[m_HeldItemIndex].UseDuration != 0.0f;
     bool UsingItem = HoldingItem && m_AnimationProgress >= 0.0f;
 
     namespace KB = Settings::KeyBinds;
