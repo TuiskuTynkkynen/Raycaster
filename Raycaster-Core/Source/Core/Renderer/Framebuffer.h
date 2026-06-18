@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Shader.h"
+#include "Platform.h"
 
 #include <glm/glm.hpp>
 #include <cstdint>
@@ -13,9 +14,11 @@ namespace Core {
             RGBA8 = 0,
             RG8,
             R8,
+#if !defined(PLATFORM_EMSCRIPTEN)
             RGBA16,
             RG16,
             R16,
+#endif
             RGBA16F,
             RG16F,
             R16F,
