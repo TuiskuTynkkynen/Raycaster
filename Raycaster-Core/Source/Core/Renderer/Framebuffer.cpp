@@ -48,23 +48,16 @@ namespace Core {
         switch (format) {
             using enum Framebuffer::ColorFormat;
         case HDR_F: return GL_R11F_G11F_B10F;
-    #if defined(PLATFORM_EMSCRIPTEN)
-        case RGB8: return GL_RGBA8;
-        case RGB16: return GL_RGBA16UI;
-        case RGB16F: return GL_RGBA16F;
-        case RGB32F: return GL_RGBA32F;
-    #else
-        case RGB8: return GL_RGB8;
-        case RGB16: return GL_RGB16UI;
-        case RGB16F: return GL_RGB16F;
-        case RGB32F: return GL_RGB32F;
-    #endif
+        case RGBA8: return GL_RGBA8;
         case RG8: return GL_RG8;
         case R8: return GL_R8;
+        case RGBA16: return GL_RGBA16UI;
         case RG16: return GL_RG16UI;
         case R16: return GL_R16UI;
+        case RGBA16F: return GL_RGBA16F;
         case RG16F: return GL_RG16F;
         case R16F: return GL_R16F;
+        case RGBA32F: return GL_RGBA32F;
         case RG32F: return GL_RG32F;
         case R32F: return GL_R32F;
         }
@@ -87,15 +80,11 @@ namespace Core {
         case RG16F:
         case RG32F:
             return GL_RG;
-        case RGB8:
-        case RGB16:
-        case RGB16F:
-        case RGB32F:
-    #if defined(PLATFORM_EMSCRIPTEN)
+        case RGBA8:
+        case RGBA16:
+        case RGBA16F:
+        case RGBA32F:
             return GL_RGBA;
-    #else
-            return GL_RGB;
-    #endif
         }
 
         RC_ASSERT(false); // This should never be reached
@@ -105,18 +94,18 @@ namespace Core {
    static constexpr GLenum GetType(Framebuffer::ColorFormat format) {
         switch (format) {
             using enum Framebuffer::ColorFormat;
-        case RGB8:
+        case RGBA8:
         case RG8:
         case R8:
             return GL_UNSIGNED_BYTE;
-        case RGB16:
+        case RGBA16:
         case RG16:
         case R16:
             return GL_SHORT;
         case RG16F:
         case R16F:
-        case RGB16F:
-        case RGB32F:
+        case RGBA16F:
+        case RGBA32F:
         case RG32F:
         case R32F:
         case HDR_F:

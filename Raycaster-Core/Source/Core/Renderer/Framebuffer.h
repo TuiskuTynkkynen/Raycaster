@@ -10,16 +10,16 @@ namespace Core {
     public:
         enum class ColorFormat : uint8_t {
             HDR_F = 255,
-            RGB8 = 0,
+            RGBA8 = 0,
             RG8,
             R8,
-            RGB16,
+            RGBA16,
             RG16,
             R16,
-            RGB16F,
+            RGBA16F,
             RG16F,
             R16F,
-            RGB32F,
+            RGBA32F,
             RG32F,
             R32F,
         };
@@ -27,7 +27,7 @@ namespace Core {
             Nearest = 0,
             Linear,
         };
-        Framebuffer(uint32_t width, uint32_t height, ColorFormat format = ColorFormat::RGB8, ColorFilter filtering = ColorFilter::Nearest, bool hasDepthStencil = true);
+        Framebuffer(uint32_t width, uint32_t height, ColorFormat format = ColorFormat::RGBA8, ColorFilter filtering = ColorFilter::Nearest, bool hasDepthStencil = true);
         ~Framebuffer();
 
         void Resize(uint32_t width, uint32_t height);
@@ -64,22 +64,22 @@ namespace Core {
     public:
         enum class ColorFormat : uint8_t {
             HDR_F = 255,
-            RGB8 = 0,
+            RGBA8 = 0,
             RG8,
             R8,
 #if !defined(PLATFORM_EMSCRIPTEN)
-            RGB16,
+            RGBA16,
             RG16,
             R16,
-            RGB16F,
+            RGBA16F,
             RG16F,
             R16F,
-            RGB32F,
+            RGBA32F,
             RG32F,
             R32F,
 #endif
         };
-        MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, MultisampleFramebuffer::ColorFormat format = MultisampleFramebuffer::ColorFormat::RGB8, Framebuffer::ColorFilter filtering = Framebuffer::ColorFilter::Nearest, bool hasDepthStencil = true);
+        MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, MultisampleFramebuffer::ColorFormat format = MultisampleFramebuffer::ColorFormat::RGBA8, Framebuffer::ColorFilter filtering = Framebuffer::ColorFilter::Nearest, bool hasDepthStencil = true);
         ~MultisampleFramebuffer();
 
         void Resize(uint32_t width, uint32_t height, uint8_t sampleCount);
