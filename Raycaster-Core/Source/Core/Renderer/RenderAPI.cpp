@@ -35,7 +35,10 @@ namespace Core {
         #endif
 
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFuncSeparate(
+            GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, // Color
+            GL_ONE, GL_ONE_MINUS_SRC_ALPHA        // Alpha
+        );
 
         glGetIntegerv(GL_MAX_SAMPLES, &s_Constants.MultiSampleCount);
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &s_Constants.TextureUnitCount);
