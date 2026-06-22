@@ -10,6 +10,7 @@ namespace Core {
     public:
         Shader(std::string_view shaderFileName);
         Shader(std::string_view vertexFileName, std::string_view fragmentFileName);
+        Shader(const char* vertexShader, const char* fragmentShader);
         ~Shader();
 
         void Bind();

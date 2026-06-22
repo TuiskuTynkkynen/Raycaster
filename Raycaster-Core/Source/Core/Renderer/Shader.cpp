@@ -155,6 +155,9 @@ namespace Core {
         m_RendererID = CreateShaderProgram(vertexCode.str().c_str(), fragmentCode.str().c_str());
     }
 
+    Shader::Shader(const char* vertexShaderCode, const char* fragmentShaderCode)
+        : m_RendererID(CreateShaderProgram(vertexShaderCode, fragmentShaderCode)) {}
+
     Shader::~Shader() {
         glDeleteProgram(m_RendererID);
     }
