@@ -16,26 +16,72 @@
 #include <fstream>
 #include <sstream>
 
+enum class ShaderType {
+    NONE = -1, Vertex = 0, Fragment = 1
+};
+
+uint32_t CreateShaderProgram(const char* vertexShaderCode, const char* fragmentShaderCode) {
+    int32_t compileStatus;
+    char shaderCompileLog[512];
+
+    const uint32_t vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderCode, NULL);
+    glCompileShader(vertexShader);
+
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
+    if (!compileStatus) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, shaderCompileLog);
+        RC_ERROR("Vertex shader compilation failed\n{}", shaderCompileLog);
+    }
+
+    const uint32_t fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderCode, NULL);
+    glCompileShader(fragmentShader);
+
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
+    if (!compileStatus) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, shaderCompileLog);
+        RC_ERROR("Fragment shader compilation failed\n{}", shaderCompileLog);
+    }
+
+    const uint32_t programID = glCreateProgram();
+    glAttachShader(programID, vertexShader);
+    glAttachShader(programID, fragmentShader);
+    glLinkProgram(programID);
+
+    glGetProgramiv(programID, GL_LINK_STATUS, &compileStatus);
+    if (!compileStatus) {
+        glGetProgramInfoLog(programID, 512, NULL, shaderCompileLog);
+        RC_ERROR("Shader program linking failed\n{}", shaderCompileLog);
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return programID;
+}
+
 namespace Core {
     Shader::Shader(std::string_view shaderFilePath)
         : m_RendererID(0)
     {
-        std::string vertexCode, fragmentCode;
+        std::stringstream shaderStrings[2];
         {
-            std::filesystem::path filePath = ApplicationDirectory() / shaderFilePath;
+            std::filesystem::path filePath = shaderFilePath;
+            if (!filePath.is_absolute()) {
+                filePath = ApplicationDirectory() / filePath;
+            }
+
             std::ifstream ShaderFile(filePath);
 
             if (!ShaderFile.good()) {
-                RC_ERROR("SHADER FILE {} READ FAILED", filePath.string());
+                RC_ERROR("Shader file, {}, read failed.", filePath.string());
                 return;
             }
 
-            std::stringstream shaderStrings[2];
-
             std::string line;
             ShaderType type = ShaderType::NONE;
-            while (getline(ShaderFile, line))
-            {
+            while (getline(ShaderFile, line)) {
                 if (line.find("#shader") != std::string::npos) {
                     if (line.find("vertex") != std::string::npos) {
                         type = ShaderType::Vertex;
@@ -45,134 +91,68 @@ namespace Core {
                     }
                     continue;
                 }
+                
+                if (type == ShaderType::NONE) {
+                    RC_ERROR("Shader file, {}, must begin with \"#shader vertex\" or \"#shader fragment\" directive.", filePath.string());
+                    return;
+                }
+
                 shaderStrings[(int)type] << line << "\n";
             }
 
-            vertexCode = shaderStrings[0].str();
-            fragmentCode = shaderStrings[1].str();
-
-            if (vertexCode.empty()) {
-                RC_ERROR("COULD NOT FIND VERTEX SHADER CODE IN SHADER FILE {}", filePath.string());
+            if (shaderStrings[0].tellp() == std::streampos(0)) {
+                RC_ERROR("Could not find vertex shader code in file, {}.", filePath.string());
                 return;
             }
 
-            if (fragmentCode.empty()) {
-                RC_ERROR("COULD NOT FIND FRAGMENT SHADER CODE IN SHADER FILE {}", filePath.string());
+            if (shaderStrings[1].tellp() == std::streampos(0)) {
+                RC_ERROR("Could not find fragment shader code in file, {}.", filePath.string());
                 return;
             }
         }
-
-        const char* vertexShaderCode = vertexCode.c_str();
-        const char* fragmentShaderCode =fragmentCode.c_str();
-
-        int32_t compileStatus;
-        char shaderCompileLog[512];
-
-        uint32_t vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderCode, NULL);
-        glCompileShader(vertexShader);
-
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
-        if (!compileStatus) {
-            glGetShaderInfoLog(vertexShader, 512, NULL, shaderCompileLog);
-            RC_ERROR("VERTEX SHADER COMPILATION FAILED\n{}", shaderCompileLog);
-        }
-
-        uint32_t fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderCode, NULL);
-        glCompileShader(fragmentShader);
-
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
-        if (!compileStatus) {
-            glGetShaderInfoLog(fragmentShader, 512, NULL, shaderCompileLog);
-            RC_ERROR("FRAGMENT SHADER COMPILATION FAILED\n{}", shaderCompileLog);
-        }
-
-        m_RendererID = glCreateProgram();
-        glAttachShader(m_RendererID, vertexShader);
-        glAttachShader(m_RendererID, fragmentShader);
-        glLinkProgram(m_RendererID);
-
-        glGetProgramiv(m_RendererID, GL_LINK_STATUS, &compileStatus);
-        if (!compileStatus) {
-            glGetProgramInfoLog(m_RendererID, 512, NULL, shaderCompileLog);
-            RC_ERROR("VERTEX SHADER PROGRAM LINKING FAILED\n{}", shaderCompileLog);
-        }
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
+        
+        m_RendererID = CreateShaderProgram(shaderStrings[0].str().c_str(), shaderStrings[1].str().c_str());
     }
 
-    Shader::Shader(const char* vertexFilePath, const char* fragmentFilePath)
+    Shader::Shader(std::string_view vertexFileName, std::string_view fragmentFileName)
         : m_RendererID(0)
     {
-        std::filesystem::path basePath = ApplicationDirectory();
+        const std::filesystem::path basePath = ApplicationDirectory();
+        std::stringstream vertexCode, fragmentCode;
         
-        std::string vertexCode, fragmentCode;
-        std::ifstream vertexShaderFile, fragmentShaderFile;
-
-        vertexShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        fragmentShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        try
         {
-            vertexShaderFile.open(basePath / vertexFilePath);
-            fragmentShaderFile.open(basePath / fragmentFilePath);
-         
-            std::stringstream vShaderStream, fShaderStream;
-            vShaderStream << vertexShaderFile.rdbuf();
-            fShaderStream << fragmentShaderFile.rdbuf();
-            
-            vertexShaderFile.close();
-            fragmentShaderFile.close();
-            
-            vertexCode = vShaderStream.str();
-            fragmentCode = fShaderStream.str();
+            std::filesystem::path vertexPath = vertexFileName;
+            if (!vertexPath.is_absolute()) {
+                vertexPath = basePath / vertexPath;
+            }
+
+
+            std::ifstream vertexFile(vertexPath);
+            if (!vertexFile.good()) {
+                RC_ERROR("Vertex shader file, {}, read failed.", vertexPath.string());
+                return;
+            }
+
+            vertexCode << vertexFile.rdbuf();
         }
-        catch (std::ifstream::failure e) 
+        
         {
-            RC_ERROR("SHADER FILE {} OR {} READ FAILED", vertexFilePath, fragmentFilePath);
-            return;
+            std::filesystem::path fragmentPath = vertexFileName;
+            if (!fragmentPath.is_absolute()) {
+                fragmentPath = basePath / fragmentPath;
+            }
+
+
+            std::ifstream fragmentFile(fragmentPath);
+            if (!fragmentFile.good()) {
+                RC_ERROR("Fragment shader file, {}, read failed.", fragmentPath.string());
+                return;
+            }
+
+            fragmentCode << fragmentFile.rdbuf();
         }
 
-        const char* vertexShaderCode = vertexCode.c_str();
-        const char* fragmentShaderCode = fragmentCode.c_str();
-
-        int32_t compileStatus;
-        char shaderCompileLog[512];
-
-        uint32_t vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderCode, NULL);
-        glCompileShader(vertexShader);
-
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
-        if (!compileStatus) {
-            glGetShaderInfoLog(vertexShader, 512, NULL, shaderCompileLog);
-            RC_ERROR("VERTEX SHADER COMPILATION FAILED\n{}", shaderCompileLog);
-        }
-
-        uint32_t fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderCode, NULL);
-        glCompileShader(fragmentShader);
-
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
-        if (!compileStatus) {
-            glGetShaderInfoLog(fragmentShader, 512, NULL, shaderCompileLog);
-            RC_ERROR("FRAGMENT SHADER COMPILATION FAILED\n{}", shaderCompileLog);
-        }
-
-        m_RendererID = glCreateProgram();
-        glAttachShader(m_RendererID, vertexShader);
-        glAttachShader(m_RendererID, fragmentShader);
-        glLinkProgram(m_RendererID);
-
-        glGetProgramiv(m_RendererID, GL_LINK_STATUS, &compileStatus);
-        if (!compileStatus) {
-            glGetProgramInfoLog(m_RendererID, 512, NULL, shaderCompileLog);
-            RC_ERROR("VERTEX SHADER PROGRAM LINKING FAILED\n{}", shaderCompileLog);
-        }
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
+        m_RendererID = CreateShaderProgram(vertexCode.str().c_str(), fragmentCode.str().c_str());
     }
 
     Shader::~Shader() {
@@ -233,7 +213,7 @@ namespace Core {
     }
 
     void Shader::SetUniformBlockBinding(const char* name, uint32_t bindingIndex){
-	uint32_t block = glGetUniformBlockIndex(m_RendererID, name);
+    uint32_t block = glGetUniformBlockIndex(m_RendererID, name);
         glUniformBlockBinding(m_RendererID, block, bindingIndex);
     }
 

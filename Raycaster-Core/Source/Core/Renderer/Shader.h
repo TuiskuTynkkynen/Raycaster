@@ -5,23 +5,11 @@
 #include <string_view>
 #include <unordered_map>
 
-enum class ShaderType {
-    NONE = -1, Vertex = 0, Fragment = 1
-};
-
 namespace Core {
-	class Shader
-	{
-    private:
-    	uint32_t m_RendererID;
-        
-        //const char* doesn't do extra allocations -> faster than string
-        std::unordered_map<const char*, uint32_t> m_UniformLocationCache; 
-
-        uint32_t GetUniformLocation(const char* name);
+	class Shader {
     public:
         Shader(std::string_view shaderFileName);
-        Shader(const char* vertexFilePath, const char* fragmentFilePath);
+        Shader(std::string_view vertexFileName, std::string_view fragmentFileName);
         ~Shader();
 
         void Bind();
@@ -39,6 +27,11 @@ namespace Core {
         void setMat4(const char* name, const glm::mat4& value);
 
         void SetUniformBlockBinding(const char* name, uint32_t bindingIndex);
+    private:
+        uint32_t m_RendererID;
+        std::unordered_map<const char*, uint32_t> m_UniformLocationCache;
+
+        uint32_t GetUniformLocation(const char* name);
 	};
 }
 
