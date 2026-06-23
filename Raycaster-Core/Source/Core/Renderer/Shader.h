@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include <string>
 #include <string_view>
 #include <unordered_map>
 
@@ -30,7 +31,7 @@ namespace Core {
         void SetUniformBlockBinding(const char* name, uint32_t bindingIndex);
     private:
         uint32_t m_RendererID;
-        std::unordered_map<const char*, uint32_t> m_UniformLocationCache;
+        std::unordered_map<std::string, uint32_t> m_UniformLocationCache;
 
         uint32_t GetUniformLocation(const char* name);
 	};

@@ -221,16 +221,17 @@ namespace Core {
     }
 
     uint32_t Shader::GetUniformLocation(const char* name) {
-        if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end()) {
-            return m_UniformLocationCache[name];
+        if (auto iter = m_UniformLocationCache.find(name); iter != m_UniformLocationCache.end()) {
+            return iter->second;
         }
 
         int32_t location = glGetUniformLocation(m_RendererID, name);
-    
-        if (location == -1) {
-            RC_WARN("UNIFORM {} DOES NOT EXIST", name);
+        if (location < 0) {
+            RC_WARN("Uniform, {}, does not exist", name);
             return 0;
         }
+
+        m_UniformLocationCache.try_emplace(name, location);
         return location;
     }
 }
