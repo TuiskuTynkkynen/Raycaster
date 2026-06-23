@@ -21,8 +21,15 @@ struct FullsceenQuad {
     }
 } static* s_RenderQuad = nullptr;
 
+static Core::Shader* s_DefaultShader = nullptr;
+
 namespace Core {
     void Framebuffer::InitRender() {
+        if (s_RenderQuad != nullptr) {
+            RC_ASSERT(s_DefaultShader != nullptr);
+            return;
+        }
+
         float quadVertices[] = {
                 -1.0f,  1.0f,  0.0f, 1.0f,
                 -1.0f, -1.0f,  0.0f, 0.0f,
@@ -35,11 +42,34 @@ namespace Core {
         quadLayout.Push<float>(2);
 
         s_RenderQuad = new FullsceenQuad(quadVertices, sizeof(quadVertices), quadLayout);
+
+        const char* vertex = R"(
+            #version 300 es
+            layout (location = 0) in vec2 aPos;
+            layout (location = 1) in highp vec2 aTexPos;
+            out highp vec2 TexPos;
+            void main() {
+                 gl_Position = vec4(aPos, 1.0f, 1.0f);
+                 TexPos = aTexPos;
+            })";     
+        const char* fragment = R"(
+            #version 300 es
+            in highp vec2 TexPos;
+            uniform sampler2D Tex;
+            out mediump vec4 FragColor;
+            void main() {
+                FragColor = texture(Tex, TexPos);
+            })";
+        s_DefaultShader = new Shader(vertex, fragment);
+        s_DefaultShader->Bind();
+        s_DefaultShader->setInt("Tex", 0);
     }
 
     void Framebuffer::ShutdownRender() {
         delete s_RenderQuad;
         s_RenderQuad = nullptr;
+        delete s_DefaultShader;
+        s_DefaultShader = nullptr;
         return;
     }
 
@@ -229,6 +259,11 @@ namespace Core {
         glBindTexture(GL_TEXTURE_2D, m_Color);
     }
 
+    void Framebuffer::Render() {
+        RC_ASSERT(s_DefaultShader, "Framebuffer::InitRender must be called before trying to render a Framebuffer");
+        Render(*s_DefaultShader, 0);
+    }
+
     void Framebuffer::Render(Shader& shader, uint8_t textureUnitIndex) {
         RC_ASSERT(s_RenderQuad, "Framebuffer::InitRender must be called before trying to render a Framebuffer");
 
@@ -356,8 +391,13 @@ namespace Core {
         m_Resolved.BindToTextureUnit(textureUnitIndex);
     }
 
+    void MultisampleFramebuffer::Render() {
+        RC_ASSERT(s_DefaultShader, "MultisampleFramebuffer::InitRender must be called before trying to render a MultisampleFramebuffer");
+        Render(*s_DefaultShader, 0);
+    }
+
     void MultisampleFramebuffer::Render(Shader& shader, uint8_t textureUnitIndex) {
-        RC_ASSERT(s_RenderQuad, "Framebuffer::InitRender must be called before trying to render a MultisampleFramebuffer");
+        RC_ASSERT(s_RenderQuad, "MultisampleFramebuffer::InitRender must be called before trying to render a MultisampleFramebuffer");
 
         auto size = m_Resolved.GetSize();
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Buffer);

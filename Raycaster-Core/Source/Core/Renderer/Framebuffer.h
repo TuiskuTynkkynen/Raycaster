@@ -43,6 +43,8 @@ namespace Core {
 
         // Note: use to bind to a sampler2D
         void BindToTextureUnit(uint8_t textureUnitIndex);
+        // Renders directly to a fullsreen quad using a default Shader.
+        void Render();
         // Renders to a fullsreen quad with layout (vec2 position, vec2 UVs)
         void Render(Shader& shader, uint8_t textureUnitIndex);
         
@@ -95,6 +97,8 @@ namespace Core {
 
         // Note: use to bind to a sampler2D, binds resolved (non MSAA) texture
         void BindToTextureUnit(uint8_t textureUnitIndex);
+        // Renders directly to a fullsreen quad using a default Shader.
+        void Render();
         // Renders to a fullsreen quad with layout (vec2 position, vec2 UVs)
         void Render(Shader& shader, uint8_t textureUnitIndex);
 
