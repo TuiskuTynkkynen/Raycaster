@@ -117,6 +117,7 @@ namespace Core {
         inline glm::uvec2 GetSize() const { return m_Resolved.GetSize(); }
         inline MultisampleFramebuffer::ColorFormat GetFormat() const { return static_cast<MultisampleFramebuffer::ColorFormat>(m_Resolved.GetFormat()); }
         inline Framebuffer::ColorFilter GetFiltering() const { return m_Resolved.GetFiltering(); }
+        inline Framebuffer& GetResolvedBuffer() { return m_Resolved; }
     private:
         uint32_t m_Buffer;
         uint32_t m_Color;
