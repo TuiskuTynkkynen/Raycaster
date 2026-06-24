@@ -1,11 +1,14 @@
 #include "UILayer.h"
 
 #include "Core/UI/UI.h"
+#include "Core/Renderer/RenderAPI.h"
 #include "Core/Renderer/Renderer2D.h"
 
 void UILayer::OnAttach() {
     m_ViewPortWidth = Core::Application::GetWindow().GetWidth();
     m_ViewPortHeight = Core::Application::GetWindow().GetHeight();
+    
+    m_Framebuffer.Resize(m_ViewPortWidth, m_ViewPortHeight, m_SampleCount);
     
     Core::Renderer2D::SetTextureAtlas("Assets/Textures/atlas.png", ATLASWIDTH, ATLASHEIGHT);
 
@@ -33,6 +36,7 @@ void UILayer::OnUpdate(Core::Timestep deltaTime) {
     const auto lock = m_Scene.lock();
     RC_ASSERT(dynamic_cast<const RaycasterScene*>(lock.get()));
     const RaycasterScene& scene = static_cast<const RaycasterScene&>(*lock);
+    const bool paused = scene.GetState() != RaycasterScene::State::Running;
 
     Core::UI::Begin({ 0.0f, 0.0f }, { m_ViewPortWidth, m_ViewPortHeight }, Core::UI::LayoutType::Horizontal, glm::vec4(0.0f));
     static float timeDelta = 0;
@@ -48,14 +52,21 @@ void UILayer::OnUpdate(Core::Timestep deltaTime) {
         timeDelta = 0.0f;
     }
 
+    if (paused) { // MSAA is not needed during gameplay
+        m_Framebuffer.Activate();
+        m_Framebuffer.Clear();
+    } else {
+        m_Framebuffer.GetResolvedBuffer().Activate();
+        m_Framebuffer.GetResolvedBuffer().Clear();
+    }
+
     std::string frameStats = std::to_string(int(1000 / frameTime)) + " FPS\n" + std::to_string(frameTime) + " ms";
     Core::UI::Text(frameStats, 0.5f, Core::UI::TextAlignment::Left, Core::UI::PositioningType::Relative, { -0.49f, -0.485f }, { 0.01f, 0.075f }, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
     std::string playerStats = "Health: " + std::format("{:2}", scene.GetPlayer().GetHealth()) + "/" + std::to_string(static_cast<uint32_t>(Player::MaxHealth));
     Core::UI::Text(playerStats, 0.5f, Core::UI::TextAlignment::Right, Core::UI::PositioningType::Relative, { 0.49f, -0.485f }, { 0.01f, 0.075f }, glm::vec4(0.2f, 0.8f, 0.2f, 1.0f));
 
-    RaycasterScene::State sceneState = scene.GetState();
-    if (sceneState != RaycasterScene::State::Running) {
+    if (paused) {
     Core::UI::BeginContainer(Core::UI::PositioningType::Offset, { -0.025f, 0.0f , 0.0f }, { 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f, 0.5f });
         if (m_SettingsUI.IsEnabled) {
             m_SettingsUI.Render();
@@ -66,6 +77,14 @@ void UILayer::OnUpdate(Core::Timestep deltaTime) {
     }
 
     Core::UI::End(deltaTime);
+
+    m_Framebuffer.Deactivate(); // Deactivate does not have to be called from the same Framabuffer
+    Core::RenderAPI::SetViewPort(0, 0, m_ViewPortWidth, m_ViewPortHeight);
+    if (paused) { // MSAA is not needed during gameplay
+        m_Framebuffer.Render();
+    } else {
+        m_Framebuffer.GetResolvedBuffer().Render();
+    }
 }
 
 void UILayer::PauseScreen(const RaycasterScene& scene) {
@@ -105,6 +124,7 @@ void UILayer::OnEvent(Core::Event& event) {
 bool UILayer::OnWindowResizeEvent(Core::WindowResize& event) {
     m_ViewPortWidth = event.GetWidth();
     m_ViewPortHeight = event.GetHeight();
+    m_Framebuffer.Resize(m_ViewPortWidth, m_ViewPortHeight, m_SampleCount);
 
     return false;
 }
