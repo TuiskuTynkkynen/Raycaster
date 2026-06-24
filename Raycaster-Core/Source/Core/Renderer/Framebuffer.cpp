@@ -276,6 +276,20 @@ namespace Core {
         RenderAPI::SetDepthBuffer(true);
     }
 
+    void Framebuffer::Clear() {
+        Clear(glm::vec4(0.0f));
+        ClearDepthStencil(1.0f, 0);
+    }
+
+    void Framebuffer::Clear(glm::vec4 color) {
+        GLfloat values[] = { color.r, color.g, color.b, color.a };
+        glClearBufferfv(GL_COLOR, 0, values);
+    }
+
+    void Framebuffer::ClearDepthStencil(float depth, int32_t stencil) {
+        glClearBufferfi(GL_DEPTH_STENCIL, 0, depth, stencil);
+    }
+
     static uint32_t CreateAndAttachMultisampleColor(uint32_t internalFramebuffer, uint32_t width, uint32_t height, uint8_t sampleCount, Framebuffer::ColorFormat format) {
         uint32_t buffer;
         glGenRenderbuffers(1, &buffer);
@@ -406,5 +420,19 @@ namespace Core {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         m_Resolved.Render(shader, textureUnitIndex);
+    }
+
+    void MultisampleFramebuffer::Clear() {
+        Clear(glm::vec4(0.0f));
+        ClearDepthStencil(1.0f, 0);
+    }
+
+    void MultisampleFramebuffer::Clear(glm::vec4 color) {
+        GLfloat values[] = { color.r, color.g, color.b, color.a };
+        glClearBufferfv(GL_COLOR, 0, values);
+    }
+
+    void MultisampleFramebuffer::ClearDepthStencil(float depth, int32_t stencil) {
+        glClearBufferfi(GL_DEPTH_STENCIL, 0, depth, stencil);
     }
 }

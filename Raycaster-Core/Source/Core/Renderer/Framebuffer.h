@@ -48,6 +48,10 @@ namespace Core {
         // Renders to a fullsreen quad with layout (vec2 position, vec2 UVs)
         void Render(Shader& shader, uint8_t textureUnitIndex);
         
+        void Clear(); // Clear color = vec4(0), depth = 1, stencil = 0
+        void Clear(glm::vec4 color);
+        void ClearDepthStencil(float depth, int32_t stencil = 0);
+
         static void InitRender();
         static void ShutdownRender();
 
@@ -101,6 +105,10 @@ namespace Core {
         void Render();
         // Renders to a fullsreen quad with layout (vec2 position, vec2 UVs)
         void Render(Shader& shader, uint8_t textureUnitIndex);
+
+        void Clear(); // Clear color = vec4(0), depth = 1, stencil = 0
+        void Clear(glm::vec4 color);
+        void ClearDepthStencil(float depth, int32_t stencil = 0);
 
         inline static void InitRender() { Framebuffer::InitRender(); }
         inline static void ShutdownRender() { Framebuffer::ShutdownRender(); }
