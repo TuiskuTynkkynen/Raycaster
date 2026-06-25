@@ -66,7 +66,7 @@ void RaycasterScene::Reinit() {
     SetState(State::Running);
 
     m_Map.Reinit(m_Lights);
-    m_Player.Init(m_Map);
+    m_Player.Init(m_Map, { 2.5f, 19.5f });
     m_Projectiles.Init();
 
     m_Interactables.Init();

@@ -18,7 +18,7 @@ public:
     static constexpr float Width = 0.8f;
     static constexpr float MaxHealth = 10.0f;
 
-    void Init(const Map& map);
+    void Init(const Map& map, glm::vec2 position);
     void Shutdown();
 
     void Update(std::span<const LineCollider> walls, std::span<const LineCollider> doors, Core::Timestep deltaTime);

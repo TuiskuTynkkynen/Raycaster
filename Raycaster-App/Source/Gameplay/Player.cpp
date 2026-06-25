@@ -16,8 +16,8 @@
 
 constexpr Core::Audio::Sound::FlagEnum DISABLE_SPATIALIZATION = Core::Audio::Sound::FlagEnum::DisableSpatialization;
 
-void Player::Init(const Map& map) {
-    m_Position = glm::vec3((float)map.GetWidth() / 2, (float)map.GetHeight() / 2, 0.5f);
+void Player::Init(const Map& map, glm::vec2 position) {
+    m_Position = glm::vec3(position, 0.5f);
     m_Scale = glm::vec3(Width * 0.5f);
     m_Rotation = glm::vec2(90.0f, 0.0f);
     m_LateralSpeed = {};
