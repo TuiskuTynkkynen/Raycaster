@@ -6,7 +6,7 @@
 #include <limits>
 
 inline constexpr uint32_t ATLASWIDTH = 16;
-inline constexpr uint32_t ATLASHEIGHT = 2;
+inline constexpr uint32_t ATLASHEIGHT = 3;
 
 namespace TextureIndices {
     enum Enumaration : uint32_t {
@@ -18,8 +18,8 @@ namespace TextureIndices {
         Wall_5                         = 5,
         Wall_6                         = 6,
         Wall_7                         = 7,
-        Barrel                         = 8,
-        Light                          = 9,
+        Wall_8                         = 8,
+        Wall_9                         = 9,
         Enemy_Basic                    = 10,
         Enemy_Ranged                   = 13,
         Floor_Item_Dagger              = 15,
@@ -29,6 +29,8 @@ namespace TextureIndices {
         Projectile_Dart_First          = 27,
         Projectile_Dart_Last           = 30,
         Floor_Item_Dart                = 31,
+        Barrel                         = 32,
+        Light                          = 33,
     };
 }
 
