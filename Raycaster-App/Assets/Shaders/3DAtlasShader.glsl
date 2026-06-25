@@ -127,7 +127,7 @@ void main(){
         discard;
     }
 
-    float brightness = 0.1;
+    float brightness = 0.0;
     for(int i = 0; i < LightCount; i++) {
         float count = 0.0f;
 
@@ -143,5 +143,6 @@ void main(){
         brightness += count / (0.95 + 0.1 * distance + 0.03 * (distance * distance)) / 4.0;
     }
 
+    brightness += 0.15 * max(1.0 - brightness, 0.0);
     FragColor *= vec4(ModelTint * brightness, 1.0);
 }
