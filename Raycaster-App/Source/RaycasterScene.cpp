@@ -9,10 +9,16 @@
 #include "Core/Renderer/RenderAPI.h"
 
 RaycasterScene::RaycasterScene() {
-    m_Lights.push_back(glm::vec3(2.5f, 3.0f, 0.75f));
-    m_Lights.push_back(glm::vec3(21.5f, 3.0f, 0.75f));
-    m_Lights.push_back(glm::vec3(18.5f, 18.0f, 0.75f));
-    m_Lights.push_back(glm::vec3(8.5f, 6.5f, 0.75f));
+    m_Lights.push_back(glm::vec3( 4.0f,  2.1f, 0.75f)); // Storage Room
+    m_Lights.push_back(glm::vec3( 7.0f,  2.5f, 0.75f)); // Cross Room
+    m_Lights.push_back(glm::vec3(17.5f,  5.5f, 0.75f)); // Cross Room
+    m_Lights.push_back(glm::vec3( 1.5f,  7.5f, 0.75f)); // Closet
+    m_Lights.push_back(glm::vec3( 3.5f,  9.0f, 0.75f)); // Ruin Hallway
+    m_Lights.push_back(glm::vec3( 7.5f,  9.5f, 0.75f)); // Dagger Room
+    m_Lights.push_back(glm::vec3(11.5f,  9.5f, 0.75f)); // ???
+    m_Lights.push_back(glm::vec3( 2.5f, 12.5f, 0.75f)); // Start Area
+    m_Lights.push_back(glm::vec3(10.0f, 18.5f, 0.75f)); // Start Area
+    m_Lights.push_back(glm::vec3( 2.5f, 19.5f, 0.75f)); // Spawn
 
     m_Map.CalculateLightMap(m_Lights);
     m_Tiles = m_Map.CreateTiles();
@@ -20,9 +26,8 @@ RaycasterScene::RaycasterScene() {
     
     Tile tile;
     tile.Colour = glm::vec3(0.0f, 1.0f, 0.0f);
-    tile.Scale = m_Player.GetScale();
-    m_Tiles.push_back(tile);
-    m_Tiles.push_back(tile);
+    tile.Scale = glm::vec3(0.4f);
+    m_Tiles.insert(m_Tiles.end(), 13, tile);
 
     m_Camera = std::make_unique<RaycasterCamera>(m_Player.GetPosition(), glm::sqrt(2.0f) / glm::sqrt((float)m_Map.GetSize()), m_Player.GetYaw(), m_Player.GetPitch());
     m_Camera3D = std::make_unique<Core::FlyCamera>(glm::vec3(m_Player.GetPosition().x, 0.5f, m_Player.GetPosition().y), glm::vec3(0.0f, 1.0f, 0.0f), -m_Player.GetYaw() - m_Player.GetPitch());
@@ -65,9 +70,25 @@ void RaycasterScene::Reinit() {
     m_Projectiles.Init();
 
     m_Interactables.Init();
-    m_Interactables.Add(InteractableType::Barrel, { 3.0f, 2.5f });
-    m_Interactables.Add(InteractableType::Barrel, { 2.5f, 2.5f });
-    m_Interactables.Add(InteractableType::Chest, { 8.5f, 6.5f });
+    m_Interactables.Add(InteractableType::Barrel, { 2.3f, 1.5f });  // Storage Room
+    m_Interactables.Add(InteractableType::Barrel, { 4.0f, 1.5f });  // Storage Room
+    m_Interactables.Add(InteractableType::Barrel, { 1.8f, 1.8f });  // Storage Room
+    m_Interactables.Add(InteractableType::Barrel, { 4.5f, 2.0f });  // Storage Room
+    m_Interactables.Add(InteractableType::Barrel, { 1.5f, 2.5f });  // Storage Room
+    m_Interactables.Add(InteractableType::Barrel, { 4.5f, 3.5f });  // Storage Room
+    m_Interactables.Add(InteractableType::Barrel, { 1.5f, 7.5f });  // Closet
+    m_Interactables.Add(InteractableType::Barrel, { 1.5f, 17.7f }); // Spawn
+    m_Interactables.Add(InteractableType::Barrel, { 3.5f, 17.7f }); // Spawn
+    m_Interactables.Add(InteractableType::Barrel, { 1.5f, 18.5f }); // Spawn
+    m_Interactables.Add(InteractableType::Barrel, { 3.5f, 18.5f }); // Spawn
+    m_Interactables.Add(InteractableType::Barrel, { 1.5f, 19.3f }); // Spawn
+    m_Interactables.Add(InteractableType::Barrel, { 3.5f, 19.3f }); // Spawn
+
+    m_Interactables.Add(InteractableType::Chest, { 3.1f, 2.5f });   // Storage Room
+    m_Interactables.Add(InteractableType::Chest, { 1.5f, 5.5f });   // Bait
+    m_Interactables.Add(InteractableType::Chest, { 17.5f, 5.5f });  // Cross
+    m_Interactables.Add(InteractableType::Chest, { 7.5f, 9.5f });   // Dagger 
+    m_Interactables.Add(InteractableType::Chest, { 19.5f, 19.5f }); // Secret
 
     for (glm::vec2 light : m_Lights) {
         m_Interactables.Add(InteractableType::Light, light);
@@ -79,8 +100,20 @@ void RaycasterScene::Reinit() {
     }
 
     m_Enemies.Init(m_Map);
-    m_Enemies.Add(EnemyType::Basic, glm::vec2(8.5f, 6.5f));
-    m_Enemies.Add(EnemyType::Ranged, glm::vec2(2.5f, 3.0f));
+    m_Enemies.Add(EnemyType::Basic, { 19.5f, 1.5f }); // Cross Room
+    m_Enemies.Add(EnemyType::Basic, { 2.5f, 2.5f });  // Storage Room
+    m_Enemies.Add(EnemyType::Basic, { 3.5f, 2.5f });  // Storage Room
+    m_Enemies.Add(EnemyType::Basic, { 1.5f, 7.5f });  // Closet
+    m_Enemies.Add(EnemyType::Basic, { 17.5f, 5.5f }); // Cross Room
+    m_Enemies.Add(EnemyType::Basic, { 21.5f, 12.5 }); // Ruins Entrance
+    m_Enemies.Add(EnemyType::Basic, { 14.5f, 13.5 }); // Hedge
+    m_Enemies.Add(EnemyType::Basic, { 9.5f, 18.5 });  // Start Area
+
+    m_Enemies.Add(EnemyType::Ranged, glm::vec2(7.5f, 2.0f));  // Cross Room
+    m_Enemies.Add(EnemyType::Ranged, glm::vec2(7.5f, 3.0f));  // Cross Room
+    m_Enemies.Add(EnemyType::Ranged, glm::vec2(10.5f, 6.5f)); // Ruins Ambush
+    m_Enemies.Add(EnemyType::Ranged, glm::vec2(3.5f, 9.5f));  // Ruins Hallway
+    m_Enemies.Add(EnemyType::Ranged, glm::vec2(1.5f, 22.5f)); // Hedge Ambush
 
     auto shader = std::make_shared<Core::Shader>("Assets/Shaders/3DAtlasShader.glsl");
     //setup shader
