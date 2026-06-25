@@ -205,6 +205,12 @@ static glm::vec2 Collision(const Enemy& enemy, const Map& map, const std::vector
     return result;
 }
 
+ActionStatus BasicIdle(Context& context, Enemy& enemy) {
+    const float approach = context.AproachMap[context.Map.GetIndex(enemy.Position)];
+    const bool activate = enemy.Health <= 0.0f || (std::isfinite(approach) && 0.0f < approach);
+    return activate ? ActionStatus::Done : ActionStatus::Running;
+}
+
 ActionStatus BasicAttack(Context& context, Enemy& enemy) {
     Core::Timestep relativeDeltaTime = context.DeltaTime / GetAttackDuration(enemy.Type);
     enemy.ActionTick += relativeDeltaTime;

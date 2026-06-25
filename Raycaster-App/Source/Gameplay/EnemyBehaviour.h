@@ -80,6 +80,7 @@ bool HealthCondition(const Context& context, Enemy& enemy) {
 ///////////////////////////////////////////////////////////////////////////////
 //                                  Actions                                  //
 ///////////////////////////////////////////////////////////////////////////////
+ActionStatus BasicIdle(Context& context, Enemy& enemy);
 ActionStatus BasicAttack(Context& context, Enemy& enemy);
 ActionStatus BasicPathfind(Context& context, Enemy& enemy);
 ActionStatus BasicDead(Context& context, Enemy& enemy);
@@ -91,32 +92,38 @@ ActionStatus RangedPathfind(Context& context, Enemy& enemy);
 ///////////////////////////////////////////////////////////////////////////////
 inline constinit std::array<Action, EnemyState::ENUMERATION_MAX + 1> s_BasicActions = [] {
     std::array<Action, EnemyState::ENUMERATION_MAX + 1> actions;
+    actions[EnemyState::Idle    ] = BasicIdle;
     actions[EnemyState::Pathfind] = BasicPathfind;
-    actions[EnemyState::Attack] = BasicAttack;
-    actions[EnemyState::Dead] = BasicDead;
+    actions[EnemyState::Attack  ] = BasicAttack;
+    actions[EnemyState::Dead    ] = BasicDead;
     return actions;
     }();
 
-inline constexpr std::array s_BasicTransitions{
+inline constexpr std::array s_BasicTransitions {
+    Transition { EnemyState::Idle,      EnemyState::Pathfind,   And<> /* Always true */ },
     Transition { EnemyState::Pathfind,  EnemyState::Attack,     DistanceCondition<1.1f> },
     Transition { EnemyState::Attack,    EnemyState::Pathfind,   DistanceCondition<1.1f, true> },
-    Transition { EnemyState::Pathfind,  EnemyState::Dead,     HealthCondition<0.0f> },
-    Transition { EnemyState::Attack,    EnemyState::Dead,   HealthCondition<0.0f> },
+    Transition { EnemyState::Idle,      EnemyState::Dead,       HealthCondition<0.0f> },
+    Transition { EnemyState::Pathfind,  EnemyState::Dead,       HealthCondition<0.0f> },
+    Transition { EnemyState::Attack,    EnemyState::Dead,       HealthCondition<0.0f> },
 };
 
 inline constinit std::array<Action, EnemyState::ENUMERATION_MAX + 1> s_RangedActions = [] {
     std::array<Action, EnemyState::ENUMERATION_MAX + 1> actions;
+    actions[EnemyState::Idle    ] = BasicIdle;
     actions[EnemyState::Pathfind] = RangedPathfind;
-    actions[EnemyState::Attack] = RangedAttack;
-    actions[EnemyState::Dead] = BasicDead;
+    actions[EnemyState::Attack  ] = RangedAttack;
+    actions[EnemyState::Dead    ] = BasicDead;
     return actions;
     }();
 
-inline constexpr std::array s_RangedTransitions{
+inline constexpr std::array s_RangedTransitions {
+    Transition { EnemyState::Idle,      EnemyState::Pathfind,   And<> /* Always true */ },
     Transition { EnemyState::Pathfind,  EnemyState::Attack,     And<RangeCondition<3.25f, 4.75f>, LineOfSightCondtion> },
     Transition { EnemyState::Attack,    EnemyState::Pathfind,   Or<RangeCondition<2.25f, 4.75f, true>, LineOfSightCondtion<true>> },
-    Transition { EnemyState::Pathfind,  EnemyState::Dead,     HealthCondition<0.0f> },
-    Transition { EnemyState::Attack,    EnemyState::Dead,   HealthCondition<0.0f> },
+    Transition { EnemyState::Idle,      EnemyState::Dead,       HealthCondition<0.0f> },
+    Transition { EnemyState::Pathfind,  EnemyState::Dead,       HealthCondition<0.0f> },
+    Transition { EnemyState::Attack,    EnemyState::Dead,       HealthCondition<0.0f> },
 };
 
 ///////////////////////////////////////////////////////////////////////////////

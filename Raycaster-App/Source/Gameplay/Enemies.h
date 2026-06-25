@@ -20,7 +20,8 @@ namespace EnemyType {
 
 namespace EnemyState {
     enum Enumeration : uint8_t {
-        Pathfind = 0,
+        Idle = 0,
+        Pathfind,
         Attack,
         Dead,
         ENUMERATION_MAX = Dead
