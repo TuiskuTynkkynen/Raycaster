@@ -411,12 +411,12 @@ void RaycastRenderer::RenderSprites(const Map& map, const Player& player, Render
 
         float width = scale.x * m_RayCount * 0.5f * reciprocalAspectRatio;
         float startX = 0.5f * (m_RayCount - width + position.x * m_RayCount);
-        int32_t endX = static_cast<int32_t>(startX + width);
+        int32_t endX = glm::min(static_cast<int32_t>(startX + width), static_cast<int32_t>(m_RayCount));
         if (endX < 0) {
             continue;
         }
         for (size_t i = static_cast<size_t>(glm::max(startX, 0.0f)); i < endX; i++) {
-            if (i >= m_RayCount || m_ZBuffer[i] < distance) {
+            if (m_ZBuffer[i] < distance) {
                 continue;
             }
 
