@@ -184,8 +184,9 @@ private:
     std::vector<bool> m_DoorState;
     std::array<uint8_t, s_MapData.Size> m_DoorIndexMap{};
     std::array<float, s_MapData.Size> m_LightMap{};
-
+    
     std::shared_ptr<Core::Texture2D> m_MapTexture;
+    std::shared_ptr<Core::Texture2D> m_AmbientTexture;
     std::shared_ptr<Core::UniformBuffer> m_UBO;
 
     struct Quad {

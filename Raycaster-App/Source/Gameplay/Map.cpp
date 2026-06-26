@@ -59,13 +59,18 @@ Map::Map() {
     m_DoorState.resize(m_Doors.size());
 
     m_MapTexture = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::ClampToEdge, Core::Texture2D::WrapMode::ClampToEdge, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
+    m_AmbientTexture = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::ClampToEdge, Core::Texture2D::WrapMode::ClampToEdge, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
     {
+        std::vector<uint8_t> ambient;
+        ambient.reserve(GetSize());
         std::vector<uint8_t> data;
         data.reserve(GetSize());
         std::vector<ShaderLineSegment> segments{ {{ 0, 0 }, { 1, 1 }}, {{ 0, 1 }, { 1, -1 }} }; // Diagonal segments
         segments.reserve(m_Doors.size() + 2);
 
         for (size_t i = 0; i < GetSize(); i++) {
+            ambient.emplace_back(40 + (s_MapData.CeilingMap[i] == 9) * 165);
+
             if (s_MapData.Map[i] >= 0) {
                 data.emplace_back((s_MapData.Map[i] != 0) * 255); // 0 -> empty, 255 -> wall
                 continue;
@@ -88,7 +93,9 @@ Map::Map() {
         m_UBO = std::make_shared<Core::UniformBuffer>(sizeof(ShaderLineSegment) * 256);
         m_UBO->Update(std::as_bytes(std::span(segments)));
         m_UBO->Bind(0);
+
         m_MapTexture->BindData(data.data(), static_cast<uint32_t>(GetHeight()), static_cast<uint32_t>(GetWidth()), 1);
+        m_AmbientTexture->BindData(ambient.data(), static_cast<uint32_t>(GetHeight()), static_cast<uint32_t>(GetWidth()), 1);
     }
 }
 
@@ -472,6 +479,10 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
             mat->MaterialMaps.back().Texture = m_MapTexture;
             mat->MaterialMaps.back().TextureIndex = 2;
 
+            mat->MaterialMaps.emplace_back();
+            mat->MaterialMaps.back().Texture = m_AmbientTexture;
+            mat->MaterialMaps.back().TextureIndex = 3;
+
             mat->Parameters.emplace_back(glm::vec2(index, 0), "AtlasOffset");
             mat->Parameters.emplace_back(glm::vec2(0.0f, 0.0f), "FlipTexture");
             mapModel.Materials.push_back(mat);
@@ -485,6 +496,11 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
 
 void Map::CalculateLightMap(std::span<const glm::vec3> lights) {
     for (size_t i = 0; i < Map::GetSize(); i++) {
+        if (s_MapData.CeilingMap[i] == 9) { // Outside
+            m_LightMap[i] = 0.8f;
+            continue;
+        }
+
         size_t y = i / Map::GetWidth();
         size_t x = i % Map::GetWidth();
 

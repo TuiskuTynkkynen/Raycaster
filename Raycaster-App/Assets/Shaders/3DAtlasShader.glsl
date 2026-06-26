@@ -38,6 +38,7 @@ uniform highp vec2 FlipTexture;
 uniform vec3 ModelTint;
 uniform sampler2D Texture;
 uniform sampler2D MapTexture;
+uniform sampler2D AmbientTexture;
 
 struct LineSegment {
     vec2 offset;
@@ -51,6 +52,10 @@ layout(std140) uniform UBO {
 #define MAX_POINT_LIGHTS 10
 uniform vec3 PointLights[MAX_POINT_LIGHTS];
 uniform int LightCount;
+
+#define MAX_AMBIENT_LIGHTS 10
+uniform vec3 AmbientLights[MAX_AMBIENT_LIGHTS];
+uniform int AmbientCount;
 
 out vec4 FragColor;
 
@@ -119,6 +124,26 @@ bool trace(highp vec2 position, highp vec2 target) {
     return true;
 }
 
+float LightIntensity(highp vec3 lightPostion) {
+    highp vec2 pos = WorldPosition.xz + vec2(0.075 * Normal.xz);
+    float hitCount = 0.0f;
+
+    // PCF?? 
+    for(int j = 0; j < 4; j++) {
+        vec2 offset = vec2(float(j < 2) * 0.05, float(j >= 2) * 0.05);
+        offset *= (j % 2 == 0) ? 1.0 : -1.0;
+        hitCount += float(trace(pos + offset, lightPostion.xz));
+    }
+    
+    float distance = length(WorldPosition - lightPostion);
+    return hitCount / (0.95 + 0.1 * distance + 0.03 * (distance * distance)) / 4.0;
+}
+
+float AmbientIntensity(){
+    highp vec2 mapPos = WorldPosition.xz + vec2(0.075 * Normal.xz);
+    return texelFetch(AmbientTexture, ivec2(int(mapPos.x), int(mapPos.y)), 0).r;
+}
+
 void main(){
     highp vec2 uv = (abs(FlipTexture - fract(TexCoords)) + AtlasOffset) / AtlasSize;
     FragColor = texture(Texture, uv);
@@ -129,20 +154,16 @@ void main(){
 
     float brightness = 0.0;
     for(int i = 0; i < LightCount; i++) {
-        float count = 0.0f;
-
-        highp vec2 pos = WorldPosition.xz + vec2(0.075 * Normal.xz);
-        // PCF?? 
-        for(int j = 0; j < 4; j++) {
-            vec2 offset = vec2(float(j < 2) * 0.05, float(j >= 2) * 0.05);
-            offset *= (j % 2 == 0) ? 1.0 : -1.0;
-            count += float(trace(pos + offset, PointLights[i].xz));
-        }
-               
-        float distance = length(WorldPosition - PointLights[i]);
-        brightness += count / (0.95 + 0.1 * distance + 0.03 * (distance * distance)) / 4.0;
+        brightness += LightIntensity(PointLights[i]);
     }
 
-    brightness += 0.15 * max(1.0 - brightness, 0.0);
+    float ambientLightBrightness = 0.0;
+    for(int i = 0; i < AmbientCount; i++) {
+        ambientLightBrightness += LightIntensity(AmbientLights[i]);
+    }
+    
+    brightness = max(brightness, ambientLightBrightness);
+    brightness += AmbientIntensity() * max(0.8 - brightness, 0.0) / 0.8;
+
     FragColor *= vec4(ModelTint * brightness, 1.0);
 }

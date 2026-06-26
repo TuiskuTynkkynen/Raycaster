@@ -20,6 +20,9 @@ RaycasterScene::RaycasterScene() {
     m_Lights.push_back(glm::vec3(10.0f, 18.5f, 0.75f)); // Start Area
     m_Lights.push_back(glm::vec3( 2.5f, 19.5f, 0.75f)); // Spawn
 
+    m_Lights.push_back(glm::vec3(18.5f, 12.5f, 0.5f)); // Ambient 1
+    m_Lights.push_back(glm::vec3( 7.5f, 18.5f, 0.5f)); // Ambient 2
+
     m_Map.CalculateLightMap(m_Lights);
     m_Tiles = m_Map.CreateTiles();
     m_Walls = m_Map.CreateWalls();
@@ -90,7 +93,8 @@ void RaycasterScene::Reinit() {
     m_Interactables.Add(InteractableType::Chest, { 7.5f, 9.5f });   // Dagger 
     m_Interactables.Add(InteractableType::Chest, { 19.5f, 19.5f }); // Secret
 
-    for (glm::vec2 light : m_Lights) {
+    for (glm::vec3 light : m_Lights) {
+        if (light.z == 0.5f) { break; }
         m_Interactables.Add(InteractableType::Light, light);
     }
 
@@ -121,20 +125,30 @@ void RaycasterScene::Reinit() {
         shader->Bind();
         shader->setInt("Texture", 0);
         shader->setInt("MapTexture", 2);
+        shader->setInt("AmbientTexture", 3);
+
+        glm::uvec2 atlasSize(ATLASWIDTH, ATLASHEIGHT);
+        shader->setVec2("AtlasSize", atlasSize);
 
         RC_ASSERT(m_Lights.size() < std::numeric_limits<uint32_t>::max());
+
         const uint32_t lightCount = glm::min(static_cast<uint32_t>(m_Lights.size()), 10u);
-        glm::uvec2 atlasSize(ATLASWIDTH, ATLASHEIGHT);
-
-        shader->setVec2("AtlasSize", atlasSize);
         shader->setInt("LightCount", lightCount);
-
         for (uint32_t i = 0; i < lightCount; i++) {
             std::string lightName = "PointLights[i]";
             lightName[12] = '0' + i;
             glm::vec3 pos(m_Lights[i].x, m_Lights[i].z, m_Lights[i].y);
             shader->setVec3(lightName.c_str(), pos);
         }
+
+        const uint32_t ambientCount = glm::min(static_cast<uint32_t>(m_Lights.size()), lightCount + 10u);
+        shader->setInt("AmbientCount", ambientCount);
+        for (uint32_t i = lightCount; i < ambientCount; i++) {
+            std::string lightName = "AmbientLights[i]";
+            lightName[14] = '0' + i - lightCount;
+            glm::vec3 pos(m_Lights[i].x, m_Lights[i].z, m_Lights[i].y);
+            shader->setVec3(lightName.c_str(), pos);
+    }
     }
     
     auto textureAtlas = std::make_shared<Core::Texture2D>(Core::Texture2D::WrapMode::Repeat, Core::Texture2D::WrapMode::Repeat, Core::Texture2D::Filter::Nearest, Core::Texture2D::Filter::Nearest);
