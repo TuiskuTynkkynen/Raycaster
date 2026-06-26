@@ -157,8 +157,15 @@ bool Player::DamageAreas(std::span<const LineCollider> attack, float thickness, 
 void Player::PickUp(Item item) {
     m_WishItemIndex = item.AdditionalData.index() + 1;
     RC_ASSERT(m_WishItemIndex < m_Inventory.size());
+    
+    if (m_Inventory[m_WishItemIndex].Count != 0) {
+        // Should be the same item
+        RC_ASSERT(item.UseAnimation.StartAtlasIndex == m_Inventory[m_WishItemIndex].UseAnimation.StartAtlasIndex);
+        m_Inventory[m_WishItemIndex].Count += item.Count;
+        return;
+    }
+    
     m_Inventory[m_WishItemIndex] = item;
-
     if (!item.UseAudioName.empty()) {
         Core::Audio::GetSoundManager().RegisterSound(item.UseAudioName, DISABLE_SPATIALIZATION);
     }
