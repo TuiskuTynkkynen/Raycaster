@@ -29,6 +29,7 @@ struct Interactable {
 
     Core::Timestep AnimationProgress = 0.0f;
     uint32_t AtlasIndex = 0;
+    bool IsInteractable = false;
     InteractableType::Enumeration Type;
 };
 

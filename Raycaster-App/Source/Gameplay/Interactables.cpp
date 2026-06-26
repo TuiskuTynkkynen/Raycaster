@@ -171,13 +171,10 @@ inline static void PlayAtPosition(InteractableType::Enumeration type, glm::vec3 
 
 template <InteractableType::Enumeration Spawn, size_t Count>
 static InteractionResult SpawnInteraction(Interactable& interactable, size_t index) {
-    if (interactable.AnimationProgress > 0.0f) {
-        return {};
-    }
-
+    interactable.IsInteractable = false;
     AnimationInteraction(interactable, index);
     PlayAtPosition(interactable.Type, interactable.Position);
-
+    
     static std::vector<InteractableType::Enumeration> items(Count, Spawn);
     return InteractionResult::Create<InteractionResult::Type::Spawn>(std::span(items), index);
 }
@@ -201,7 +198,7 @@ void Interactables::Shutdown() {
 
 void Interactables::Add(InteractableType::Enumeration type, glm::vec2 position) {
     RC_ASSERT(type <= InteractableType::ENUMERATION_MAX);
-    m_Interactables.emplace_back(glm::vec3{ position, CalculatePositionZ(type) }, GetScale(type), -std::numeric_limits<float>::infinity(), GetAtlasIndex(type, 0.0f), type);
+    m_Interactables.emplace_back(glm::vec3{ position, CalculatePositionZ(type) }, GetScale(type), -std::numeric_limits<float>::infinity(), GetAtlasIndex(type, 0.0f), GetInteraction(type) != nullptr, type);
     
     if (s_InteractableParameters[type].Placement == PlacementType::Falling) {
         m_Interactables.back().AnimationProgress = 0.0f;
@@ -236,7 +233,7 @@ std::optional<InteractableType::Enumeration> Interactables::CanInteract(glm::vec
 
     float maxDot = 0.0f;
     for (size_t i = 0; i < m_Interactables.size(); i++) {
-        if (!GetInteraction(m_Interactables[i].Type)) {
+        if (!m_Interactables[i].IsInteractable) {
             continue;
         }
         glm::vec2 delta = m_Interactables[i].Position;
@@ -275,10 +272,12 @@ InteractionResult Interactables::Interact(glm::vec2 position, float rotation) {
     
     result = interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
     if (result.GetType() == InteractionResult::Type::Pickup) {
+        m_CachedPosition =  { -1.0f, -1.0f };
         Remove(result.Index);
     }
     // InteractionResult::Type::Spawn
     if (auto list = std::get_if<std::span<const InteractableType::Enumeration>>(&result.Data)) {
+        m_CachedPosition = { -1.0f, -1.0f };
         for (auto type : *list) {
             Add(type, m_Interactables[result.Index].Position);
         }
