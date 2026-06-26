@@ -31,6 +31,7 @@ static constexpr InteractionResult AnimationInteraction(Interactable& interactab
 template <InteractableType::Enumeration Spawn, size_t Count = 1>
 static InteractionResult SpawnInteraction(Interactable& interactable, size_t index);
 static InteractionResult DoorInteraction(Interactable& interactable, size_t index);
+static InteractionResult AudioInteraction(Interactable& interactable, size_t index);
 
 using InteractionPtr = InteractionResult(*)(Interactable& interactable, size_t);
 
@@ -63,9 +64,11 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Placement = PlacementType::Floor
     };
     parameters[InteractableType::ChestEmpty] = InteractableParameters{
+        .Interaction = AudioInteraction,
         .Scale = 0.5f,
         .Animation = { TextureIndices::Chest_Animation_Start },
         .Placement = PlacementType::Floor,
+        .InteractAudioName = "Assets/Audio/chest_locked.opus",
     };
     parameters[InteractableType::ChestDagger] = InteractableParameters{
         .Interaction = SpawnInteraction<InteractableType::Dagger>,
@@ -182,6 +185,15 @@ static InteractionResult SpawnInteraction(Interactable& interactable, size_t ind
 static InteractionResult DoorInteraction(Interactable& interactable, size_t index) {
     PlayAtPosition(interactable.Type, interactable.Position);
     return ToggleInteraction(interactable, index);
+}
+
+static InteractionResult AudioInteraction(Interactable& interactable, size_t index) {
+    if (interactable.AnimationProgress <= 0.0f) {
+        interactable.AnimationProgress = glm::epsilon<float>();
+    }
+
+    PlayAtPosition(interactable.Type, interactable.Position);
+    return {};
 }
 
 
