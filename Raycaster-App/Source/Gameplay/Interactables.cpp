@@ -16,7 +16,7 @@ static constexpr InteractionResult PickupInteraction(Interactable& interactable,
     case InteractableType::Dagger:
             return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 1, Animations::AttackDagger, 0.75f, "Assets/Audio/attack_dagger.opus", MeleeWeaponData{0.75f, 0.25f, 1.0f, 0.75f}), index);
     case InteractableType::Dart:
-        return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(1.0f, 5, Animations::AttackDart, 0.75f, "Assets/Audio/attack_dart.opus", RangedWeaponData{.AttackTiming = 0.8f, .ProjectileSpeed = 0.1f, .Type = ProjectileType::Dart}), index);
+        return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(1.0f, 1, Animations::AttackDart, 0.75f, "Assets/Audio/attack_dart.opus", RangedWeaponData{.AttackTiming = 0.8f, .ProjectileSpeed = 0.1f, .Type = ProjectileType::Dart}), index);
     default:
         RC_ASSERT(false, "Tried to pickup interactable with invalid type");
         return {};
@@ -28,6 +28,7 @@ static constexpr InteractionResult ToggleInteraction(Interactable& interactable,
 }
 
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
+template <InteractableType::Enumeration Spawn, size_t Count = 1>
 static InteractionResult SpawnInteraction(Interactable& interactable, size_t index);
 static InteractionResult DoorInteraction(Interactable& interactable, size_t index);
 
@@ -61,12 +62,29 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Animation = {TextureIndices::Barrel},
         .Placement = PlacementType::Floor
     };
-    parameters[InteractableType::Chest] = InteractableParameters{
-        .Interaction = SpawnInteraction,
+    parameters[InteractableType::ChestEmpty] = InteractableParameters{
+        .Scale = 0.5f,
+        .Animation = { TextureIndices::Chest_Animation_Start },
+        .Placement = PlacementType::Floor,
+    };
+    parameters[InteractableType::ChestDagger] = InteractableParameters{
+        .Interaction = SpawnInteraction<InteractableType::Dagger>,
         .Scale = 0.5f,
         .Animation = Animations::ChestOpen,
         .Placement = PlacementType::Floor,
         .InteractAudioName = "Assets/Audio/chest_open.opus",
+    };
+    parameters[InteractableType::ChestDarts] = InteractableParameters{
+        .Interaction = SpawnInteraction<InteractableType::Dart, 5>,
+        .Scale = 0.5f,
+        .Animation = Animations::ChestOpen,
+        .Placement = PlacementType::Floor,
+        .InteractAudioName = "Assets/Audio/chest_open.opus",
+    };
+    parameters[InteractableType::Corpse] = InteractableParameters {
+        .Scale = 1.0f,
+        .Animation = { TextureIndices::Enemy_Basic + static_cast<uint32_t>(TextureOffsets::Enemy_Corpse) },
+        .Placement = PlacementType::Floor,
     };
     parameters[InteractableType::DoorToggle] = InteractableParameters{
         .Interaction = DoorInteraction,
@@ -151,6 +169,7 @@ inline static void PlayAtPosition(InteractableType::Enumeration type, glm::vec3 
     }
 }
 
+template <InteractableType::Enumeration Spawn, size_t Count>
 static InteractionResult SpawnInteraction(Interactable& interactable, size_t index) {
     if (interactable.AnimationProgress > 0.0f) {
         return {};
@@ -158,8 +177,8 @@ static InteractionResult SpawnInteraction(Interactable& interactable, size_t ind
 
     AnimationInteraction(interactable, index);
     PlayAtPosition(interactable.Type, interactable.Position);
-    
-    static auto items = { InteractableType::Dagger, InteractableType::Dart };
+
+    static std::vector<InteractableType::Enumeration> items(Count, Spawn);
     return InteractionResult::Create<InteractionResult::Type::Spawn>(std::span(items), index);
 }
 

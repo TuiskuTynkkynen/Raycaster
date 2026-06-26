@@ -12,7 +12,10 @@ namespace InteractableType {
     enum Enumeration : uint8_t {
         Light = 0,
         Barrel,
-        Chest,
+        ChestEmpty,
+        ChestDagger,
+        ChestDarts,
+        Corpse,
         DoorToggle,
         Dagger,
         Dart,
