@@ -84,6 +84,13 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Placement = PlacementType::Floor,
         .InteractAudioName = "Assets/Audio/chest_open.opus",
     };
+    parameters[InteractableType::ChestChalice] = InteractableParameters{
+        .Interaction = SpawnInteraction<InteractableType::Chalice>,
+        .Scale = 0.5f,
+        .Animation = Animations::ChestOpen,
+        .Placement = PlacementType::Floor,
+        .InteractAudioName = "Assets/Audio/chest_open.opus",
+    };
     parameters[InteractableType::Corpse] = InteractableParameters {
         .Scale = 1.0f,
         .Animation = { TextureIndices::Enemy_Basic + static_cast<uint32_t>(TextureOffsets::Enemy_Corpse) },
@@ -107,6 +114,12 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .Interaction = PickupInteraction,
         .Scale = 0.5f,
         .Animation = {TextureIndices::Floor_Item_Dart},
+        .Placement = PlacementType::Falling,
+        .InteractAudioName = "Assets/Audio/item_bounce.opus",
+    };
+    parameters[InteractableType::Chalice] = InteractableParameters{
+        .Scale = 0.5f,
+        .Animation = {TextureIndices::Floor_Item_Chalice},
         .Placement = PlacementType::Falling,
         .InteractAudioName = "Assets/Audio/item_bounce.opus",
     };

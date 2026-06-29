@@ -31,6 +31,7 @@ namespace TextureIndices {
         Floor_Item_Dart                = 31,
         Barrel                         = 32,
         Light                          = 33,
+        Floor_Item_Chalice             = 47,
     };
 }
 

@@ -87,7 +87,7 @@ void RaycasterScene::Reinit() {
     m_Interactables.Add(InteractableType::Barrel, { 1.5f, 19.3f }); // Spawn
     m_Interactables.Add(InteractableType::Barrel, { 3.5f, 19.3f }); // Spawn
 
-    m_Interactables.Add(InteractableType::ChestEmpty,  {  3.1f,  2.5f }); // Storage Room
+    m_Interactables.Add(InteractableType::ChestChalice,{  3.1f,  2.5f }); // Storage Room
     m_Interactables.Add(InteractableType::ChestEmpty,  {  1.5f,  5.5f }); // Bait
     m_Interactables.Add(InteractableType::ChestDarts,  { 17.5f,  5.5f }); // Cross
     m_Interactables.Add(InteractableType::ChestDagger, {  7.5f,  9.5f }); // Dagger 

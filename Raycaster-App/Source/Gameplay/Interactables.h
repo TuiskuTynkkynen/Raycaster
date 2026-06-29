@@ -15,11 +15,13 @@ namespace InteractableType {
         ChestEmpty,
         ChestDagger,
         ChestDarts,
+        ChestChalice,
         Corpse,
         DoorToggle,
         Dagger,
         Dart,
-        ENUMERATION_MAX = Dart,
+        Chalice,
+        ENUMERATION_MAX = Chalice,
     };
 }
 
