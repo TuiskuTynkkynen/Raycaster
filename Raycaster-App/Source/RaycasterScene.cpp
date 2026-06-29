@@ -143,9 +143,9 @@ void RaycasterScene::Reinit() {
             shader->setVec3(lightName.c_str(), pos);
         }
 
-        const uint32_t ambientCount = glm::min(static_cast<uint32_t>(m_Lights.size()), lightCount + 10u);
-        shader->setInt("AmbientCount", ambientCount);
-        for (uint32_t i = lightCount; i < ambientCount; i++) {
+        const uint32_t maxAmbientIndex = glm::min(static_cast<uint32_t>(m_Lights.size()), lightCount + 10u);
+        shader->setInt("AmbientCount", maxAmbientIndex - lightCount);
+        for (uint32_t i = lightCount; i < maxAmbientIndex; i++) {
             std::string lightName = "AmbientLights[i]";
             lightName[14] = '0' + i - lightCount;
             glm::vec3 pos(m_Lights[i].x, m_Lights[i].z, m_Lights[i].y);
