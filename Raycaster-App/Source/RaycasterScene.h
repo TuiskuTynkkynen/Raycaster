@@ -39,6 +39,7 @@ public:
         Running = 0,
         Paused,
         Dead,
+        Win,
         Invalid,
     };
     inline State GetState() const { return m_State; }

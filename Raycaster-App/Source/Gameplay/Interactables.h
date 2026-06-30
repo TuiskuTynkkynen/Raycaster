@@ -35,15 +35,18 @@ struct Interactable {
     InteractableType::Enumeration Type;
 };
 
+struct WinTag {};
+
 class InteractionResult {
 public:
-    using variant = std::variant<std::nullopt_t, std::string_view, glm::vec2 , Item, std::span<const InteractableType::Enumeration>>;
+    using variant = std::variant<std::nullopt_t, std::string_view, glm::vec2 , Item, std::span<const InteractableType::Enumeration>, WinTag>;
     enum class Type {
         None = 0,
         Debug,
         Toggle,
         Pickup,
         Spawn,
+        Win,
     };
     Type GetType() const { return static_cast<Type>(Data.index()); };
 

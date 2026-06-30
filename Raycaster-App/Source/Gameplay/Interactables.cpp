@@ -27,6 +27,10 @@ static constexpr InteractionResult ToggleInteraction(Interactable& interactable,
     return InteractionResult::Create<InteractionResult::Type::Toggle>(interactable.Position, index);
 }
 
+static constexpr InteractionResult WinInteraction(Interactable& interactable, size_t index) {
+    return InteractionResult::Create<InteractionResult::Type::Win>(WinTag{}, index);
+}
+
 static constexpr InteractionResult AnimationInteraction(Interactable& interactable, size_t index);
 template <InteractableType::Enumeration Spawn, size_t Count = 1>
 static InteractionResult SpawnInteraction(Interactable& interactable, size_t index);
@@ -118,6 +122,7 @@ static constinit std::array<InteractableParameters, InteractableType::ENUMERATIO
         .InteractAudioName = "Assets/Audio/item_bounce.opus",
     };
     parameters[InteractableType::Chalice] = InteractableParameters{
+        .Interaction = WinInteraction,
         .Scale = 0.5f,
         .Animation = {TextureIndices::Floor_Item_Chalice},
         .Placement = PlacementType::Falling,
@@ -296,7 +301,7 @@ InteractionResult Interactables::Interact(glm::vec2 position, float rotation) {
     }
     
     result = interaction(m_Interactables[m_CachedIndex], m_CachedIndex);
-    if (result.GetType() == InteractionResult::Type::Pickup) {
+    if (result.GetType() == InteractionResult::Type::Pickup || result.GetType() == InteractionResult::Type::Win) {
         m_CachedPosition =  { -1.0f, -1.0f };
         Remove(result.Index);
     }
