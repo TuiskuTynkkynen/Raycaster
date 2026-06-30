@@ -14,8 +14,8 @@ public:
     void OnUpdate(Core::Timestep deltaTime) override;
     void OnEvent(Core::Event& event) override;
 private:
-    uint32_t m_ViewPortWidth = -1;
-    uint32_t m_ViewPortHeight = -1;
+    uint32_t m_ViewPortWidth = 0;
+    uint32_t m_ViewPortHeight = 0;
 
     Settings::UI m_SettingsUI{};
 

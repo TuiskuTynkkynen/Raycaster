@@ -5,11 +5,6 @@
 #include "Core/Renderer/Renderer2D.h"
 
 void UILayer::OnAttach() {
-    m_ViewPortWidth = Core::Application::GetWindow().GetWidth();
-    m_ViewPortHeight = Core::Application::GetWindow().GetHeight();
-    
-    m_Framebuffer.Resize(m_ViewPortWidth, m_ViewPortHeight, m_SampleCount);
-    
     Core::Renderer2D::SetTextureAtlas("Assets/Textures/atlas.png", ATLASWIDTH, ATLASHEIGHT);
 
     std::shared_ptr<Core::Font> font = std::make_shared<Core::Font>(false);
@@ -25,6 +20,10 @@ void UILayer::OnAttach() {
     Core::UI::SetTextureAtlas(buttonTexture, glm::uvec2(12, 7));
 
     m_SettingsUI.Init();
+
+    m_ViewPortWidth = Core::Application::GetWindow().GetWidth();
+    m_ViewPortHeight = Core::Application::GetWindow().GetHeight();
+    m_Framebuffer.Resize(m_ViewPortWidth, m_ViewPortHeight, m_SampleCount);
 }
 
 void UILayer::OnDetach() {
@@ -33,6 +32,10 @@ void UILayer::OnDetach() {
 }
 
 void UILayer::OnUpdate(Core::Timestep deltaTime) {
+    if (m_ViewPortHeight == 0 || m_ViewPortWidth == 0) {
+        return;
+    }
+
     const auto lock = m_Scene.lock();
     RC_ASSERT(dynamic_cast<const RaycasterScene*>(lock.get()));
     const RaycasterScene& scene = static_cast<const RaycasterScene&>(*lock);
@@ -126,7 +129,10 @@ void UILayer::OnEvent(Core::Event& event) {
 bool UILayer::OnWindowResizeEvent(Core::WindowResize& event) {
     m_ViewPortWidth = event.GetWidth();
     m_ViewPortHeight = event.GetHeight();
+
+    if (m_ViewPortHeight != 0 && m_ViewPortWidth != 0) {
     m_Framebuffer.Resize(m_ViewPortWidth, m_ViewPortHeight, m_SampleCount);
+    }
 
     return false;
 }
