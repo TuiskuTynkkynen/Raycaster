@@ -296,11 +296,21 @@ Core::Model Map::CreateModel(const std::span<LineCollider> walls, std::shared_pt
 
     {
         for (auto& wall : walls) {
-            uint32_t midX = static_cast<uint32_t>(wall.Position.x + 0.5f * wall.Vector.x - 1e-6f * wall.Normal.x);
-            uint32_t midY = static_cast<uint32_t>(wall.Position.y + 0.5f * wall.Vector.y - 1e-6f * wall.Normal.y);
-            uint32_t index = static_cast<uint32_t>(glm::abs(s_MapData.Map[GetIndex(midX, midY)]));
+            const glm::vec2 delta(glm::sign(wall.Vector.x), glm::sign(wall.Vector.y));
+            const glm::ivec2 end(wall.Position + wall.Vector);
 
-            wallIndices.emplace_back(glm::vec4{ wall.Position.x, wall.Position.y, wall.Position.x + wall.Vector.x, wall.Position.y + wall.Vector.y }, index);
+            glm::ivec2 previous(wall.Position);
+            uint8_t previousIndex = glm::abs(s_MapData.Map[GetIndex(glm::vec2(previous) + 0.5f * delta - 1e-6f * wall.Normal)]);
+            for (glm::ivec2 next = wall.Position + delta; next != end; next += delta) {
+                uint8_t index = glm::abs(s_MapData.Map[GetIndex(glm::vec2(next) + 0.5f * delta - 1e-6f * wall.Normal)]);
+                if (previousIndex == index) { continue; }
+
+                wallIndices.emplace_back(glm::vec4{ previous.x, previous.y, next.x, next.y }, previousIndex);
+                previousIndex = index;
+                previous = next;
+            }
+
+            wallIndices.emplace_back(glm::vec4{ previous.x, previous.y, end.x, end.y }, previousIndex);
         }
 
         //sort walls vector by atlas texture index
