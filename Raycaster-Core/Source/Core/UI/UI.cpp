@@ -123,9 +123,12 @@ namespace Core::UI {
 
     static bool IsHoverable(size_t index) {
         RC_ASSERT(index < Internal::System->Elements.size());
-
         auto& element = Internal::System->Elements[index];
-        return element.Type >= SurfaceType::Hoverable && element.Colours[0] != element.Colours[1];
+
+        const bool widgetHoverable = element.Widget && element.Widget->Hoverable();
+        const bool surfaceHoverable = element.Colours[0] != element.Colours[1];
+        
+        return element.Type >= SurfaceType::Hoverable && (widgetHoverable || surfaceHoverable);
     }
 
     static size_t NextHoverable(size_t startIndex, int64_t direction) {

@@ -16,6 +16,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override {}
         bool Render(Surface& current) override { return m_RenderFunction(current); }
+
+        bool Hoverable() override { return false; }
     private:
         std::function<bool(Surface&)> m_RenderFunction;
     };
@@ -27,6 +29,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override {}
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return m_AtlasIndices[0] != m_AtlasIndices[1]; }
     private:
         glm::uvec3 m_AtlasIndices;
         glm::vec2 m_Scale;
@@ -41,6 +45,7 @@ namespace Core::UI::Widgets {
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
 
+        bool Hoverable() override { return false; }
     private:
         std::basic_string_view<T> m_Text;
         float m_Scale = 0.0f;
@@ -54,6 +59,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return false; }
 
         std::basic_string_view<T> Text{};
         
@@ -71,6 +78,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return false; }
     private:
         std::vector<T>& m_Text;
         
@@ -91,6 +100,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return m_BoxAtlasIndices[0] != m_BoxAtlasIndices[1]; }
     private:
         std::vector<T>& m_Text;
 
@@ -117,6 +128,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override { return true; }
+
+        bool Hoverable() override { return false; }
     private:
         std::function<ValueType(std::basic_string<CharType>)> m_ValueTypeFromString;
         std::function<std::basic_string<CharType>(ValueType)> m_ValueTypeToString;
@@ -135,6 +148,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override {}
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return false; }
     private:
         const std::array<glm::vec4, 3> m_Colours;
         bool m_Enabled;
@@ -148,6 +163,7 @@ namespace Core::UI::Widgets {
         void Update(Surface& current) override {}
         bool Render(Surface& current) override;
 
+        bool Hoverable() override { return m_BoxAtlasIndices[0] != m_BoxAtlasIndices[1]; }
     private:
         bool m_Enabled;
 
@@ -163,6 +179,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override { return true; };
+
+        bool Hoverable() override { return false; }
     private:
         uint8_t m_VisibleChildren;
         size_t m_ItemCount;
@@ -178,6 +196,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override { return true; }
+
+        bool Hoverable() override { return false; }
     private:
         float& m_ScrollOffset;
 
@@ -192,6 +212,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return m_AtlasIndices[0] != m_AtlasIndices[1]; }
     private:
         float& m_ScrollOffset;
 
@@ -209,6 +231,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return false; }
     private:
         T& m_Value;
         T m_Min;
@@ -230,6 +254,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return m_BoxAtlasIndices[0] != m_BoxAtlasIndices[1] || m_SliderAtlasIndices[0] != m_SliderAtlasIndices[1]; }
     private:
         T& m_Value;
         T m_Min;
@@ -254,6 +280,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override;
+
+        bool Hoverable() override { return false; }
     private:
         float& m_ScrollOffset;
 
@@ -276,6 +304,8 @@ namespace Core::UI::Widgets {
 
         void Update(Surface& current) override;
         bool Render(Surface& current) override { return false; }
+
+        bool Hoverable() override { return false; }
     private:
         size_t m_PreviousHoverID;
     };

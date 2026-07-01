@@ -54,6 +54,8 @@ namespace Core::UI {
 
         virtual void Update(Surface& current) = 0;
         virtual bool Render(Surface& current) = 0;
+
+        virtual bool Hoverable() = 0;
     };
 
     inline Surface::Surface(SurfaceType type, LayoutType layout, PositioningType positioning, glm::vec3 position, glm::vec2 size,
