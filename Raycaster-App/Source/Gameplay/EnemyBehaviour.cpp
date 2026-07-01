@@ -38,6 +38,8 @@ bool LineOfSight(const Context& context, glm::vec2 start, glm::vec2 end) {
 
                 auto span = context.SpatialPartition.Get({ mapX + x - 1, mapY + y - 1 });
                 for (uint16_t index : span) {
+                    if (context.Enemies[index].State == EnemyState::Dead) { continue; }
+
                     auto hit = Algorithms::LineCollisions(context.Enemies[index].Position, collider, context.Enemies[index].Scale().x * 0.5f) != glm::vec2(0.0f);
                     if (hit) {
                         return true;
@@ -160,14 +162,12 @@ static glm::vec2 Collision(const Enemy& enemy, const Map& map, const std::vector
 
     // TODO fix O(n^2) 
     for (size_t i = 0; i < Enemies.size(); i++) {
-        //if (&enemy == &Enemies[i]) {
-        //    continue;
-        //}
-
         glm::vec2 dir = enemy.Position - Enemies[i].Position;
 
         // Check squared distance to save a sqrt
-        if (glm::dot(dir, dir) > (0.45f * 0.45f)) {
+        if (&enemy == &Enemies[i]
+            || Enemies[i].State == EnemyState::Dead
+            || glm::dot(dir, dir) > (0.45f * 0.45f)) {
             continue;
         }
 
