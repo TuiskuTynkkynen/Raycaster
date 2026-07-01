@@ -933,6 +933,48 @@ namespace Core {
     template void UI::Combo(std::span<const std::wstring>, ComboState&, uint8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
     template void UI::Combo(std::span<const std::wstring_view>, ComboState&, uint8_t, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
 
+    template<typename T>
+    void UI::TextureCombo(std::span<const T> items, ComboState& state, uint8_t maxHeight, const ComboAtlasProperties& atlasProperties, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& selectedColours, const std::array<glm::vec4, 3>& boxColours) {
+        RC_ASSERT(Internal::System, "Tried to create a UI combo before initializing UI");
+        RC_ASSERT(!Internal::System->Elements.empty(), "Tried to create a UI combo before calling UI Begin");
+        RC_ASSERT(!items.empty(), "Tried to create a UI combo with no items");
+
+        state.SelectedItemIndex = glm::min(state.SelectedItemIndex, items.size() - 1);
+        const uint8_t visibleItems = glm::min(maxHeight, static_cast<uint8_t>(items.size()));
+        const size_t currentIndex = Internal::System->Elements.size();
+        const size_t parentIndex = Internal::System->OpenElement;
+
+        PushContainerElement(SurfaceType::None, LayoutType::None, Uninitialized<float>(), positioning, glm::vec3(position, 0.0f), size, Transparent);
+        Internal::System->Elements.back().Widget = Internal::make_widget<Widgets::ComboWidget>(state.SelectedItemIndex, state.Open, visibleItems, items.size());
+
+        state.Open |= TextureButton(items[state.SelectedItemIndex], atlasProperties.ComboButtons, glm::vec2(!state.Open), boxColours);
+        const bool scrollBar = maxHeight <= items.size();
+        const glm::vec2 buttonSize(1.0f - 0.1f * scrollBar, 1.0f / visibleItems);
+        
+        BeginScrollContainer(state.ScrollOffset, 0.0f, PositioningType::Relative, glm::vec3(0.0f, (visibleItems - 1.0f) / 2.0f, glm::epsilon<float>()), glm::vec2(state.Open, visibleItems), true, 1.0f, glm::vec4(0.0f), glm::vec4(0.0f));
+        for (size_t i = 0; i < items.size(); i++) {
+            if (TextureButton(items[i], atlasProperties.ComboButtons, PositioningType::Offset, glm::vec2(-0.05f * scrollBar, -0.025f * (1 + i) * 0), buttonSize, (i == state.SelectedItemIndex) ? selectedColours : boxColours)) {
+                Internal::Input->InteractionID = currentIndex + 1;
+                state.SelectedItemIndex = i;
+                state.Open = false;
+            }
+        }
+
+        if (scrollBar) {
+            bool unitialized = IsUninitialized(atlasProperties.ScrollBarButtonOffset.x) || IsUninitialized(atlasProperties.ScrollBarButtonOffset.y);
+            glm::vec2 buttonOffset = unitialized ? glm::vec2(0.0f, 0.5f * (1.0f - atlasProperties.ScrollBarButtonSize.y)) : atlasProperties.ScrollBarButtonSize;
+            TextureScrollBar(state.ScrollOffset, buttonOffset, atlasProperties.ScrollBarButtonSize, atlasProperties.ScrollBarButtons, atlasProperties.ScrollBarSliderSize, atlasProperties.ScrollBarSlider, atlasProperties.ScrollBarBase, { 0.1f, 1.0f });
+        }
+        EndScrollContainer();
+
+        Internal::System->OpenElement = parentIndex;
+    }
+
+    template void UI::TextureCombo(std::span<const std::string>, ComboState&, uint8_t, const ComboAtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::TextureCombo(std::span<const std::string_view>, ComboState&, uint8_t, const ComboAtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::TextureCombo(std::span<const std::wstring>, ComboState&, uint8_t, const ComboAtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+    template void UI::TextureCombo(std::span<const std::wstring_view>, ComboState&, uint8_t, const ComboAtlasProperties&, PositioningType, glm::vec2, glm::vec2, const std::array<glm::vec4, 3>&, const std::array<glm::vec4, 3>&);
+
     template <typename T>
     void UI::Slider(T& value, T min, T max, bool vertical, float sliderSize, PositioningType positioning, glm::vec2 position, glm::vec2 size, const std::array<glm::vec4, 3>& sliderColours, const std::array<glm::vec4, 3>& boxColours) {
         RC_ASSERT(Internal::System, "Tried to create a UI slider before initializing UI");
