@@ -1042,7 +1042,7 @@ namespace Core::UI::Widgets {
         Renderer2D::DrawShapeQuad(3, current.Colours[index], transform, texTransform);
 
         //Slider
-        glm::vec3 sliderPosition(0.0f);
+        glm::vec3 sliderPosition = current.Position;
         sliderPosition[m_SliderDimension] = current.Position[m_SliderDimension] + (current.Size[m_SliderDimension] * (1.0f - m_SliderSize[m_SliderDimension])) * glm::clamp(static_cast<float>(m_Value + m_Min) / static_cast<float>(m_Max - m_Min) - 0.5f, -0.5f, 0.5f);
         sliderPosition[1 - m_SliderDimension] = current.Position[1 - m_SliderDimension];
 
