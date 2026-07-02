@@ -115,7 +115,7 @@ static float LightBilinear(glm::vec2 position, const Map& map) {
     return glm::clamp(glm::mix(y[0], y[1], mix), 0.0f, 1.0f);
 }
 
-void RaycastRenderer::Render(const Map& map, const RaycasterCamera& camera, const Player& player, Renderables& renderables) {
+void RaycastRenderer::Render(const Map& map, const RaycasterCamera& camera, Renderables& renderables) {
     const glm::uvec2 viewSize = Settings::Video::ViewPortSize(Settings::Video::LayerType::Raycaster);
     if (viewSize.x * viewSize.y <= m_RayWidth) { return; }
 
@@ -123,7 +123,7 @@ void RaycastRenderer::Render(const Map& map, const RaycasterCamera& camera, cons
 
     RenderWalls(map, camera);
     RenderFloors(map, camera);
-    RenderSprites(map, player, renderables);
+    RenderSprites(map, camera, renderables);
 }
 
 void RaycastRenderer::RenderWalls(const Map& map, const RaycasterCamera& camera) {
@@ -358,20 +358,20 @@ void RaycastRenderer::RenderFloors(const Map& map, const RaycasterCamera& camera
     RenderFloor(false, map, camera);
 }
 
-void RaycastRenderer::RenderSprites(const Map& map, const Player& player, Renderables& renderables) {
+void RaycastRenderer::RenderSprites(const Map& map, const RaycasterCamera& camera, Renderables& renderables) {
     auto spriteObjects = renderables.GetSprites();
 
     size_t count = spriteObjects.size();
     uint32_t rayIndex = m_RayCount;
     size_t space = m_Rays.size();
     const float reciprocalAspectRatio = 1.0f / m_AspectRatio;
-    const float pitchOffset = glm::tan(glm::radians(player.GetPitch()));
-
-    glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(player.GetYaw() + 90.0f));
+    const float pitchOffset = camera.GetDirection().z;
+    
+    glm::mat3 matrix = glm::rotate(glm::mat3(1.0f), glm::radians(camera.GetYaw() + 90.0f));
 
     for (size_t index = 0; index < count; index++) {
         auto& sprite = spriteObjects[index];
-        sprite.Position = sprite.Position - player.GetPosition();
+        sprite.Position = sprite.Position - camera.GetPosition();
         sprite.Position = matrix * sprite.Position;
     }
 

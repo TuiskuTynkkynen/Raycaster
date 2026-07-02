@@ -4,7 +4,6 @@
 #include "Entities.h"
 #include "Map.h"
 #include "Renderables.h"
-#include "Player.h"
 
 #include <array>
 #include <vector>
@@ -16,11 +15,11 @@ public:
         m_Lines.resize(m_RayCount);
     }
 
-    void Render(const Map& map, const RaycasterCamera& camera, const Player& player, Renderables& renderables);
+    void Render(const Map& map, const RaycasterCamera& camera, Renderables& renderables);
 
     void RenderWalls(const Map& map, const RaycasterCamera& camera);
     void RenderFloors(const Map& map, const RaycasterCamera& camera);
-    void RenderSprites(const Map& map, const Player& player, Renderables& renderables);
+    void RenderSprites(const Map& map, const RaycasterCamera& camera, Renderables& renderables);
     
     inline std::span<const Ray> GetRays() const { return m_Rays; }
     inline std::span<const Line> GetLines() const { return m_Lines; }
