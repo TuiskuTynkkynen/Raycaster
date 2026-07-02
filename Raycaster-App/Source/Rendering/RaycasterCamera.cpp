@@ -1,12 +1,14 @@
 #include "RaycasterCamera.h"
 
 RaycasterCamera::RaycasterCamera(glm::vec3 position, float zoom, float yaw, float pitch)
-    : Core::Camera2D(position, zoom) {
+    : Core::Camera2D(position, zoom), m_Yaw(yaw), m_Pitch(pitch) {
     UpdateCamera(position, yaw, pitch);
 }
 
 void RaycasterCamera::UpdateCamera(glm::vec3 position, float yaw, float pitch) {
     Core::Camera2D::UpdateCamera(position);
+    m_Pitch = pitch;
+    m_Yaw = yaw;
 
     glm::vec3 front(0.0f);
     yaw = glm::radians(yaw);
