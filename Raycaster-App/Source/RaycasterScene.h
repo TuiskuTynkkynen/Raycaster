@@ -7,11 +7,9 @@
 #include "Renderables.h"
 #include "Projectiles.h"
 #include "Player.h"
-#include "RaycasterEvents.h"
 #include "RaycastRenderer.h"
 
-#include "Core/Base/Application.h"
-#include "Core/Events/WindowEvent.h"
+#include "Core/Scene/Scene.h"
 
 #include <memory>
 
@@ -23,7 +21,6 @@ public:
     void OnDetach(Core::Application& app) override;
 
     void OnUpdate(Core::Timestep deltaTime) override;
-    void OnEvent(Core::Event& event) override;
 
     inline std::span<const Ray> GetRays() const { return m_Renderer.GetRays(); }
     inline std::span<const Floor> GetFloors() const { return m_Renderer.GetFloors(); }
@@ -43,7 +40,9 @@ public:
         Invalid,
     };
     inline State GetState() const { return m_State; }
-private:
+protected:
+    virtual void SetState(State state) = 0;
+
     Map m_Map{};
 
     std::vector<Tile> m_Tiles;
@@ -64,11 +63,6 @@ private:
 
     State m_State = State::Invalid;
 
-    void ShutdownSystems();
     void Reinit();
-    void SetState(State state);
-    
-    bool OnRestart(Restart& event);
-    bool OnResume(Resume& event);
-    bool OnKeyReleased(Core::KeyReleased& event);
+    void Shutdown();
 };

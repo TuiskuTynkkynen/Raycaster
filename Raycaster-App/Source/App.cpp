@@ -1,4 +1,4 @@
-#include "RaycasterScene.h"
+#include "GameScene.h"
 
 #include "Core/Base/Application.h"
 
@@ -12,7 +12,7 @@ extern "C" {
 int main() {
     Core::Application app;
 
-    app.PushScene<RaycasterScene>();
+    app.PushScene<GameScene>();
     app.GetWindow().SetVSync(false);
 
     app.Run();

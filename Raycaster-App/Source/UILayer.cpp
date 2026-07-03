@@ -1,5 +1,8 @@
 #include "UILayer.h"
 
+#include "RaycasterEvents.h"
+
+#include "Core/Base/Application.h"
 #include "Core/UI/UI.h"
 #include "Core/Renderer/RenderAPI.h"
 #include "Core/Renderer/Renderer2D.h"
