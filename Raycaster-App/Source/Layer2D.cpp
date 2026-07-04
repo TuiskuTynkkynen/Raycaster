@@ -35,14 +35,13 @@ void Layer2D::OnUpdate(Core::Timestep deltaTime) {
     }
 
     glm::vec4 colour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    const Player& player = scene.GetPlayer();
-    Core::Renderer2D::DrawRotatedFlatQuad(player.GetPosition(), -player.GetYaw(), AxisZ, player.GetScale(), colour);
+    Core::Renderer2D::DrawRotatedFlatQuad(scene.GetCamera().GetPosition(), -scene.GetCamera().GetYaw(), AxisZ, scene.GetPlayer().GetScale(), colour);
 
     Core::Renderer2D::Flush();
 
     colour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
     std::span<const Line> lines = scene.GetLines();
-    size_t lineCount = lines.size();
+    size_t lineCount = lines.size() * Settings::Video::LayerEnabled(Settings::Video::LayerType::Raycaster);
     for (size_t i = 0; i < lineCount; i++) {
         Core::Renderer2D::DrawLine(lines[i].Posistion, lines[i].Scale, colour);
     }

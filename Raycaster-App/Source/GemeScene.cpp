@@ -76,7 +76,7 @@ void GameScene::OnUpdate(Core::Timestep deltaTime) {
             m_Projectiles.Add(projectile.Type, projectile.Position, projectile.Velocity);
         }
     }
-    m_Enemies.UpdateRender(m_Tiles, m_Renderables);
+    m_Enemies.UpdateRender({ m_Tiles.end() - m_Enemies.Count(), m_Tiles.end()}, m_Renderables);
 
     m_Interactables.Update(deltaTime);
     m_Interactables.UpdateRender(m_Renderables);
