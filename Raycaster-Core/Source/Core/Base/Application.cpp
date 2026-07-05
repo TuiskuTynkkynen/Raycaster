@@ -55,7 +55,7 @@ namespace Core {
     void Application::Update() {
         RC_ASSERT(!m_SceneStack.empty(), "Scene stack is empty");
         RC_ASSERT(m_LayerStack.Size(), "Layer stack is empty");
-
+        
         float currentFrame = static_cast<float>(glfwGetTime());
         Timestep deltaTime = currentFrame - m_LastFrame;
         m_LastFrame = currentFrame;
@@ -69,7 +69,7 @@ namespace Core {
         if (!m_Running) { 
             return; // Recieved Application Close event
         }
-
+        
         m_SceneStack.back()->OnUpdate(deltaTime);
             
         for (Layer* layer : m_LayerStack.Layers()) {
@@ -82,6 +82,7 @@ namespace Core {
     void Application::OnEvent(Event& event) {
         EventDispatcher dispatcer(event);
         dispatcer.Dispatch<ApplicationClose>(std::bind(&Application::OnApplicationCloseEvent, this, std::placeholders::_1));
+        dispatcer.Dispatch<ApplicationScenePush>(std::bind(&Application::OnApplicationScenePushEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<ApplicationScenePop>(std::bind(&Application::OnApplicationScenePopEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowClose>(std::bind(&Application::OnWindowCloseEvent, this, std::placeholders::_1));
         dispatcer.Dispatch<WindowResize>(std::bind(&Application::OnWindowResizeEvent, this, std::placeholders::_1));
@@ -116,11 +117,12 @@ namespace Core {
     }
 
     void Application::PushScene(std::shared_ptr<Scene> scene) {
-        if (!m_SceneStack.empty()) { 
-            m_SceneStack.back()->OnDetach(*this); 
+        RC_ASSERT(scene);
+        if (m_Running && !m_SceneStack.empty()) {
+            PushEvent<ApplicationScenePush>(scene);
+            return;
         }
 
-        RC_ASSERT(scene);
         m_SceneStack.push_back(scene);
         AttachScene(scene);
     }
@@ -146,6 +148,16 @@ namespace Core {
             RC_ASSERT(layer != nullptr);
             layer->SetScene(scene);
         }
+    }
+
+    bool Application::OnApplicationScenePushEvent(ApplicationScenePush& event) {
+        if (!m_SceneStack.empty()) {
+            m_SceneStack.back()->OnDetach(*this);
+        }
+
+        m_SceneStack.push_back(event.GetScene());
+        AttachScene(GetActiveScene());
+        return true;
     }
 
     bool Application::OnApplicationScenePopEvent(ApplicationScenePop& event) {

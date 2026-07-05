@@ -57,6 +57,7 @@ namespace Core {
         float m_LastFrame = 0.0f;
 
         bool OnApplicationCloseEvent(ApplicationClose& event);
+        bool OnApplicationScenePushEvent(ApplicationScenePush& event);
         bool OnApplicationScenePopEvent(ApplicationScenePop& event);
         bool OnWindowCloseEvent(WindowClose& event);
         bool OnWindowResizeEvent(WindowResize& event);
