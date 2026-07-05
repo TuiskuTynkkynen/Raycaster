@@ -23,7 +23,7 @@ namespace Core {
     }
     
     Application::~Application() {
-        for (auto& scene : m_SceneStack) {
+        if (auto scene = GetActiveScene().lock()) {
             scene->OnDetach(*this);
         }
         m_LayerStack.Clear();
