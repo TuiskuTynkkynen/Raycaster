@@ -24,7 +24,8 @@ namespace Core::Renderer2D {
         template <typename T>
         void DrawString(const T& text, const glm::vec3& position, float scale, const glm::vec4& colour, bool flipVertivcal = false);
 
-        void SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height);
+        void SetTextureAtlas(const char* fileName, uint32_t atlasWidth, uint32_t atlasHeight);
+        void SetTextureAtlas(std::span<const std::byte> embeddedImage, uint32_t atlasWidth, uint32_t atlasHeight);
         void SetFont(std::shared_ptr<Font> font);
         std::weak_ptr<Font> GetFont();
 

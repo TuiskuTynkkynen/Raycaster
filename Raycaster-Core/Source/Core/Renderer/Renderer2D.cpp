@@ -464,6 +464,15 @@ namespace Core {
         s_Data.TextureShader->setVec2("AtlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
     }
 
+    void Renderer2D::SetTextureAtlas(std::span<const std::byte> embeddedImage, uint32_t width, uint32_t height) {
+        s_Data.TextureShader->Bind();
+        s_Data.TextureAtlas->BindImage(embeddedImage);
+
+        s_Data.atlasWidth = width;
+        s_Data.atlasHeight = height;
+        s_Data.TextureShader->setVec2("AtlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
+    }
+
     void Renderer2D::SetFont(std::shared_ptr<Font> font) {
         s_Data.Font = font;
     }
