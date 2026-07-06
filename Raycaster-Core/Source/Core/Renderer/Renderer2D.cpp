@@ -468,6 +468,10 @@ namespace Core {
         s_Data.Font = font;
     }
 
+    std::weak_ptr<Font> Renderer2D::GetFont() {
+        return s_Data.Font;
+    }
+
     template void Renderer2D::DrawString<std::string>(const std::string&, const glm::vec3&, float, const glm::vec4&, bool);
     template void Renderer2D::DrawString<std::wstring>(const std::wstring&, const glm::vec3&, float, const glm::vec4&, bool);
     template void Renderer2D::DrawString<std::string_view>(const std::string_view&, const glm::vec3&, float, const glm::vec4&, bool);

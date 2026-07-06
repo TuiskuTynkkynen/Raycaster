@@ -26,6 +26,7 @@ namespace Core::Renderer2D {
 
         void SetTextureAtlas(const char* fileName, uint32_t width, uint32_t height);
         void SetFont(std::shared_ptr<Font> font);
+        std::weak_ptr<Font> GetFont();
 
         //Using Core::Shapes functions
         void DrawTriangle(const glm::vec3& angles, uint32_t textureIndex, const glm::vec4& colour, const glm::mat4& transform, const glm::mat3& textureTransform = glm::mat3(1.0f), const glm::vec2& atlasIndex = glm::vec2(0.0f));

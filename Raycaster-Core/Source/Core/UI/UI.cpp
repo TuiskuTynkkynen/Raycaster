@@ -348,7 +348,10 @@ namespace Core {
         RenderAPI::SetDepthFunction(RenderAPI::DepthFunction::LessEqual);
         Renderer2D::BeginScene(glm::ortho(0.0f, Internal::System->AspectRatio, 1.0f, 0.0f), true);
 
-        if(Internal::Font) { Internal::Font->ActivateAtlas(2); }
+        const bool fontEnabled = static_cast<bool>(Internal::Font);
+        if (fontEnabled) {
+            Renderer2D::SetFont(std::exchange(Internal::Font, Renderer2D::GetFont().lock()));
+        }
         if(Internal::TextureAtlas) { Internal::TextureAtlas->Activate(3); }
         
         std::vector<size_t> scissorIDs;
@@ -417,6 +420,10 @@ namespace Core {
         Renderer2D::EndScene();
         RenderAPI::SetDepthFunction();
         RenderAPI::SetScissor(false);
+
+        if (fontEnabled) {
+            Renderer2D::SetFont(std::exchange(Internal::Font, Renderer2D::GetFont().lock()));
+        }
     }
 
     void UI::End(Timestep deltaTime) {
