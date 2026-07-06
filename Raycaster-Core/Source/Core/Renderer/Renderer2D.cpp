@@ -450,7 +450,7 @@ namespace Core {
             position.x = x + glyph.Bearing.x * scale + size.x * 0.5f;
             position.y = y - (glyph.Size.y - glyph.Bearing.y) * scale * horizontalMultiplier - size.y * 0.5f;
 
-            DrawQuad(2, colour, position, glm::vec3(scale), glyph.TexPosition, glyph.TexScale);
+            DrawQuad(2, colour, position, size, glyph.TexPosition, glyph.TexScale);
             x += glyph.Advance * scale;
         }
     }
