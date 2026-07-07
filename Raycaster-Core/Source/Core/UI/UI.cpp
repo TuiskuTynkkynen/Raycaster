@@ -344,7 +344,7 @@ namespace Core {
         RC_ASSERT(!Internal::System->Elements.empty(), "Tried to render UI before calling UI Begin");
 
         RenderAPI::SetViewPort(static_cast<uint32_t>(Internal::System->Position.x), static_cast<uint32_t>(Internal::System->Position.y),
-            static_cast<uint32_t>(Internal::System->Position.x + Internal::System->Size.x), static_cast<uint32_t>(Internal::System->Position.y + Internal::System->Size.y));
+            static_cast<uint32_t>(Internal::System->Size.x), static_cast<uint32_t>(Internal::System->Size.y));
         RenderAPI::SetDepthFunction(RenderAPI::DepthFunction::LessEqual);
         Renderer2D::BeginScene(glm::ortho(0.0f, Internal::System->AspectRatio, 1.0f, 0.0f), true);
 
@@ -1090,7 +1090,7 @@ namespace Core {
         RC_ASSERT(Internal::Input, "UI should be initialized before dispatching events to it");
 
         Internal::Input->MouseState.Moved = true;
-        Internal::Input->MouseState.Position = event.GetPosition() / Internal::System->Size;
+        Internal::Input->MouseState.Position = (event.GetPosition() - Internal::System->Position) / Internal::System->Size;
         Internal::Input->MouseState.Position.x *= Internal::System->AspectRatio;
 
         return false;
