@@ -210,6 +210,24 @@ namespace Core {
         glDeleteFramebuffers(1, &m_Buffer);
     }
 
+    Framebuffer::Framebuffer(Framebuffer&& other) noexcept
+        : m_Buffer      (std::exchange(m_Buffer,       0)),
+          m_Color       (std::exchange(m_Color,        0)),
+          m_DepthStencil(std::exchange(m_DepthStencil, 0)),
+          m_Format      (other.m_Format),
+          m_Filter      (other.m_Filter),
+          m_Size        (std::exchange(other.m_Size,   glm::vec2(0.0f))) {};
+
+    Framebuffer& Framebuffer::operator=(Framebuffer&& other) noexcept {
+        std::swap(m_Buffer,       other.m_Buffer);
+        std::swap(m_Color,        other.m_Color);
+        std::swap(m_DepthStencil, other.m_DepthStencil);
+        std::swap(m_Format,       other.m_Format);
+        std::swap(m_Filter,       other.m_Filter);
+        std::swap(m_Size,         other.m_Size);
+        return *this;
+    }
+
     void Framebuffer::Resize(uint32_t width, uint32_t height) {
         m_Size = glm::uvec2(width, height);
 
@@ -371,6 +389,20 @@ namespace Core {
         glDeleteTextures(1, &m_Color);
         glDeleteRenderbuffers(1, &m_DepthStencil);
         glDeleteFramebuffers(1, &m_Buffer);
+    }
+
+    MultisampleFramebuffer::MultisampleFramebuffer(MultisampleFramebuffer&& other) noexcept
+        : m_Buffer      (std::exchange(other.m_Buffer,       0)),
+          m_Color       (std::exchange(other.m_Color,        0)),
+          m_DepthStencil(std::exchange(other.m_DepthStencil, 0)),
+          m_Resolved    (std::move(other.m_Resolved)) {}
+
+    MultisampleFramebuffer& MultisampleFramebuffer::operator=(MultisampleFramebuffer&& other) noexcept {
+        std::swap(m_Buffer,       other.m_Buffer);
+        std::swap(m_Color,        other.m_Color);
+        std::swap(m_DepthStencil, other.m_DepthStencil);
+        std::swap(m_Resolved,     other.m_Resolved);
+        return *this;
     }
 
     void MultisampleFramebuffer::Activate() {

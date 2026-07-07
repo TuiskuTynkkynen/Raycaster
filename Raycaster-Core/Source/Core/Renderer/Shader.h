@@ -5,14 +5,25 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 
 namespace Core {
-	class Shader {
+    class Shader {
     public:
         Shader(std::string_view shaderFileName);
         Shader(std::string_view vertexFileName, std::string_view fragmentFileName);
         Shader(const char* vertexShader, const char* fragmentShader);
         ~Shader();
+
+        Shader(const Shader&) = delete;
+        Shader(Shader&& other) noexcept
+            : m_RendererID(std::exchange(other.m_RendererID, 0)), m_UniformLocationCache(std::move(other.m_UniformLocationCache)) {
+        };
+        Shader& operator=(const Shader&) = delete;
+        Shader& operator=(Shader&& other) noexcept {
+            std::swap(m_RendererID, other.m_RendererID); std::swap(m_UniformLocationCache, other.m_UniformLocationCache);
+            return *this;
+        };
 
         void Bind();
         void Unbind();
@@ -34,6 +45,6 @@ namespace Core {
         std::unordered_map<std::string, uint32_t> m_UniformLocationCache;
 
         uint32_t GetUniformLocation(const char* name);
-	};
+    };
 }
 

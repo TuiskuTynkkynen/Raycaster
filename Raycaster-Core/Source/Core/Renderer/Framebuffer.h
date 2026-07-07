@@ -33,6 +33,11 @@ namespace Core {
         Framebuffer(uint32_t width, uint32_t height, ColorFormat format = ColorFormat::RGBA8, ColorFilter filtering = ColorFilter::Nearest, bool hasDepthStencil = true);
         ~Framebuffer();
 
+        Framebuffer(const Framebuffer&) = delete;
+        Framebuffer(Framebuffer&& other) noexcept;
+        Framebuffer& operator=(const Framebuffer&) = delete;
+        Framebuffer& operator=(Framebuffer&& other) noexcept;
+
         void Resize(uint32_t width, uint32_t height);
 
         void Activate();
@@ -90,6 +95,11 @@ namespace Core {
         };
         MultisampleFramebuffer(uint32_t width, uint32_t height, uint8_t sampleCount, MultisampleFramebuffer::ColorFormat format = MultisampleFramebuffer::ColorFormat::RGBA8, Framebuffer::ColorFilter filtering = Framebuffer::ColorFilter::Nearest, bool hasDepthStencil = true);
         ~MultisampleFramebuffer();
+
+        MultisampleFramebuffer(const MultisampleFramebuffer&) = delete;
+        MultisampleFramebuffer(MultisampleFramebuffer&& other) noexcept;
+        MultisampleFramebuffer& operator=(const MultisampleFramebuffer&) = delete;
+        MultisampleFramebuffer& operator=(MultisampleFramebuffer&& other) noexcept;
 
         void Resize(uint32_t width, uint32_t height, uint8_t sampleCount);
         
