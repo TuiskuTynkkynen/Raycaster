@@ -1124,6 +1124,10 @@ namespace Core {
             const Surface& current = Internal::System->Elements[Internal::System->HoverID];
             const Surface& parent = Internal::System->Elements[current.ParentID];
 
+            if (current.Type < SurfaceType::Hoverable) {
+                return false;
+            }
+
             if (CalculateClippedRect(current).Inside(Internal::Input->MouseState.Position)) {
                 if (current.Type >= SurfaceType::Activatable) {
                     Internal::System->ActiveID = Internal::System->HoverID;
