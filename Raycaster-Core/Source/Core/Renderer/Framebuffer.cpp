@@ -43,8 +43,7 @@ namespace Core {
 
         s_RenderQuad = new FullsceenQuad(quadVertices, sizeof(quadVertices), quadLayout);
 
-        const char* vertex = R"(
-            #version 300 es
+        const char* vertex = R"(#version 300 es
             layout (location = 0) in vec2 aPos;
             layout (location = 1) in highp vec2 aTexPos;
             out highp vec2 TexPos;
@@ -52,8 +51,7 @@ namespace Core {
                  gl_Position = vec4(aPos, 1.0f, 1.0f);
                  TexPos = aTexPos;
             })";     
-        const char* fragment = R"(
-            #version 300 es
+        const char* fragment = R"(#version 300 es
             in highp vec2 TexPos;
             uniform sampler2D Tex;
             out mediump vec4 FragColor;
