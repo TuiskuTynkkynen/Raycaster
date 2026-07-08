@@ -117,7 +117,7 @@ void UILayer::PauseScreen(const RaycasterScene& scene) {
 
     if (Core::UI::Button("Quit", glm::vec2{ 0.5f, 0.2f })) {
         Core::UI::ResetInteractionElement();
-        Core::Application::PushEvent<Core::ApplicationClose>();
+        Core::Application::PopScene();
     }
 }
 
