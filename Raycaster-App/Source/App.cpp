@@ -1,4 +1,4 @@
-#include "DemoScene.h"
+#include "MenuScene.h"
 
 #include "Core/Base/Application.h"
 
@@ -12,7 +12,7 @@ extern "C" {
 int main() {
     Core::Application app;
 
-    app.PushScene<DemoScene>();
+    app.PushScene<MenuScene>();
     app.GetWindow().SetVSync(false);
 
     app.Run();
