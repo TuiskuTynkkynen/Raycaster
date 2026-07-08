@@ -16,7 +16,7 @@ static constexpr InteractionResult PickupInteraction(Interactable& interactable,
     case InteractableType::Dagger:
             return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(0.5f, 1, Animations::AttackDagger, 0.75f, "Assets/Audio/attack_dagger.opus", MeleeWeaponData{0.75f, 0.25f, 1.0f, 0.75f}), index);
     case InteractableType::Dart:
-        return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(1.0f, 1, Animations::AttackDart, 0.75f, "Assets/Audio/attack_dart.opus", RangedWeaponData{.AttackTiming = 0.8f, .ProjectileSpeed = 0.1f, .Type = ProjectileType::Dart}), index);
+        return InteractionResult::Create<InteractionResult::Type::Pickup>(Item(1.0f, 1, Animations::AttackDart, 0.75f, "Assets/Audio/attack_dart.opus", RangedWeaponData{.AttackTiming = 0.8f, .ProjectileSpeed = 3.5f, .Type = ProjectileType::Dart}), index);
     default:
         RC_ASSERT(false, "Tried to pickup interactable with invalid type");
         return {};
