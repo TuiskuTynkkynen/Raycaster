@@ -62,7 +62,11 @@ static void ResetVideoSetting() {
 
 namespace Settings {
     void UI::Init() {
-        LoadSettings();
+        static bool loaded = false;
+        if (loaded) {
+            LoadSettings();
+            loaded = true;
+        }
         m_Deselected = { Core::UI::DefaultColours[0], Core::UI::DefaultColours[0], Core::UI::DefaultColours[0] };
         m_Selected = { Core::UI::DefaultColours[2], Core::UI::DefaultColours[2], Core::UI::DefaultColours[2] };
     }
