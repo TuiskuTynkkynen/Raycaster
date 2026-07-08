@@ -54,7 +54,6 @@ namespace Core {
 
     void Application::Update() {
         RC_ASSERT(!m_SceneStack.empty(), "Scene stack is empty");
-        RC_ASSERT(m_LayerStack.Size(), "Layer stack is empty");
         
         float currentFrame = static_cast<float>(glfwGetTime());
         Timestep deltaTime = currentFrame - m_LastFrame;
