@@ -10,7 +10,13 @@ extern "C" {
 #endif
 
 int main() {
-    Core::Application app;
+    Core::Application app({
+        .IconPaths = {
+            "Assets/Textures/icon.png",
+            "Assets/Textures/icon_medium.png",
+            "Assets/Textures/icon_large.png",
+        }
+    });
 
     app.PushScene<MenuScene>();
     app.GetWindow().SetVSync(false);

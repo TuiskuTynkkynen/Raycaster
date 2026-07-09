@@ -5,7 +5,9 @@
 #include "Core/Events/TextEvent.h"
 #include "Core/Events/WindowEvent.h"
 #include "Core/Debug/Debug.h"
+#include "Platform.h"
 
+#include <stb/stb_image.h>
 #include <GLFW/glfw3.h>
 #if defined(PLATFORM_EMSCRIPTEN)
     #include <emscripten/html5.h>
@@ -121,6 +123,34 @@ namespace Core {
         s_GLFWInitialized = true;
     }
 
+    static void SetWindowIcons(const std::initializer_list<const char*> iconPaths, GLFWwindow* window) {
+        std::vector<GLFWimage> images;
+        images.reserve(iconPaths.size());
+        
+        stbi_set_flip_vertically_on_load(false);
+        for (const char* icon : iconPaths) {
+            std::filesystem::path path = icon;
+            if (!path.is_absolute()) {
+                path = ApplicationDirectory() / path;
+            }
+
+            int width, height;
+            unsigned char* data = stbi_load(path.string().c_str(), &width, &height, NULL, 4);
+            if (!data) {
+                RC_WARN("Failed to load Window icon, {}, skipping it.", icon);
+                continue;
+            }
+
+            images.emplace_back(width, height, data);
+        }
+
+        glfwSetWindowIcon(window, static_cast<int>(images.size()), images.data());
+
+        for (GLFWimage image : images) {
+            stbi_image_free(image.pixels);
+        }
+    }
+
     Window::WindowData Window::CreateWindow(const WindowProperties& properties) {
         InitGLFW();
 
@@ -181,6 +211,7 @@ namespace Core {
         
         glfwSetWindowUserPointer(internalWindow, &m_Data);
         SetVSync(true);
+        SetWindowIcons(properties.IconPaths, internalWindow);
 
         glfwSetFramebufferSizeCallback(internalWindow, [](GLFWwindow* window, int width, int height) {
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);

@@ -7,6 +7,7 @@
 #include <string>
 #include <functional>
 #include <cstdint>
+#include <initializer_list>
 
 namespace Core {
     // WindowMode support is best effort and may differ based on platform.
@@ -21,6 +22,7 @@ namespace Core {
         WindowMode Mode = WindowMode::Windowed;
         uint32_t Width = 1200;
         uint32_t Height = 600;
+        std::initializer_list<const char*> IconPaths;
     };
 
     class Window {
