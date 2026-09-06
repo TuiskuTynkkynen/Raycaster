@@ -46,7 +46,7 @@ function RaycasterCoreDependencies.include()
     filter {}
 end
 
-group "Core/Dependencies"
+group(project("Raycaster-Core").group .. "/Dependencies")
     include(getabsolutepath "glm.lua")
     include(getabsolutepath "FreeType.lua")
     include(getabsolutepath "miniaudio.lua")
@@ -57,4 +57,4 @@ group "Core/Dependencies"
         include(getabsolutepath "GLFW.lua")
         include(getabsolutepath "glad.lua")
     end
-group "Core"
+group(project("Raycaster-Core").group)
