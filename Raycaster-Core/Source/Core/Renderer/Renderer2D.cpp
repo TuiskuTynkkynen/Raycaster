@@ -145,9 +145,10 @@ namespace Core {
         s_Data.ShapeVertexArray->AddBuffer(*s_Data.ShapeVertexBuffer, quadLayout);
         s_Data.ShapeElementBuffer = std::make_unique<ElementBuffer>(s_Data.MaxIndices);
 
-        s_Data.TextureShader = std::make_unique<Shader>(ShaderCore::Default2DVertexShader, ShaderCore::Default2DFragmentShader);
-        s_Data.TextureShader->Bind();
-        
+        s_Data.atlasWidth = s_Data.atlasHeight = 1;
+        SetAtlasTextureShader(nullptr);
+        SetSimpleShader(nullptr);
+
         s_Data.TextureAtlas = std::make_unique<Texture2D>(Texture2D::WrapMode::Repeat, Texture2D::WrapMode::Repeat, Texture2D::Filter::Nearest, Texture2D::Filter::Nearest);
         s_Data.WhiteTexture = std::make_unique<Texture2D>(Texture2D::WrapMode::Repeat, Texture2D::WrapMode::Repeat, Texture2D::Filter::Nearest, Texture2D::Filter::Nearest);
         {
@@ -166,16 +167,6 @@ namespace Core {
 
             s_Data.WhiteTexture->BindData(whiteTextureData, 1, 1, 4);
         }
-
-        for (uint32_t i = 0; i < 16; i++) {
-            std::string uniform = "Textures[" + std::to_string(i) + "]";
-            s_Data.TextureShader->setInt(uniform.c_str(), i);
-        }
-
-        s_Data.atlasWidth = s_Data.atlasHeight = 1;
-        s_Data.TextureShader->setVec2("AtlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
-        
-        s_Data.SimpleShader = std::make_unique<Shader>(ShaderCore::Simple2DVertexShader, ShaderCore::Simple2DFragmentShader);
 
         s_Data.Font = std::make_shared<Font>();
 
@@ -453,6 +444,29 @@ namespace Core {
 
             DrawQuad(2, colour, position, size, glyph.TexPosition, glyph.TexScale);
             x += glyph.Advance * scale;
+        }
+    }
+
+    void Renderer2D::SetSimpleShader(std::unique_ptr<Shader> shader) {
+        if (!shader) {
+            shader = std::make_unique<Shader>(ShaderCore::Default2DVertexShader, ShaderCore::Default2DFragmentShader);
+        }
+
+        s_Data.SimpleShader.swap(shader);
+    }
+
+    void Renderer2D::SetAtlasTextureShader(std::unique_ptr<Shader> shader) {
+        if (!shader) {
+            shader = std::make_unique<Shader>(ShaderCore::Default2DVertexShader, ShaderCore::Default2DFragmentShader);
+        }
+
+        s_Data.TextureShader.swap(shader);
+        s_Data.TextureShader->Bind();
+        s_Data.TextureShader->setVec2("AtlasSize", glm::vec2(s_Data.atlasWidth, s_Data.atlasHeight));
+
+        for (uint32_t i = 0; i < 16; i++) {
+            std::string uniform = "Textures[" + std::to_string(i) + "]";
+            s_Data.TextureShader->setInt(uniform.c_str(), i);
         }
     }
 
