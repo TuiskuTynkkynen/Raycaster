@@ -1,46 +1,52 @@
-#shader vertex
-#version 300 es
+#pragma once
 
+namespace Core::ShaderCore {
+    inline const char* Simple2DVertexShader = R"(#version 300 es
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aColour;
+uniform mat4 ViewProjection;
+out vec3 VertexColour;
+
+void main() {
+     gl_Position = ViewProjection * vec4(aPos, 1.0f);
+     VertexColour = aColour;
+})";
+
+    inline const char* Simple2DFragmentShader = R"(#version 300 es
+in mediump vec3 VertexColour;
+out mediump vec4 FragColor;
+
+void main() {
+    FragColor = vec4(VertexColour, 1.0f);
+})";
+
+    inline const char* Default2DVertexShader = R"(#version 300 es
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec4 aColour;
 layout (location = 2) in highp vec2 aTexPos;
 layout (location = 3) in highp vec2 aAtlasOffset;
 layout (location = 4) in float aTexIndex;
-
 uniform mat4 ViewProjection;
-
 out vec4 VertexColour;
-
-out highp vec2 TexCoords;
-out highp vec2 AtlasOffset;
+out highp vec2 TexCoords, AtlasOffset;
 flat out int TextureIndex;
 
-void main()
-{
+void main() {
     gl_Position = ViewProjection * vec4(aPos, 1.0f);
-
     VertexColour = aColour;
-
     TexCoords = aTexPos;
     AtlasOffset = aAtlasOffset;
     AtlasOffset += 1e-5;
     TextureIndex = int(aTexIndex);
-}
+})";
 
-
-#shader fragment
-#version 300 es
+    inline const char* Default2DFragmentShader = R"(#version 300 es
 precision mediump float;
-
 in vec4 VertexColour;
-
-in highp vec2 TexCoords;
-in highp vec2 AtlasOffset;
+in highp vec2 TexCoords, AtlasOffset;
 flat in int TextureIndex;
-
 uniform sampler2D Textures[16];
 uniform highp vec2 AtlasSize;
-
 out vec4 FragColor;
 
 vec4 sampleTexture(int index, vec2 uv) { // GOD I LOVE version 300 es
@@ -62,7 +68,6 @@ vec4 sampleTexture(int index, vec2 uv) { // GOD I LOVE version 300 es
         case 14: return texture(Textures[14], uv);
         case 15: return texture(Textures[15], uv);
     }
-
     return vec4(1.0, 0.0, 1.0, 1.0);
 }
 
@@ -70,14 +75,12 @@ void main(){
     if(TextureIndex == 1) {
         highp vec2 uv = (fract(TexCoords) + AtlasOffset) / AtlasSize;
         FragColor =  sampleTexture(TextureIndex, uv) * VertexColour;
-        return;
     } else if(TextureIndex == 2) {
         float smoothing = 0.0035f;
-        float alpha = smoothstep( 0.5 - smoothing, 0.5 + smoothing, sampleTexture(TextureIndex, TexCoords).r );
         FragColor = VertexColour;
-        FragColor.a *= alpha;
-        return;
+        FragColor.a *= smoothstep( 0.5 - smoothing, 0.5 + smoothing, sampleTexture(TextureIndex, TexCoords).r );;
+    } else {
+        FragColor = sampleTexture(TextureIndex, TexCoords) * VertexColour;
     }
-
-    FragColor = sampleTexture(TextureIndex, TexCoords) * VertexColour;
+})";
 }
