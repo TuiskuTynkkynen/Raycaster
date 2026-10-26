@@ -13,8 +13,18 @@ namespace Core::RenderAPI {
     void SetClearColour(float r, float g, float b);
     void Clear();
 
-    void DrawVertices(const VertexArray& array, uint32_t vertexCount);
-    void DrawIndexed(const VertexArray& array, uint32_t indexCount);
+
+    enum class Primitive : uint8_t {
+        Points = 0,
+        Lines,
+        LineLoop,
+        LineStrip,
+        Triangles,
+        TriangleStrip,
+        TriangleFan,
+    };
+    void DrawVertices(const VertexArray& array, uint32_t vertexCount, Primitive primitiveType = Primitive::Triangles);
+    void DrawIndexed(const VertexArray& array, uint32_t indexCount, Primitive primitiveType = Primitive::Triangles);
     void DrawLines(const VertexArray& array, uint32_t vertexCount);
 
     void SetLineWidth(uint32_t width);

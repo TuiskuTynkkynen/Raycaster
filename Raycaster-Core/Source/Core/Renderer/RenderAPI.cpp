@@ -18,6 +18,17 @@ struct ContextConstants {
 
 static void OpenGLDebugCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
 
+inline constexpr GLenum OpenGLPrimitiveType(Core::RenderAPI::Primitive primitiveType) {
+    static_assert(static_cast<GLenum>(Core::RenderAPI::Primitive::Points) == GL_POINTS);
+    static_assert(static_cast<GLenum>(Core::RenderAPI::Primitive::Lines) == GL_LINES);
+    static_assert(static_cast<GLenum>(Core::RenderAPI::Primitive::LineStrip) == GL_LINE_STRIP);
+    static_assert(static_cast<GLenum>(Core::RenderAPI::Primitive::LineLoop) == GL_LINE_LOOP);
+    static_assert(static_cast<GLenum>(Core::RenderAPI::Primitive::Triangles) == GL_TRIANGLES);
+    static_assert(static_cast<GLenum>(Core::RenderAPI::Primitive::TriangleStrip) == GL_TRIANGLE_STRIP);
+    static_assert(static_cast<GLenum>(Core::RenderAPI::Primitive::TriangleFan) == GL_TRIANGLE_FAN);
+    return GL_POINTS + static_cast<GLenum>(primitiveType);
+}
+
 namespace Core {
     void RenderAPI::Init() {
         #if !defined(PLATFORM_EMSCRIPTEN)
@@ -69,14 +80,14 @@ namespace Core {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    void RenderAPI::DrawVertices(const VertexArray& array, uint32_t vertexCount) {
+    void RenderAPI::DrawVertices(const VertexArray& array, uint32_t vertexCount, Primitive primitive) {
         array.Bind();
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+        glDrawArrays(OpenGLPrimitiveType(primitive), 0, vertexCount);
     }
 
-    void RenderAPI::DrawIndexed(const VertexArray& array, uint32_t indexCount) {
+    void RenderAPI::DrawIndexed(const VertexArray& array, uint32_t indexCount, Primitive primitive) {
         array.Bind();
-        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+        glDrawElements(OpenGLPrimitiveType(primitive), indexCount, GL_UNSIGNED_INT, 0);
     }
 
     void RenderAPI::DrawLines(const VertexArray& array, uint32_t vertexCount) {
