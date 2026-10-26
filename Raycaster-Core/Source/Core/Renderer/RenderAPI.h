@@ -25,8 +25,7 @@ namespace Core::RenderAPI {
     };
     void DrawVertices(const VertexArray& array, uint32_t vertexCount, Primitive primitiveType = Primitive::Triangles);
     void DrawIndexed(const VertexArray& array, uint32_t indexCount, Primitive primitiveType = Primitive::Triangles);
-    void DrawLines(const VertexArray& array, uint32_t vertexCount);
-
+    
     void SetLineWidth(uint32_t width);
     void SetDepthBuffer(bool enabled);
     enum class DepthFunction : uint8_t {

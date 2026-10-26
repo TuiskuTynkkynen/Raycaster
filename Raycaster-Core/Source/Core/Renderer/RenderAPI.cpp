@@ -90,11 +90,6 @@ namespace Core {
         glDrawElements(OpenGLPrimitiveType(primitive), indexCount, GL_UNSIGNED_INT, 0);
     }
 
-    void RenderAPI::DrawLines(const VertexArray& array, uint32_t vertexCount) {
-        array.Bind();
-        glDrawArrays(GL_LINES, 0, vertexCount);
-    }
-
     void RenderAPI::SetLineWidth(uint32_t width) {
         glLineWidth(static_cast<GLfloat>(width));
     }

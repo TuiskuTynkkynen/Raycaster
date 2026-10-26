@@ -201,7 +201,7 @@ namespace Core {
             s_Data.LineVertexBuffer->SetData(s_Data.LineVertices.data(), sizeof(SimpleVertex) * s_Data.LineVertexCount);
 
             s_Data.SimpleShader->Bind();
-            RenderAPI::DrawLines(*s_Data.LineVertexArray, s_Data.LineVertexCount);
+            RenderAPI::DrawVertices(*s_Data.LineVertexArray, s_Data.LineVertexCount, RenderAPI::Primitive::Lines);
 
             s_Data.LineVertexCount = 0;
             s_Data.LineBackIter = s_Data.LineVertices.begin();
